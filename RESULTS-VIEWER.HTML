@@ -296,7 +296,8 @@ function activeTagsHtml(f, removeFn) {
 function fSelect(key, label, options, currentVal, onchangeFn) {
   if (!options || options.length <= 1) return "";
   var s = '<div class="filter-group"><label class="filter-label">'+label+'</label><select class="filter-select" onchange="'+onchangeFn+'(\''+key+'\',this.value)">';
-  s += '<option value="ALL">All '+label+'s</option>';
+  var allLabel = label==="Apparatus" ? "All Apparatus" : label==="Training Hrs" ? "All Training Hrs" : "All "+label+"s";
+  s += '<option value="ALL">'+allLabel+'</option>';
   options.forEach(function(o) { if (o) s += '<option value="'+esc(o)+'"'+(currentVal===o?' selected':'')+'>'+esc(o)+'</option>'; });
   s += '</select></div>';
   return s;
