@@ -190,8 +190,8 @@ var activeCompIdx = -1;
 var activeTab = "competitions";
 var compSortState = { apparatus: {}, dir: 1 };
 var leagueSortState = { col: "total", dir: -1 };
-var compFilters = { apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" };
-var leagueFilters = { apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" };
+var compFilters = { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" };
+var leagueFilters = { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" };
 
 var RAW_BASE = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/" + BRANCH + "/";
 var API_BASE = "https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/";
@@ -260,6 +260,7 @@ function loadXlsxFile(filename) {
             country: String(r["Country"]||"").trim(),
             region: String(r["Region"]||"").trim(),
             trainingHrs: String(r["Training Hrs"]||r["Training Hours"]||"").trim(),
+            gender: String(r["Gender"]||"").trim(),
           };
         }).filter(function(e) { return e.memberId||e.club; });
         if (entries.length) { comp.sheets.push({ apparatus:sn, entries:entries }); comp.totalEntries+=entries.length; }
@@ -294,6 +295,7 @@ function buildLeagueData(filters) {
       sh.entries.forEach(function(e) {
         if (!e.memberId) return;
         // Apply filters
+        if (filters.gender!=="ALL" && e.gender!==filters.gender) return;
         if (filters.ageCategory!=="ALL" && e.ageCategory!==filters.ageCategory) return;
         if (filters.level!=="ALL" && e.level!==filters.level) return;
         if (filters.country!=="ALL" && e.country!==filters.country) return;
@@ -362,7 +364,7 @@ function updateLeagueStats() {
 
 /* ── League Options ── */
 function collectLeagueOptions() {
-  var sets = { apparatuses:new Set(), ageCategories:new Set(), levels:new Set(), countries:new Set(), regions:new Set(), trainingHrs:new Set() };
+  var sets = { apparatuses:new Set(), ageCategories:new Set(), levels:new Set(), countries:new Set(), regions:new Set(), trainingHrs:new Set(), genders:new Set() };
   competitions.forEach(function(comp) {
     comp.sheets.forEach(function(sh) {
       sets.apparatuses.add(sh.apparatus);
@@ -372,6 +374,7 @@ function collectLeagueOptions() {
         if (e.country) sets.countries.add(e.country);
         if (e.region) sets.regions.add(e.region);
         if (e.trainingHrs) sets.trainingHrs.add(e.trainingHrs);
+        if (e.gender) sets.genders.add(e.gender);
       });
     });
   });
@@ -382,6 +385,7 @@ function collectLeagueOptions() {
     countries: Array.from(sets.countries).sort(),
     regions: Array.from(sets.regions).sort(),
     trainingHrs: Array.from(sets.trainingHrs).sort(),
+    genders: Array.from(sets.genders).sort(),
   };
 }
 
@@ -406,7 +410,7 @@ function renderLeague() {
   });
 
   // Active filter tags
-  var filterLabels = { apparatus:"Apparatus", ageCategory:"Age Category", level:"Level", country:"Country", region:"Region", trainingHrs:"Training Hrs" };
+  var filterLabels = { gender:"Gender", apparatus:"Apparatus", ageCategory:"Age Category", level:"Level", country:"Country", region:"Region", trainingHrs:"Training Hrs" };
   var activeTags = [];
   Object.keys(filterLabels).forEach(function(k) { if (leagueFilters[k]!=="ALL") activeTags.push({key:k,label:filterLabels[k]+": "+leagueFilters[k]}); });
   if (leagueFilters.memberSearch) activeTags.push({key:"memberSearch",label:"Member ID: "+leagueFilters.memberSearch});
@@ -416,6 +420,7 @@ function renderLeague() {
 
   // Filters
   html += '<div class="filters-bar">' +
+    leagueFilterSelect("gender","Gender",opts.genders) +
     leagueFilterSelect("apparatus","Apparatus",opts.apparatuses) +
     leagueFilterSelect("ageCategory","Age Category",opts.ageCategories) +
     leagueFilterSelect("level","Level",opts.levels) +
@@ -500,7 +505,7 @@ function doLeagueSort(col) {
   else { leagueSortState.col=col; leagueSortState.dir=["total","memberId"].indexOf(col)>=0||col.length>3?-1:1; }
   renderLeague();
 }
-function clearLeagueFilters() { leagueFilters={apparatus:"ALL",ageCategory:"ALL",level:"ALL",country:"ALL",region:"ALL",trainingHrs:"ALL",memberSearch:""}; renderLeague(); }
+function clearLeagueFilters() { leagueFilters={gender:"ALL",apparatus:"ALL",ageCategory:"ALL",level:"ALL",country:"ALL",region:"ALL",trainingHrs:"ALL",memberSearch:""}; renderLeague(); }
 function removeLeagueFilter(key) { if(key==="memberSearch")leagueFilters.memberSearch=""; else leagueFilters[key]="ALL"; renderLeague(); }
 
 /* ── Competition Results ── */
@@ -556,7 +561,7 @@ function compFilterSelect(key, label, options) {
 }
 
 function collectCompOptions(comp) {
-  var sets={apparatuses:[],ageCategories:new Set(),levels:new Set(),countries:new Set(),regions:new Set(),trainingHrs:new Set()};
+  var sets={apparatuses:[],ageCategories:new Set(),levels:new Set(),countries:new Set(),regions:new Set(),trainingHrs:new Set(),genders:new Set()};
   comp.sheets.forEach(function(sh){
     sets.apparatuses.push(sh.apparatus);
     sh.entries.forEach(function(e){
@@ -565,14 +570,15 @@ function collectCompOptions(comp) {
       if(e.country)sets.countries.add(e.country);
       if(e.region)sets.regions.add(e.region);
       if(e.trainingHrs)sets.trainingHrs.add(e.trainingHrs);
+      if(e.gender)sets.genders.add(e.gender);
     });
   });
-  return { apparatuses:sets.apparatuses, ageCategories:Array.from(sets.ageCategories).sort(), levels:Array.from(sets.levels).sort(), countries:Array.from(sets.countries).sort(), regions:Array.from(sets.regions).sort(), trainingHrs:Array.from(sets.trainingHrs).sort() };
+  return { apparatuses:sets.apparatuses, ageCategories:Array.from(sets.ageCategories).sort(), levels:Array.from(sets.levels).sort(), countries:Array.from(sets.countries).sort(), regions:Array.from(sets.regions).sort(), trainingHrs:Array.from(sets.trainingHrs).sort(), genders:Array.from(sets.genders).sort() };
 }
 
 function renderCompResults() {
   var comp = competitions[activeCompIdx];
-  var filterLabels={apparatus:"Apparatus",ageCategory:"Age Category",level:"Level",country:"Country",region:"Region",trainingHrs:"Training Hrs"};
+  var filterLabels={gender:"Gender",apparatus:"Apparatus",ageCategory:"Age Category",level:"Level",country:"Country",region:"Region",trainingHrs:"Training Hrs"};
   var activeTags=[];
   Object.keys(filterLabels).forEach(function(k){if(compFilters[k]!=="ALL")activeTags.push({key:k,label:filterLabels[k]+": "+compFilters[k]});});
   if(compFilters.memberSearch)activeTags.push({key:"memberSearch",label:"Member ID: "+compFilters.memberSearch});
@@ -586,6 +592,7 @@ function renderCompResults() {
   var totalVisible=0; var html="";
   sheets.forEach(function(sh){
     var entries=sh.entries.filter(function(e){
+      if(compFilters.gender!=="ALL"&&e.gender!==compFilters.gender)return false;
       if(compFilters.ageCategory!=="ALL"&&e.ageCategory!==compFilters.ageCategory)return false;
       if(compFilters.level!=="ALL"&&e.level!==compFilters.level)return false;
       if(compFilters.country!=="ALL"&&e.country!==compFilters.country)return false;
@@ -633,7 +640,7 @@ function doCompSort(apparatus,col){
   else{compSortState.apparatus[apparatus]=col;compSortState.dir=col==="score"?-1:1;}
   renderCompResults();
 }
-function clearCompFilters(){compFilters={apparatus:"ALL",ageCategory:"ALL",level:"ALL",country:"ALL",region:"ALL",trainingHrs:"ALL",memberSearch:""};renderMain();}
+function clearCompFilters(){compFilters={gender:"ALL",apparatus:"ALL",ageCategory:"ALL",level:"ALL",country:"ALL",region:"ALL",trainingHrs:"ALL",memberSearch:""};renderMain();}
 function removeCompFilter(key){if(key==="memberSearch")compFilters.memberSearch="";else compFilters[key]="ALL";renderMain();}
 
 function showWelcome(){
