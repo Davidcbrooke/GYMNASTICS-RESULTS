@@ -189,8 +189,7 @@ var competitions = [];
 var activeCompIdx = -1;
 var activeTab = "competitions";
 var compSortState = { apparatus: {}, dir: 1 };
-var leagueSortState = { col: "total", dir: -1 };
-var compFilters = { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" };
+var leagueSortState = { col: "total", dir: -1 };var compFilters = { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" };
 var leagueFilters = { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" };
 
 var RAW_BASE = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/" + BRANCH + "/";
@@ -403,10 +402,9 @@ function renderLeague() {
   rows.sort(function(a,b) {
     var col = leagueSortState.col;
     var av, bv;
-    if (col === "total") { av = a.total; bv = b.total; }
-    else if (apparatus.indexOf(col) >= 0) { av = a.scores[col]||0; bv = b.scores[col]||0; }
+    if (col === "total") { av = a.total; bv = b.total; return (bv-av)*leagueSortState.dir; }
+    else if (apparatus.indexOf(col) >= 0) { av = a.scores[col]||0; bv = b.scores[col]||0; return (bv-av)*leagueSortState.dir; }
     else { av = String(a[col]||""); bv = String(b[col]||""); return av.localeCompare(bv)*leagueSortState.dir; }
-    return (bv-av)*leagueSortState.dir;
   });
 
   // Active filter tags
@@ -580,7 +578,7 @@ function renderCompResults() {
   var comp = competitions[activeCompIdx];
   var filterLabels={gender:"Gender",apparatus:"Apparatus",ageCategory:"Age Category",level:"Level",country:"Country",region:"Region",trainingHrs:"Training Hrs"};
   var activeTags=[];
-  Object.keys(filterLabels).forEach(function(k){if(compFilters[k]!=="ALL")activeTags.push({key:k,label:filterLabels[k]+": "+compFilters[k]});});
+  Object.keys(filterLabels).forEach(function(k){if(compFilters[k]&&compFilters[k]!=="ALL")activeTags.push({key:k,label:filterLabels[k]+": "+compFilters[k]});});
   if(compFilters.memberSearch)activeTags.push({key:"memberSearch",label:"Member ID: "+compFilters.memberSearch});
   var afBar=document.getElementById("active-filters-bar");
   if(afBar){
