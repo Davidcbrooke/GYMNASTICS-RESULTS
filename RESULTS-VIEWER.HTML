@@ -152,7 +152,7 @@ var activeCompIdx = -1;
 var activeTab = "competitions";
 var compSortState = { apparatus: {}, dir: 1 };
 var leagueSortCol = "total";
-var leagueSortDir = -1; // -1 = descending (highest first)
+var leagueSortDir = 1; // will be flipped to -1 (highest first) on first render
 
 function freshCompFilters() { return { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" }; }
 function freshLeagueFilters() { return { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" }; }
@@ -360,10 +360,10 @@ function renderLeague() {
   var rows = data.rows;
   var apparatus = data.apparatus;
 
-  // Sort — default highest total first
+  // Sort — highest total first by default
   rows.sort(function(a,b) {
     var col = leagueSortCol; var dir = leagueSortDir;
-    if (col==="total") return (b.total - a.total) * dir;
+    if (col==="total") return (b.total - a.total);
     if (apparatus.indexOf(col)>=0) return ((b.scores[col]||0)-(a.scores[col]||0))*dir;
     return String(a[col]||"").localeCompare(String(b[col]||""))*dir;
   });
