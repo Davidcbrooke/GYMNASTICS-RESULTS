@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Competition Results</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #1a2340;
+    --navy-light: #243058;
+    --accent: #c8102e;
+    --accent-light: rgba(200,16,46,0.08);
+    --gold: #b8972a;
+    --white: #ffffff;
+    --off-white: #f7f8fa;
+    --border: #e2e6ed;
+    --text: #1a2340;
+    --text-mid: #4a5568;
+    --text-light: #8a96a8;
+    --shadow: 0 2px 12px rgba(26,35,64,0.08);
+    --shadow-lg: 0 8px 32px rgba(26,35,64,0.12);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--off-white);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 280px; min-width: 280px;
+    background: var(--navy);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  .sidebar-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-title {
+    font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.4);
+    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;
+  }
+  .sidebar-subtitle { font-size: 18px; font-weight: 700; color: #fff; line-height: 1.3; }
+
+  .upload-btn {
+    margin: 16px; padding: 10px 16px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: background 0.15s;
+    width: calc(100% - 32px);
+  }
+  .upload-btn:hover { background: #a50d26; }
+  .upload-btn svg { flex-shrink: 0; }
+
+  .comp-list { padding: 8px 0; flex: 1; }
+  .comp-item {
+    padding: 12px 24px; cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .comp-item:hover { background: rgba(255,255,255,0.05); }
+  .comp-item.active {
+    background: rgba(255,255,255,0.08);
+    border-left-color: var(--accent);
+  }
+  .comp-name { font-size: 14px; font-weight: 600; color: #fff; }
+  .comp-date { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .comp-count {
+    display: inline-block; margin-top: 4px;
+    font-size: 11px; color: rgba(255,255,255,0.35);
+  }
+
+  .no-comps {
+    padding: 24px; text-align: center;
+    color: rgba(255,255,255,0.3); font-size: 13px; line-height: 1.6;
+  }
+
+  /* ── Main header ── */
+  .main-header {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+    box-shadow: var(--shadow);
+  }
+  .comp-title { font-size: 22px; font-weight: 700; color: var(--navy); }
+  .comp-meta { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+
+  /* ── Filters ── */
+  .filters-bar {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; min-width: 140px; }
+  .filter-label { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.08em; }
+  .filter-select {
+    padding: 7px 10px; border: 1px solid var(--border);
+    border-radius: 7px; font-size: 13px; color: var(--text);
+    background: var(--off-white); outline: none; cursor: pointer;
+    transition: border-color 0.15s;
+    min-width: 140px; max-width: 180px;
+  }
+  .filter-select:focus { border-color: var(--navy); }
+  .filter-search {
+    padding: 7px 10px; border: 1px solid var(--border);
+    border-radius: 7px; font-size: 13px; color: var(--text);
+    background: var(--off-white); outline: none;
+    transition: border-color 0.15s; min-width: 160px;
+  }
+  .filter-search:focus { border-color: var(--navy); }
+  .filter-search::placeholder { color: var(--text-light); }
+
+  .clear-btn {
+    padding: 7px 14px; background: transparent;
+    border: 1px solid var(--border); border-radius: 7px;
+    font-size: 12px; font-weight: 600; color: var(--text-mid);
+    cursor: pointer; transition: all 0.15s; align-self: flex-end;
+  }
+  .clear-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .active-filters {
+    padding: 8px 32px;
+    background: var(--accent-light);
+    border-bottom: 1px solid rgba(200,16,46,0.12);
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  }
+  .active-filters-label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-right: 4px; }
+  .filter-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #fff; border: 1px solid rgba(200,16,46,0.2);
+    border-radius: 20px; padding: 3px 10px 3px 12px;
+    font-size: 12px; font-weight: 500; color: var(--navy);
+  }
+  .filter-tag button {
+    background: none; border: none; cursor: pointer;
+    color: var(--accent); font-size: 14px; line-height: 1;
+    padding: 0; display: flex; align-items: center;
+  }
+
+  /* ── Results ── */
+  .results-area { flex: 1; overflow-y: auto; padding: 24px 32px; }
+
+  .results-summary {
+    font-size: 13px; color: var(--text-light);
+    margin-bottom: 16px; font-weight: 500;
+  }
+  .results-summary span { color: var(--navy); font-weight: 700; }
+
+  /* Apparatus section */
+  .apparatus-section { margin-bottom: 32px; }
+  .apparatus-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 12px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--navy);
+  }
+  .apparatus-name { font-size: 16px; font-weight: 700; color: var(--navy); }
+  .apparatus-count {
+    font-size: 12px; font-weight: 600; color: var(--text-light);
+    background: var(--off-white); border: 1px solid var(--border);
+    border-radius: 20px; padding: 2px 10px;
+  }
+
+  .results-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); }
+  .results-table thead tr { background: var(--navy); }
+  .results-table th {
+    padding: 11px 14px; text-align: left;
+    font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7);
+    text-transform: uppercase; letter-spacing: 0.07em;
+    white-space: nowrap; cursor: pointer; user-select: none;
+  }
+  .results-table th:hover { color: #fff; }
+  .results-table th .sort-icon { margin-left: 4px; opacity: 0.5; }
+  .results-table th.sorted .sort-icon { opacity: 1; color: var(--gold); }
+
+  .results-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  .results-table tbody tr:last-child { border-bottom: none; }
+  .results-table tbody tr:hover { background: var(--off-white); }
+  .results-table td { padding: 11px 14px; font-size: 13px; color: var(--text); }
+
+  .rank-cell { font-weight: 700; color: var(--text-light); font-size: 12px; }
+  .rank-1 { color: #b8972a; }
+  .rank-2 { color: #8a9399; }
+  .rank-3 { color: #a0634a; }
+  .score-cell { font-weight: 700; color: var(--navy); font-size: 14px; }
+  .member-cell { font-family: monospace; font-size: 12px; color: var(--text-mid); }
+  .badge-cell span {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 600;
+    background: rgba(26,35,64,0.06); color: var(--navy);
+  }
+
+  /* ── Empty / Welcome states ── */
+  .empty-state {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 32px; text-align: center; color: var(--text-light);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-title { font-size: 18px; font-weight: 700; color: var(--text-mid); margin-bottom: 8px; }
+  .empty-sub { font-size: 14px; line-height: 1.6; max-width: 340px; }
+
+  .no-results {
+    background: #fff; border-radius: 10px; padding: 40px;
+    text-align: center; color: var(--text-light);
+    box-shadow: var(--shadow);
+  }
+
+  /* ── Hidden file input ── */
+  #file-input { display: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: relative; }
+    .filters-bar { padding: 12px 16px; }
+    .results-area { padding: 16px; }
+    .main-header { padding: 16px; }
+    .active-filters { padding: 8px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Gymnastics</div>
+      <div class="sidebar-subtitle">Competition Results</div>
+    </div>
+
+    <button class="upload-btn" id="upload-btn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M7 1v8M4 4l3-3 3 3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Add Competition Results
+    </button>
+    <input type="file" id="file-input" accept=".xlsx,.xls" multiple/>
+
+    <div class="comp-list" id="comp-list">
+      <div class="no-comps">No competitions loaded yet.<br/>Click above to add results.</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main" id="main">
+    <div class="empty-state" id="welcome-state">
+      <div class="empty-icon">🏅</div>
+      <div class="empty-title">No competition selected</div>
+      <div class="empty-sub">Upload competition result files using the button on the left, then click a competition to view its results.</div>
+    </div>
+  </main>
+</div>
+
+<script>
+var competitions = [];
+var activeCompIdx = -1;
+var sortState = { apparatus: {}, col: null, dir: 1 };
+var filters = { apparatus: "ALL", ageCategory: "ALL", level: "ALL", country: "ALL", region: "ALL", trainingHrs: "ALL", memberSearch: "" };
+
+/* ── File Loading ── */
+document.getElementById("upload-btn").addEventListener("click", function() {
+  document.getElementById("file-input").click();
+});
+document.getElementById("file-input").addEventListener("change", function(e) {
+  var files = Array.from(e.target.files || []);
+  files.forEach(loadFile);
+  e.target.value = "";
+});
+
+function loadFile(file) {
+  var reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      var arr = new Uint8Array(evt.target.result);
+      var wb = XLSX.read(arr, { type: "array" });
+      var parsed = parseFilename(file.name);
+      var comp = { name: parsed.location, date: parsed.date, displayDate: parsed.displayDate, sheets: [], totalEntries: 0 };
+      wb.SheetNames.forEach(function(sn) {
+        var ws = wb.Sheets[sn];
+        var rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+        if (!rows.length) return;
+        var entries = rows.map(function(r) {
+          return {
+            memberId: String(r["Member ID"] || r["BG Number"] || "").trim(),
+            club: String(r["Club"] || "").trim(),
+            ageCategory: String(r["Age Category"] || "").trim(),
+            level: String(r["Level"] || "").trim(),
+            score: r["Final Score"] !== undefined ? r["Final Score"] : (r["Score"] !== undefined ? r["Score"] : ""),
+            country: String(r["Country"] || "").trim(),
+            region: String(r["Region"] || "").trim(),
+            trainingHrs: String(r["Training Hrs"] || r["Training Hours"] || "").trim(),
+          };
+        }).filter(function(e) { return e.memberId || e.club; });
+        if (entries.length) { comp.sheets.push({ apparatus: sn, entries: entries }); comp.totalEntries += entries.length; }
+      });
+      if (!comp.sheets.length) { alert("No results found in " + file.name); return; }
+      // Deduplicate by name+date
+      var exists = competitions.findIndex(function(c) { return c.name === comp.name && c.date === comp.date; });
+      if (exists >= 0) competitions[exists] = comp;
+      else competitions.push(comp);
+      competitions.sort(function(a,b) { return b.date.localeCompare(a.date); });
+      renderSidebar();
+      var idx = competitions.findIndex(function(c) { return c.name === comp.name && c.date === comp.date; });
+      selectComp(idx);
+    } catch(err) { console.error(err); alert("Could not load " + file.name + ": " + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseFilename(name) {
+  var base = name.replace(/\.[^.]+$/, "");
+  // Format: Location_YYYY-MM-DD_results or Location_YYYY-MM-DD
+  var m = base.match(/^(.+?)_(\d{4}-\d{2}-\d{2})/);
+  if (m) {
+    var loc = m[1].replace(/_/g, " ");
+    var d = m[2];
+    var parts = d.split("-");
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var display = parts[2] + " " + months[parseInt(parts[1],10)-1] + " " + parts[0];
+    return { location: loc, date: d, displayDate: display };
+  }
+  return { location: base.replace(/_/g," "), date: "", displayDate: "" };
+}
+
+/* ── Sidebar ── */
+function renderSidebar() {
+  var el = document.getElementById("comp-list");
+  if (!competitions.length) { el.innerHTML = '<div class="no-comps">No competitions loaded yet.<br/>Click above to add results.</div>'; return; }
+  el.innerHTML = competitions.map(function(c,i) {
+    return '<div class="comp-item' + (i===activeCompIdx?' active':'') + '" onclick="selectComp('+i+')">' +
+      '<div class="comp-name">' + esc(c.name) + '</div>' +
+      (c.displayDate ? '<div class="comp-date">' + esc(c.displayDate) + '</div>' : '') +
+      '<div class="comp-count">' + c.totalEntries + ' entries · ' + c.sheets.length + ' apparatus</div>' +
+      '</div>';
+  }).join("");
+}
+
+/* ── Select Competition ── */
+function selectComp(idx) {
+  activeCompIdx = idx;
+  sortState = { apparatus: {}, col: null, dir: 1 };
+  filters = { apparatus: "ALL", ageCategory: "ALL", level: "ALL", country: "ALL", region: "ALL", trainingHrs: "ALL", memberSearch: "" };
+  renderSidebar();
+  renderMain();
+}
+
+/* ── Main Render ── */
+function renderMain() {
+  var main = document.getElementById("main");
+  if (activeCompIdx < 0 || !competitions[activeCompIdx]) {
+    main.innerHTML = '<div class="empty-state" id="welcome-state"><div class="empty-icon">🏅</div><div class="empty-title">No competition selected</div><div class="empty-sub">Click a competition on the left to view results.</div></div>';
+    return;
+  }
+  var comp = competitions[activeCompIdx];
+  // Collect filter options
+  var opts = collectOptions(comp);
+  // Build header
+  var html = '<div class="main-header">' +
+    '<div class="comp-title">' + esc(comp.name) + '</div>' +
+    (comp.displayDate ? '<div class="comp-meta">' + esc(comp.displayDate) + ' · ' + comp.totalEntries + ' entries</div>' : '<div class="comp-meta">' + comp.totalEntries + ' entries</div>') +
+    '</div>';
+  // Filters bar
+  html += '<div class="filters-bar">' +
+    filterSelect("apparatus", "Apparatus", opts.apparatuses) +
+    filterSelect("ageCategory", "Age Category", opts.ageCategories) +
+    filterSelect("level", "Level", opts.levels) +
+    filterSelect("country", "Country", opts.countries) +
+    filterSelect("region", "Region", opts.regions) +
+    filterSelect("trainingHrs", "Training Hrs", opts.trainingHrs) +
+    '<div class="filter-group"><label class="filter-label">Member ID</label><input class="filter-search" id="filter-member" placeholder="Search ID..." value="' + esc(filters.memberSearch) + '" oninput="filters.memberSearch=this.value;renderResults()"/></div>' +
+    '<button class="clear-btn" onclick="clearFilters()">Clear All</button>' +
+    '</div>';
+  // Active filter tags
+  html += '<div id="active-filters-bar"></div>';
+  // Results
+  html += '<div class="results-area" id="results-area"></div>';
+  main.innerHTML = html;
+  renderResults();
+}
+
+function filterSelect(key, label, options) {
+  if (options.length <= 1) return "";
+  var s = '<div class="filter-group"><label class="filter-label">' + label + '</label><select class="filter-select" onchange="filters.' + key + '=this.value;renderResults()">';
+  s += '<option value="ALL">All ' + label + 's</option>';
+  options.forEach(function(o) { s += '<option value="' + esc(o) + '"' + (filters[key]===o?' selected':'') + '>' + esc(o) + '</option>'; });
+  s += '</select></div>';
+  return s;
+}
+
+function collectOptions(comp) {
+  var sets = { apparatuses: [], ageCategories: new Set(), levels: new Set(), countries: new Set(), regions: new Set(), trainingHrs: new Set() };
+  comp.sheets.forEach(function(sh) {
+    sets.apparatuses.push(sh.apparatus);
+    sh.entries.forEach(function(e) {
+      if (e.ageCategory) sets.ageCategories.add(e.ageCategory);
+      if (e.level) sets.levels.add(e.level);
+      if (e.country) sets.countries.add(e.country);
+      if (e.region) sets.regions.add(e.region);
+      if (e.trainingHrs) sets.trainingHrs.add(e.trainingHrs);
+    });
+  });
+  return {
+    apparatuses: sets.apparatuses,
+    ageCategories: Array.from(sets.ageCategories).sort(),
+    levels: Array.from(sets.levels).sort(),
+    countries: Array.from(sets.countries).sort(),
+    regions: Array.from(sets.regions).sort(),
+    trainingHrs: Array.from(sets.trainingHrs).sort(),
+  };
+}
+
+function renderResults() {
+  var comp = competitions[activeCompIdx];
+  // Active filter tags
+  var activeTags = [];
+  var filterLabels = { apparatus:"Apparatus", ageCategory:"Age Category", level:"Level", country:"Country", region:"Region", trainingHrs:"Training Hrs" };
+  Object.keys(filterLabels).forEach(function(k) {
+    if (filters[k] !== "ALL") activeTags.push({ key: k, label: filterLabels[k] + ": " + filters[k] });
+  });
+  if (filters.memberSearch) activeTags.push({ key: "memberSearch", label: "Member ID: " + filters.memberSearch });
+  var afBar = document.getElementById("active-filters-bar");
+  if (afBar) {
+    if (activeTags.length) {
+      afBar.className = "active-filters";
+      afBar.innerHTML = '<span class="active-filters-label">Filtered by</span>' +
+        activeTags.map(function(t) {
+          return '<span class="filter-tag">' + esc(t.label) +
+            '<button onclick="removeFilter(\'' + t.key + '\')" title="Remove">×</button></span>';
+        }).join("");
+    } else { afBar.className = ""; afBar.innerHTML = ""; }
+  }
+
+  // Filter sheets
+  var sheets = comp.sheets;
+  if (filters.apparatus !== "ALL") sheets = sheets.filter(function(s) { return s.apparatus === filters.apparatus; });
+
+  var totalVisible = 0;
+  var html = "";
+
+  sheets.forEach(function(sh) {
+    var entries = sh.entries.filter(function(e) {
+      if (filters.ageCategory !== "ALL" && e.ageCategory !== filters.ageCategory) return false;
+      if (filters.level !== "ALL" && e.level !== filters.level) return false;
+      if (filters.country !== "ALL" && e.country !== filters.country) return false;
+      if (filters.region !== "ALL" && e.region !== filters.region) return false;
+      if (filters.trainingHrs !== "ALL" && e.trainingHrs !== filters.trainingHrs) return false;
+      if (filters.memberSearch && e.memberId.toLowerCase().indexOf(filters.memberSearch.toLowerCase()) < 0) return false;
+      return true;
+    });
+    if (!entries.length) return;
+
+    // Sort
+    var sk = sortState.apparatus[sh.apparatus];
+    if (sk) {
+      entries = entries.slice().sort(function(a,b) {
+        var av = a[sk] || "", bv = b[sk] || "";
+        if (sk === "score") { av = parseFloat(av)||0; bv = parseFloat(bv)||0; return (bv-av)*sortState.dir; }
+        return String(av).localeCompare(String(bv)) * sortState.dir;
+      });
+    } else {
+      // Default: sort by score descending
+      entries = entries.slice().sort(function(a,b) { return (parseFloat(b.score)||0)-(parseFloat(a.score)||0); });
+    }
+
+    totalVisible += entries.length;
+    html += '<div class="apparatus-section">' +
+      '<div class="apparatus-header">' +
+      '<span class="apparatus-name">' + esc(sh.apparatus) + '</span>' +
+      '<span class="apparatus-count">' + entries.length + ' results</span>' +
+      '</div>' +
+      '<table class="results-table">' +
+      '<thead><tr>' +
+      '<th style="width:40px">#</th>' +
+      thSort(sh.apparatus, "memberId", "Member ID") +
+      thSort(sh.apparatus, "club", "Club") +
+      thSort(sh.apparatus, "ageCategory", "Age Cat.") +
+      thSort(sh.apparatus, "level", "Level") +
+      thSort(sh.apparatus, "country", "Country") +
+      thSort(sh.apparatus, "region", "Region") +
+      thSort(sh.apparatus, "trainingHrs", "Training Hrs") +
+      thSort(sh.apparatus, "score", "Score") +
+      '</tr></thead><tbody>';
+
+    entries.forEach(function(e, i) {
+      var rank = i + 1;
+      var rankClass = rank === 1 ? "rank-1" : rank === 2 ? "rank-2" : rank === 3 ? "rank-3" : "";
+      var scoreVal = parseFloat(e.score);
+      var scoreDisplay = !isNaN(scoreVal) ? scoreVal.toFixed(3) : (e.score || "—");
+      html += '<tr>' +
+        '<td class="rank-cell ' + rankClass + '">' + rank + '</td>' +
+        '<td class="member-cell">' + esc(e.memberId || "—") + '</td>' +
+        '<td>' + esc(e.club || "—") + '</td>' +
+        '<td><span class="badge-cell"><span>' + esc(e.ageCategory || "—") + '</span></span></td>' +
+        '<td><span class="badge-cell"><span>' + esc(e.level || "—") + '</span></span></td>' +
+        '<td>' + esc(e.country || "—") + '</td>' +
+        '<td>' + esc(e.region || "—") + '</td>' +
+        '<td>' + esc(e.trainingHrs || "—") + '</td>' +
+        '<td class="score-cell">' + scoreDisplay + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div>';
+  });
+
+  var area = document.getElementById("results-area");
+  if (!area) return;
+  if (!totalVisible) {
+    area.innerHTML = '<div class="no-results"><strong>No results match your filters.</strong><br/><span style="font-size:13px;color:#8a96a8">Try adjusting or clearing the filters above.</span></div>';
+    return;
+  }
+  area.innerHTML = '<div class="results-summary">Showing <span>' + totalVisible + '</span> result' + (totalVisible!==1?'s':'') + (activeTags.length?' (filtered)':'') + '</div>' + html;
+}
+
+function thSort(apparatus, col, label) {
+  var current = sortState.apparatus[apparatus];
+  var isSorted = current === col;
+  var icon = isSorted ? (sortState.dir === 1 ? " ↑" : " ↓") : " ↕";
+  return '<th class="' + (isSorted?'sorted':'') + '" onclick="doSort(\'' + apparatus + '\',\'' + col + '\')">' +
+    label + '<span class="sort-icon">' + icon + '</span></th>';
+}
+
+function doSort(apparatus, col) {
+  if (sortState.apparatus[apparatus] === col) sortState.dir = sortState.dir === 1 ? -1 : 1;
+  else { sortState.apparatus[apparatus] = col; sortState.dir = col === "score" ? -1 : 1; }
+  renderResults();
+}
+
+function clearFilters() {
+  filters = { apparatus: "ALL", ageCategory: "ALL", level: "ALL", country: "ALL", region: "ALL", trainingHrs: "ALL", memberSearch: "" };
+  renderMain();
+}
+
+function removeFilter(key) {
+  if (key === "memberSearch") filters.memberSearch = "";
+  else filters[key] = "ALL";
+  renderMain();
+}
+
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+</script>
+</body>
+</html>
