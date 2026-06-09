@@ -86,6 +86,13 @@
   .score-cell { font-weight: 700; color: var(--navy); font-size: 14px; }
   .total-cell { font-weight: 800; color: var(--accent); font-size: 15px; }
   .member-cell { font-family: monospace; font-size: 12px; color: var(--text-mid); }
+  .member-link { font-family: monospace; font-size: 12px; color: var(--accent); cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; font-weight: 600; }
+  .member-link:hover { color: var(--navy); }
+  .search-mode-toggle { display: flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; align-self: flex-end; }
+  .search-mode-btn { padding: 7px 12px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; background: var(--off-white); color: var(--text-light); }
+  .search-mode-btn.active { background: var(--navy); color: #fff; }
+  tr.highlighted-row td { background: rgba(200,16,46,0.08) !important; border-left: 3px solid var(--accent); }
+  tr.highlighted-row .member-link { color: var(--accent); font-weight: 800; }
   .badge span { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: rgba(26,35,64,0.06); color: var(--navy); }
   .apparatus-score { text-align: center; }
   .apparatus-score.best { font-weight: 700; color: var(--navy); }
@@ -95,10 +102,58 @@
   .empty-title { font-size: 17px; font-weight: 700; color: var(--text-mid); margin-bottom: 8px; }
   .empty-sub { font-size: 14px; line-height: 1.6; max-width: 320px; }
   .no-results { background: #fff; border-radius: 10px; padding: 36px; text-align: center; color: var(--text-light); box-shadow: var(--shadow); }
+
+  /* ── Profile Popup ── */
+  .profile-overlay { position: fixed; inset: 0; background: rgba(26,35,64,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+  .profile-modal { background: #fff; border-radius: 16px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(26,35,64,0.3); }
+  .profile-header { background: var(--navy); padding: 24px 28px; border-radius: 16px 16px 0 0; display: flex; align-items: flex-start; justify-content: space-between; }
+  .profile-id { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .profile-club { font-size: 20px; font-weight: 700; color: #fff; }
+  .profile-close { background: rgba(255,255,255,0.1); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
+  .profile-close:hover { background: rgba(255,255,255,0.2); }
+  .profile-body { padding: 24px 28px; }
+
+  /* Profile details pills */
+  .profile-details { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .profile-pill { display: inline-flex; flex-direction: column; background: var(--off-white); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; }
+  .profile-pill-label { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 2px; }
+  .profile-pill-value { font-size: 13px; font-weight: 600; color: var(--navy); }
+
+  /* Profile sections */
+  .profile-section { margin-bottom: 24px; }
+  .profile-section-title { font-size: 13px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--navy); }
+
+  /* Best scores grid */
+  .best-scores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .best-score-card { background: var(--off-white); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; text-align: center; }
+  .best-score-apparatus { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .best-score-value { font-size: 20px; font-weight: 800; color: var(--navy); }
+  .best-score-card.top { border-color: var(--gold); background: rgba(184,151,42,0.06); }
+  .best-score-card.top .best-score-value { color: var(--gold); }
+
+  /* All results table */
+  .profile-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .profile-table th { padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.07em; border-bottom: 1px solid var(--border); }
+  .profile-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .profile-table tr:last-child td { border-bottom: none; }
+  .profile-table tr:hover td { background: var(--off-white); }
+  .profile-table .best-marker { color: var(--gold); font-weight: 700; font-size: 11px; margin-left: 4px; }
+
+  /* Chart */
+  .chart-wrap { position: relative; height: 180px; margin-top: 4px; }
+  canvas { width: 100% !important; }
+
+  /* Total row */
+  .total-row { background: var(--navy); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .total-row-label { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7); }
+  .total-row-value { font-size: 22px; font-weight: 800; color: #fff; }
+
   @media (max-width: 768px) {
     .app { flex-direction: column; }
     .sidebar { width: 100%; height: auto; position: relative; }
     .filters-bar, .results-area, .main-header, .active-filters { padding-left: 16px; padding-right: 16px; }
+    .profile-modal { max-height: 95vh; }
+    .profile-body { padding: 16px; }
   }
 </style>
 </head>
@@ -140,6 +195,11 @@
   </main>
 </div>
 
+<!-- Profile Popup -->
+<div class="profile-overlay" id="profile-overlay" style="display:none" onclick="closeProfile(event)">
+  <div class="profile-modal" id="profile-modal"></div>
+</div>
+
 <script>
 var GITHUB_USER = "Davidcbrooke";
 var GITHUB_REPO = "GYMNASTICS-RESULTS";
@@ -152,10 +212,10 @@ var activeCompIdx = -1;
 var activeTab = "competitions";
 var compSortState = { apparatus: {}, dir: 1 };
 var leagueSortCol = "total";
-var leagueSortDir = 1; // will be flipped to -1 (highest first) on first render
+var leagueSortDir = -1;
 
-function freshCompFilters() { return { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" }; }
-function freshLeagueFilters() { return { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"" }; }
+function freshCompFilters() { return { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"", memberSearchMode:"filter" }; }
+function freshLeagueFilters() { return { gender:"ALL", apparatus:"ALL", ageCategory:"ALL", level:"ALL", country:"ALL", region:"ALL", trainingHrs:"ALL", memberSearch:"", memberSearchMode:"filter" }; }
 var compFilters = freshCompFilters();
 var leagueFilters = freshLeagueFilters();
 
@@ -242,308 +302,378 @@ function parseFilename(name) {
   return { location:base.replace(/_/g," "), date:"", displayDate:"" };
 }
 
-/* ── Collect filter options ── */
-function collectAllOptions() {
-  var g=new Set(), ap=new Set(), ac=new Set(), lv=new Set(), co=new Set(), re=new Set(), tr=new Set();
+/* ── Gymnast Profile ── */
+function openProfile(memberId) {
+  // Gather all results for this gymnast across all competitions
+  var info = { memberId:memberId, club:"", ageCategory:"", level:"", country:"", region:"", trainingHrs:"", gender:"" };
+  var allResults = []; // { competition, date, displayDate, apparatus, score }
+  var bestScores = {}; // apparatus -> best score
+
   competitions.forEach(function(comp) {
     comp.sheets.forEach(function(sh) {
-      ap.add(sh.apparatus);
       sh.entries.forEach(function(e) {
-        if (e.gender) g.add(e.gender);
-        if (e.ageCategory) ac.add(e.ageCategory);
-        if (e.level) lv.add(e.level);
-        if (e.country) co.add(e.country);
-        if (e.region) re.add(e.region);
-        if (e.trainingHrs) tr.add(e.trainingHrs);
+        if (e.memberId !== memberId) return;
+        // Update info with latest values
+        if (e.club) info.club = e.club;
+        if (e.ageCategory) info.ageCategory = e.ageCategory;
+        if (e.level) info.level = e.level;
+        if (e.country) info.country = e.country;
+        if (e.region) info.region = e.region;
+        if (e.trainingHrs) info.trainingHrs = e.trainingHrs;
+        if (e.gender) info.gender = e.gender;
+        var score = parseFloat(e.score);
+        if (!isNaN(score)) {
+          allResults.push({ competition:comp.name, date:comp.date, displayDate:comp.displayDate, apparatus:sh.apparatus, score:score });
+          if (!bestScores[sh.apparatus] || score > bestScores[sh.apparatus]) bestScores[sh.apparatus] = score;
+        }
       });
     });
   });
-  return { genders:arr(g), apparatuses:arr(ap), ageCategories:arr(ac), levels:arr(lv), countries:arr(co), regions:arr(re), trainingHrs:arr(tr) };
-}
-function collectCompOptions(comp) {
-  var g=new Set(), ap=[], ac=new Set(), lv=new Set(), co=new Set(), re=new Set(), tr=new Set();
-  comp.sheets.forEach(function(sh) {
-    ap.push(sh.apparatus);
-    sh.entries.forEach(function(e) {
-      if (e.gender) g.add(e.gender);
-      if (e.ageCategory) ac.add(e.ageCategory);
-      if (e.level) lv.add(e.level);
-      if (e.country) co.add(e.country);
-      if (e.region) re.add(e.region);
-      if (e.trainingHrs) tr.add(e.trainingHrs);
-    });
-  });
-  return { genders:arr(g), apparatuses:ap, ageCategories:arr(ac), levels:arr(lv), countries:arr(co), regions:arr(re), trainingHrs:arr(tr) };
-}
-function arr(s) { return Array.from(s).sort(); }
 
-/* ── Active filter tags ── */
+  // Sort results by date then apparatus
+  allResults.sort(function(a,b) { return a.date.localeCompare(b.date) || a.apparatus.localeCompare(b.apparatus); });
+
+  // Total
+  var total = 0;
+  Object.values(bestScores).forEach(function(s) { total += s; });
+  total = Math.round(total*1000)/1000;
+
+  // Build score progression per apparatus (for chart)
+  var apparatuses = Object.keys(bestScores).sort();
+  var progressionByApparatus = {};
+  apparatuses.forEach(function(a) {
+    progressionByApparatus[a] = allResults.filter(function(r) { return r.apparatus===a; }).map(function(r) { return { date:r.displayDate, score:r.score }; });
+  });
+
+  // Build HTML
+  var html = '<div class="profile-header">' +
+    '<div><div class="profile-id">Member ID: ' + esc(memberId) + '</div><div class="profile-club">' + esc(info.club||"Unknown Club") + '</div></div>' +
+    '<button class="profile-close" onclick="closeProfile()">×</button></div>';
+
+  html += '<div class="profile-body">';
+
+  // Details pills
+  html += '<div class="profile-details">';
+  if (info.gender) html += pill("Gender", info.gender);
+  if (info.ageCategory) html += pill("Age Category", info.ageCategory);
+  if (info.level) html += pill("Level", info.level);
+  if (info.country) html += pill("Country", info.country);
+  if (info.region) html += pill("Region", info.region);
+  if (info.trainingHrs) html += pill("Training Hrs", info.trainingHrs);
+  html += pill("Competitions", allResults.length > 0 ? [...new Set(allResults.map(function(r){return r.competition;}))].length + "" : "0");
+  html += '</div>';
+
+  // Total
+  html += '<div class="total-row"><div class="total-row-label">Total Score (Best per Apparatus)</div><div class="total-row-value">'+total.toFixed(3)+'</div></div>';
+
+  // Best scores
+  html += '<div class="profile-section"><div class="profile-section-title">Best Scores per Apparatus</div>';
+  html += '<div class="best-scores-grid">';
+  var maxScore = Math.max.apply(null, Object.values(bestScores));
+  apparatuses.forEach(function(a) {
+    var isTop = bestScores[a] === maxScore;
+    html += '<div class="best-score-card'+(isTop?' top':'')+'"><div class="best-score-apparatus">'+esc(a)+'</div><div class="best-score-value">'+bestScores[a].toFixed(3)+'</div></div>';
+  });
+  html += '</div></div>';
+
+  // Score progression chart
+  if (allResults.length > 1) {
+    html += '<div class="profile-section"><div class="profile-section-title">Score Progression</div>';
+    html += '<div class="chart-wrap"><canvas id="profile-chart"></canvas></div></div>';
+  }
+
+  // All results
+  html += '<div class="profile-section"><div class="profile-section-title">All Results</div>';
+  html += '<table class="profile-table"><thead><tr><th>Competition</th><th>Date</th><th>Apparatus</th><th>Score</th></tr></thead><tbody>';
+  allResults.forEach(function(r) {
+    var isBest = bestScores[r.apparatus] === r.score;
+    html += '<tr><td>'+esc(r.competition)+'</td><td>'+esc(r.displayDate||r.date)+'</td><td>'+esc(r.apparatus)+'</td>' +
+      '<td><strong>'+r.score.toFixed(3)+'</strong>'+(isBest?'<span class="best-marker">★ Best</span>':'')+'</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '</div>'; // profile-body
+
+  var modal = document.getElementById("profile-modal");
+  modal.innerHTML = html;
+  document.getElementById("profile-overlay").style.display = "flex";
+  document.body.style.overflow = "hidden";
+
+  // Draw chart if needed
+  if (allResults.length > 1) {
+    setTimeout(function() { drawChart(progressionByApparatus, apparatuses); }, 50);
+  }
+}
+
+function pill(label, value) {
+  return '<div class="profile-pill"><div class="profile-pill-label">'+esc(label)+'</div><div class="profile-pill-value">'+esc(value)+'</div></div>';
+}
+
+function drawChart(progressionByApparatus, apparatuses) {
+  var canvas = document.getElementById("profile-chart");
+  if (!canvas) return;
+  var ctx = canvas.getContext("2d");
+  var dpr = window.devicePixelRatio || 1;
+  var w = canvas.parentElement.clientWidth;
+  var h = 180;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + "px"; canvas.style.height = h + "px";
+  ctx.scale(dpr, dpr);
+
+  var colors = ["#c8102e","#1a2340","#b8972a","#22c55e","#8b5cf6","#f97316"];
+  var pad = { top:16, right:16, bottom:40, left:48 };
+  var chartW = w - pad.left - pad.right;
+  var chartH = h - pad.top - pad.bottom;
+
+  // Collect all scores for scale
+  var allScores = [];
+  apparatuses.forEach(function(a) { progressionByApparatus[a].forEach(function(p) { allScores.push(p.score); }); });
+  var minS = Math.max(0, Math.min.apply(null,allScores) - 1);
+  var maxS = Math.max.apply(null,allScores) + 1;
+
+  // Collect all unique dates in order
+  var allDates = [];
+  apparatuses.forEach(function(a) { progressionByApparatus[a].forEach(function(p) { if (allDates.indexOf(p.date)<0) allDates.push(p.date); }); });
+  allDates.sort();
+
+  if (allDates.length < 2) return;
+
+  // Grid
+  ctx.strokeStyle = "#e2e6ed"; ctx.lineWidth = 1;
+  for (var i=0;i<=4;i++) {
+    var y = pad.top + chartH - (chartH/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+chartW,y); ctx.stroke();
+    ctx.fillStyle="#8a96a8"; ctx.font="10px sans-serif"; ctx.textAlign="right";
+    ctx.fillText((minS + (maxS-minS)/4*i).toFixed(1), pad.left-6, y+4);
+  }
+
+  // X labels
+  ctx.fillStyle="#8a96a8"; ctx.font="10px sans-serif"; ctx.textAlign="center";
+  allDates.forEach(function(d,i) {
+    var x = pad.left + (i/(allDates.length-1))*chartW;
+    ctx.fillText(d, x, h-pad.bottom+16);
+  });
+
+  // Lines
+  apparatuses.forEach(function(a,ai) {
+    var pts = progressionByApparatus[a];
+    if (pts.length < 1) return;
+    ctx.strokeStyle = colors[ai % colors.length];
+    ctx.lineWidth = 2; ctx.lineJoin="round";
+    ctx.beginPath();
+    pts.forEach(function(p,pi) {
+      var di = allDates.indexOf(p.date);
+      var x = pad.left + (di/(allDates.length-1))*chartW;
+      var y = pad.top + chartH - ((p.score-minS)/(maxS-minS))*chartH;
+      if (pi===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    // Dots
+    pts.forEach(function(p) {
+      var di = allDates.indexOf(p.date);
+      var x = pad.left + (di/(allDates.length-1))*chartW;
+      var y = pad.top + chartH - ((p.score-minS)/(maxS-minS))*chartH;
+      ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
+      ctx.fillStyle=colors[ai%colors.length]; ctx.fill();
+    });
+    // Legend
+    ctx.fillStyle=colors[ai%colors.length]; ctx.font="bold 10px sans-serif"; ctx.textAlign="left";
+    ctx.fillText(a, pad.left + ai*90, pad.top+10);
+  });
+}
+
+function closeProfile(e) {
+  if (e && e.target !== document.getElementById("profile-overlay")) return;
+  document.getElementById("profile-overlay").style.display = "none";
+  document.body.style.overflow = "";
+}
+
+/* ── Filter helpers ── */
 var FILTER_LABELS = { gender:"Gender", apparatus:"Apparatus", ageCategory:"Age Category", level:"Level", country:"Country", region:"Region", trainingHrs:"Training Hrs" };
 
 function activeTagsHtml(f, removeFn) {
   var tags = [];
-  Object.keys(FILTER_LABELS).forEach(function(k) {
-    if (f[k] && f[k] !== "ALL") tags.push({ key:k, label:FILTER_LABELS[k]+": "+f[k] });
-  });
-  if (f.memberSearch) tags.push({ key:"memberSearch", label:"Member ID: "+f.memberSearch });
+  Object.keys(FILTER_LABELS).forEach(function(k) { if (f[k] && f[k]!=="ALL") tags.push({key:k,label:FILTER_LABELS[k]+": "+f[k]}); });
+  if (f.memberSearch) tags.push({key:"memberSearch",label:"Member ID: "+f.memberSearch});
   if (!tags.length) return "";
   return '<div class="active-filters"><span class="active-filters-label">Filtered by</span>' +
-    tags.map(function(t) { return '<span class="filter-tag">'+esc(t.label)+'<button onclick="'+removeFn+'(\''+t.key+'\')">×</button></span>'; }).join("") +
-    '</div>';
+    tags.map(function(t){return '<span class="filter-tag">'+esc(t.label)+'<button onclick="'+removeFn+'(\''+t.key+'\')">×</button></span>';}).join("")+'</div>';
 }
 
-/* ── Filter select builder ── */
 function fSelect(key, label, options, currentVal, onchangeFn) {
-  if (!options || options.length <= 1) return "";
-  var s = '<div class="filter-group"><label class="filter-label">'+label+'</label><select class="filter-select" onchange="'+onchangeFn+'(\''+key+'\',this.value)">';
-  var allLabel = label==="Apparatus" ? "All Apparatus" : label==="Training Hrs" ? "All Training Hrs" : "All "+label+"s";
-  s += '<option value="ALL">'+allLabel+'</option>';
-  options.forEach(function(o) { if (o) s += '<option value="'+esc(o)+'"'+(currentVal===o?' selected':'')+'>'+esc(o)+'</option>'; });
-  s += '</select></div>';
-  return s;
+  if (!options||options.length<=1) return "";
+  var allLabel = label==="Apparatus"?"All Apparatus":label==="Training Hrs"?"All Training Hrs":"All "+label+"s";
+  var s='<div class="filter-group"><label class="filter-label">'+label+'</label><select class="filter-select" onchange="'+onchangeFn+'(\''+key+'\',this.value)">';
+  s+='<option value="ALL">'+allLabel+'</option>';
+  options.forEach(function(o){if(o)s+='<option value="'+esc(o)+'"'+(currentVal===o?' selected':'')+'>'+esc(o)+'</option>';});
+  s+='</select></div>'; return s;
 }
+
+function collectAllOptions() {
+  var g=new Set(),ap=new Set(),ac=new Set(),lv=new Set(),co=new Set(),re=new Set(),tr=new Set();
+  competitions.forEach(function(comp){comp.sheets.forEach(function(sh){ap.add(sh.apparatus);sh.entries.forEach(function(e){if(e.gender)g.add(e.gender);if(e.ageCategory)ac.add(e.ageCategory);if(e.level)lv.add(e.level);if(e.country)co.add(e.country);if(e.region)re.add(e.region);if(e.trainingHrs)tr.add(e.trainingHrs);});});});
+  return {genders:arr(g),apparatuses:arr(ap),ageCategories:arr(ac),levels:arr(lv),countries:arr(co),regions:arr(re),trainingHrs:arr(tr)};
+}
+function collectCompOptions(comp) {
+  var g=new Set(),ap=[],ac=new Set(),lv=new Set(),co=new Set(),re=new Set(),tr=new Set();
+  comp.sheets.forEach(function(sh){ap.push(sh.apparatus);sh.entries.forEach(function(e){if(e.gender)g.add(e.gender);if(e.ageCategory)ac.add(e.ageCategory);if(e.level)lv.add(e.level);if(e.country)co.add(e.country);if(e.region)re.add(e.region);if(e.trainingHrs)tr.add(e.trainingHrs);});});
+  return {genders:arr(g),apparatuses:ap,ageCategories:arr(ac),levels:arr(lv),countries:arr(co),regions:arr(re),trainingHrs:arr(tr)};
+}
+function arr(s){return Array.from(s).sort();}
 
 /* ── League ── */
 function updateLeagueStats() {
-  var data = buildLeagueData(freshLeagueFilters());
-  document.getElementById("league-gymnasts-num").textContent = data.rows.length;
-  document.getElementById("league-comps-num").textContent = competitions.length;
+  var data=buildLeagueData(freshLeagueFilters());
+  document.getElementById("league-gymnasts-num").textContent=data.rows.length;
+  document.getElementById("league-comps-num").textContent=competitions.length;
 }
 
 function buildLeagueData(f) {
-  var gymnasts = {};
-  var apparatusSet = new Set();
-  competitions.forEach(function(comp) {
-    comp.sheets.forEach(function(sh) {
-      sh.entries.forEach(function(e) {
-        if (!e.memberId) return;
-        if (f.gender && f.gender!=="ALL" && e.gender!==f.gender) return;
-        if (f.ageCategory && f.ageCategory!=="ALL" && e.ageCategory!==f.ageCategory) return;
-        if (f.level && f.level!=="ALL" && e.level!==f.level) return;
-        if (f.country && f.country!=="ALL" && e.country!==f.country) return;
-        if (f.region && f.region!=="ALL" && e.region!==f.region) return;
-        if (f.trainingHrs && f.trainingHrs!=="ALL" && e.trainingHrs!==f.trainingHrs) return;
-        if (f.memberSearch && e.memberId.toLowerCase().indexOf(f.memberSearch.toLowerCase())<0) return;
-        var score = parseFloat(e.score);
-        if (isNaN(score)) return;
-        if (!gymnasts[e.memberId]) {
-          gymnasts[e.memberId] = { memberId:e.memberId, club:e.club, ageCategory:e.ageCategory, level:e.level, country:e.country, region:e.region, trainingHrs:e.trainingHrs, gender:e.gender, scores:{}, total:0 };
-        }
-        var g = gymnasts[e.memberId];
-        if (e.club) g.club=e.club; if (e.ageCategory) g.ageCategory=e.ageCategory;
-        if (e.level) g.level=e.level; if (e.country) g.country=e.country;
-        if (e.region) g.region=e.region; if (e.trainingHrs) g.trainingHrs=e.trainingHrs;
-        if (e.gender) g.gender=e.gender;
-        if (!g.scores[sh.apparatus] || score > g.scores[sh.apparatus]) g.scores[sh.apparatus] = score;
+  var gymnasts={},apparatusSet=new Set();
+  competitions.forEach(function(comp){
+    comp.sheets.forEach(function(sh){
+      sh.entries.forEach(function(e){
+        if(!e.memberId)return;
+        if(f.gender&&f.gender!=="ALL"&&e.gender!==f.gender)return;
+        if(f.ageCategory&&f.ageCategory!=="ALL"&&e.ageCategory!==f.ageCategory)return;
+        if(f.level&&f.level!=="ALL"&&e.level!==f.level)return;
+        if(f.country&&f.country!=="ALL"&&e.country!==f.country)return;
+        if(f.region&&f.region!=="ALL"&&e.region!==f.region)return;
+        if(f.trainingHrs&&f.trainingHrs!=="ALL"&&e.trainingHrs!==f.trainingHrs)return;
+        if(f.memberSearch&&f.memberSearchMode!=="highlight"&&e.memberId.toLowerCase().indexOf(f.memberSearch.toLowerCase())<0)return;
+        var score=parseFloat(e.score);if(isNaN(score))return;
+        if(!gymnasts[e.memberId])gymnasts[e.memberId]={memberId:e.memberId,club:e.club,ageCategory:e.ageCategory,level:e.level,country:e.country,region:e.region,trainingHrs:e.trainingHrs,gender:e.gender,scores:{},total:0};
+        var g=gymnasts[e.memberId];
+        if(e.club)g.club=e.club;if(e.ageCategory)g.ageCategory=e.ageCategory;if(e.level)g.level=e.level;if(e.country)g.country=e.country;if(e.region)g.region=e.region;if(e.trainingHrs)g.trainingHrs=e.trainingHrs;if(e.gender)g.gender=e.gender;
+        if(!g.scores[sh.apparatus]||score>g.scores[sh.apparatus])g.scores[sh.apparatus]=score;
         apparatusSet.add(sh.apparatus);
       });
     });
   });
-  var allApparatus = Array.from(apparatusSet).sort();
-  if (f.apparatus && f.apparatus!=="ALL") {
-    allApparatus = [f.apparatus];
-    Object.keys(gymnasts).forEach(function(id) { if (!gymnasts[id].scores[f.apparatus]) delete gymnasts[id]; });
-  }
-  var rows = Object.values(gymnasts);
-  rows.forEach(function(g) {
-    g.total = 0;
-    allApparatus.forEach(function(a) { g.total += g.scores[a]||0; });
-    g.total = Math.round(g.total*1000)/1000;
-  });
-  return { rows:rows, apparatus:allApparatus };
+  var allApparatus=Array.from(apparatusSet).sort();
+  if(f.apparatus&&f.apparatus!=="ALL"){allApparatus=[f.apparatus];Object.keys(gymnasts).forEach(function(id){if(!gymnasts[id].scores[f.apparatus])delete gymnasts[id];});}
+  var rows=Object.values(gymnasts);
+  rows.forEach(function(g){g.total=0;allApparatus.forEach(function(a){g.total+=g.scores[a]||0;});g.total=Math.round(g.total*1000)/1000;});
+  return{rows:rows,apparatus:allApparatus};
 }
 
 function renderLeague() {
-  var main = document.getElementById("main");
-  if (!competitions.length) { showWelcome(); return; }
-  var opts = collectAllOptions();
-  var data = buildLeagueData(leagueFilters);
-  var rows = data.rows;
-  var apparatus = data.apparatus;
-
-  // Sort — highest total first by default
-  rows.sort(function(a,b) {
-    var col = leagueSortCol; var dir = leagueSortDir;
-    if (col==="total") return (b.total - a.total);
-    if (apparatus.indexOf(col)>=0) return ((b.scores[col]||0)-(a.scores[col]||0))*dir;
+  var main=document.getElementById("main");
+  if(!competitions.length){showWelcome();return;}
+  var opts=collectAllOptions();
+  var data=buildLeagueData(leagueFilters);
+  var rows=data.rows,apparatus=data.apparatus;
+  rows.sort(function(a,b){
+    var col=leagueSortCol,dir=leagueSortDir;
+    if(col==="total")return b.total-a.total;
+    if(apparatus.indexOf(col)>=0)return((b.scores[col]||0)-(a.scores[col]||0))*dir;
     return String(a[col]||"").localeCompare(String(b[col]||""))*dir;
   });
-
-  var html = '<div class="main-header"><div class="main-title">National League Table</div>' +
-    '<div class="main-meta">'+rows.length+' gymnasts · '+competitions.length+' competitions · Best score per apparatus</div></div>';
-
-  html += '<div class="filters-bar">' +
-    fSelect("gender","Gender",opts.genders,leagueFilters.gender,"setLeagueFilter") +
-    fSelect("apparatus","Apparatus",opts.apparatuses,leagueFilters.apparatus,"setLeagueFilter") +
-    fSelect("ageCategory","Age Category",opts.ageCategories,leagueFilters.ageCategory,"setLeagueFilter") +
-    fSelect("level","Level",opts.levels,leagueFilters.level,"setLeagueFilter") +
-    fSelect("country","Country",opts.countries,leagueFilters.country,"setLeagueFilter") +
-    fSelect("region","Region",opts.regions,leagueFilters.region,"setLeagueFilter") +
-    fSelect("trainingHrs","Training Hrs",opts.trainingHrs,leagueFilters.trainingHrs,"setLeagueFilter") +
-    '<div class="filter-group"><label class="filter-label">Member ID</label><input class="filter-search" placeholder="Search ID..." value="'+esc(leagueFilters.memberSearch)+'" oninput="leagueFilters.memberSearch=this.value;renderLeague()"/></div>' +
-    '<button class="clear-btn" onclick="clearLeagueFilters()">Clear All</button></div>';
-
-  html += activeTagsHtml(leagueFilters, "removeLeagueFilter");
-  html += '<div class="results-area">';
-
-  if (!rows.length) {
-    html += '<div class="no-results"><strong>No gymnasts match your filters.</strong><br/><span style="font-size:13px;color:#8a96a8">Try adjusting or clearing the filters above.</span></div>';
-  } else {
-    html += '<div class="results-summary">Showing <span>'+rows.length+'</span> gymnast'+(rows.length!==1?'s':'')+'</div>';
-    html += '<table class="results-table"><thead><tr><th style="width:36px">#</th>';
-    html += lth("memberId","Member ID")+lth("club","Club")+lth("gender","Gender")+lth("ageCategory","Age Cat.")+lth("level","Level")+lth("country","Country")+lth("region","Region")+lth("trainingHrs","Training Hrs");
-    apparatus.forEach(function(a) { html += lth(a,a); });
-    html += lth("total","Total")+'</tr></thead><tbody>';
-    rows.forEach(function(g,i) {
-      var rank=i+1; var rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
-      html += '<tr><td class="rank-cell '+rc+'">'+rank+'</td>';
-      html += '<td class="member-cell">'+esc(g.memberId||"—")+'</td>';
-      html += '<td>'+esc(g.club||"—")+'</td>';
-      html += '<td><span class="badge"><span>'+esc(g.gender||"—")+'</span></span></td>';
-      html += '<td><span class="badge"><span>'+esc(g.ageCategory||"—")+'</span></span></td>';
-      html += '<td><span class="badge"><span>'+esc(g.level||"—")+'</span></span></td>';
-      html += '<td>'+esc(g.country||"—")+'</td><td>'+esc(g.region||"—")+'</td><td>'+esc(g.trainingHrs||"—")+'</td>';
-      apparatus.forEach(function(a) {
-        var s=g.scores[a];
-        html += s!==undefined ? '<td class="apparatus-score best">'+parseFloat(s).toFixed(3)+'</td>' : '<td class="apparatus-score empty">—</td>';
-      });
-      html += '<td class="total-cell">'+g.total.toFixed(3)+'</td></tr>';
+  var html='<div class="main-header"><div class="main-title">National League Table</div><div class="main-meta">'+rows.length+' gymnasts · '+competitions.length+' competitions · Best score per apparatus</div></div>';
+  html+='<div class="filters-bar">'+fSelect("gender","Gender",opts.genders,leagueFilters.gender,"setLeagueFilter")+fSelect("apparatus","Apparatus",opts.apparatuses,leagueFilters.apparatus,"setLeagueFilter")+fSelect("ageCategory","Age Category",opts.ageCategories,leagueFilters.ageCategory,"setLeagueFilter")+fSelect("level","Level",opts.levels,leagueFilters.level,"setLeagueFilter")+fSelect("country","Country",opts.countries,leagueFilters.country,"setLeagueFilter")+fSelect("region","Region",opts.regions,leagueFilters.region,"setLeagueFilter")+fSelect("trainingHrs","Training Hrs",opts.trainingHrs,leagueFilters.trainingHrs,"setLeagueFilter")+
+  '<div class="filter-group"><label class="filter-label">Member ID</label><input class="filter-search" placeholder="Search ID..." value="'+esc(leagueFilters.memberSearch)+'" oninput="leagueFilters.memberSearch=this.value;renderLeague()"/></div>'+
+  '<div class="search-mode-toggle"><button class="search-mode-btn'+(leagueFilters.memberSearchMode==="filter"?" active":"")+'" onclick="leagueFilters.memberSearchMode=\'filter\';renderLeague()" title="Filter: only show matching rows">Filter</button><button class="search-mode-btn'+(leagueFilters.memberSearchMode==="highlight"?" active":"")+'" onclick="leagueFilters.memberSearchMode=\'highlight\';renderLeague()" title="Highlight: show all rows, highlight matches">Highlight</button></div>'+
+  '<button class="clear-btn" onclick="clearLeagueFilters()">Clear All</button></div>';
+  html+=activeTagsHtml(leagueFilters,"removeLeagueFilter");
+  html+='<div class="results-area">';
+  if(!rows.length){html+='<div class="no-results"><strong>No gymnasts match your filters.</strong><br/><span style="font-size:13px;color:#8a96a8">Try adjusting or clearing the filters above.</span></div>';}
+  else{
+    html+='<div class="results-summary">Showing <span>'+rows.length+'</span> gymnast'+(rows.length!==1?'s':'')+'</div>';
+    html+='<table class="results-table"><thead><tr><th style="width:36px">#</th>'+lth("memberId","Member ID")+lth("club","Club")+lth("gender","Gender")+lth("ageCategory","Age Cat.")+lth("level","Level")+lth("country","Country")+lth("region","Region")+lth("trainingHrs","Training Hrs");
+    apparatus.forEach(function(a){html+=lth(a,a);});
+    html+=lth("total","Total")+'</tr></thead><tbody>';
+    rows.forEach(function(g,i){
+      var rank=i+1,rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
+      var isHighlighted = leagueFilters.memberSearch && leagueFilters.memberSearchMode==="highlight" && g.memberId.toLowerCase().indexOf(leagueFilters.memberSearch.toLowerCase())>=0;
+      html+='<tr'+(isHighlighted?' class="highlighted-row"':'')+'><td class="rank-cell '+rc+'">'+rank+'</td>';
+      html+='<td><button class="member-link" onclick="openProfile(\''+esc(g.memberId)+'\')">'+esc(g.memberId)+'</button></td>';
+      html+='<td>'+esc(g.club||"—")+'</td><td><span class="badge"><span>'+esc(g.gender||"—")+'</span></span></td><td><span class="badge"><span>'+esc(g.ageCategory||"—")+'</span></span></td><td><span class="badge"><span>'+esc(g.level||"—")+'</span></span></td><td>'+esc(g.country||"—")+'</td><td>'+esc(g.region||"—")+'</td><td>'+esc(g.trainingHrs||"—")+'</td>';
+      apparatus.forEach(function(a){var s=g.scores[a];html+=s!==undefined?'<td class="apparatus-score best">'+parseFloat(s).toFixed(3)+'</td>':'<td class="apparatus-score empty">—</td>';});
+      html+='<td class="total-cell">'+g.total.toFixed(3)+'</td></tr>';
     });
-    html += '</tbody></table>';
+    html+='</tbody></table>';
   }
-  html += '</div>';
-  main.innerHTML = html;
+  html+='</div>';
+  main.innerHTML=html;
 }
 
-function lth(col, label) {
-  var sorted = leagueSortCol===col;
-  var icon = sorted ? (leagueSortDir===-1?" ↓":" ↑") : " ↕";
-  return '<th class="'+(sorted?"sorted":"")+'" onclick="doLeagueSort(\''+col+'\')">'+esc(label)+'<span class="sort-icon">'+icon+'</span></th>';
-}
-function doLeagueSort(col) {
-  if (leagueSortCol===col) leagueSortDir = leagueSortDir===1?-1:1;
-  else { leagueSortCol=col; leagueSortDir=-1; }
-  renderLeague();
-}
-function setLeagueFilter(key,val) { leagueFilters[key]=val; renderLeague(); }
-function clearLeagueFilters() { leagueFilters=freshLeagueFilters(); renderLeague(); }
-function removeLeagueFilter(key) { if(key==="memberSearch")leagueFilters.memberSearch=""; else leagueFilters[key]="ALL"; renderLeague(); }
+function lth(col,label){var sorted=leagueSortCol===col;var icon=sorted?(leagueSortDir===-1?" ↓":" ↑"):" ↕";return '<th class="'+(sorted?"sorted":"")+'" onclick="doLeagueSort(\''+col+'\')">'+esc(label)+'<span class="sort-icon">'+icon+'</span></th>';}
+function doLeagueSort(col){if(leagueSortCol===col)leagueSortDir=leagueSortDir===1?-1:1;else{leagueSortCol=col;leagueSortDir=-1;}renderLeague();}
+function setLeagueFilter(key,val){leagueFilters[key]=val;renderLeague();}
+function clearLeagueFilters(){leagueFilters=freshLeagueFilters();renderLeague();}
+function removeLeagueFilter(key){if(key==="memberSearch")leagueFilters.memberSearch="";else leagueFilters[key]="ALL";renderLeague();}
 
 /* ── Competition results ── */
-function renderSidebar() {
-  var el = document.getElementById("comp-list");
-  if (!competitions.length) { el.innerHTML='<div class="no-comps">No competitions found.</div>'; return; }
-  el.innerHTML = competitions.map(function(c,i) {
-    return '<div class="comp-item'+(i===activeCompIdx?" active":"")+'" onclick="selectComp('+i+')">' +
-      '<div class="comp-name">'+esc(c.name)+'</div>' +
-      (c.displayDate?'<div class="comp-date">'+esc(c.displayDate)+'</div>':'') +
-      '<div class="comp-count">'+c.totalEntries+' entries · '+c.sheets.length+' apparatus</div></div>';
-  }).join("");
+function renderSidebar(){
+  var el=document.getElementById("comp-list");
+  if(!competitions.length){el.innerHTML='<div class="no-comps">No competitions found.</div>';return;}
+  el.innerHTML=competitions.map(function(c,i){return '<div class="comp-item'+(i===activeCompIdx?" active":"")+'" onclick="selectComp('+i+')">'+'<div class="comp-name">'+esc(c.name)+'</div>'+(c.displayDate?'<div class="comp-date">'+esc(c.displayDate)+'</div>':'')+'<div class="comp-count">'+c.totalEntries+' entries · '+c.sheets.length+' apparatus</div></div>';}).join("");
 }
 
-function selectComp(idx) {
-  activeCompIdx=idx; compSortState={apparatus:{},dir:1}; compFilters=freshCompFilters();
-  renderSidebar();
-  if (activeTab==="competitions") renderMain();
-}
+function selectComp(idx){activeCompIdx=idx;compSortState={apparatus:{},dir:1};compFilters=freshCompFilters();renderSidebar();if(activeTab==="competitions")renderMain();}
 
-function renderMain() {
-  var main = document.getElementById("main");
-  if (activeCompIdx<0||!competitions[activeCompIdx]) { showWelcome(); return; }
-  var comp = competitions[activeCompIdx];
-  var opts = collectCompOptions(comp);
-  var html = '<div class="main-header"><div class="main-title">'+esc(comp.name)+'</div>' +
-    (comp.displayDate?'<div class="main-meta">'+esc(comp.displayDate)+' · '+comp.totalEntries+' entries</div>':'<div class="main-meta">'+comp.totalEntries+' entries</div>')+
-    '</div>';
-  html += '<div class="filters-bar">' +
-    fSelect("gender","Gender",opts.genders,compFilters.gender,"setCompFilter") +
-    fSelect("apparatus","Apparatus",opts.apparatuses,compFilters.apparatus,"setCompFilter") +
-    fSelect("ageCategory","Age Category",opts.ageCategories,compFilters.ageCategory,"setCompFilter") +
-    fSelect("level","Level",opts.levels,compFilters.level,"setCompFilter") +
-    fSelect("country","Country",opts.countries,compFilters.country,"setCompFilter") +
-    fSelect("region","Region",opts.regions,compFilters.region,"setCompFilter") +
-    fSelect("trainingHrs","Training Hrs",opts.trainingHrs,compFilters.trainingHrs,"setCompFilter") +
-    '<div class="filter-group"><label class="filter-label">Member ID</label><input class="filter-search" placeholder="Search ID..." value="'+esc(compFilters.memberSearch)+'" oninput="compFilters.memberSearch=this.value;renderCompResults()"/></div>' +
-    '<button class="clear-btn" onclick="clearCompFilters()">Clear All</button></div>';
-  html += '<div id="active-filters-bar"></div>';
-  html += '<div class="results-area" id="results-area"></div>';
-  main.innerHTML = html;
+function renderMain(){
+  var main=document.getElementById("main");
+  if(activeCompIdx<0||!competitions[activeCompIdx]){showWelcome();return;}
+  var comp=competitions[activeCompIdx];
+  var opts=collectCompOptions(comp);
+  var html='<div class="main-header"><div class="main-title">'+esc(comp.name)+'</div>'+(comp.displayDate?'<div class="main-meta">'+esc(comp.displayDate)+' · '+comp.totalEntries+' entries</div>':'<div class="main-meta">'+comp.totalEntries+' entries</div>')+'</div>';
+  html+='<div class="filters-bar">'+fSelect("gender","Gender",opts.genders,compFilters.gender,"setCompFilter")+fSelect("apparatus","Apparatus",opts.apparatuses,compFilters.apparatus,"setCompFilter")+fSelect("ageCategory","Age Category",opts.ageCategories,compFilters.ageCategory,"setCompFilter")+fSelect("level","Level",opts.levels,compFilters.level,"setCompFilter")+fSelect("country","Country",opts.countries,compFilters.country,"setCompFilter")+fSelect("region","Region",opts.regions,compFilters.region,"setCompFilter")+fSelect("trainingHrs","Training Hrs",opts.trainingHrs,compFilters.trainingHrs,"setCompFilter")+
+  '<div class="filter-group"><label class="filter-label">Member ID</label><input class="filter-search" placeholder="Search ID..." value="'+esc(compFilters.memberSearch)+'" oninput="compFilters.memberSearch=this.value;renderCompResults()"/></div>'+
+  '<div class="search-mode-toggle"><button class="search-mode-btn'+(compFilters.memberSearchMode==="filter"?" active":"")+'" onclick="compFilters.memberSearchMode=\'filter\';renderCompResults()" title="Filter: only show matching rows">Filter</button><button class="search-mode-btn'+(compFilters.memberSearchMode==="highlight"?" active":"")+'" onclick="compFilters.memberSearchMode=\'highlight\';renderCompResults()" title="Highlight: show all rows, highlight matches">Highlight</button></div>'+
+  '<button class="clear-btn" onclick="clearCompFilters()">Clear All</button></div>';
+  html+='<div id="active-filters-bar"></div>';
+  html+='<div class="results-area" id="results-area"></div>';
+  main.innerHTML=html;
   renderCompResults();
 }
 
-function renderCompResults() {
-  var comp = competitions[activeCompIdx];
-  var afBar = document.getElementById("active-filters-bar");
-  if (afBar) afBar.outerHTML = activeTagsHtml(compFilters,"removeCompFilter") || '<div id="active-filters-bar"></div>';
-
-  var sheets = comp.sheets;
-  if (compFilters.apparatus && compFilters.apparatus!=="ALL") sheets=sheets.filter(function(s){return s.apparatus===compFilters.apparatus;});
-  var totalVisible=0; var html="";
-
-  sheets.forEach(function(sh) {
-    var entries = sh.entries.filter(function(e) {
-      if (compFilters.gender && compFilters.gender!=="ALL" && e.gender!==compFilters.gender) return false;
-      if (compFilters.ageCategory && compFilters.ageCategory!=="ALL" && e.ageCategory!==compFilters.ageCategory) return false;
-      if (compFilters.level && compFilters.level!=="ALL" && e.level!==compFilters.level) return false;
-      if (compFilters.country && compFilters.country!=="ALL" && e.country!==compFilters.country) return false;
-      if (compFilters.region && compFilters.region!=="ALL" && e.region!==compFilters.region) return false;
-      if (compFilters.trainingHrs && compFilters.trainingHrs!=="ALL" && e.trainingHrs!==compFilters.trainingHrs) return false;
-      if (compFilters.memberSearch && e.memberId.toLowerCase().indexOf(compFilters.memberSearch.toLowerCase())<0) return false;
+function renderCompResults(){
+  var comp=competitions[activeCompIdx];
+  var afEl=document.getElementById("active-filters-bar");
+  if(afEl){var afHtml=activeTagsHtml(compFilters,"removeCompFilter");afEl.outerHTML=afHtml||'<div id="active-filters-bar"></div>';}
+  var sheets=comp.sheets;
+  if(compFilters.apparatus&&compFilters.apparatus!=="ALL")sheets=sheets.filter(function(s){return s.apparatus===compFilters.apparatus;});
+  var totalVisible=0,html="";
+  sheets.forEach(function(sh){
+    var entries=sh.entries.filter(function(e){
+      if(compFilters.gender&&compFilters.gender!=="ALL"&&e.gender!==compFilters.gender)return false;
+      if(compFilters.ageCategory&&compFilters.ageCategory!=="ALL"&&e.ageCategory!==compFilters.ageCategory)return false;
+      if(compFilters.level&&compFilters.level!=="ALL"&&e.level!==compFilters.level)return false;
+      if(compFilters.country&&compFilters.country!=="ALL"&&e.country!==compFilters.country)return false;
+      if(compFilters.region&&compFilters.region!=="ALL"&&e.region!==compFilters.region)return false;
+      if(compFilters.trainingHrs&&compFilters.trainingHrs!=="ALL"&&e.trainingHrs!==compFilters.trainingHrs)return false;
+      if(compFilters.memberSearch&&compFilters.memberSearchMode!=="highlight"&&e.memberId.toLowerCase().indexOf(compFilters.memberSearch.toLowerCase())<0)return false;
       return true;
     });
-    if (!entries.length) return;
-    var sk = compSortState.apparatus[sh.apparatus];
-    if (sk) {
-      entries=entries.slice().sort(function(a,b){
-        if(sk==="score") return ((parseFloat(b.score)||0)-(parseFloat(a.score)||0))*(compSortState.dir||1);
-        return String(a[sk]||"").localeCompare(String(b[sk]||""))*(compSortState.dir||1);
-      });
-    } else {
-      entries=entries.slice().sort(function(a,b){return (parseFloat(b.score)||0)-(parseFloat(a.score)||0);});
-    }
+    if(!entries.length)return;
+    var sk=compSortState.apparatus[sh.apparatus];
+    if(sk){entries=entries.slice().sort(function(a,b){if(sk==="score")return((parseFloat(b.score)||0)-(parseFloat(a.score)||0))*(compSortState.dir||1);return String(a[sk]||"").localeCompare(String(b[sk]||""))*(compSortState.dir||1);});}
+    else{entries=entries.slice().sort(function(a,b){return(parseFloat(b.score)||0)-(parseFloat(a.score)||0);});}
     totalVisible+=entries.length;
-    html+='<div class="apparatus-section"><div class="apparatus-header"><span class="apparatus-name">'+esc(sh.apparatus)+'</span><span class="apparatus-count">'+entries.length+' results</span></div>' +
-      '<table class="results-table"><thead><tr><th style="width:36px">#</th>' +
-      cth(sh.apparatus,"memberId","Member ID")+cth(sh.apparatus,"club","Club")+
-      cth(sh.apparatus,"ageCategory","Age Cat.")+cth(sh.apparatus,"level","Level")+
-      cth(sh.apparatus,"country","Country")+cth(sh.apparatus,"region","Region")+
-      cth(sh.apparatus,"trainingHrs","Training Hrs")+cth(sh.apparatus,"score","Score")+
-      '</tr></thead><tbody>';
+    html+='<div class="apparatus-section"><div class="apparatus-header"><span class="apparatus-name">'+esc(sh.apparatus)+'</span><span class="apparatus-count">'+entries.length+' results</span></div><table class="results-table"><thead><tr><th style="width:36px">#</th>'+cth(sh.apparatus,"memberId","Member ID")+cth(sh.apparatus,"club","Club")+cth(sh.apparatus,"ageCategory","Age Cat.")+cth(sh.apparatus,"level","Level")+cth(sh.apparatus,"country","Country")+cth(sh.apparatus,"region","Region")+cth(sh.apparatus,"trainingHrs","Training Hrs")+cth(sh.apparatus,"score","Score")+'</tr></thead><tbody>';
     entries.forEach(function(e,i){
-      var rank=i+1; var rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
-      var sv=parseFloat(e.score); var sd=!isNaN(sv)?sv.toFixed(3):(e.score||"—");
-      html+='<tr><td class="rank-cell '+rc+'">'+rank+'</td><td class="member-cell">'+esc(e.memberId||"—")+'</td><td>'+esc(e.club||"—")+'</td>' +
-        '<td><span class="badge"><span>'+esc(e.ageCategory||"—")+'</span></span></td>' +
-        '<td><span class="badge"><span>'+esc(e.level||"—")+'</span></span></td>' +
-        '<td>'+esc(e.country||"—")+'</td><td>'+esc(e.region||"—")+'</td><td>'+esc(e.trainingHrs||"—")+'</td>' +
-        '<td class="score-cell">'+sd+'</td></tr>';
+      var rank=i+1,rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
+      var sv=parseFloat(e.score),sd=!isNaN(sv)?sv.toFixed(3):(e.score||"—");
+      var isHighlighted = compFilters.memberSearch && compFilters.memberSearchMode==="highlight" && e.memberId.toLowerCase().indexOf(compFilters.memberSearch.toLowerCase())>=0;
+      html+='<tr'+(isHighlighted?' class="highlighted-row"':'')+'><td class="rank-cell '+rc+'">'+rank+'</td>';
+      html+='<td><button class="member-link" onclick="openProfile(\''+esc(e.memberId)+'\')">'+esc(e.memberId)+'</button></td>';
+      html+='<td>'+esc(e.club||"—")+'</td><td><span class="badge"><span>'+esc(e.ageCategory||"—")+'</span></span></td><td><span class="badge"><span>'+esc(e.level||"—")+'</span></span></td><td>'+esc(e.country||"—")+'</td><td>'+esc(e.region||"—")+'</td><td>'+esc(e.trainingHrs||"—")+'</td><td class="score-cell">'+sd+'</td></tr>';
     });
     html+='</tbody></table></div>';
   });
-
   var area=document.getElementById("results-area");
-  if (!area) return;
-  if (!totalVisible) { area.innerHTML='<div class="no-results"><strong>No results match your filters.</strong><br/><span style="font-size:13px;color:#8a96a8">Try adjusting or clearing the filters above.</span></div>'; return; }
+  if(!area)return;
+  if(!totalVisible){area.innerHTML='<div class="no-results"><strong>No results match your filters.</strong><br/><span style="font-size:13px;color:#8a96a8">Try adjusting or clearing the filters above.</span></div>';return;}
   area.innerHTML='<div class="results-summary">Showing <span>'+totalVisible+'</span> result'+(totalVisible!==1?'s':'')+'</div>'+html;
 }
 
-function cth(apparatus,col,label){
-  var sorted=compSortState.apparatus[apparatus]===col;
-  var icon=sorted?(compSortState.dir===1?" ↑":" ↓"):" ↕";
-  return '<th class="'+(sorted?"sorted":"")+'" onclick="doCompSort(\''+apparatus+'\',\''+col+'\')">'+label+'<span class="sort-icon">'+icon+'</span></th>';
-}
-function doCompSort(apparatus,col){
-  if(compSortState.apparatus[apparatus]===col)compSortState.dir=compSortState.dir===1?-1:1;
-  else{compSortState.apparatus[apparatus]=col;compSortState.dir=col==="score"?-1:1;}
-  renderCompResults();
-}
-function setCompFilter(key,val) { compFilters[key]=val; renderMain(); }
+function cth(apparatus,col,label){var sorted=compSortState.apparatus[apparatus]===col;var icon=sorted?(compSortState.dir===1?" ↑":" ↓"):" ↕";return '<th class="'+(sorted?"sorted":"")+'" onclick="doCompSort(\''+apparatus+'\',\''+col+'\')">'+label+'<span class="sort-icon">'+icon+'</span></th>';}
+function doCompSort(apparatus,col){if(compSortState.apparatus[apparatus]===col)compSortState.dir=compSortState.dir===1?-1:1;else{compSortState.apparatus[apparatus]=col;compSortState.dir=col==="score"?-1:1;}renderCompResults();}
+function setCompFilter(key,val){compFilters[key]=val;renderMain();}
 function clearCompFilters(){compFilters=freshCompFilters();renderMain();}
 function removeCompFilter(key){if(key==="memberSearch")compFilters.memberSearch="";else compFilters[key]="ALL";renderMain();}
 
-function showWelcome(){
-  document.getElementById("main").innerHTML='<div class="empty-state"><div class="empty-icon">🏅</div><div class="empty-title">No competition selected</div><div class="empty-sub">Select a competition from the left, or click League Table for national standings.</div></div>';
-}
+function showWelcome(){document.getElementById("main").innerHTML='<div class="empty-state"><div class="empty-icon">🏅</div><div class="empty-title">No competition selected</div><div class="empty-sub">Select a competition from the left, or click League Table for national standings.</div></div>';}
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
 loadCompetitions();
