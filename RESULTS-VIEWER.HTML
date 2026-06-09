@@ -342,7 +342,7 @@ function openProfile(memberId) {
   var apparatuses = Object.keys(bestScores).sort();
   var progressionByApparatus = {};
   apparatuses.forEach(function(a) {
-    progressionByApparatus[a] = allResults.filter(function(r) { return r.apparatus===a; }).map(function(r) { return { date:r.displayDate, score:r.score }; });
+    progressionByApparatus[a] = allResults.filter(function(r) { return r.apparatus===a; }).map(function(r) { return { date:r.displayDate, dateRaw:r.date, score:r.score }; });
   });
 
   // Build HTML
@@ -430,10 +430,15 @@ function drawChart(progressionByApparatus, apparatuses) {
   var minS = Math.max(0, Math.min.apply(null,allScores) - 1);
   var maxS = Math.max.apply(null,allScores) + 1;
 
-  // Collect all unique dates in order
+  // Collect all unique dates in order (by actual date string YYYY-MM-DD)
   var allDates = [];
-  apparatuses.forEach(function(a) { progressionByApparatus[a].forEach(function(p) { if (allDates.indexOf(p.date)<0) allDates.push(p.date); }); });
-  allDates.sort();
+  var allDatesRaw = [];
+  apparatuses.forEach(function(a) { progressionByApparatus[a].forEach(function(p) { if (allDatesRaw.indexOf(p.dateRaw)<0) { allDatesRaw.push(p.dateRaw); allDates.push(p.date); } }); });
+  // Sort by raw date
+  var combined = allDatesRaw.map(function(d,i){return{raw:d,display:allDates[i]};});
+  combined.sort(function(a,b){return a.raw.localeCompare(b.raw);});
+  allDatesRaw = combined.map(function(x){return x.raw;});
+  allDates = combined.map(function(x){return x.display;});
 
   if (allDates.length < 2) return;
 
@@ -453,7 +458,7 @@ function drawChart(progressionByApparatus, apparatuses) {
     ctx.fillText(d, x, h-pad.bottom+16);
   });
 
-  // Lines
+    // Lines
   apparatuses.forEach(function(a,ai) {
     var pts = progressionByApparatus[a];
     if (pts.length < 1) return;
@@ -461,16 +466,16 @@ function drawChart(progressionByApparatus, apparatuses) {
     ctx.lineWidth = 2; ctx.lineJoin="round";
     ctx.beginPath();
     pts.forEach(function(p,pi) {
-      var di = allDates.indexOf(p.date);
-      var x = pad.left + (di/(allDates.length-1))*chartW;
+      var di = allDatesRaw.indexOf(p.dateRaw);
+      var x = pad.left + (di/(allDatesRaw.length-1))*chartW;
       var y = pad.top + chartH - ((p.score-minS)/(maxS-minS))*chartH;
       if (pi===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     });
     ctx.stroke();
     // Dots
     pts.forEach(function(p) {
-      var di = allDates.indexOf(p.date);
-      var x = pad.left + (di/(allDates.length-1))*chartW;
+      var di = allDatesRaw.indexOf(p.dateRaw);
+      var x = pad.left + (di/(allDatesRaw.length-1))*chartW;
       var y = pad.top + chartH - ((p.score-minS)/(maxS-minS))*chartH;
       ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
       ctx.fillStyle=colors[ai%colors.length]; ctx.fill();
