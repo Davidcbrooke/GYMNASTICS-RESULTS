@@ -274,12 +274,12 @@ function loadXlsxFile(filename) {
           return {
             memberId: String(r["Member ID"]||r["BG Number"]||"").trim(),
             club: String(r["Club"]||"").trim(),
-            ageCategory: String(r["Age Category"]||"").trim(),
+            ageCategory: String(r["Age Category"]||r["AgeCategory"]||"").trim(),
             level: String(r["Level"]||"").trim(),
-            score: r["Final Score"]!==undefined ? r["Final Score"] : (r["Score"]!==undefined ? r["Score"] : ""),
+            score: r["Final Score"]!==undefined ? r["Final Score"] : (r["FinalScore"]!==undefined ? r["FinalScore"] : (r["Score"]!==undefined ? r["Score"] : "")),
             country: String(r["Country"]||"").trim(),
             region: String(r["Region"]||"").trim(),
-            trainingHrs: String(r["Training Hrs"]||r["Training Hours"]||"").trim(),
+            trainingHrs: String(r["Training Hrs"]||r["TrainingHrs"]||r["Training Hours"]||"").trim(),
             gender: String(r["Gender"]||"").trim(),
           };
         }).filter(function(e) { return e.memberId||e.club; });
