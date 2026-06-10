@@ -125,7 +125,7 @@
     <div class="page-header-inner">
       <div>
         <div class="page-title">National Finals Qualifiers</div>
-        <div class="page-sub">Girls · Top 3 per apparatus · 12 places per Level per Region · 4-piece gymnasts only</div>
+        <div class="page-sub">Girls · Top 3 per apparatus · 12 places per Level per Region · Minimum 3 apparatus</div>
       </div>
       <div class="status-bar">
         <div class="status-dot loading" id="status-dot"></div>
@@ -280,12 +280,12 @@ function buildBestScores(level, region) {
     g.total = Math.round(g.total*1000)/1000;
   });
 
-  // Exclude gymnasts who don't have scores on ALL 4 apparatus
+  // Exclude gymnasts who don't have scores on at least 3 apparatus
   var eligible = {};
   Object.keys(gymnasts).forEach(function(id) {
     var g = gymnasts[id];
-    var hasAll = GIRLS_APPARATUS_ORDER.every(function(a) { return g.scores[a] !== undefined; });
-    if (hasAll) eligible[id] = g;
+    var apparatusCount = GIRLS_APPARATUS_ORDER.filter(function(a) { return g.scores[a] !== undefined; }).length;
+    if (apparatusCount >= 3) eligible[id] = g;
   });
 
   return { eligible: eligible, total: Object.keys(gymnasts).length, eligibleCount: Object.keys(eligible).length };
@@ -380,7 +380,7 @@ function renderPage() {
 
   // Exclusion note
   if (excluded > 0) {
-    html += '<div class="excluded-note">⚠ <strong>'+excluded+' gymnast'+(excluded!==1?'s':'')+' excluded</strong> — competed in fewer than 4 apparatus and are not eligible for qualification.</div>';
+    html += '<div class="excluded-note">⚠ <strong>'+excluded+' gymnast'+(excluded!==1?'s':'')+' excluded</strong> — competed on fewer than 3 apparatus and are not eligible for qualification.</div>';
   }
 
   // Summary bar
@@ -393,7 +393,7 @@ function renderPage() {
 
   // No data check
   if (result.eligibleCount === 0) {
-    html += '<div class="empty-msg">No eligible gymnasts found for Level '+activeLevel+' in '+activeRegion+'.<br><span style="font-size:12px;color:var(--text-light)">Gymnasts must have scores on all 4 apparatus to qualify.</span></div>';
+    html += '<div class="empty-msg">No eligible gymnasts found for Level '+activeLevel+' in '+activeRegion+'.<br><span style="font-size:12px;color:var(--text-light)">Gymnasts must have scores on at least 3 apparatus to qualify.</span></div>';
     document.getElementById("page-body").innerHTML = html;
     return;
   }
