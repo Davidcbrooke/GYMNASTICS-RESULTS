@@ -78,9 +78,14 @@
   .unavail-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--red-light); }
   .restore-btn { padding: 3px 8px; font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(22,163,74,0.3); background: var(--green-light); color: var(--green); transition: all 0.15s; white-space: nowrap; }
   .restore-btn:hover { background: rgba(22,163,74,0.15); }
+  .export-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+  .export-btn { padding: 9px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+  .export-excel { background: #16a34a; color: #fff; }
+  .export-excel:hover { background: #15803d; }
+  .export-pdf { background: var(--accent); color: #fff; }
+  .export-pdf:hover { background: #a50d26; }
   .full-list-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--navy); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .full-list-count { font-size: 12px; font-weight: 600; color: var(--text-light); background: var(--off-white); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; }
-  .full-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 32px; }
   .full-table thead tr { background: var(--navy); }
   .full-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
   .full-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -188,6 +193,7 @@ var unavailableFileSha = null;
 var namesLookup = {};
 var pendingAction = null;
 var GITHUB_TOKEN = "";
+var currentQualifiers = [];
 
 /* ── Login ── */
 function checkPassword() {
@@ -521,6 +527,7 @@ function renderPage() {
   var result = computeQualifiers(activeLevel, activeRegion);
   var qba = result.qualifiersByApparatus;
   var allQ = result.allQualifiers;
+  currentQualifiers = allQ;
   var excluded = result.totalGymnasts - result.eligibleCount;
   var html = "";
 
@@ -563,16 +570,16 @@ function renderPage() {
       if (q.unavailable) {
         html += '<td><span style="font-size:10px;color:var(--accent);font-weight:700;">✗ Unavailable</span></td>';
         html += '<td><button class="restore-btn" onclick="restoreGymnast(\''+esc(q.gymnast.memberId)+'\')">Restore</button></td>';
-      } else if (q.nextUp) {
+      else if (q.nextUp) {
         html += '<td style="font-size:10px;color:var(--gold);font-weight:600;">Next up</td><td></td>';
       } else if (q.skipped) {
         html += '<td style="font-size:10px;color:var(--text-light);">'+esc(q.skipReason)+'</td><td></td>';
       } else if (q.promoted) {
         html += '<td><span class="promoted-badge">★ Promoted</span></td>';
-        html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
+        html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Mark Unavailable</button></td>';
       } else {
         html += '<td><span class="qualified-badge">✓ Qualified</span></td>';
-        html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
+        html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Mark Unavailable</button></td>';
       }
       html += '</tr>';
     });
@@ -582,6 +589,10 @@ function renderPage() {
   html += '</div>';
 
   html += '<div class="full-list-title">Full Qualifiers List<span class="full-list-count">'+allQ.length+' of '+(GIRLS_APPARATUS_ORDER.length*QUALIFIERS_PER_APPARATUS)+' places filled</span></div>';
+  html += '<div class="export-bar">';
+  html += '<button class="export-btn export-excel" onclick="exportExcel(currentQualifiers,\''+activeLevel+'\',\''+activeRegion+'\')">⬇ Download Excel</button>';
+  html += '<button class="export-btn export-pdf" onclick="exportPDF(currentQualifiers,\''+activeLevel+'\',\''+activeRegion+'\')">⬇ Download PDF</button>';
+  html += '</div>';
   html += '<table class="full-table"><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
   allQ.forEach(function(q,i) {
     var name = getName(q.gymnast.memberId);
@@ -595,7 +606,7 @@ function renderPage() {
     html += '<td style="font-weight:800;color:var(--accent);">'+q.gymnast.total.toFixed(3)+'</td>';
     html += '<td>'+esc(q.gymnast.ageCategory||"—")+'</td>';
     html += '<td>'+esc(q.gymnast.trainingHrs||"—")+'</td>';
-    html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
+    html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Mark Unavailable</button></td>';
     html += '</tr>';
   });
   if (!allQ.length) html += '<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text-light);">No qualifiers yet</td></tr>';
@@ -612,6 +623,79 @@ function renderPage() {
   }
 
   document.getElementById("page-body").innerHTML = html;
+}
+
+/* ── Export Functions ── */
+function exportExcel(allQ, level, region) {
+  var headers = ["#","Member ID","Name","Club","Qualifies On","Score","Total","Age Cat.","Training Hrs"];
+  var rows = [headers];
+  allQ.forEach(function(q, i) {
+    rows.push([
+      i+1,
+      q.gymnast.memberId,
+      getName(q.gymnast.memberId)||"",
+      q.gymnast.club||"",
+      q.apparatus + (q.promoted?" (Promoted)":""),
+      q.score,
+      q.gymnast.total,
+      q.gymnast.ageCategory||"",
+      q.gymnast.trainingHrs||""
+    ]);
+  });
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [{wch:4},{wch:12},{wch:20},{wch:36},{wch:18},{wch:8},{wch:8},{wch:10},{wch:12}];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Qualifiers");
+  var filename = "Qualifiers_Level" + level + "_" + region.replace(/\s/g,"_") + ".xlsx";
+  var buf = XLSX.write(wb, { bookType:"xlsx", type:"array" });
+  var blob = new Blob([buf], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); }, 100);
+}
+
+function exportPDF(allQ, level, region) {
+  var win = window.open("", "_blank");
+  var rows = allQ.map(function(q, i) {
+    var name = getName(q.gymnast.memberId)||"—";
+    return '<tr>' +
+      '<td>'+(i+1)+'</td>' +
+      '<td>'+esc(q.gymnast.memberId)+'</td>' +
+      '<td><strong>'+esc(name)+'</strong></td>' +
+      '<td>'+esc(q.gymnast.club||"—")+'</td>' +
+      '<td>'+esc(q.apparatus)+(q.promoted?' <em>(Promoted)</em>':'')+'</td>' +
+      '<td>'+q.score.toFixed(3)+'</td>' +
+      '<td><strong>'+q.gymnast.total.toFixed(3)+'</strong></td>' +
+      '<td>'+esc(q.gymnast.ageCategory||"—")+'</td>' +
+      '<td>'+esc(q.gymnast.trainingHrs||"—")+'</td>' +
+      '</tr>';
+  }).join("");
+
+  win.document.write('<!DOCTYPE html><html><head><title>Qualifiers — Level '+level+' — '+region+'</title>' +
+    '<style>' +
+    'body{font-family:Arial,sans-serif;padding:24px;color:#1a2340;}' +
+    'h1{font-size:18px;margin-bottom:4px;}' +
+    'h2{font-size:13px;font-weight:400;color:#8a96a8;margin-bottom:20px;}' +
+    'table{width:100%;border-collapse:collapse;font-size:12px;}' +
+    'thead tr{background:#1a2340;color:#fff;}' +
+    'th{padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;}' +
+    'td{padding:8px 10px;border-bottom:1px solid #e2e6ed;}' +
+    'tr:last-child td{border-bottom:none;}' +
+    'tr:nth-child(even){background:#f7f8fa;}' +
+    '.footer{margin-top:20px;font-size:11px;color:#8a96a8;}' +
+    '@media print{body{padding:0;}}' +
+    '</style></head><body>' +
+    '<h1>National Finals Qualifiers — Level '+level+' — '+esc(region)+'</h1>' +
+    '<h2>'+allQ.length+' qualifiers · Girls · Top 3 per apparatus</h2>' +
+    '<table><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th></tr></thead>' +
+    '<tbody>'+rows+'</tbody></table>' +
+    '<div class="footer">Generated '+new Date().toLocaleDateString('en-GB')+'</div>' +
+    '</body></html>');
+  win.document.close();
+  win.focus();
+  setTimeout(function(){ win.print(); }, 500);
 }
 
 function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
