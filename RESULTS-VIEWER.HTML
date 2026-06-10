@@ -278,7 +278,7 @@ function loadXlsxFile(filename) {
             level: String(r["Level"]||"").trim(),
             score: r["Final Score"]!==undefined ? r["Final Score"] : (r["FinalScore"]!==undefined ? r["FinalScore"] : (r["Score"]!==undefined ? r["Score"] : "")),
             country: String(r["Country"]||"").trim(),
-            region: String(r["Region"]||"").trim(),
+            region: normaliseRegion(String(r["Region"]||"").trim()),
             trainingHrs: normaliseTrainingHrs(String(r["Training Hrs"]||r["TrainingHrs"]||r["Training Hours"]||"").trim()),
             gender: String(r["Gender"]||"").trim(),
           };
@@ -288,6 +288,12 @@ function loadXlsxFile(filename) {
       return comp.sheets.length ? comp : null;
     })
     .catch(function(err) { console.warn("Skipping",filename,err); return null; });
+}
+
+function normaliseRegion(val) {
+  if (!val) return "";
+  if (val.toLowerCase().indexOf("northern ireland")>=0 || val.toLowerCase().indexOf("n. ireland")>=0 || val.toLowerCase().indexOf("n.ireland")>=0) return "N. Ireland";
+  return val;
 }
 
 function normaliseTrainingHrs(val) {
