@@ -20,7 +20,7 @@
   .login-card { background: #fff; border-radius: 16px; padding: 40px; width: 100%; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
   .login-title { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
   .login-sub { font-size: 13px; color: var(--text-light); margin-bottom: 24px; }
-  .login-input { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; margin-bottom: 12px; }
+  .login-input { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; margin-bottom: 12px; font-family: inherit; }
   .login-input:focus { border-color: var(--navy); }
   .login-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .login-btn:hover { background: #a50d26; }
@@ -38,8 +38,7 @@
   .status-dot.ok { background: #22c55e; }
   .status-dot.error { background: var(--accent); }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-  .unavail-count-badge { background: var(--accent); color: #fff; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-  .unavail-count-badge:hover { background: #a50d26; }
+  .unavail-count-badge { background: var(--accent); color: #fff; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
   .tab-section { background: #fff; border-bottom: 1px solid var(--border); box-shadow: var(--shadow); }
   .tab-section-inner { max-width: 1200px; margin: 0 auto; }
   .tab-row { display: flex; padding: 0 32px; overflow-x: auto; }
@@ -55,15 +54,15 @@
   .summary-card-lbl { font-size: 11px; color: var(--text-light); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
   .summary-card.full .summary-card-num { color: var(--green); }
   .apparatus-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
-  .apparatus-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .apparatus-card { background: #fff; border-radius: 12px; overflow: auto; box-shadow: var(--shadow); border: 1px solid var(--border); }
   .apparatus-card-header { background: var(--navy); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
   .apparatus-card-title { font-size: 14px; font-weight: 700; color: #fff; }
   .apparatus-card-sub { font-size: 11px; color: rgba(255,255,255,0.5); }
-  .qualifier-table { width: 100%; border-collapse: collapse; }
+  .qualifier-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
   .qualifier-table th { padding: 8px 12px; text-align: left; font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.07em; border-bottom: 1px solid var(--border); }
   .qualifier-table td { padding: 9px 12px; font-size: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .qualifier-table tr:last-child td { border-bottom: none; }
-  .pos-cell { font-weight: 700; color: var(--text-light); font-size: 12px; width: 28px; }
+  .pos-cell { font-weight: 700; color: var(--text-light); font-size: 12px; }
   .pos-1 { color: #b8972a; } .pos-2 { color: #8a9399; } .pos-3 { color: #a0634a; }
   .qualified-badge { display: inline-block; background: var(--green-light); color: var(--green); border: 1px solid rgba(22,163,74,0.2); border-radius: 20px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
   .promoted-badge { display: inline-block; background: rgba(184,151,42,0.1); color: var(--gold); border: 1px solid rgba(184,151,42,0.2); border-radius: 20px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
@@ -71,21 +70,21 @@
   .score-cell { font-weight: 700; color: var(--navy); }
   .member-cell { font-family: monospace; font-size: 11px; color: var(--text-mid); }
   .next-up-row { background: rgba(255,184,0,0.05); }
-  .next-up-row td { color: var(--text-mid); }
   .promoted-row { background: rgba(184,151,42,0.04); }
-  .skipped-row td { opacity: 0.4; }
-  .unavail-btn { padding: 3px 8px; font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--off-white); color: var(--text-light); transition: all 0.15s; white-space: nowrap; }
+  .unavail-row td { opacity: 0.45; }
+  .unavail-btn { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--off-white); color: var(--text-light); transition: all 0.15s; white-space: nowrap; }
   .unavail-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--red-light); }
-  .restore-btn { padding: 3px 8px; font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(22,163,74,0.3); background: var(--green-light); color: var(--green); transition: all 0.15s; white-space: nowrap; }
+  .restore-btn { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(22,163,74,0.3); background: var(--green-light); color: var(--green); white-space: nowrap; }
   .restore-btn:hover { background: rgba(22,163,74,0.15); }
-  .export-bar { display: flex; gap: 10px; margin-bottom: 16px; }
-  .export-btn { padding: 9px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+  .export-bar { display: flex; gap: 10px; margin-bottom: 14px; }
+  .export-btn { padding: 9px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
   .export-excel { background: #16a34a; color: #fff; }
   .export-excel:hover { background: #15803d; }
   .export-pdf { background: var(--accent); color: #fff; }
   .export-pdf:hover { background: #a50d26; }
   .full-list-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--navy); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .full-list-count { font-size: 12px; font-weight: 600; color: var(--text-light); background: var(--off-white); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; }
+  .full-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 32px; }
   .full-table thead tr { background: var(--navy); }
   .full-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
   .full-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -93,26 +92,28 @@
   .full-table tr:hover td { background: var(--off-white); }
   .apparatus-tag { display: inline-block; background: var(--accent-light); color: var(--accent); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
   .unavail-section { margin-bottom: 24px; }
-  .unavail-section-title { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); display: flex; align-items: center; gap: 10px; }
+  .unavail-section-title { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
   .unavail-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
   .unavail-table thead tr { background: var(--accent); }
-  .unavail-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.07em; }
+  .unavail-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); text-transform: uppercase; }
   .unavail-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); }
   .unavail-table tr:last-child td { border-bottom: none; }
   .excluded-note { background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.2); border-radius: 10px; padding: 10px 16px; font-size: 12px; color: #92680a; margin-bottom: 20px; }
   .empty-msg { text-align: center; padding: 40px; color: var(--text-light); background: #fff; border-radius: 12px; box-shadow: var(--shadow); font-size: 14px; }
-  .confirm-overlay { position: fixed; inset: 0; background: rgba(26,35,64,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+  .confirm-overlay { position: fixed; inset: 0; background: rgba(26,35,64,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
   .confirm-modal { background: #fff; border-radius: 16px; padding: 32px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(26,35,64,0.3); text-align: center; }
   .confirm-title { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
   .confirm-sub { font-size: 13px; color: var(--text-mid); margin-bottom: 24px; line-height: 1.6; }
   .confirm-btns { display: flex; gap: 10px; }
   .confirm-yes { flex: 1; padding: 11px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .confirm-no { flex: 1; padding: 11px; background: var(--off-white); color: var(--text-mid); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  @media (max-width: 900px) {
+    .apparatus-grid { grid-template-columns: 1fr; }
+    .summary-bar { grid-template-columns: repeat(2, 1fr); }
+  }
   @media (max-width: 768px) {
     .page-body { padding: 16px; }
     .tab-row { padding: 0 12px; }
-    .apparatus-grid { grid-template-columns: 1fr; }
-    .summary-bar { grid-template-columns: repeat(2, 1fr); }
     .page-header { padding: 16px; }
   }
 </style>
@@ -123,10 +124,10 @@
   <div class="login-card">
     <div class="login-title">🏅 National Finals</div>
     <div class="login-sub">Qualifier Administration</div>
-    <input class="login-input" type="password" id="password-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPassword()"/>
-    <input class="login-input" type="password" id="token-input" placeholder="Enter GitHub token" onkeydown="if(event.key==='Enter')checkPassword()"/>
-    <button class="login-btn" onclick="checkPassword()">Access Qualifiers</button>
-    <div class="login-error" id="login-error">Incorrect password or missing token. Please try again.</div>
+    <input class="login-input" type="password" id="password-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <input class="login-input" type="password" id="token-input" placeholder="Enter GitHub token" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">Access Qualifiers</button>
+    <div class="login-error" id="login-error">Incorrect password or missing token.</div>
   </div>
 </div>
 
@@ -146,7 +147,7 @@
     <div class="page-header-inner">
       <div>
         <div class="page-title">National Finals Qualifiers</div>
-        <div class="page-sub">Girls · Top 3 per apparatus · 12 places per Level per Region · Minimum 3 apparatus</div>
+        <div class="page-sub">Girls · Top 3 per apparatus · 12 places per Level per Region · Min. 3 apparatus</div>
       </div>
       <div class="header-right">
         <div id="unavail-badge" style="display:none" class="unavail-count-badge" onclick="scrollToUnavailable()"></div>
@@ -164,48 +165,45 @@
     </div>
   </div>
   <div class="page-body" id="page-body">
-    <div class="empty-msg">Loading competition data...</div>
+    <div class="empty-msg">Loading...</div>
   </div>
 </div>
 
 <script>
-// ── CONFIG ─────────────────────────────────────────
 var GITHUB_USER = "Davidcbrooke";
 var GITHUB_REPO = "GYMNASTICS-RESULTS";
 var BRANCH = "main";
 var PASSWORD = "saadi2026";
-var GIRLS_APPARATUS_ORDER = ["Floor", "Uneven Bars", "Vault", "Balance Beam"];
-var QUALIFIERS_PER_APPARATUS = 3;
+var GIRLS_APPARATUS = ["Floor", "Uneven Bars", "Vault", "Balance Beam"];
+var QUALS_PER = 3;
 var LEVELS = ["A", "B", "C"];
 var REGIONS = ["N. Ireland", "West Midlands", "East", "South West", "East Midlands"];
-var UNAVAILABLE_FILE = "unavailable.json";
+var UNAVAIL_FILE = "unavailable.json";
 var NAMES_FILE = "gymnast-names.xlsx";
-// ───────────────────────────────────────────────────
 
-var RAW_BASE = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/" + BRANCH + "/";
-var API_BASE = "https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/";
+var RAW = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/" + BRANCH + "/";
+var API = "https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/";
 
 var allData = [];
 var activeLevel = "A";
 var activeRegion = REGIONS[0];
-var unavailableIds = new Set();
-var unavailableFileSha = null;
-var namesLookup = {};
-var pendingAction = null;
-var GITHUB_TOKEN = "";
-var currentQualifiers = [];
+var unavailIds = new Set();
+var unavailSha = null;
+var names = {};
+var pendingFn = null;
+var TOKEN = "";
+var currentQ = [];
 
-/* ── Login ── */
-function checkPassword() {
-  var val = document.getElementById("password-input").value;
-  var token = document.getElementById("token-input").value.trim();
-  if (val === PASSWORD && token) {
-    GITHUB_TOKEN = token;
+function doLogin() {
+  var pw = document.getElementById("password-input").value;
+  var tk = document.getElementById("token-input").value.trim();
+  if (pw === PASSWORD && tk.length > 0) {
+    TOKEN = tk;
     document.getElementById("login-wrap").style.display = "none";
     document.getElementById("app").className = "app visible";
     fetchNames();
+    fetchUnavail();
     loadData();
-    fetchUnavailable();
   } else {
     document.getElementById("login-error").style.display = "block";
     document.getElementById("password-input").value = "";
@@ -213,492 +211,351 @@ function checkPassword() {
   }
 }
 
-function setStatus(state, msg) {
-  document.getElementById("status-dot").className = "status-dot " + state;
-  document.getElementById("status-text").textContent = msg;
+function setStatus(s, m) {
+  document.getElementById("status-dot").className = "status-dot " + s;
+  document.getElementById("status-text").textContent = m;
 }
 
-/* ── Confirm Dialog ── */
-function showConfirm(title, sub, yesLabel, onYes) {
+function showConfirm(title, sub, label, fn) {
   document.getElementById("confirm-title").textContent = title;
   document.getElementById("confirm-sub").textContent = sub;
-  document.getElementById("confirm-yes-btn").textContent = yesLabel;
-  pendingAction = onYes;
+  document.getElementById("confirm-yes-btn").textContent = label;
+  pendingFn = fn;
   document.getElementById("confirm-overlay").style.display = "flex";
 }
 function closeConfirm() {
   document.getElementById("confirm-overlay").style.display = "none";
-  pendingAction = null;
+  pendingFn = null;
 }
 document.getElementById("confirm-yes-btn").addEventListener("click", function() {
-  if (pendingAction) { pendingAction(); pendingAction = null; }
+  if (pendingFn) { pendingFn(); pendingFn = null; }
   closeConfirm();
 });
 
-/* ── Names ── */
 function fetchNames() {
-  fetch(RAW_BASE + NAMES_FILE)
-    .then(function(r) { if (!r.ok) throw new Error("Names file not found"); return r.arrayBuffer(); })
+  fetch(RAW + NAMES_FILE)
+    .then(function(r) { return r.arrayBuffer(); })
     .then(function(buf) {
       var wb = XLSX.read(new Uint8Array(buf), { type:"array" });
       var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:"" });
       rows.forEach(function(r) {
         var id = String(r["Mid"]||r["BG Number"]||r["Member ID"]||"").trim();
-        var first = String(r["FirstName"]||r["First Name"]||"").trim();
-        var last = String(r["LastName"]||r["Last Name"]||"").trim();
-        if (id) namesLookup[id] = (first + " " + last).trim();
+        var fn = String(r["FirstName"]||r["First Name"]||"").trim();
+        var ln = String(r["LastName"]||r["Last Name"]||"").trim();
+        if (id) names[id] = (fn + " " + ln).trim();
       });
     })
-    .catch(function(err) { console.warn("Could not load names:", err); });
+    .catch(function(e) { console.warn("Names:", e); });
 }
 
-function getName(memberId) {
-  return namesLookup[memberId] || "";
-}
+function getName(id) { return names[id] || ""; }
 
-/* ── Unavailable — GitHub persistence ── */
-function fetchUnavailable() {
-  fetch("https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + UNAVAILABLE_FILE + "?ref=" + BRANCH, {
-    headers: { "Authorization": "token " + GITHUB_TOKEN, "Accept": "application/vnd.github.v3+json" }
+function fetchUnavail() {
+  fetch(API + UNAVAIL_FILE + "?ref=" + BRANCH, {
+    headers: { "Authorization": "token " + TOKEN, "Accept": "application/vnd.github.v3+json" }
   })
-  .then(function(r) {
-    if (r.status === 404) return null;
-    if (!r.ok) throw new Error("Failed to fetch unavailable list");
-    return r.json();
-  })
-  .then(function(data) {
-    if (!data) return;
-    unavailableFileSha = data.sha;
-    var content = atob(data.content.replace(/\n/g,""));
-    var ids = JSON.parse(content);
-    unavailableIds = new Set(ids);
-    updateUnavailBadge();
+  .then(function(r) { if (r.status === 404) return null; return r.json(); })
+  .then(function(d) {
+    if (!d) return;
+    unavailSha = d.sha;
+    var ids = JSON.parse(atob(d.content.replace(/\n/g,"")));
+    unavailIds = new Set(ids);
+    updateBadge();
     renderPage();
   })
-  .catch(function(err) { console.warn("Could not load unavailable list:", err); });
+  .catch(function(e) { console.warn("Unavail fetch:", e); });
 }
 
-function saveUnavailable() {
-  var content = btoa(JSON.stringify(Array.from(unavailableIds)));
-  var body = { message:"Update unavailable list", content:content, branch:BRANCH };
-  if (unavailableFileSha) body.sha = unavailableFileSha;
-  setStatus("loading", "Saving...");
-  fetch("https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + UNAVAILABLE_FILE, {
-    method: "PUT",
-    headers: {
-      "Authorization": "token " + GITHUB_TOKEN,
-      "Accept": "application/vnd.github.v3+json",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(body)
+function saveUnavail() {
+  var body = { message:"Update unavailable list", content:btoa(JSON.stringify(Array.from(unavailIds))), branch:BRANCH };
+  if (unavailSha) body.sha = unavailSha;
+  setStatus("loading","Saving...");
+  fetch(API + UNAVAIL_FILE, {
+    method:"PUT",
+    headers:{ "Authorization":"token "+TOKEN, "Accept":"application/vnd.github.v3+json", "Content-Type":"application/json" },
+    body:JSON.stringify(body)
   })
-  .then(function(r) {
-    if (!r.ok) return r.json().then(function(e){ throw new Error(e.message||r.status); });
-    return r.json();
-  })
-  .then(function(data) {
-    unavailableFileSha = data.content.sha;
-    setStatus("ok", "Saved successfully");
-    setTimeout(function(){ setStatus("ok", "Data loaded"); }, 2000);
-  })
-  .catch(function(err) {
-    console.error("Save error:", err);
-    setStatus("error", "Save failed: " + err.message);
-    alert("Could not save: " + err.message);
+  .then(function(r) { if (!r.ok) return r.json().then(function(e){ throw new Error(e.message||r.status); }); return r.json(); })
+  .then(function(d) { unavailSha = d.content.sha; setStatus("ok","Saved"); setTimeout(function(){ setStatus("ok","Data loaded"); },2000); })
+  .catch(function(e) { setStatus("error","Save failed: "+e.message); alert("Could not save: "+e.message); });
+}
+
+function markUnavail(id, club) {
+  showConfirm("Mark as Unavailable?", "Member ID "+id+(club?" ("+club+")":"")+" will be removed from all qualifier spots. This will be saved across all devices.", "Mark Unavailable", function() {
+    unavailIds.add(id); saveUnavail(); updateBadge(); renderPage();
   });
 }
-
-function markUnavailable(memberId, club) {
-  showConfirm(
-    "Mark as Unavailable?",
-    "Member ID " + memberId + (club ? " (" + club + ")" : "") + " will be removed from all qualifier spots and replaced by the next eligible gymnast. This will be saved across all devices.",
-    "Mark Unavailable",
-    function() {
-      unavailableIds.add(memberId);
-      saveUnavailable();
-      updateUnavailBadge();
-      renderPage();
-    }
-  );
+function restoreGymnast(id) {
+  showConfirm("Restore Gymnast?", "Member ID "+id+" will be reinstated as available.", "Restore", function() {
+    unavailIds.delete(id); saveUnavail(); updateBadge(); renderPage();
+  });
 }
-
-function restoreGymnast(memberId) {
-  showConfirm(
-    "Restore Gymnast?",
-    "Member ID " + memberId + " will be reinstated as available and qualifiers will be recalculated.",
-    "Restore",
-    function() {
-      unavailableIds.delete(memberId);
-      saveUnavailable();
-      updateUnavailBadge();
-      renderPage();
-    }
-  );
+function updateBadge() {
+  var b = document.getElementById("unavail-badge");
+  if (unavailIds.size > 0) { b.style.display=""; b.textContent=unavailIds.size+" Unavailable"; }
+  else { b.style.display="none"; }
 }
-
-function updateUnavailBadge() {
-  var badge = document.getElementById("unavail-badge");
-  if (unavailableIds.size > 0) {
-    badge.style.display = "";
-    badge.textContent = unavailableIds.size + " Unavailable";
-  } else {
-    badge.style.display = "none";
-  }
-}
-
 function scrollToUnavailable() {
   var el = document.getElementById("unavail-section");
-  if (el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+  if (el) el.scrollIntoView({behavior:"smooth"});
 }
 
-/* ── Load Competition Data ── */
 function loadData() {
-  setStatus("loading", "Loading competitions...");
-  fetch(API_BASE + "?ref=" + BRANCH, { headers: { "Accept": "application/vnd.github.v3+json" } })
-    .then(function(r) { if (!r.ok) throw new Error("Status " + r.status); return r.json(); })
+  setStatus("loading","Loading...");
+  fetch(API + "?ref=" + BRANCH, { headers:{"Accept":"application/vnd.github.v3+json"} })
+    .then(function(r) { return r.json(); })
     .then(function(files) {
-      var xlsxFiles = files.filter(function(f) {
-        return f.type==="file" && f.name.toLowerCase().endsWith(".xlsx") && f.name.toLowerCase() !== NAMES_FILE;
-      });
-      if (!xlsxFiles.length) { setStatus("error","No files found"); return; }
-      setStatus("loading","Loading " + xlsxFiles.length + " file(s)...");
-      return Promise.all(xlsxFiles.map(function(f) { return loadFile(f.name); }));
+      var xl = files.filter(function(f) { return f.type==="file" && f.name.toLowerCase().endsWith(".xlsx") && f.name.toLowerCase()!==NAMES_FILE; });
+      return Promise.all(xl.map(function(f) { return loadFile(f.name); }));
     })
     .then(function(results) {
-      if (!results) return;
       allData = [];
-      results.forEach(function(entries) { if (entries) allData = allData.concat(entries); });
-      setStatus("ok", "Data loaded");
+      results.forEach(function(e) { if (e) allData = allData.concat(e); });
+      setStatus("ok","Data loaded");
       renderTabs();
       renderPage();
     })
-    .catch(function(err) { console.error(err); setStatus("error","Failed to load"); });
+    .catch(function(e) { console.error(e); setStatus("error","Failed to load"); });
 }
 
-function loadFile(filename) {
-  return fetch(RAW_BASE + filename)
-    .then(function(r) { if (!r.ok) throw new Error(); return r.arrayBuffer(); })
+function loadFile(name) {
+  return fetch(RAW + name)
+    .then(function(r) { return r.arrayBuffer(); })
     .then(function(buf) {
-      var wb = XLSX.read(new Uint8Array(buf), { type:"array" });
-      var entries = [];
+      var wb = XLSX.read(new Uint8Array(buf), {type:"array"});
+      var out = [];
       wb.SheetNames.forEach(function(sn) {
-        var rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval:"" });
-        rows.forEach(function(r) {
+        XLSX.utils.sheet_to_json(wb.Sheets[sn], {defval:""}).forEach(function(r) {
           var score = parseFloat(r["Final Score"]||r["FinalScore"]||r["Score"]||"");
           if (isNaN(score)) return;
-          var memberId = String(r["Member ID"]||r["BG Number"]||"").trim();
-          if (!memberId) return;
-          var gender = String(r["Gender"]||"").trim();
-          if (gender && gender.toLowerCase() !== "girls") return;
-          entries.push({
-            memberId: memberId,
+          var id = String(r["Member ID"]||r["BG Number"]||"").trim();
+          if (!id) return;
+          var gender = String(r["Gender"]||"").trim().toLowerCase();
+          if (gender && gender !== "girls") return;
+          out.push({
+            memberId: id,
             club: String(r["Club"]||"").trim(),
             ageCategory: String(r["Age Category"]||r["AgeCategory"]||"").trim(),
             level: String(r["Level"]||"").trim().toUpperCase(),
             score: score,
-            country: String(r["Country"]||"").trim(),
-            region: normaliseRegion(String(r["Region"]||"").trim()),
-            trainingHrs: normaliseTrainingHrs(String(r["Training Hrs"]||r["TrainingHrs"]||r["Training Hours"]||"").trim()),
-            gender: gender,
-            apparatus: sn,
+            region: normRegion(String(r["Region"]||"").trim()),
+            trainingHrs: normHrs(String(r["Training Hrs"]||r["TrainingHrs"]||r["Training Hours"]||"").trim()),
+            apparatus: sn
           });
         });
       });
-      return entries;
+      return out;
     })
     .catch(function() { return []; });
 }
 
-function normaliseRegion(val) {
-  if (!val) return "";
-  var v = val.toLowerCase();
-  if (v.indexOf("northern ireland")>=0||v.indexOf("n. ireland")>=0||v.indexOf("n.ireland")>=0) return "N. Ireland";
-  return val;
-}
-
-function normaliseTrainingHrs(val) {
-  var v = val.toLowerCase().replace(/\s/g,"");
+function normRegion(v) {
   if (!v) return "";
-  if (v.indexOf("6-10")>=0||v==="10"||v==="10hrs") return "6-10hrs";
-  if (v.indexOf("2-5")>=0) return "2-5hrs";
-  return val;
+  var l = v.toLowerCase();
+  if (l.indexOf("northern ireland")>=0||l.indexOf("n. ireland")>=0||l.indexOf("n.ireland")>=0) return "N. Ireland";
+  return v;
+}
+function normHrs(v) {
+  var l = v.toLowerCase().replace(/\s/g,"");
+  if (!l) return "";
+  if (l.indexOf("6-10")>=0||l==="10"||l==="10hrs") return "6-10hrs";
+  if (l.indexOf("2-5")>=0) return "2-5hrs";
+  return v;
 }
 
-/* ── Build Best Scores ── */
-function buildBestScores(level, region) {
-  var gymnasts = {};
+function buildScores(level, region) {
+  var g = {};
   allData.forEach(function(e) {
-    if (e.level !== level) return;
-    if (e.region !== region) return;
-    if (!gymnasts[e.memberId]) {
-      gymnasts[e.memberId] = { memberId:e.memberId, club:e.club, ageCategory:e.ageCategory, level:e.level, country:e.country, region:e.region, trainingHrs:e.trainingHrs, scores:{}, total:0 };
-    }
-    var g = gymnasts[e.memberId];
-    if (e.club) g.club = e.club;
-    if (!g.scores[e.apparatus] || e.score > g.scores[e.apparatus]) g.scores[e.apparatus] = e.score;
+    if (e.level!==level||e.region!==region) return;
+    if (!g[e.memberId]) g[e.memberId]={memberId:e.memberId,club:e.club,ageCategory:e.ageCategory,trainingHrs:e.trainingHrs,scores:{},total:0};
+    var gy=g[e.memberId];
+    if (e.club) gy.club=e.club;
+    if (!gy.scores[e.apparatus]||e.score>gy.scores[e.apparatus]) gy.scores[e.apparatus]=e.score;
   });
-  Object.values(gymnasts).forEach(function(g) {
-    g.total = 0;
-    Object.values(g.scores).forEach(function(s) { g.total += s; });
-    g.total = Math.round(g.total*1000)/1000;
+  Object.values(g).forEach(function(gy){ gy.total=0; Object.values(gy.scores).forEach(function(s){gy.total+=s;}); gy.total=Math.round(gy.total*1000)/1000; });
+  var eligible={}, total=Object.keys(g).length;
+  Object.keys(g).forEach(function(id){
+    var cnt=GIRLS_APPARATUS.filter(function(a){return g[id].scores[a]!==undefined;}).length;
+    if (cnt>=3) eligible[id]=g[id];
   });
-  var eligible = {}, total = Object.keys(gymnasts).length;
-  Object.keys(gymnasts).forEach(function(id) {
-    var g = gymnasts[id];
-    var count = GIRLS_APPARATUS_ORDER.filter(function(a) { return g.scores[a] !== undefined; }).length;
-    if (count >= 3) eligible[id] = g;
-  });
-  return { eligible:eligible, total:total, eligibleCount:Object.keys(eligible).length };
+  return {eligible:eligible,total:total,eligibleCount:Object.keys(eligible).length};
 }
 
-/* ── Qualification Logic ── */
-function computeQualifiers(level, region) {
-  var result = buildBestScores(level, region);
-  var gymnasts = result.eligible;
-  var qualifiedIds = new Set();
-  var qualifiersByApparatus = {};
-  var allQualifiers = [];
+function computeQuals(level, region) {
+  var res = buildScores(level, region);
+  var g = res.eligible;
+  var qualIds = new Set();
+  var byApp = {};
+  var allQ = [];
 
-  GIRLS_APPARATUS_ORDER.forEach(function(apparatus) {
-    var ranked = Object.values(gymnasts)
-      .filter(function(g) { return g.scores[apparatus] !== undefined; })
-      .sort(function(a,b) {
-        var diff = b.scores[apparatus] - a.scores[apparatus];
-        if (diff !== 0) return diff;
-        return b.total - a.total;
-      });
+  GIRLS_APPARATUS.forEach(function(app) {
+    var ranked = Object.values(g)
+      .filter(function(gy){return gy.scores[app]!==undefined;})
+      .sort(function(a,b){ var d=b.scores[app]-a.scores[app]; return d!==0?d:b.total-a.total; });
 
-    var qualifiers = [];
-    var spotsLeft = QUALIFIERS_PER_APPARATUS;
-    var i = 0;
+    var list=[], spots=QUALS_PER, i=0;
+    while (i<ranked.length) {
+      var gy=ranked[i], sc=gy.scores[app];
+      var tb=(ranked[i-1]&&ranked[i-1].scores[app]===sc)||(ranked[i+1]&&ranked[i+1].scores[app]===sc);
 
-    while (i < ranked.length) {
-      var g = ranked[i];
-      var myScore = g.scores[apparatus];
-      var isTiebreak = (ranked[i-1] && ranked[i-1].scores[apparatus] === myScore) ||
-                       (ranked[i+1] && ranked[i+1].scores[apparatus] === myScore);
-
-      if (unavailableIds.has(g.memberId)) {
-        qualifiers.push({ gymnast:g, score:myScore, unavailable:true, tiebreak:isTiebreak });
+      if (unavailIds.has(gy.memberId)) {
+        list.push({gy:gy,sc:sc,unavail:true,tb:tb}); i++; continue;
+      }
+      if (qualIds.has(gy.memberId)) {
+        if (list.length<QUALS_PER+4) list.push({gy:gy,sc:sc,skipped:true,tb:tb});
         i++; continue;
       }
-
-      if (qualifiedIds.has(g.memberId)) {
-        if (qualifiers.length < QUALIFIERS_PER_APPARATUS + 4) {
-          qualifiers.push({ gymnast:g, score:myScore, skipped:true, skipReason:"Already qualified", tiebreak:isTiebreak });
-        }
-        i++; continue;
-      }
-
-      if (spotsLeft > 0) {
-        var isPromoted = qualifiers.some(function(q) { return q.skipped || q.promoted || q.unavailable; });
-        qualifiers.push({ gymnast:g, score:myScore, skipped:false, tiebreak:isTiebreak, promoted:isPromoted });
-        qualifiedIds.add(g.memberId);
-        allQualifiers.push({ gymnast:g, apparatus:apparatus, score:myScore, promoted:isPromoted });
-        spotsLeft--;
+      if (spots>0) {
+        var promoted=list.some(function(q){return q.skipped||q.promoted||q.unavail;});
+        list.push({gy:gy,sc:sc,tb:tb,promoted:promoted});
+        qualIds.add(gy.memberId);
+        allQ.push({gy:gy,app:app,sc:sc,promoted:promoted});
+        spots--;
       } else {
-        if (qualifiers.filter(function(q){return q.nextUp;}).length < 2) {
-          qualifiers.push({ gymnast:g, score:myScore, nextUp:true, tiebreak:isTiebreak });
-        } else { break; }
+        if (list.filter(function(q){return q.nextUp;}).length<2) list.push({gy:gy,sc:sc,nextUp:true,tb:tb});
+        else break;
       }
       i++;
     }
-
-    qualifiersByApparatus[apparatus] = qualifiers;
+    byApp[app]=list;
   });
-
-  return { qualifiersByApparatus:qualifiersByApparatus, allQualifiers:allQualifiers, qualifiedIds:qualifiedIds, totalGymnasts:result.total, eligibleCount:result.eligibleCount };
+  return {byApp:byApp,allQ:allQ,total:res.total,eligibleCount:res.eligibleCount};
 }
 
-/* ── Render ── */
 function renderTabs() {
-  document.getElementById("level-tabs").innerHTML = LEVELS.map(function(l) {
+  document.getElementById("level-tabs").innerHTML = LEVELS.map(function(l){
     return '<button class="tab-btn'+(l===activeLevel?" active":"")+'" onclick="switchLevel(\''+l+'\')">Level '+l+'</button>';
   }).join("");
-  document.getElementById("region-tabs").innerHTML = REGIONS.map(function(r) {
+  document.getElementById("region-tabs").innerHTML = REGIONS.map(function(r){
     return '<button class="tab-btn'+(r===activeRegion?" active":"")+'" onclick="switchRegion(\''+esc(r)+'\')">'+esc(r)+'</button>';
   }).join("");
 }
-
-function switchLevel(level) { activeLevel=level; renderTabs(); renderPage(); }
-function switchRegion(region) { activeRegion=region; renderTabs(); renderPage(); }
+function switchLevel(l){activeLevel=l;renderTabs();renderPage();}
+function switchRegion(r){activeRegion=r;renderTabs();renderPage();}
 
 function renderPage() {
-  var result = computeQualifiers(activeLevel, activeRegion);
-  var qba = result.qualifiersByApparatus;
-  var allQ = result.allQualifiers;
-  currentQualifiers = allQ;
-  var excluded = result.totalGymnasts - result.eligibleCount;
-  var html = "";
+  var res=computeQuals(activeLevel,activeRegion);
+  currentQ=res.allQ;
+  var excluded=res.total-res.eligibleCount;
+  var html="";
 
-  if (excluded > 0) {
-    html += '<div class="excluded-note">⚠ <strong>'+excluded+' gymnast'+(excluded!==1?'s':'')+' excluded</strong> — competed on fewer than 3 apparatus and are not eligible.</div>';
-  }
+  if (excluded>0) html+='<div class="excluded-note">⚠ <strong>'+excluded+' gymnast'+(excluded!==1?'s':'')+' excluded</strong> — fewer than 3 apparatus.</div>';
 
-  html += '<div class="summary-bar">';
-  GIRLS_APPARATUS_ORDER.forEach(function(a) {
-    var count = (qba[a]||[]).filter(function(q){return !q.skipped&&!q.nextUp&&!q.unavailable;}).length;
-    html += '<div class="summary-card'+(count>=QUALIFIERS_PER_APPARATUS?" full":"")+'"><div class="summary-card-num">'+count+'/'+QUALIFIERS_PER_APPARATUS+'</div><div class="summary-card-lbl">'+a+'</div></div>';
+  html+='<div class="summary-bar">';
+  GIRLS_APPARATUS.forEach(function(a){
+    var cnt=(res.byApp[a]||[]).filter(function(q){return !q.skipped&&!q.nextUp&&!q.unavail;}).length;
+    html+='<div class="summary-card'+(cnt>=QUALS_PER?" full":"")+'"><div class="summary-card-num">'+cnt+'/'+QUALS_PER+'</div><div class="summary-card-lbl">'+a+'</div></div>';
   });
-  html += '</div>';
+  html+='</div>';
 
-  if (result.eligibleCount === 0) {
-    html += '<div class="empty-msg">No eligible gymnasts found for Level '+activeLevel+' in '+activeRegion+'.</div>';
-    document.getElementById("page-body").innerHTML = html;
-    return;
-  }
+  if (res.eligibleCount===0){html+='<div class="empty-msg">No eligible gymnasts for Level '+activeLevel+' in '+activeRegion+'.</div>';document.getElementById("page-body").innerHTML=html;return;}
 
-  html += '<div class="apparatus-grid">';
-  GIRLS_APPARATUS_ORDER.forEach(function(apparatus) {
-    var qualifiers = qba[apparatus]||[];
-    html += '<div class="apparatus-card"><div class="apparatus-card-header"><div class="apparatus-card-title">'+apparatus+'</div><div class="apparatus-card-sub">Top '+QUALIFIERS_PER_APPARATUS+' · Level '+activeLevel+' · '+activeRegion+'</div></div>';
-    html += '<table class="qualifier-table"><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
-    var pos = 0;
-    qualifiers.forEach(function(q) {
-      if (!q.skipped && !q.nextUp && !q.unavailable) pos++;
-      var rc = pos===1?"pos-1":pos===2?"pos-2":pos===3?"pos-3":"";
-      var rowClass = q.unavailable?"skipped-row":q.nextUp?"next-up-row":q.promoted?"promoted-row":"";
-      var strikeStyle = q.unavailable?"text-decoration:line-through;":"";
-      var name = getName(q.gymnast.memberId);
-      html += '<tr class="'+rowClass+'">';
-      html += '<td class="pos-cell '+rc+'">'+(q.nextUp||q.skipped||q.unavailable?"—":pos)+'</td>';
-      html += '<td class="member-cell" style="'+strikeStyle+'">'+esc(q.gymnast.memberId)+'</td>';
-      html += '<td style="font-size:12px;font-weight:600;'+strikeStyle+'">'+esc(name||"—")+'</td>';
-      html += '<td style="font-size:11px;'+strikeStyle+'">'+esc(q.gymnast.club||"—")+'</td>';
-      html += '<td class="score-cell" style="'+strikeStyle+'">'+q.score.toFixed(3)+(q.tiebreak&&!q.nextUp&&!q.unavailable?'<span class="tiebreak-note">TB</span>':'')+'</td>';
-      html += '<td style="font-size:11px;color:var(--text-light);'+strikeStyle+'">'+q.gymnast.total.toFixed(3)+'</td>';
-      if (q.unavailable) {
-        html += '<td><span style="font-size:10px;color:var(--accent);font-weight:700;">✗ Unavailable</span></td>';
-        html += '<td><button class="restore-btn" onclick="restoreGymnast(\''+esc(q.gymnast.memberId)+'\')">Restore</button></td>';
-      else if (q.nextUp) {
-        html += '<td style="font-size:10px;color:var(--gold);font-weight:600;">Next up</td><td></td>';
+  html+='<div class="apparatus-grid">';
+  GIRLS_APPARATUS.forEach(function(app){
+    var list=res.byApp[app]||[];
+    html+='<div class="apparatus-card"><div class="apparatus-card-header"><div class="apparatus-card-title">'+app+'</div><div class="apparatus-card-sub">Top '+QUALS_PER+' · Level '+activeLevel+' · '+activeRegion+'</div></div>';
+    html+='<table class="qualifier-table"><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
+    var pos=0;
+    list.forEach(function(q){
+      if (!q.skipped&&!q.nextUp&&!q.unavail) pos++;
+      var rc=pos===1?"pos-1":pos===2?"pos-2":pos===3?"pos-3":"";
+      var rowCls=q.unavail?"unavail-row":q.nextUp?"next-up-row":q.promoted?"promoted-row":"";
+      var strike=q.unavail?"text-decoration:line-through;":"";
+      var name=getName(q.gy.memberId);
+      html+='<tr class="'+rowCls+'">';
+      html+='<td class="pos-cell '+rc+'">'+(q.nextUp||q.skipped||q.unavail?"—":pos)+'</td>';
+      html+='<td class="member-cell" style="'+strike+'">'+esc(q.gy.memberId)+'</td>';
+      html+='<td style="font-size:12px;font-weight:600;'+strike+'">'+esc(name||"—")+'</td>';
+      html+='<td style="font-size:11px;'+strike+'">'+esc(q.gy.club||"—")+'</td>';
+      html+='<td class="score-cell" style="'+strike+'">'+q.sc.toFixed(3)+(q.tb&&!q.nextUp&&!q.unavail?'<span class="tiebreak-note">TB</span>':'')+'</td>';
+      html+='<td style="font-size:11px;color:var(--text-light);'+strike+'">'+q.gy.total.toFixed(3)+'</td>';
+      if (q.unavail) {
+        html+='<td><span style="font-size:10px;color:var(--accent);font-weight:700;">✗ Unavailable</span></td>';
+        html+='<td><button class="restore-btn" onclick="restoreGymnast(\''+esc(q.gy.memberId)+'\')">Restore</button></td>';
+      } else if (q.nextUp) {
+        html+='<td style="font-size:10px;color:var(--gold);font-weight:600;">Next up</td><td></td>';
       } else if (q.skipped) {
-        html += '<td style="font-size:10px;color:var(--text-light);">'+esc(q.skipReason)+'</td><td></td>';
+        html+='<td style="font-size:10px;color:var(--text-light);">Already qualified</td><td></td>';
       } else if (q.promoted) {
-        html += '<td><span class="promoted-badge">★ Promoted</span></td>';
-        html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Mark Unavailable</button></td>';
+        html+='<td><span class="promoted-badge">★ Promoted</span></td>';
+        html+='<td><button class="unavail-btn" onclick="markUnavail(\''+esc(q.gy.memberId)+'\',\''+esc(q.gy.club)+'\')">Mark Unavailable</button></td>';
       } else {
-        html += '<td><span class="qualified-badge">✓ Qualified</span></td>';
-        html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Mark Unavailable</button></td>';
+        html+='<td><span class="qualified-badge">✓ Qualified</span></td>';
+        html+='<td><button class="unavail-btn" onclick="markUnavail(\''+esc(q.gy.memberId)+'\',\''+esc(q.gy.club)+'\')">Mark Unavailable</button></td>';
       }
-      html += '</tr>';
+      html+='</tr>';
     });
-    if (!qualifiers.length) html += '<tr><td colspan="8" style="padding:16px;text-align:center;color:var(--text-light);font-size:12px;">No scores recorded</td></tr>';
-    html += '</tbody></table></div>';
+    if (!list.length) html+='<tr><td colspan="8" style="padding:16px;text-align:center;color:var(--text-light);font-size:12px;">No scores</td></tr>';
+    html+='</tbody></table></div>';
   });
-  html += '</div>';
+  html+='</div>';
 
-  html += '<div class="full-list-title">Full Qualifiers List<span class="full-list-count">'+allQ.length+' of '+(GIRLS_APPARATUS_ORDER.length*QUALIFIERS_PER_APPARATUS)+' places filled</span></div>';
-  html += '<div class="export-bar">';
-  html += '<button class="export-btn export-excel" onclick="exportExcel(currentQualifiers,\''+activeLevel+'\',\''+activeRegion+'\')">⬇ Download Excel</button>';
-  html += '<button class="export-btn export-pdf" onclick="exportPDF(currentQualifiers,\''+activeLevel+'\',\''+activeRegion+'\')">⬇ Download PDF</button>';
-  html += '</div>';
-  html += '<table class="full-table"><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
-  allQ.forEach(function(q,i) {
-    var name = getName(q.gymnast.memberId);
-    html += '<tr'+(q.promoted?' style="background:rgba(184,151,42,0.04)"':'')+'>';
-    html += '<td style="font-weight:700;color:var(--text-light);font-size:12px;">'+(i+1)+'</td>';
-    html += '<td class="member-cell">'+esc(q.gymnast.memberId)+'</td>';
-    html += '<td style="font-weight:600;">'+esc(name||"—")+'</td>';
-    html += '<td>'+esc(q.gymnast.club||"—")+'</td>';
-    html += '<td><span class="apparatus-tag">'+esc(q.apparatus)+'</span>'+(q.promoted?' <span style="font-size:10px;color:var(--gold);font-weight:600;">★ Promoted</span>':'')+'</td>';
-    html += '<td style="font-weight:700;color:var(--navy);">'+q.score.toFixed(3)+'</td>';
-    html += '<td style="font-weight:800;color:var(--accent);">'+q.gymnast.total.toFixed(3)+'</td>';
-    html += '<td>'+esc(q.gymnast.ageCategory||"—")+'</td>';
-    html += '<td>'+esc(q.gymnast.trainingHrs||"—")+'</td>';
-    html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Mark Unavailable</button></td>';
-    html += '</tr>';
+  html+='<div class="full-list-title">Full Qualifiers List<span class="full-list-count">'+currentQ.length+' of '+(GIRLS_APPARATUS.length*QUALS_PER)+' places filled</span></div>';
+  html+='<div class="export-bar">';
+  html+='<button class="export-btn export-excel" onclick="exportExcel()">⬇ Download Excel</button>';
+  html+='<button class="export-btn export-pdf" onclick="exportPDF()">⬇ Download PDF</button>';
+  html+='</div>';
+
+  html+='<table class="full-table"><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
+  currentQ.forEach(function(q,i){
+    var name=getName(q.gy.memberId);
+    html+='<tr'+(q.promoted?' style="background:rgba(184,151,42,0.04)"':'')+'>';
+    html+='<td style="font-weight:700;color:var(--text-light);font-size:12px;">'+(i+1)+'</td>';
+    html+='<td class="member-cell">'+esc(q.gy.memberId)+'</td>';
+    html+='<td style="font-weight:600;">'+esc(name||"—")+'</td>';
+    html+='<td>'+esc(q.gy.club||"—")+'</td>';
+    html+='<td><span class="apparatus-tag">'+esc(q.app)+'</span>'+(q.promoted?' <span style="font-size:10px;color:var(--gold);font-weight:600;">★ Promoted</span>':'')+'</td>';
+    html+='<td style="font-weight:700;color:var(--navy);">'+q.sc.toFixed(3)+'</td>';
+    html+='<td style="font-weight:800;color:var(--accent);">'+q.gy.total.toFixed(3)+'</td>';
+    html+='<td>'+esc(q.gy.ageCategory||"—")+'</td>';
+    html+='<td>'+esc(q.gy.trainingHrs||"—")+'</td>';
+    html+='<td><button class="unavail-btn" onclick="markUnavail(\''+esc(q.gy.memberId)+'\',\''+esc(q.gy.club)+'\')">Mark Unavailable</button></td>';
+    html+='</tr>';
   });
-  if (!allQ.length) html += '<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text-light);">No qualifiers yet</td></tr>';
-  html += '</tbody></table>';
+  if (!currentQ.length) html+='<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text-light);">No qualifiers yet</td></tr>';
+  html+='</tbody></table>';
 
-  if (unavailableIds.size > 0) {
-    html += '<div class="unavail-section" id="unavail-section"><div class="unavail-section-title">Unavailable Gymnasts <span style="font-size:13px;font-weight:400;color:rgba(200,16,46,0.6)">('+unavailableIds.size+' marked)</span></div>';
-    html += '<table class="unavail-table"><thead><tr><th>Member ID</th><th>Name</th><th>Reason</th><th></th></tr></thead><tbody>';
-    Array.from(unavailableIds).forEach(function(id) {
-      var name = getName(id);
-      html += '<tr><td class="member-cell">'+esc(id)+'</td><td style="font-weight:600;">'+esc(name||"—")+'</td><td style="font-size:12px;color:var(--text-mid);">Marked unavailable for finals</td><td><button class="restore-btn" onclick="restoreGymnast(\''+esc(id)+'\')">Restore</button></td></tr>';
+  if (unavailIds.size>0){
+    html+='<div class="unavail-section" id="unavail-section"><div class="unavail-section-title">Unavailable Gymnasts ('+unavailIds.size+' marked)</div>';
+    html+='<table class="unavail-table"><thead><tr><th>Member ID</th><th>Name</th><th>Reason</th><th></th></tr></thead><tbody>';
+    Array.from(unavailIds).forEach(function(id){
+      html+='<tr><td class="member-cell">'+esc(id)+'</td><td style="font-weight:600;">'+esc(getName(id)||"—")+'</td><td style="font-size:12px;color:var(--text-mid);">Marked unavailable for finals</td><td><button class="restore-btn" onclick="restoreGymnast(\''+esc(id)+'\')">Restore</button></td></tr>';
     });
-    html += '</tbody></table></div>';
+    html+='</tbody></table></div>';
   }
 
-  document.getElementById("page-body").innerHTML = html;
+  document.getElementById("page-body").innerHTML=html;
 }
 
-/* ── Export Functions ── */
-function exportExcel(allQ, level, region) {
-  var headers = ["#","Member ID","Name","Club","Qualifies On","Score","Total","Age Cat.","Training Hrs"];
-  var rows = [headers];
-  allQ.forEach(function(q, i) {
-    rows.push([
-      i+1,
-      q.gymnast.memberId,
-      getName(q.gymnast.memberId)||"",
-      q.gymnast.club||"",
-      q.apparatus + (q.promoted?" (Promoted)":""),
-      q.score,
-      q.gymnast.total,
-      q.gymnast.ageCategory||"",
-      q.gymnast.trainingHrs||""
-    ]);
+function exportExcel(){
+  var headers=["#","Member ID","Name","Club","Qualifies On","Score","Total","Age Cat.","Training Hrs"];
+  var rows=[headers];
+  currentQ.forEach(function(q,i){
+    rows.push([i+1,q.gy.memberId,getName(q.gy.memberId)||"",q.gy.club||"",q.app+(q.promoted?" (Promoted)":""),q.sc,q.gy.total,q.gy.ageCategory||"",q.gy.trainingHrs||""]);
   });
-  var ws = XLSX.utils.aoa_to_sheet(rows);
-  ws["!cols"] = [{wch:4},{wch:12},{wch:20},{wch:36},{wch:18},{wch:8},{wch:8},{wch:10},{wch:12}];
-  var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Qualifiers");
-  var filename = "Qualifiers_Level" + level + "_" + region.replace(/\s/g,"_") + ".xlsx";
-  var buf = XLSX.write(wb, { bookType:"xlsx", type:"array" });
-  var blob = new Blob([buf], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  document.body.appendChild(a); a.click();
-  setTimeout(function(){ document.body.removeChild(a); }, 100);
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"]=[{wch:4},{wch:12},{wch:22},{wch:36},{wch:20},{wch:8},{wch:8},{wch:10},{wch:12}];
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Qualifiers");
+  var buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+  a.download="Qualifiers_Level"+activeLevel+"_"+activeRegion.replace(/\s/g,"_")+".xlsx";
+  document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);},100);
 }
 
-function exportPDF(allQ, level, region) {
-  var win = window.open("", "_blank");
-  var rows = allQ.map(function(q, i) {
-    var name = getName(q.gymnast.memberId)||"—";
-    return '<tr>' +
-      '<td>'+(i+1)+'</td>' +
-      '<td>'+esc(q.gymnast.memberId)+'</td>' +
-      '<td><strong>'+esc(name)+'</strong></td>' +
-      '<td>'+esc(q.gymnast.club||"—")+'</td>' +
-      '<td>'+esc(q.apparatus)+(q.promoted?' <em>(Promoted)</em>':'')+'</td>' +
-      '<td>'+q.score.toFixed(3)+'</td>' +
-      '<td><strong>'+q.gymnast.total.toFixed(3)+'</strong></td>' +
-      '<td>'+esc(q.gymnast.ageCategory||"—")+'</td>' +
-      '<td>'+esc(q.gymnast.trainingHrs||"—")+'</td>' +
-      '</tr>';
+function exportPDF(){
+  var win=window.open("","_blank");
+  var rows=currentQ.map(function(q,i){
+    return '<tr><td>'+(i+1)+'</td><td>'+esc(q.gy.memberId)+'</td><td><strong>'+esc(getName(q.gy.memberId)||"—")+'</strong></td><td>'+esc(q.gy.club||"—")+'</td><td>'+esc(q.app)+(q.promoted?' <em>(Promoted)</em>':'')+'</td><td>'+q.sc.toFixed(3)+'</td><td><strong>'+q.gy.total.toFixed(3)+'</strong></td><td>'+esc(q.gy.ageCategory||"—")+'</td><td>'+esc(q.gy.trainingHrs||"—")+'</td></tr>';
   }).join("");
-
-  win.document.write('<!DOCTYPE html><html><head><title>Qualifiers — Level '+level+' — '+region+'</title>' +
-    '<style>' +
-    'body{font-family:Arial,sans-serif;padding:24px;color:#1a2340;}' +
-    'h1{font-size:18px;margin-bottom:4px;}' +
-    'h2{font-size:13px;font-weight:400;color:#8a96a8;margin-bottom:20px;}' +
-    'table{width:100%;border-collapse:collapse;font-size:12px;}' +
-    'thead tr{background:#1a2340;color:#fff;}' +
-    'th{padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;}' +
-    'td{padding:8px 10px;border-bottom:1px solid #e2e6ed;}' +
-    'tr:last-child td{border-bottom:none;}' +
-    'tr:nth-child(even){background:#f7f8fa;}' +
-    '.footer{margin-top:20px;font-size:11px;color:#8a96a8;}' +
-    '@media print{body{padding:0;}}' +
-    '</style></head><body>' +
-    '<h1>National Finals Qualifiers — Level '+level+' — '+esc(region)+'</h1>' +
-    '<h2>'+allQ.length+' qualifiers · Girls · Top 3 per apparatus</h2>' +
-    '<table><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th></tr></thead>' +
-    '<tbody>'+rows+'</tbody></table>' +
-    '<div class="footer">Generated '+new Date().toLocaleDateString('en-GB')+'</div>' +
-    '</body></html>');
+  win.document.write('<!DOCTYPE html><html><head><title>Qualifiers Level '+activeLevel+' '+activeRegion+'</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#1a2340;}h1{font-size:18px;margin-bottom:4px;}h2{font-size:13px;font-weight:400;color:#8a96a8;margin-bottom:20px;}table{width:100%;border-collapse:collapse;font-size:12px;}thead tr{background:#1a2340;color:#fff;}th{padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;}td{padding:8px 10px;border-bottom:1px solid #e2e6ed;}tr:nth-child(even){background:#f7f8fa;}.footer{margin-top:20px;font-size:11px;color:#8a96a8;}</style></head><body><h1>National Finals Qualifiers — Level '+activeLevel+' — '+esc(activeRegion)+'</h1><h2>'+currentQ.length+' qualifiers · Girls · Top 3 per apparatus</h2><table><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th></tr></thead><tbody>'+rows+'</tbody></table><div class="footer">Generated '+new Date().toLocaleDateString("en-GB")+'</div></body></html>');
   win.document.close();
   win.focus();
-  setTimeout(function(){ win.print(); }, 500);
+  setTimeout(function(){win.print();},500);
 }
 
-function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 </script>
 </body>
 </html>
