@@ -13,6 +13,7 @@
     --text: #1a2340; --text-mid: #4a5568; --text-light: #8a96a8;
     --shadow: 0 2px 12px rgba(26,35,64,0.08);
     --green: #16a34a; --green-light: rgba(22,163,74,0.08);
+    --red-light: rgba(200,16,46,0.06);
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; }
 
@@ -34,24 +35,25 @@
   .page-header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
   .page-title { font-size: 20px; font-weight: 700; color: #fff; }
   .page-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
   .status-bar { background: rgba(255,255,255,0.08); border-radius: 8px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 8px; }
   .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .status-dot.loading { background: #FFB800; animation: pulse 1s infinite; }
   .status-dot.ok { background: #22c55e; }
   .status-dot.error { background: var(--accent); }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  .unavail-count-badge { background: var(--accent); color: #fff; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .unavail-count-badge:hover { background: #a50d26; }
 
-  /* Tab bars */
+  /* Tabs */
   .tab-section { background: #fff; border-bottom: 1px solid var(--border); box-shadow: var(--shadow); }
   .tab-section-inner { max-width: 1200px; margin: 0 auto; }
-  .tab-row { display: flex; padding: 0 32px; gap: 0; overflow-x: auto; }
+  .tab-row { display: flex; padding: 0 32px; overflow-x: auto; }
   .tab-row::-webkit-scrollbar { display: none; }
-  .tab-row-label { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 16px 0; }
+  .level-tab-row { border-bottom: 1px solid var(--border); }
   .tab-btn { padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--text-light); background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; transition: all 0.15s; }
   .tab-btn:hover { color: var(--navy); }
   .tab-btn.active { color: var(--navy); border-bottom-color: var(--accent); }
-  .level-tab-row { border-bottom: 1px solid var(--border); }
-  .region-tab-row { }
 
   .page-body { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
 
@@ -70,32 +72,56 @@
   .apparatus-card-sub { font-size: 11px; color: rgba(255,255,255,0.5); }
   .qualifier-table { width: 100%; border-collapse: collapse; }
   .qualifier-table th { padding: 8px 12px; text-align: left; font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.07em; border-bottom: 1px solid var(--border); }
-  .qualifier-table td { padding: 9px 12px; font-size: 12px; border-bottom: 1px solid var(--border); }
+  .qualifier-table td { padding: 9px 12px; font-size: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .qualifier-table tr:last-child td { border-bottom: none; }
   .pos-cell { font-weight: 700; color: var(--text-light); font-size: 12px; width: 28px; }
   .pos-1 { color: #b8972a; } .pos-2 { color: #8a9399; } .pos-3 { color: #a0634a; }
   .qualified-badge { display: inline-block; background: var(--green-light); color: var(--green); border: 1px solid rgba(22,163,74,0.2); border-radius: 20px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
+  .promoted-badge { display: inline-block; background: rgba(184,151,42,0.1); color: var(--gold); border: 1px solid rgba(184,151,42,0.2); border-radius: 20px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
   .tiebreak-note { font-size: 9px; color: var(--text-light); font-style: italic; margin-left: 3px; }
   .score-cell { font-weight: 700; color: var(--navy); }
-  .total-cell { font-size: 11px; color: var(--text-light); }
   .member-cell { font-family: monospace; font-size: 11px; color: var(--text-mid); }
-  .skipped-row td { opacity: 0.4; }
   .next-up-row { background: rgba(255,184,0,0.05); }
   .next-up-row td { color: var(--text-mid); }
+  .promoted-row { background: rgba(184,151,42,0.04); }
+
+  /* Unavailable button */
+  .unavail-btn { padding: 3px 8px; font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--off-white); color: var(--text-light); transition: all 0.15s; white-space: nowrap; }
+  .unavail-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--red-light); }
+  .restore-btn { padding: 3px 8px; font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(22,163,74,0.3); background: var(--green-light); color: var(--green); transition: all 0.15s; white-space: nowrap; }
+  .restore-btn:hover { background: rgba(22,163,74,0.15); }
 
   /* Full list */
   .full-list-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--navy); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .full-list-count { font-size: 12px; font-weight: 600; color: var(--text-light); background: var(--off-white); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; }
-  .full-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  .full-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 32px; }
   .full-table thead tr { background: var(--navy); }
   .full-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
-  .full-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .full-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .full-table tr:last-child td { border-bottom: none; }
   .full-table tr:hover td { background: var(--off-white); }
   .apparatus-tag { display: inline-block; background: var(--accent-light); color: var(--accent); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
 
-  .empty-msg { text-align: center; padding: 40px; color: var(--text-light); background: #fff; border-radius: 12px; box-shadow: var(--shadow); font-size: 14px; }
+  /* Unavailable panel */
+  .unavail-section { margin-bottom: 24px; }
+  .unavail-section-title { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); display: flex; align-items: center; gap: 10px; }
+  .unavail-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  .unavail-table thead tr { background: var(--accent); }
+  .unavail-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.07em; }
+  .unavail-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .unavail-table tr:last-child td { border-bottom: none; }
+
   .excluded-note { background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.2); border-radius: 10px; padding: 10px 16px; font-size: 12px; color: #92680a; margin-bottom: 20px; }
+  .empty-msg { text-align: center; padding: 40px; color: var(--text-light); background: #fff; border-radius: 12px; box-shadow: var(--shadow); font-size: 14px; }
+
+  /* Confirm dialog */
+  .confirm-overlay { position: fixed; inset: 0; background: rgba(26,35,64,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+  .confirm-modal { background: #fff; border-radius: 16px; padding: 32px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(26,35,64,0.3); text-align: center; }
+  .confirm-title { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  .confirm-sub { font-size: 13px; color: var(--text-mid); margin-bottom: 24px; line-height: 1.6; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-yes { flex: 1; padding: 11px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .confirm-no { flex: 1; padding: 11px; background: var(--off-white); color: var(--text-mid); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
 
   @media (max-width: 768px) {
     .page-body { padding: 16px; }
@@ -119,6 +145,18 @@
   </div>
 </div>
 
+<!-- Confirm Dialog -->
+<div class="confirm-overlay" id="confirm-overlay" style="display:none">
+  <div class="confirm-modal">
+    <div class="confirm-title" id="confirm-title">Mark as Unavailable?</div>
+    <div class="confirm-sub" id="confirm-sub"></div>
+    <div class="confirm-btns">
+      <button class="confirm-no" onclick="closeConfirm()">Cancel</button>
+      <button class="confirm-yes" id="confirm-yes-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <!-- App -->
 <div class="app" id="app">
   <div class="page-header">
@@ -127,9 +165,12 @@
         <div class="page-title">National Finals Qualifiers</div>
         <div class="page-sub">Girls · Top 3 per apparatus · 12 places per Level per Region · Minimum 3 apparatus</div>
       </div>
-      <div class="status-bar">
-        <div class="status-dot loading" id="status-dot"></div>
-        <span id="status-text">Loading...</span>
+      <div class="header-right">
+        <div id="unavail-badge" style="display:none" class="unavail-count-badge" onclick="scrollToUnavailable()"></div>
+        <div class="status-bar">
+          <div class="status-dot loading" id="status-dot"></div>
+          <span id="status-text">Loading...</span>
+        </div>
       </div>
     </div>
   </div>
@@ -151,11 +192,12 @@
 var GITHUB_USER = "Davidcbrooke";
 var GITHUB_REPO = "GYMNASTICS-RESULTS";
 var BRANCH = "main";
-var PASSWORD = "saadi2026"; // ← Change this to your preferred password
+var PASSWORD = "saadi2026";
 var GIRLS_APPARATUS_ORDER = ["Floor", "Uneven Bars", "Vault", "Balance Beam"];
 var QUALIFIERS_PER_APPARATUS = 3;
 var LEVELS = ["A", "B", "C"];
 var REGIONS = ["N. Ireland", "West Midlands", "East", "South West", "East Midlands"];
+var STORAGE_KEY = "nationals_unavailable";
 // ───────────────────────────────────────────────────
 
 var RAW_BASE = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/" + BRANCH + "/";
@@ -164,6 +206,19 @@ var API_BASE = "https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO
 var allData = [];
 var activeLevel = "A";
 var activeRegion = REGIONS[0];
+var unavailableIds = loadUnavailable(); // Set of member IDs marked unavailable
+var pendingAction = null;
+
+/* ── Persistence ── */
+function loadUnavailable() {
+  try {
+    var stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch(e) { return new Set(); }
+}
+function saveUnavailable() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(unavailableIds))); } catch(e) {}
+}
 
 /* ── Login ── */
 function checkPassword() {
@@ -183,6 +238,61 @@ function setStatus(state, msg) {
   document.getElementById("status-text").textContent = msg;
 }
 
+/* ── Confirm Dialog ── */
+function showConfirm(title, sub, yesLabel, onYes) {
+  document.getElementById("confirm-title").textContent = title;
+  document.getElementById("confirm-sub").textContent = sub;
+  document.getElementById("confirm-yes-btn").textContent = yesLabel;
+  pendingAction = onYes;
+  document.getElementById("confirm-overlay").style.display = "flex";
+}
+function closeConfirm() { document.getElementById("confirm-overlay").style.display = "none"; pendingAction = null; }
+document.getElementById("confirm-yes-btn").addEventListener("click", function() {
+  if (pendingAction) { pendingAction(); pendingAction = null; }
+  closeConfirm();
+});
+
+/* ── Mark unavailable / restore ── */
+function markUnavailable(memberId, club) {
+  showConfirm(
+    "Mark as Unavailable?",
+    "Member ID " + memberId + " (" + (club||"unknown club") + ") will be removed from all qualifier spots and replaced by the next eligible gymnast. This will be saved.",
+    "Mark Unavailable",
+    function() {
+      unavailableIds.add(memberId);
+      saveUnavailable();
+      updateUnavailBadge();
+      renderPage();
+    }
+  );
+}
+function restoreGymnast(memberId) {
+  showConfirm(
+    "Restore Gymnast?",
+    "Member ID " + memberId + " will be reinstated as available and qualifiers will be recalculated.",
+    "Restore",
+    function() {
+      unavailableIds.delete(memberId);
+      saveUnavailable();
+      updateUnavailBadge();
+      renderPage();
+    }
+  );
+}
+function updateUnavailBadge() {
+  var badge = document.getElementById("unavail-badge");
+  if (unavailableIds.size > 0) {
+    badge.style.display = "";
+    badge.textContent = unavailableIds.size + " Unavailable";
+  } else {
+    badge.style.display = "none";
+  }
+}
+function scrollToUnavailable() {
+  var el = document.getElementById("unavail-section");
+  if (el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
 /* ── Load Data ── */
 function loadData() {
   setStatus("loading", "Loading competitions...");
@@ -198,7 +308,8 @@ function loadData() {
       if (!results) return;
       allData = [];
       results.forEach(function(entries) { if (entries) allData = allData.concat(entries); });
-      setStatus("ok", "Data loaded · " + allData.length + " entries");
+      setStatus("ok", "Data loaded");
+      updateUnavailBadge();
       renderTabs();
       renderPage();
     })
@@ -253,42 +364,31 @@ function normaliseTrainingHrs(val) {
   return val;
 }
 
-/* ── Build Best Scores (region + level filtered, 4-piece only) ── */
+/* ── Build Best Scores ── */
 function buildBestScores(level, region) {
   var gymnasts = {};
-
   allData.forEach(function(e) {
     if (e.level !== level) return;
     if (e.region !== region) return;
-
     if (!gymnasts[e.memberId]) {
-      gymnasts[e.memberId] = {
-        memberId: e.memberId, club: e.club, ageCategory: e.ageCategory,
-        level: e.level, country: e.country, region: e.region,
-        trainingHrs: e.trainingHrs, scores: {}, total: 0
-      };
+      gymnasts[e.memberId] = { memberId:e.memberId, club:e.club, ageCategory:e.ageCategory, level:e.level, country:e.country, region:e.region, trainingHrs:e.trainingHrs, scores:{}, total:0 };
     }
     var g = gymnasts[e.memberId];
     if (e.club) g.club = e.club;
     if (!g.scores[e.apparatus] || e.score > g.scores[e.apparatus]) g.scores[e.apparatus] = e.score;
   });
-
-  // Calculate totals
   Object.values(gymnasts).forEach(function(g) {
     g.total = 0;
     Object.values(g.scores).forEach(function(s) { g.total += s; });
     g.total = Math.round(g.total*1000)/1000;
   });
-
-  // Exclude gymnasts who don't have scores on at least 3 apparatus
-  var eligible = {};
+  var eligible = {}, total = Object.keys(gymnasts).length;
   Object.keys(gymnasts).forEach(function(id) {
     var g = gymnasts[id];
-    var apparatusCount = GIRLS_APPARATUS_ORDER.filter(function(a) { return g.scores[a] !== undefined; }).length;
-    if (apparatusCount >= 3) eligible[id] = g;
+    var count = GIRLS_APPARATUS_ORDER.filter(function(a) { return g.scores[a] !== undefined; }).length;
+    if (count >= 3) eligible[id] = g;
   });
-
-  return { eligible: eligible, total: Object.keys(gymnasts).length, eligibleCount: Object.keys(eligible).length };
+  return { eligible:eligible, total:total, eligibleCount:Object.keys(eligible).length };
 }
 
 /* ── Qualification Logic ── */
@@ -301,11 +401,11 @@ function computeQualifiers(level, region) {
 
   GIRLS_APPARATUS_ORDER.forEach(function(apparatus) {
     var ranked = Object.values(gymnasts)
-      .filter(function(g) { return g.scores[apparatus] !== undefined; })
+      .filter(function(g) { return g.scores[apparatus] !== undefined && !unavailableIds.has(g.memberId); })
       .sort(function(a,b) {
         var diff = b.scores[apparatus] - a.scores[apparatus];
         if (diff !== 0) return diff;
-        return b.total - a.total; // tiebreak by total
+        return b.total - a.total;
       });
 
     var qualifiers = [];
@@ -314,27 +414,25 @@ function computeQualifiers(level, region) {
 
     while (i < ranked.length) {
       var g = ranked[i];
-
-      // Determine if tiebreak applies (same score as adjacent gymnast at a qualifying boundary)
-      var isTiebreak = false;
       var myScore = g.scores[apparatus];
-      if (ranked[i-1] && ranked[i-1].scores[apparatus] === myScore) isTiebreak = true;
-      if (ranked[i+1] && ranked[i+1].scores[apparatus] === myScore) isTiebreak = true;
+      var isTiebreak = (ranked[i-1] && ranked[i-1].scores[apparatus] === myScore) ||
+                       (ranked[i+1] && ranked[i+1].scores[apparatus] === myScore);
 
       if (qualifiedIds.has(g.memberId)) {
-        if (qualifiers.length < QUALIFIERS_PER_APPARATUS + 3) {
-          qualifiers.push({ gymnast:g, score:myScore, skipped:true, reason:"Already qualified", tiebreak:isTiebreak });
+        // Already qualified on another apparatus — skip, show with note
+        if (qualifiers.length < QUALIFIERS_PER_APPARATUS + 4) {
+          qualifiers.push({ gymnast:g, score:myScore, skipped:true, skipReason:"Already qualified", tiebreak:isTiebreak });
         }
         i++; continue;
       }
 
       if (spotsLeft > 0) {
-        qualifiers.push({ gymnast:g, score:myScore, skipped:false, tiebreak:isTiebreak });
+        var isPromoted = qualifiers.some(function(q) { return q.skipped || (q.promoted); });
+        qualifiers.push({ gymnast:g, score:myScore, skipped:false, tiebreak:isTiebreak, promoted:isPromoted });
         qualifiedIds.add(g.memberId);
-        allQualifiers.push({ gymnast:g, apparatus:apparatus, score:myScore });
+        allQualifiers.push({ gymnast:g, apparatus:apparatus, score:myScore, promoted:isPromoted });
         spotsLeft--;
       } else {
-        // Show next 2 as "next up"
         if (qualifiers.filter(function(q){return q.nextUp;}).length < 2) {
           qualifiers.push({ gymnast:g, score:myScore, nextUp:true, tiebreak:isTiebreak });
         } else { break; }
@@ -345,45 +443,34 @@ function computeQualifiers(level, region) {
     qualifiersByApparatus[apparatus] = qualifiers;
   });
 
-  return {
-    qualifiersByApparatus: qualifiersByApparatus,
-    allQualifiers: allQualifiers,
-    qualifiedIds: qualifiedIds,
-    totalGymnasts: result.total,
-    eligibleCount: result.eligibleCount
-  };
+  return { qualifiersByApparatus:qualifiersByApparatus, allQualifiers:allQualifiers, qualifiedIds:qualifiedIds, totalGymnasts:result.total, eligibleCount:result.eligibleCount };
 }
 
 /* ── Render ── */
 function renderTabs() {
-  var levelHtml = LEVELS.map(function(l) {
+  document.getElementById("level-tabs").innerHTML = LEVELS.map(function(l) {
     return '<button class="tab-btn'+(l===activeLevel?" active":"")+'" onclick="switchLevel(\''+l+'\')">Level '+l+'</button>';
   }).join("");
-  document.getElementById("level-tabs").innerHTML = levelHtml;
-
-  var regionHtml = REGIONS.map(function(r) {
+  document.getElementById("region-tabs").innerHTML = REGIONS.map(function(r) {
     return '<button class="tab-btn'+(r===activeRegion?" active":"")+'" onclick="switchRegion(\''+esc(r)+'\')">'+esc(r)+'</button>';
   }).join("");
-  document.getElementById("region-tabs").innerHTML = regionHtml;
 }
 
-function switchLevel(level) { activeLevel = level; renderTabs(); renderPage(); }
-function switchRegion(region) { activeRegion = region; renderTabs(); renderPage(); }
+function switchLevel(level) { activeLevel=level; renderTabs(); renderPage(); }
+function switchRegion(region) { activeRegion=region; renderTabs(); renderPage(); }
 
 function renderPage() {
   var result = computeQualifiers(activeLevel, activeRegion);
   var qba = result.qualifiersByApparatus;
   var allQ = result.allQualifiers;
   var excluded = result.totalGymnasts - result.eligibleCount;
-
   var html = "";
 
-  // Exclusion note
   if (excluded > 0) {
-    html += '<div class="excluded-note">⚠ <strong>'+excluded+' gymnast'+(excluded!==1?'s':'')+' excluded</strong> — competed on fewer than 3 apparatus and are not eligible for qualification.</div>';
+    html += '<div class="excluded-note">⚠ <strong>'+excluded+' gymnast'+(excluded!==1?'s':'')+' excluded</strong> — competed on fewer than 3 apparatus and are not eligible.</div>';
   }
 
-  // Summary bar
+  // Summary
   html += '<div class="summary-bar">';
   GIRLS_APPARATUS_ORDER.forEach(function(a) {
     var count = (qba[a]||[]).filter(function(q){return !q.skipped&&!q.nextUp;}).length;
@@ -391,9 +478,8 @@ function renderPage() {
   });
   html += '</div>';
 
-  // No data check
   if (result.eligibleCount === 0) {
-    html += '<div class="empty-msg">No eligible gymnasts found for Level '+activeLevel+' in '+activeRegion+'.<br><span style="font-size:12px;color:var(--text-light)">Gymnasts must have scores on at least 3 apparatus to qualify.</span></div>';
+    html += '<div class="empty-msg">No eligible gymnasts found for Level '+activeLevel+' in '+activeRegion+'.</div>';
     document.getElementById("page-body").innerHTML = html;
     return;
   }
@@ -401,49 +487,59 @@ function renderPage() {
   // Apparatus cards
   html += '<div class="apparatus-grid">';
   GIRLS_APPARATUS_ORDER.forEach(function(apparatus) {
-    var qualifiers = qba[apparatus] || [];
-    html += '<div class="apparatus-card">';
-    html += '<div class="apparatus-card-header"><div class="apparatus-card-title">'+apparatus+'</div><div class="apparatus-card-sub">Top '+QUALIFIERS_PER_APPARATUS+' · Level '+activeLevel+' · '+activeRegion+'</div></div>';
-    html += '<table class="qualifier-table"><thead><tr><th>#</th><th>Member ID</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th></tr></thead><tbody>';
-
+    var qualifiers = qba[apparatus]||[];
+    html += '<div class="apparatus-card"><div class="apparatus-card-header"><div class="apparatus-card-title">'+apparatus+'</div><div class="apparatus-card-sub">Top '+QUALIFIERS_PER_APPARATUS+' · Level '+activeLevel+' · '+activeRegion+'</div></div>';
+    html += '<table class="qualifier-table"><thead><tr><th>#</th><th>Member ID</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
     var pos = 0;
     qualifiers.forEach(function(q) {
       if (!q.skipped && !q.nextUp) pos++;
       var rc = pos===1?"pos-1":pos===2?"pos-2":pos===3?"pos-3":"";
-      var rowClass = q.skipped?"skipped-row":q.nextUp?"next-up-row":"";
+      var rowClass = q.nextUp?"next-up-row":q.promoted?"promoted-row":"";
       html += '<tr class="'+rowClass+'">';
       html += '<td class="pos-cell '+rc+'">'+(q.nextUp||q.skipped?"—":pos)+'</td>';
       html += '<td class="member-cell">'+esc(q.gymnast.memberId)+'</td>';
-      html += '<td style="font-size:12px;">'+esc(q.gymnast.club||"—")+'</td>';
+      html += '<td style="font-size:11px;">'+esc(q.gymnast.club||"—")+'</td>';
       html += '<td class="score-cell">'+q.score.toFixed(3)+(q.tiebreak&&!q.nextUp?'<span class="tiebreak-note">TB</span>':'')+'</td>';
-      html += '<td class="total-cell">'+q.gymnast.total.toFixed(3)+'</td>';
-      if (q.skipped) html += '<td style="font-size:10px;color:var(--text-light);">Already qualified</td>';
-      else if (q.nextUp) html += '<td style="font-size:10px;color:#b8972a;font-weight:600;">Next up</td>';
-      else html += '<td><span class="qualified-badge">✓ Qualified</span></td>';
+      html += '<td style="font-size:11px;color:var(--text-light);">'+q.gymnast.total.toFixed(3)+'</td>';
+      if (q.nextUp) html += '<td style="font-size:10px;color:var(--gold);font-weight:600;">Next up</td><td></td>';
+      else if (q.skipped) html += '<td style="font-size:10px;color:var(--text-light);">'+esc(q.skipReason)+'</td><td></td>';
+      else if (q.promoted) html += '<td><span class="promoted-badge">★ Promoted</span></td><td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
+      else html += '<td><span class="qualified-badge">✓ Qualified</span></td><td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
       html += '</tr>';
     });
-    if (!qualifiers.length) html += '<tr><td colspan="6" style="padding:16px;text-align:center;color:var(--text-light);font-size:12px;">No scores recorded</td></tr>';
+    if (!qualifiers.length) html += '<tr><td colspan="7" style="padding:16px;text-align:center;color:var(--text-light);font-size:12px;">No scores recorded</td></tr>';
     html += '</tbody></table></div>';
   });
   html += '</div>';
 
   // Full qualifiers list
   html += '<div class="full-list-title">Full Qualifiers List<span class="full-list-count">'+allQ.length+' of '+(GIRLS_APPARATUS_ORDER.length*QUALIFIERS_PER_APPARATUS)+' places filled</span></div>';
-  html += '<table class="full-table"><thead><tr><th>#</th><th>Member ID</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th></tr></thead><tbody>';
+  html += '<table class="full-table"><thead><tr><th>#</th><th>Member ID</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
   allQ.forEach(function(q,i) {
-    html += '<tr>';
+    html += '<tr'+(q.promoted?' style="background:rgba(184,151,42,0.04)"':'')+'>';
     html += '<td style="font-weight:700;color:var(--text-light);font-size:12px;">'+(i+1)+'</td>';
     html += '<td class="member-cell">'+esc(q.gymnast.memberId)+'</td>';
     html += '<td>'+esc(q.gymnast.club||"—")+'</td>';
-    html += '<td><span class="apparatus-tag">'+esc(q.apparatus)+'</span></td>';
+    html += '<td><span class="apparatus-tag">'+esc(q.apparatus)+'</span>'+(q.promoted?' <span style="font-size:10px;color:var(--gold);font-weight:600;">★ Promoted</span>':'')+'</td>';
     html += '<td style="font-weight:700;color:var(--navy);">'+q.score.toFixed(3)+'</td>';
     html += '<td style="font-weight:800;color:var(--accent);">'+q.gymnast.total.toFixed(3)+'</td>';
     html += '<td>'+esc(q.gymnast.ageCategory||"—")+'</td>';
     html += '<td>'+esc(q.gymnast.trainingHrs||"—")+'</td>';
+    html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
     html += '</tr>';
   });
-  if (!allQ.length) html += '<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--text-light);">No qualifiers yet</td></tr>';
+  if (!allQ.length) html += '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text-light);">No qualifiers yet</td></tr>';
   html += '</tbody></table>';
+
+  // Unavailable list
+  if (unavailableIds.size > 0) {
+    html += '<div class="unavail-section" id="unavail-section"><div class="unavail-section-title">Unavailable Gymnasts <span style="font-size:13px;font-weight:400;color:rgba(200,16,46,0.6)">('+unavailableIds.size+' marked)</span></div>';
+    html += '<table class="unavail-table"><thead><tr><th>Member ID</th><th>Reason</th><th></th></tr></thead><tbody>';
+    Array.from(unavailableIds).forEach(function(id) {
+      html += '<tr><td class="member-cell">'+esc(id)+'</td><td style="font-size:12px;color:var(--text-mid);">Marked unavailable for finals</td><td><button class="restore-btn" onclick="restoreGymnast(\''+esc(id)+'\')">Restore</button></td></tr>';
+    });
+    html += '</tbody></table></div>';
+  }
 
   document.getElementById("page-body").innerHTML = html;
 }
