@@ -140,8 +140,9 @@
     <div class="login-title">🏅 National Finals</div>
     <div class="login-sub">Qualifier Administration</div>
     <input class="login-input" type="password" id="password-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPassword()"/>
+    <input class="login-input" type="password" id="token-input" placeholder="Enter GitHub token" onkeydown="if(event.key==='Enter')checkPassword()"/>
     <button class="login-btn" onclick="checkPassword()">Access Qualifiers</button>
-    <div class="login-error" id="login-error">Incorrect password. Please try again.</div>
+    <div class="login-error" id="login-error">Incorrect password or missing token. Please try again.</div>
   </div>
 </div>
 
@@ -197,7 +198,7 @@ var GIRLS_APPARATUS_ORDER = ["Floor", "Uneven Bars", "Vault", "Balance Beam"];
 var QUALIFIERS_PER_APPARATUS = 3;
 var LEVELS = ["A", "B", "C"];
 var REGIONS = ["N. Ireland", "West Midlands", "East", "South West", "East Midlands"];
-var STORAGE_KEY = "nationals_unavailable";
+var GITHUB_TOKEN = ""; // set at login
 // ───────────────────────────────────────────────────
 
 var RAW_BASE = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/" + BRANCH + "/";
@@ -209,27 +210,66 @@ var activeRegion = REGIONS[0];
 var unavailableIds = loadUnavailable(); // Set of member IDs marked unavailable
 var pendingAction = null;
 
-/* ── Persistence ── */
+/* ── Persistence via GitHub ── */
+var unavailableFileSha = null; // needed for GitHub file updates
+
 function loadUnavailable() {
-  try {
-    var stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? new Set(JSON.parse(stored)) : new Set();
-  } catch(e) { return new Set(); }
+  return new Set(); // start empty, loaded async after login
 }
+
+function fetchUnavailable() {
+  return fetch("https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + UNAVAILABLE_FILE + "?ref=" + BRANCH, {
+    headers: { "Authorization": "token " + GITHUB_TOKEN, "Accept": "application/vnd.github.v3+json" }
+  })
+  .then(function(r) {
+    if (r.status === 404) return null; // file doesn't exist yet
+    if (!r.ok) throw new Error("Failed to fetch unavailable list");
+    return r.json();
+  })
+  .then(function(data) {
+    if (!data) return;
+    unavailableFileSha = data.sha;
+    var content = atob(data.content.replace(/\n/g,""));
+    var ids = JSON.parse(content);
+    unavailableIds = new Set(ids);
+    updateUnavailBadge();
+    renderPage();
+  })
+  .catch(function(err) { console.warn("Could not load unavailable list:", err); });
+}
+
 function saveUnavailable() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(unavailableIds))); } catch(e) {}
+  var content = btoa(JSON.stringify(Array.from(unavailableIds)));
+  var body = { message: "Update unavailable list", content: content, branch: BRANCH };
+  if (unavailableFileSha) body.sha = unavailableFileSha;
+  return fetch("https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + UNAVAILABLE_FILE, {
+    method: "PUT",
+    headers: {
+      "Authorization": "token " + GITHUB_TOKEN,
+      "Accept": "application/vnd.github.v3+json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  })
+  .then(function(r) { if (!r.ok) throw new Error("Failed to save"); return r.json(); })
+  .then(function(data) { unavailableFileSha = data.content.sha; })
+  .catch(function(err) { console.error("Could not save unavailable list:", err); alert("Could not save changes to GitHub. Please try again."); });
 }
 
 /* ── Login ── */
 function checkPassword() {
   var val = document.getElementById("password-input").value;
-  if (val === PASSWORD) {
+  var token = document.getElementById("token-input").value.trim();
+  if (val === PASSWORD && token) {
+    GITHUB_TOKEN = token;
     document.getElementById("login-wrap").style.display = "none";
     document.getElementById("app").className = "app visible";
     loadData();
+    fetchUnavailable();
   } else {
     document.getElementById("login-error").style.display = "block";
     document.getElementById("password-input").value = "";
+    document.getElementById("token-input").value = "";
   }
 }
 
@@ -256,7 +296,7 @@ document.getElementById("confirm-yes-btn").addEventListener("click", function() 
 function markUnavailable(memberId, club) {
   showConfirm(
     "Mark as Unavailable?",
-    "Member ID " + memberId + " (" + (club||"unknown club") + ") will be removed from all qualifier spots and replaced by the next eligible gymnast. This will be saved.",
+    "Member ID " + memberId + " (" + (club||"unknown club") + ") will be removed from all qualifier spots and replaced by the next eligible gymnast. This will be saved across all devices.",
     "Mark Unavailable",
     function() {
       unavailableIds.add(memberId);
