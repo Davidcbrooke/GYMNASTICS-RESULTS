@@ -53,8 +53,8 @@
   .summary-card-num { font-size: 24px; font-weight: 800; color: var(--navy); }
   .summary-card-lbl { font-size: 11px; color: var(--text-light); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
   .summary-card.full .summary-card-num { color: var(--green); }
-  .apparatus-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
-  .apparatus-card { background: #fff; border-radius: 12px; overflow: auto; box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .apparatus-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+  .apparatus-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); }
   .apparatus-card-header { background: var(--navy); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
   .apparatus-card-title { font-size: 14px; font-weight: 700; color: #fff; }
   .apparatus-card-sub { font-size: 11px; color: rgba(255,255,255,0.5); }
@@ -98,7 +98,15 @@
   .unavail-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); text-transform: uppercase; }
   .unavail-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); }
   .unavail-table tr:last-child td { border-bottom: none; }
-  .excluded-note { background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.2); border-radius: 10px; padding: 10px 16px; font-size: 12px; color: #92680a; margin-bottom: 20px; }
+  .filter-toggle { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .filter-toggle-label { font-size: 13px; font-weight: 600; color: var(--navy); }
+  .filter-toggle-sub { font-size: 11px; color: var(--text-light); margin-top: 1px; }
+  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 24px; cursor: pointer; transition: 0.2s; }
+  .toggle-slider:before { content:""; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+  input:checked + .toggle-slider { background: var(--navy); }
+  input:checked + .toggle-slider:before { transform: translateX(20px); }
   .empty-msg { text-align: center; padding: 40px; color: var(--text-light); background: #fff; border-radius: 12px; box-shadow: var(--shadow); font-size: 14px; }
   .confirm-overlay { position: fixed; inset: 0; background: rgba(26,35,64,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
   .confirm-modal { background: #fff; border-radius: 16px; padding: 32px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(26,35,64,0.3); text-align: center; }
@@ -193,6 +201,7 @@ var names = {};
 var pendingFn = null;
 var TOKEN = "";
 var currentQ = [];
+var minApparatus = 3; // 0 = all gymnasts, 3 = 3+ apparatus only
 
 function doLogin() {
   var pw = document.getElementById("password-input").value;
@@ -376,7 +385,7 @@ function buildScores(level, region) {
   var eligible={}, total=Object.keys(g).length;
   Object.keys(g).forEach(function(id){
     var cnt=GIRLS_APPARATUS.filter(function(a){return g[id].scores[a]!==undefined;}).length;
-    if (cnt>=3) eligible[id]=g[id];
+    if (minApparatus===0||cnt>=3) eligible[id]=g[id];
   });
   return {eligible:eligible,total:total,eligibleCount:Object.keys(eligible).length};
 }
@@ -430,6 +439,7 @@ function renderTabs() {
     return '<button class="tab-btn'+(r===activeRegion?" active":"")+'" onclick="switchRegion(\''+esc(r)+'\')">'+esc(r)+'</button>';
   }).join("");
 }
+function toggleEligibility(checked) { minApparatus = checked ? 3 : 0; renderPage(); }
 function switchLevel(l){activeLevel=l;renderTabs();renderPage();}
 function switchRegion(r){activeRegion=r;renderTabs();renderPage();}
 
@@ -438,6 +448,13 @@ function renderPage() {
   currentQ=res.allQ;
   var excluded=res.total-res.eligibleCount;
   var html="";
+
+  // Eligibility toggle
+  html+='<div class="filter-toggle">';
+  html+='<label class="toggle-switch"><input type="checkbox" id="eligibility-toggle" '+(minApparatus===3?"checked":"")+' onchange="toggleEligibility(this.checked)"><span class="toggle-slider"></span></label>';
+  html+='<div><div class="filter-toggle-label">3+ Apparatus Only</div>';
+  html+='<div class="filter-toggle-sub">'+(minApparatus===3?"Showing only gymnasts who have competed on 3 or more apparatus":"Showing all gymnasts regardless of apparatus count")+'</div></div>';
+  html+='</div>';
 
   if (excluded>0) html+='<div class="excluded-note">⚠ <strong>'+excluded+' gymnast'+(excluded!==1?'s':'')+' excluded</strong> — fewer than 3 apparatus.</div>';
 
