@@ -439,6 +439,7 @@ function renderTabs() {
     return '<button class="tab-btn'+(r===activeRegion?" active":"")+'" onclick="switchRegion(\''+esc(r)+'\')">'+esc(r)+'</button>';
   }).join("");
 }
+function updatePlaces(val) { var n = parseInt(val); if (!isNaN(n) && n >= 1) { QUALS_PER = n; renderPage(); } }
 function toggleEligibility(checked) { minApparatus = checked ? 3 : 0; renderPage(); }
 function switchLevel(l){activeLevel=l;renderTabs();renderPage();}
 function switchRegion(r){activeRegion=r;renderTabs();renderPage();}
@@ -449,11 +450,15 @@ function renderPage() {
   var excluded=res.total-res.eligibleCount;
   var html="";
 
-  // Eligibility toggle
+  // Eligibility toggle and places control
   html+='<div class="filter-toggle">';
   html+='<label class="toggle-switch"><input type="checkbox" id="eligibility-toggle" '+(minApparatus===3?"checked":"")+' onchange="toggleEligibility(this.checked)"><span class="toggle-slider"></span></label>';
   html+='<div><div class="filter-toggle-label">3+ Apparatus Only</div>';
   html+='<div class="filter-toggle-sub">'+(minApparatus===3?"Showing only gymnasts who have competed on 3 or more apparatus":"Showing all gymnasts regardless of apparatus count")+'</div></div>';
+  html+='<div style="margin-left:auto;display:flex;align-items:center;gap:10px;">';
+  html+='<div><div class="filter-toggle-label">Places per Apparatus</div><div class="filter-toggle-sub">Total places: '+(QUALS_PER*GIRLS_APPARATUS.length)+'</div></div>';
+  html+='<input type="number" min="1" max="20" value="'+QUALS_PER+'" onchange="updatePlaces(this.value)" style="width:60px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-weight:700;color:var(--navy);text-align:center;outline:none;">';
+  html+='</div>';
   html+='</div>';
 
   if (excluded>0) html+='<div class="excluded-note">⚠ <strong>'+excluded+' gymnast'+(excluded!==1?'s':'')+' excluded</strong> — fewer than 3 apparatus.</div>';
