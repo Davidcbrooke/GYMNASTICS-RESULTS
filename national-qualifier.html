@@ -546,16 +546,18 @@ function renderPage() {
     html += '<table class="qualifier-table"><thead><tr><th>#</th><th>Member ID</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
     var pos = 0;
     qualifiers.forEach(function(q) {
-      if (!q.skipped && !q.nextUp) pos++;
+      if (!q.skipped && !q.nextUp && !q.unavailable) pos++;
       var rc = pos===1?"pos-1":pos===2?"pos-2":pos===3?"pos-3":"";
-      var rowClass = q.nextUp?"next-up-row":q.promoted?"promoted-row":"";
+      var rowClass = q.unavailable?"skipped-row":q.nextUp?"next-up-row":q.promoted?"promoted-row":"";
+      var strikeStyle = q.unavailable?"text-decoration:line-through;":"";
       html += '<tr class="'+rowClass+'">';
-      html += '<td class="pos-cell '+rc+'">'+(q.nextUp||q.skipped?"—":pos)+'</td>';
-      html += '<td class="member-cell">'+esc(q.gymnast.memberId)+'</td>';
-      html += '<td style="font-size:11px;">'+esc(q.gymnast.club||"—")+'</td>';
-      html += '<td class="score-cell">'+q.score.toFixed(3)+(q.tiebreak&&!q.nextUp?'<span class="tiebreak-note">TB</span>':'')+'</td>';
-      html += '<td style="font-size:11px;color:var(--text-light);">'+q.gymnast.total.toFixed(3)+'</td>';
-      if (q.nextUp) html += '<td style="font-size:10px;color:var(--gold);font-weight:600;">Next up</td><td></td>';
+      html += '<td class="pos-cell '+rc+'">'+(q.nextUp||q.skipped||q.unavailable?"—":pos)+'</td>';
+      html += '<td class="member-cell" style="'+strikeStyle+'">'+esc(q.gymnast.memberId)+'</td>';
+      html += '<td style="font-size:11px;'+strikeStyle+'">'+esc(q.gymnast.club||"—")+'</td>';
+      html += '<td class="score-cell" style="'+strikeStyle+'">'+q.score.toFixed(3)+(q.tiebreak&&!q.nextUp&&!q.unavailable?'<span class="tiebreak-note">TB</span>':'')+'</td>';
+      html += '<td style="font-size:11px;color:var(--text-light);'+strikeStyle+'">'+q.gymnast.total.toFixed(3)+'</td>';
+      if (q.unavailable) html += '<td><span style="font-size:10px;color:var(--accent);font-weight:700;">✗ Unavailable</span></td><td><button class="restore-btn" onclick="restoreGymnast(\''+esc(q.gymnast.memberId)+'\')">Restore</button></td>';
+      else if (q.nextUp) html += '<td style="font-size:10px;color:var(--gold);font-weight:600;">Next up</td><td></td>';
       else if (q.skipped) html += '<td style="font-size:10px;color:var(--text-light);">'+esc(q.skipReason)+'</td><td></td>';
       else if (q.promoted) html += '<td><span class="promoted-badge">★ Promoted</span></td><td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
       else html += '<td><span class="qualified-badge">✓ Qualified</span></td><td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
