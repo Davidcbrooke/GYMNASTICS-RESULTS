@@ -244,6 +244,7 @@ function saveUnavailable() {
   var content = btoa(JSON.stringify(Array.from(unavailableIds)));
   var body = { message: "Update unavailable list", content: content, branch: BRANCH };
   if (unavailableFileSha) body.sha = unavailableFileSha;
+  setStatus("loading", "Saving...");
   return fetch("https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + UNAVAILABLE_FILE, {
     method: "PUT",
     headers: {
@@ -253,9 +254,20 @@ function saveUnavailable() {
     },
     body: JSON.stringify(body)
   })
-  .then(function(r) { if (!r.ok) throw new Error("Failed to save"); return r.json(); })
-  .then(function(data) { unavailableFileSha = data.content.sha; })
-  .catch(function(err) { console.error("Could not save unavailable list:", err); alert("Could not save changes to GitHub. Please try again."); });
+  .then(function(r) {
+    if (!r.ok) return r.json().then(function(e){ throw new Error(e.message||r.status); });
+    return r.json();
+  })
+  .then(function(data) {
+    unavailableFileSha = data.content.sha;
+    setStatus("ok", "Saved successfully");
+    setTimeout(function(){ setStatus("ok", "Data loaded"); }, 2000);
+  })
+  .catch(function(err) {
+    console.error("Save error:", err);
+    setStatus("error", "Save failed: " + err.message);
+    alert("Could not save: " + err.message);
+  });
 }
 
 /* ── Login ── */
