@@ -16,8 +16,6 @@
     --red-light: rgba(200,16,46,0.06);
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; }
-
-  /* Login */
   .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: var(--navy); }
   .login-card { background: #fff; border-radius: 16px; padding: 40px; width: 100%; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
   .login-title { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
@@ -27,8 +25,6 @@
   .login-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .login-btn:hover { background: #a50d26; }
   .login-error { font-size: 12px; color: var(--accent); margin-top: 8px; display: none; }
-
-  /* App */
   .app { display: none; }
   .app.visible { display: block; }
   .page-header { background: var(--navy); padding: 24px 32px; }
@@ -44,8 +40,6 @@
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
   .unavail-count-badge { background: var(--accent); color: #fff; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
   .unavail-count-badge:hover { background: #a50d26; }
-
-  /* Tabs */
   .tab-section { background: #fff; border-bottom: 1px solid var(--border); box-shadow: var(--shadow); }
   .tab-section-inner { max-width: 1200px; margin: 0 auto; }
   .tab-row { display: flex; padding: 0 32px; overflow-x: auto; }
@@ -54,17 +48,12 @@
   .tab-btn { padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--text-light); background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; transition: all 0.15s; }
   .tab-btn:hover { color: var(--navy); }
   .tab-btn.active { color: var(--navy); border-bottom-color: var(--accent); }
-
   .page-body { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
-
-  /* Summary */
   .summary-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
   .summary-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; box-shadow: var(--shadow); }
   .summary-card-num { font-size: 24px; font-weight: 800; color: var(--navy); }
   .summary-card-lbl { font-size: 11px; color: var(--text-light); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
   .summary-card.full .summary-card-num { color: var(--green); }
-
-  /* Apparatus grid */
   .apparatus-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
   .apparatus-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); }
   .apparatus-card-header { background: var(--navy); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
@@ -84,14 +73,11 @@
   .next-up-row { background: rgba(255,184,0,0.05); }
   .next-up-row td { color: var(--text-mid); }
   .promoted-row { background: rgba(184,151,42,0.04); }
-
-  /* Unavailable button */
+  .skipped-row td { opacity: 0.4; }
   .unavail-btn { padding: 3px 8px; font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--off-white); color: var(--text-light); transition: all 0.15s; white-space: nowrap; }
   .unavail-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--red-light); }
   .restore-btn { padding: 3px 8px; font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(22,163,74,0.3); background: var(--green-light); color: var(--green); transition: all 0.15s; white-space: nowrap; }
   .restore-btn:hover { background: rgba(22,163,74,0.15); }
-
-  /* Full list */
   .full-list-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--navy); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .full-list-count { font-size: 12px; font-weight: 600; color: var(--text-light); background: var(--off-white); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; }
   .full-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 32px; }
@@ -101,8 +87,6 @@
   .full-table tr:last-child td { border-bottom: none; }
   .full-table tr:hover td { background: var(--off-white); }
   .apparatus-tag { display: inline-block; background: var(--accent-light); color: var(--accent); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
-
-  /* Unavailable panel */
   .unavail-section { margin-bottom: 24px; }
   .unavail-section-title { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); display: flex; align-items: center; gap: 10px; }
   .unavail-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
@@ -110,11 +94,8 @@
   .unavail-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.07em; }
   .unavail-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); }
   .unavail-table tr:last-child td { border-bottom: none; }
-
   .excluded-note { background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.2); border-radius: 10px; padding: 10px 16px; font-size: 12px; color: #92680a; margin-bottom: 20px; }
   .empty-msg { text-align: center; padding: 40px; color: var(--text-light); background: #fff; border-radius: 12px; box-shadow: var(--shadow); font-size: 14px; }
-
-  /* Confirm dialog */
   .confirm-overlay { position: fixed; inset: 0; background: rgba(26,35,64,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
   .confirm-modal { background: #fff; border-radius: 16px; padding: 32px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(26,35,64,0.3); text-align: center; }
   .confirm-title { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
@@ -122,7 +103,6 @@
   .confirm-btns { display: flex; gap: 10px; }
   .confirm-yes { flex: 1; padding: 11px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .confirm-no { flex: 1; padding: 11px; background: var(--off-white); color: var(--text-mid); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-
   @media (max-width: 768px) {
     .page-body { padding: 16px; }
     .tab-row { padding: 0 12px; }
@@ -134,7 +114,6 @@
 </head>
 <body>
 
-<!-- Login -->
 <div class="login-wrap" id="login-wrap">
   <div class="login-card">
     <div class="login-title">🏅 National Finals</div>
@@ -146,10 +125,9 @@
   </div>
 </div>
 
-<!-- Confirm Dialog -->
 <div class="confirm-overlay" id="confirm-overlay" style="display:none">
   <div class="confirm-modal">
-    <div class="confirm-title" id="confirm-title">Mark as Unavailable?</div>
+    <div class="confirm-title" id="confirm-title"></div>
     <div class="confirm-sub" id="confirm-sub"></div>
     <div class="confirm-btns">
       <button class="confirm-no" onclick="closeConfirm()">Cancel</button>
@@ -158,7 +136,6 @@
   </div>
 </div>
 
-<!-- App -->
 <div class="app" id="app">
   <div class="page-header">
     <div class="page-header-inner">
@@ -175,14 +152,12 @@
       </div>
     </div>
   </div>
-
   <div class="tab-section">
     <div class="tab-section-inner">
       <div class="tab-row level-tab-row" id="level-tabs"></div>
       <div class="tab-row" id="region-tabs"></div>
     </div>
   </div>
-
   <div class="page-body" id="page-body">
     <div class="empty-msg">Loading competition data...</div>
   </div>
@@ -198,9 +173,8 @@ var GIRLS_APPARATUS_ORDER = ["Floor", "Uneven Bars", "Vault", "Balance Beam"];
 var QUALIFIERS_PER_APPARATUS = 3;
 var LEVELS = ["A", "B", "C"];
 var REGIONS = ["N. Ireland", "West Midlands", "East", "South West", "East Midlands"];
-var GITHUB_TOKEN = ""; // set at login
 var UNAVAILABLE_FILE = "unavailable.json";
-var unavailableFileSha = null;
+var NAMES_FILE = "gymnast-names.xlsx";
 // ───────────────────────────────────────────────────
 
 var RAW_BASE = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/" + BRANCH + "/";
@@ -209,84 +183,11 @@ var API_BASE = "https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO
 var allData = [];
 var activeLevel = "A";
 var activeRegion = REGIONS[0];
-var unavailableIds = loadUnavailable(); // Set of member IDs marked unavailable
+var unavailableIds = new Set();
+var unavailableFileSha = null;
+var namesLookup = {};
 var pendingAction = null;
-
-/* ── Persistence via GitHub ── */
-var unavailableFileSha = null; // needed for GitHub file updates
-
-function loadUnavailable() {
-  return new Set(); // start empty, loaded async after login
-}
-
-function fetchNames() {
-  return fetch(RAW_BASE + NAMES_FILE)
-    .then(function(r) { if (!r.ok) throw new Error("Names file not found"); return r.arrayBuffer(); })
-    .then(function(buf) {
-      var wb = XLSX.read(new Uint8Array(buf), { type:"array" });
-      var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:"" });
-      rows.forEach(function(r) {
-        var id = String(r["Mid"]||r["BG Number"]||r["Member ID"]||"").trim();
-        var first = String(r["FirstName"]||r["First Name"]||"").trim();
-        var last = String(r["LastName"]||r["Last Name"]||"").trim();
-        if (id) namesLookup[id] = (first + " " + last).trim();
-      });
-    })
-    .catch(function(err) { console.warn("Could not load names:", err); });
-}
-
-function getName(memberId) {
-  return namesLookup[memberId] || "";
-}
-  return fetch("https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + UNAVAILABLE_FILE + "?ref=" + BRANCH, {
-    headers: { "Authorization": "token " + GITHUB_TOKEN, "Accept": "application/vnd.github.v3+json" }
-  })
-  .then(function(r) {
-    if (r.status === 404) return null; // file doesn't exist yet
-    if (!r.ok) throw new Error("Failed to fetch unavailable list");
-    return r.json();
-  })
-  .then(function(data) {
-    if (!data) return;
-    unavailableFileSha = data.sha;
-    var content = atob(data.content.replace(/\n/g,""));
-    var ids = JSON.parse(content);
-    unavailableIds = new Set(ids);
-    updateUnavailBadge();
-    renderPage();
-  })
-  .catch(function(err) { console.warn("Could not load unavailable list:", err); });
-}
-
-function saveUnavailable() {
-  var content = btoa(JSON.stringify(Array.from(unavailableIds)));
-  var body = { message: "Update unavailable list", content: content, branch: BRANCH };
-  if (unavailableFileSha) body.sha = unavailableFileSha;
-  setStatus("loading", "Saving...");
-  return fetch("https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + UNAVAILABLE_FILE, {
-    method: "PUT",
-    headers: {
-      "Authorization": "token " + GITHUB_TOKEN,
-      "Accept": "application/vnd.github.v3+json",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(body)
-  })
-  .then(function(r) {
-    if (!r.ok) return r.json().then(function(e){ throw new Error(e.message||r.status); });
-    return r.json();
-  })
-  .then(function(data) {
-    unavailableFileSha = data.content.sha;
-    setStatus("ok", "Saved successfully");
-    setTimeout(function(){ setStatus("ok", "Data loaded"); }, 2000);
-  })
-  .catch(function(err) {
-    console.error("Save error:", err);
-    setStatus("error", "Save failed: " + err.message);
-    alert("Could not save: " + err.message);
-  });
-}
+var GITHUB_TOKEN = "";
 
 /* ── Login ── */
 function checkPassword() {
@@ -319,17 +220,92 @@ function showConfirm(title, sub, yesLabel, onYes) {
   pendingAction = onYes;
   document.getElementById("confirm-overlay").style.display = "flex";
 }
-function closeConfirm() { document.getElementById("confirm-overlay").style.display = "none"; pendingAction = null; }
+function closeConfirm() {
+  document.getElementById("confirm-overlay").style.display = "none";
+  pendingAction = null;
+}
 document.getElementById("confirm-yes-btn").addEventListener("click", function() {
   if (pendingAction) { pendingAction(); pendingAction = null; }
   closeConfirm();
 });
 
-/* ── Mark unavailable / restore ── */
+/* ── Names ── */
+function fetchNames() {
+  fetch(RAW_BASE + NAMES_FILE)
+    .then(function(r) { if (!r.ok) throw new Error("Names file not found"); return r.arrayBuffer(); })
+    .then(function(buf) {
+      var wb = XLSX.read(new Uint8Array(buf), { type:"array" });
+      var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:"" });
+      rows.forEach(function(r) {
+        var id = String(r["Mid"]||r["BG Number"]||r["Member ID"]||"").trim();
+        var first = String(r["FirstName"]||r["First Name"]||"").trim();
+        var last = String(r["LastName"]||r["Last Name"]||"").trim();
+        if (id) namesLookup[id] = (first + " " + last).trim();
+      });
+    })
+    .catch(function(err) { console.warn("Could not load names:", err); });
+}
+
+function getName(memberId) {
+  return namesLookup[memberId] || "";
+}
+
+/* ── Unavailable — GitHub persistence ── */
+function fetchUnavailable() {
+  fetch("https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + UNAVAILABLE_FILE + "?ref=" + BRANCH, {
+    headers: { "Authorization": "token " + GITHUB_TOKEN, "Accept": "application/vnd.github.v3+json" }
+  })
+  .then(function(r) {
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error("Failed to fetch unavailable list");
+    return r.json();
+  })
+  .then(function(data) {
+    if (!data) return;
+    unavailableFileSha = data.sha;
+    var content = atob(data.content.replace(/\n/g,""));
+    var ids = JSON.parse(content);
+    unavailableIds = new Set(ids);
+    updateUnavailBadge();
+    renderPage();
+  })
+  .catch(function(err) { console.warn("Could not load unavailable list:", err); });
+}
+
+function saveUnavailable() {
+  var content = btoa(JSON.stringify(Array.from(unavailableIds)));
+  var body = { message:"Update unavailable list", content:content, branch:BRANCH };
+  if (unavailableFileSha) body.sha = unavailableFileSha;
+  setStatus("loading", "Saving...");
+  fetch("https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + UNAVAILABLE_FILE, {
+    method: "PUT",
+    headers: {
+      "Authorization": "token " + GITHUB_TOKEN,
+      "Accept": "application/vnd.github.v3+json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  })
+  .then(function(r) {
+    if (!r.ok) return r.json().then(function(e){ throw new Error(e.message||r.status); });
+    return r.json();
+  })
+  .then(function(data) {
+    unavailableFileSha = data.content.sha;
+    setStatus("ok", "Saved successfully");
+    setTimeout(function(){ setStatus("ok", "Data loaded"); }, 2000);
+  })
+  .catch(function(err) {
+    console.error("Save error:", err);
+    setStatus("error", "Save failed: " + err.message);
+    alert("Could not save: " + err.message);
+  });
+}
+
 function markUnavailable(memberId, club) {
   showConfirm(
     "Mark as Unavailable?",
-    "Member ID " + memberId + " (" + (club||"unknown club") + ") will be removed from all qualifier spots and replaced by the next eligible gymnast. This will be saved across all devices.",
+    "Member ID " + memberId + (club ? " (" + club + ")" : "") + " will be removed from all qualifier spots and replaced by the next eligible gymnast. This will be saved across all devices.",
     "Mark Unavailable",
     function() {
       unavailableIds.add(memberId);
@@ -339,6 +315,7 @@ function markUnavailable(memberId, club) {
     }
   );
 }
+
 function restoreGymnast(memberId) {
   showConfirm(
     "Restore Gymnast?",
@@ -352,6 +329,7 @@ function restoreGymnast(memberId) {
     }
   );
 }
+
 function updateUnavailBadge() {
   var badge = document.getElementById("unavail-badge");
   if (unavailableIds.size > 0) {
@@ -361,18 +339,21 @@ function updateUnavailBadge() {
     badge.style.display = "none";
   }
 }
+
 function scrollToUnavailable() {
   var el = document.getElementById("unavail-section");
   if (el) el.scrollIntoView({ behavior:"smooth", block:"start" });
 }
 
-/* ── Load Data ── */
+/* ── Load Competition Data ── */
 function loadData() {
   setStatus("loading", "Loading competitions...");
   fetch(API_BASE + "?ref=" + BRANCH, { headers: { "Accept": "application/vnd.github.v3+json" } })
     .then(function(r) { if (!r.ok) throw new Error("Status " + r.status); return r.json(); })
     .then(function(files) {
-      var xlsxFiles = files.filter(function(f) { return f.type==="file" && f.name.toLowerCase().endsWith(".xlsx"); });
+      var xlsxFiles = files.filter(function(f) {
+        return f.type==="file" && f.name.toLowerCase().endsWith(".xlsx") && f.name.toLowerCase() !== NAMES_FILE;
+      });
       if (!xlsxFiles.length) { setStatus("error","No files found"); return; }
       setStatus("loading","Loading " + xlsxFiles.length + " file(s)...");
       return Promise.all(xlsxFiles.map(function(f) { return loadFile(f.name); }));
@@ -382,7 +363,6 @@ function loadData() {
       allData = [];
       results.forEach(function(entries) { if (entries) allData = allData.concat(entries); });
       setStatus("ok", "Data loaded");
-      updateUnavailBadge();
       renderTabs();
       renderPage();
     })
@@ -429,6 +409,7 @@ function normaliseRegion(val) {
   if (v.indexOf("northern ireland")>=0||v.indexOf("n. ireland")>=0||v.indexOf("n.ireland")>=0) return "N. Ireland";
   return val;
 }
+
 function normaliseTrainingHrs(val) {
   var v = val.toLowerCase().replace(/\s/g,"");
   if (!v) return "";
@@ -474,7 +455,7 @@ function computeQualifiers(level, region) {
 
   GIRLS_APPARATUS_ORDER.forEach(function(apparatus) {
     var ranked = Object.values(gymnasts)
-      .filter(function(g) { return g.scores[apparatus] !== undefined && !unavailableIds.has(g.memberId); })
+      .filter(function(g) { return g.scores[apparatus] !== undefined; })
       .sort(function(a,b) {
         var diff = b.scores[apparatus] - a.scores[apparatus];
         if (diff !== 0) return diff;
@@ -491,8 +472,12 @@ function computeQualifiers(level, region) {
       var isTiebreak = (ranked[i-1] && ranked[i-1].scores[apparatus] === myScore) ||
                        (ranked[i+1] && ranked[i+1].scores[apparatus] === myScore);
 
+      if (unavailableIds.has(g.memberId)) {
+        qualifiers.push({ gymnast:g, score:myScore, unavailable:true, tiebreak:isTiebreak });
+        i++; continue;
+      }
+
       if (qualifiedIds.has(g.memberId)) {
-        // Already qualified on another apparatus — skip, show with note
         if (qualifiers.length < QUALIFIERS_PER_APPARATUS + 4) {
           qualifiers.push({ gymnast:g, score:myScore, skipped:true, skipReason:"Already qualified", tiebreak:isTiebreak });
         }
@@ -500,7 +485,7 @@ function computeQualifiers(level, region) {
       }
 
       if (spotsLeft > 0) {
-        var isPromoted = qualifiers.some(function(q) { return q.skipped || (q.promoted); });
+        var isPromoted = qualifiers.some(function(q) { return q.skipped || q.promoted || q.unavailable; });
         qualifiers.push({ gymnast:g, score:myScore, skipped:false, tiebreak:isTiebreak, promoted:isPromoted });
         qualifiedIds.add(g.memberId);
         allQualifiers.push({ gymnast:g, apparatus:apparatus, score:myScore, promoted:isPromoted });
@@ -543,10 +528,9 @@ function renderPage() {
     html += '<div class="excluded-note">⚠ <strong>'+excluded+' gymnast'+(excluded!==1?'s':'')+' excluded</strong> — competed on fewer than 3 apparatus and are not eligible.</div>';
   }
 
-  // Summary
   html += '<div class="summary-bar">';
   GIRLS_APPARATUS_ORDER.forEach(function(a) {
-    var count = (qba[a]||[]).filter(function(q){return !q.skipped&&!q.nextUp;}).length;
+    var count = (qba[a]||[]).filter(function(q){return !q.skipped&&!q.nextUp&&!q.unavailable;}).length;
     html += '<div class="summary-card'+(count>=QUALIFIERS_PER_APPARATUS?" full":"")+'"><div class="summary-card-num">'+count+'/'+QUALIFIERS_PER_APPARATUS+'</div><div class="summary-card-lbl">'+a+'</div></div>';
   });
   html += '</div>';
@@ -557,12 +541,11 @@ function renderPage() {
     return;
   }
 
-  // Apparatus cards
   html += '<div class="apparatus-grid">';
   GIRLS_APPARATUS_ORDER.forEach(function(apparatus) {
     var qualifiers = qba[apparatus]||[];
     html += '<div class="apparatus-card"><div class="apparatus-card-header"><div class="apparatus-card-title">'+apparatus+'</div><div class="apparatus-card-sub">Top '+QUALIFIERS_PER_APPARATUS+' · Level '+activeLevel+' · '+activeRegion+'</div></div>';
-    html += '<table class="qualifier-table"><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
+    html += '<table class="qualifier-table"><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
     var pos = 0;
     qualifiers.forEach(function(q) {
       if (!q.skipped && !q.nextUp && !q.unavailable) pos++;
@@ -577,19 +560,27 @@ function renderPage() {
       html += '<td style="font-size:11px;'+strikeStyle+'">'+esc(q.gymnast.club||"—")+'</td>';
       html += '<td class="score-cell" style="'+strikeStyle+'">'+q.score.toFixed(3)+(q.tiebreak&&!q.nextUp&&!q.unavailable?'<span class="tiebreak-note">TB</span>':'')+'</td>';
       html += '<td style="font-size:11px;color:var(--text-light);'+strikeStyle+'">'+q.gymnast.total.toFixed(3)+'</td>';
-      if (q.unavailable) html += '<td><span style="font-size:10px;color:var(--accent);font-weight:700;">✗ Unavailable</span></td><td><button class="restore-btn" onclick="restoreGymnast(\''+esc(q.gymnast.memberId)+'\')">Restore</button></td>';
-      else if (q.nextUp) html += '<td style="font-size:10px;color:var(--gold);font-weight:600;">Next up</td><td></td>';
-      else if (q.skipped) html += '<td style="font-size:10px;color:var(--text-light);">'+esc(q.skipReason)+'</td><td></td>';
-      else if (q.promoted) html += '<td><span class="promoted-badge">★ Promoted</span></td><td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
-      else html += '<td><span class="qualified-badge">✓ Qualified</span></td><td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
+      if (q.unavailable) {
+        html += '<td><span style="font-size:10px;color:var(--accent);font-weight:700;">✗ Unavailable</span></td>';
+        html += '<td><button class="restore-btn" onclick="restoreGymnast(\''+esc(q.gymnast.memberId)+'\')">Restore</button></td>';
+      } else if (q.nextUp) {
+        html += '<td style="font-size:10px;color:var(--gold);font-weight:600;">Next up</td><td></td>';
+      } else if (q.skipped) {
+        html += '<td style="font-size:10px;color:var(--text-light);">'+esc(q.skipReason)+'</td><td></td>';
+      } else if (q.promoted) {
+        html += '<td><span class="promoted-badge">★ Promoted</span></td>';
+        html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
+      } else {
+        html += '<td><span class="qualified-badge">✓ Qualified</span></td>';
+        html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
+      }
       html += '</tr>';
     });
-    if (!qualifiers.length) html += '<tr><td colspan="7" style="padding:16px;text-align:center;color:var(--text-light);font-size:12px;">No scores recorded</td></tr>';
+    if (!qualifiers.length) html += '<tr><td colspan="8" style="padding:16px;text-align:center;color:var(--text-light);font-size:12px;">No scores recorded</td></tr>';
     html += '</tbody></table></div>';
   });
   html += '</div>';
 
-  // Full qualifiers list
   html += '<div class="full-list-title">Full Qualifiers List<span class="full-list-count">'+allQ.length+' of '+(GIRLS_APPARATUS_ORDER.length*QUALIFIERS_PER_APPARATUS)+' places filled</span></div>';
   html += '<table class="full-table"><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
   allQ.forEach(function(q,i) {
@@ -597,7 +588,7 @@ function renderPage() {
     html += '<tr'+(q.promoted?' style="background:rgba(184,151,42,0.04)"':'')+'>';
     html += '<td style="font-weight:700;color:var(--text-light);font-size:12px;">'+(i+1)+'</td>';
     html += '<td class="member-cell">'+esc(q.gymnast.memberId)+'</td>';
-    html += '<td style="font-weight:600;font-size:13px;">'+esc(name||"—")+'</td>';
+    html += '<td style="font-weight:600;">'+esc(name||"—")+'</td>';
     html += '<td>'+esc(q.gymnast.club||"—")+'</td>';
     html += '<td><span class="apparatus-tag">'+esc(q.apparatus)+'</span>'+(q.promoted?' <span style="font-size:10px;color:var(--gold);font-weight:600;">★ Promoted</span>':'')+'</td>';
     html += '<td style="font-weight:700;color:var(--navy);">'+q.score.toFixed(3)+'</td>';
@@ -607,15 +598,15 @@ function renderPage() {
     html += '<td><button class="unavail-btn" onclick="markUnavailable(\''+esc(q.gymnast.memberId)+'\',\''+esc(q.gymnast.club)+'\')">Unavailable</button></td>';
     html += '</tr>';
   });
-  if (!allQ.length) html += '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text-light);">No qualifiers yet</td></tr>';
+  if (!allQ.length) html += '<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text-light);">No qualifiers yet</td></tr>';
   html += '</tbody></table>';
 
-  // Unavailable list
   if (unavailableIds.size > 0) {
     html += '<div class="unavail-section" id="unavail-section"><div class="unavail-section-title">Unavailable Gymnasts <span style="font-size:13px;font-weight:400;color:rgba(200,16,46,0.6)">('+unavailableIds.size+' marked)</span></div>';
-    html += '<table class="unavail-table"><thead><tr><th>Member ID</th><th>Reason</th><th></th></tr></thead><tbody>';
+    html += '<table class="unavail-table"><thead><tr><th>Member ID</th><th>Name</th><th>Reason</th><th></th></tr></thead><tbody>';
     Array.from(unavailableIds).forEach(function(id) {
-      html += '<tr><td class="member-cell">'+esc(id)+'</td><td style="font-size:12px;color:var(--text-mid);">Marked unavailable for finals</td><td><button class="restore-btn" onclick="restoreGymnast(\''+esc(id)+'\')">Restore</button></td></tr>';
+      var name = getName(id);
+      html += '<tr><td class="member-cell">'+esc(id)+'</td><td style="font-weight:600;">'+esc(name||"—")+'</td><td style="font-size:12px;color:var(--text-mid);">Marked unavailable for finals</td><td><button class="restore-btn" onclick="restoreGymnast(\''+esc(id)+'\')">Restore</button></td></tr>';
     });
     html += '</tbody></table></div>';
   }
@@ -623,7 +614,7 @@ function renderPage() {
   document.getElementById("page-body").innerHTML = html;
 }
 
-function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 </script>
 </body>
 </html>
