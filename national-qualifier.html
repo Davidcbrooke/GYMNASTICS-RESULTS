@@ -219,7 +219,25 @@ function loadUnavailable() {
   return new Set(); // start empty, loaded async after login
 }
 
-function fetchUnavailable() {
+function fetchNames() {
+  return fetch(RAW_BASE + NAMES_FILE)
+    .then(function(r) { if (!r.ok) throw new Error("Names file not found"); return r.arrayBuffer(); })
+    .then(function(buf) {
+      var wb = XLSX.read(new Uint8Array(buf), { type:"array" });
+      var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:"" });
+      rows.forEach(function(r) {
+        var id = String(r["Mid"]||r["BG Number"]||r["Member ID"]||"").trim();
+        var first = String(r["FirstName"]||r["First Name"]||"").trim();
+        var last = String(r["LastName"]||r["Last Name"]||"").trim();
+        if (id) namesLookup[id] = (first + " " + last).trim();
+      });
+    })
+    .catch(function(err) { console.warn("Could not load names:", err); });
+}
+
+function getName(memberId) {
+  return namesLookup[memberId] || "";
+}
   return fetch("https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + UNAVAILABLE_FILE + "?ref=" + BRANCH, {
     headers: { "Authorization": "token " + GITHUB_TOKEN, "Accept": "application/vnd.github.v3+json" }
   })
@@ -278,6 +296,7 @@ function checkPassword() {
     GITHUB_TOKEN = token;
     document.getElementById("login-wrap").style.display = "none";
     document.getElementById("app").className = "app visible";
+    fetchNames();
     loadData();
     fetchUnavailable();
   } else {
@@ -543,16 +562,18 @@ function renderPage() {
   GIRLS_APPARATUS_ORDER.forEach(function(apparatus) {
     var qualifiers = qba[apparatus]||[];
     html += '<div class="apparatus-card"><div class="apparatus-card-header"><div class="apparatus-card-title">'+apparatus+'</div><div class="apparatus-card-sub">Top '+QUALIFIERS_PER_APPARATUS+' · Level '+activeLevel+' · '+activeRegion+'</div></div>';
-    html += '<table class="qualifier-table"><thead><tr><th>#</th><th>Member ID</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
+    html += '<table class="qualifier-table"><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
     var pos = 0;
     qualifiers.forEach(function(q) {
       if (!q.skipped && !q.nextUp && !q.unavailable) pos++;
       var rc = pos===1?"pos-1":pos===2?"pos-2":pos===3?"pos-3":"";
       var rowClass = q.unavailable?"skipped-row":q.nextUp?"next-up-row":q.promoted?"promoted-row":"";
       var strikeStyle = q.unavailable?"text-decoration:line-through;":"";
+      var name = getName(q.gymnast.memberId);
       html += '<tr class="'+rowClass+'">';
       html += '<td class="pos-cell '+rc+'">'+(q.nextUp||q.skipped||q.unavailable?"—":pos)+'</td>';
       html += '<td class="member-cell" style="'+strikeStyle+'">'+esc(q.gymnast.memberId)+'</td>';
+      html += '<td style="font-size:12px;font-weight:600;'+strikeStyle+'">'+esc(name||"—")+'</td>';
       html += '<td style="font-size:11px;'+strikeStyle+'">'+esc(q.gymnast.club||"—")+'</td>';
       html += '<td class="score-cell" style="'+strikeStyle+'">'+q.score.toFixed(3)+(q.tiebreak&&!q.nextUp&&!q.unavailable?'<span class="tiebreak-note">TB</span>':'')+'</td>';
       html += '<td style="font-size:11px;color:var(--text-light);'+strikeStyle+'">'+q.gymnast.total.toFixed(3)+'</td>';
@@ -570,11 +591,13 @@ function renderPage() {
 
   // Full qualifiers list
   html += '<div class="full-list-title">Full Qualifiers List<span class="full-list-count">'+allQ.length+' of '+(GIRLS_APPARATUS_ORDER.length*QUALIFIERS_PER_APPARATUS)+' places filled</span></div>';
-  html += '<table class="full-table"><thead><tr><th>#</th><th>Member ID</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
+  html += '<table class="full-table"><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
   allQ.forEach(function(q,i) {
+    var name = getName(q.gymnast.memberId);
     html += '<tr'+(q.promoted?' style="background:rgba(184,151,42,0.04)"':'')+'>';
     html += '<td style="font-weight:700;color:var(--text-light);font-size:12px;">'+(i+1)+'</td>';
     html += '<td class="member-cell">'+esc(q.gymnast.memberId)+'</td>';
+    html += '<td style="font-weight:600;font-size:13px;">'+esc(name||"—")+'</td>';
     html += '<td>'+esc(q.gymnast.club||"—")+'</td>';
     html += '<td><span class="apparatus-tag">'+esc(q.apparatus)+'</span>'+(q.promoted?' <span style="font-size:10px;color:var(--gold);font-weight:600;">★ Promoted</span>':'')+'</td>';
     html += '<td style="font-weight:700;color:var(--navy);">'+q.score.toFixed(3)+'</td>';
