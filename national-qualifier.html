@@ -201,7 +201,9 @@ var names = {};
 var pendingFn = null;
 var TOKEN = "";
 var currentQ = [];
-var minApparatus = 3; // 0 = all gymnasts, 3 = 3+ apparatus only
+var minApparatus = 3;
+var QUALS_PER = 3;
+var qualsPerApp = { "Floor": 3, "Uneven Bars": 3, "Vault": 3, "Balance Beam": 3 };
 
 function doLogin() {
   var pw = document.getElementById("password-input").value;
@@ -402,7 +404,7 @@ function computeQuals(level, region) {
       .filter(function(gy){return gy.scores[app]!==undefined;})
       .sort(function(a,b){ var d=b.scores[app]-a.scores[app]; return d!==0?d:b.total-a.total; });
 
-    var list=[], spots=QUALS_PER, i=0;
+    var list=[], spots=qualsPerApp[app]||QUALS_PER, i=0;
     while (i<ranked.length) {
       var gy=ranked[i], sc=gy.scores[app];
       var tb=(ranked[i-1]&&ranked[i-1].scores[app]===sc)||(ranked[i+1]&&ranked[i+1].scores[app]===sc);
@@ -439,7 +441,8 @@ function renderTabs() {
     return '<button class="tab-btn'+(r===activeRegion?" active":"")+'" onclick="switchRegion(\''+esc(r)+'\')">'+esc(r)+'</button>';
   }).join("");
 }
-function updatePlaces(val) { var n = parseInt(val); if (!isNaN(n) && n >= 1) { QUALS_PER = n; renderPage(); } }
+function updateAppPlaces(app, val) { var n=parseInt(val); if (!isNaN(n)&&n>=1) { qualsPerApp[app]=n; QUALS_PER=n; renderPage(); } }
+function updatePlaces(val) { var n=parseInt(val); if (!isNaN(n)&&n>=1) { QUALS_PER=n; renderPage(); } }
 function toggleEligibility(checked) { minApparatus = checked ? 3 : 0; renderPage(); }
 function switchLevel(l){activeLevel=l;renderTabs();renderPage();}
 function switchRegion(r){activeRegion=r;renderTabs();renderPage();}
@@ -451,13 +454,21 @@ function renderPage() {
   var html="";
 
   // Eligibility toggle and places control
-  html+='<div class="filter-toggle">';
+  var totalPlaces = GIRLS_APPARATUS.reduce(function(t,a){return t+(qualsPerApp[a]||3);},0);
+  html+='<div class="filter-toggle" style="flex-wrap:wrap;gap:14px;">';
+  html+='<div style="display:flex;align-items:center;gap:12px;">';
   html+='<label class="toggle-switch"><input type="checkbox" id="eligibility-toggle" '+(minApparatus===3?"checked":"")+' onchange="toggleEligibility(this.checked)"><span class="toggle-slider"></span></label>';
   html+='<div><div class="filter-toggle-label">3+ Apparatus Only</div>';
-  html+='<div class="filter-toggle-sub">'+(minApparatus===3?"Showing only gymnasts who have competed on 3 or more apparatus":"Showing all gymnasts regardless of apparatus count")+'</div></div>';
-  html+='<div style="margin-left:auto;display:flex;align-items:center;gap:10px;">';
-  html+='<div><div class="filter-toggle-label">Places per Apparatus</div><div class="filter-toggle-sub">Total places: '+(QUALS_PER*GIRLS_APPARATUS.length)+'</div></div>';
-  html+='<input type="number" min="1" max="20" value="'+QUALS_PER+'" onchange="updatePlaces(this.value)" style="width:60px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-weight:700;color:var(--navy);text-align:center;outline:none;">';
+  html+='<div class="filter-toggle-sub">'+(minApparatus===3?"3+ apparatus only":"All gymnasts")+'</div></div>';
+  html+='</div>';
+  html+='<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-left:auto;">';
+  html+='<div style="font-size:11px;color:var(--text-light);font-weight:600;">PLACES PER APPARATUS <span style="color:var(--navy);">(Total: '+totalPlaces+')</span></div>';
+  GIRLS_APPARATUS.forEach(function(a){
+    html+='<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">';
+    html+='<div style="font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;">'+a.split(' ')[0]+'</div>';
+    html+='<input type="number" min="1" max="20" value="'+(qualsPerApp[a]||3)+'" onchange="updateAppPlaces(\''+a+'\',this.value)" style="width:52px;padding:5px 8px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-weight:700;color:var(--navy);text-align:center;outline:none;">';
+    html+='</div>';
+  });
   html+='</div>';
   html+='</div>';
 
@@ -466,7 +477,8 @@ function renderPage() {
   html+='<div class="summary-bar">';
   GIRLS_APPARATUS.forEach(function(a){
     var cnt=(res.byApp[a]||[]).filter(function(q){return !q.skipped&&!q.nextUp&&!q.unavail;}).length;
-    html+='<div class="summary-card'+(cnt>=QUALS_PER?" full":"")+'"><div class="summary-card-num">'+cnt+'/'+QUALS_PER+'</div><div class="summary-card-lbl">'+a+'</div></div>';
+    var places=qualsPerApp[a]||QUALS_PER;
+    html+='<div class="summary-card'+(cnt>=places?" full":"")+'"><div class="summary-card-num">'+cnt+'/'+places+'</div><div class="summary-card-lbl">'+a+'</div></div>';
   });
   html+='</div>';
 
@@ -475,7 +487,7 @@ function renderPage() {
   html+='<div class="apparatus-grid">';
   GIRLS_APPARATUS.forEach(function(app){
     var list=res.byApp[app]||[];
-    html+='<div class="apparatus-card"><div class="apparatus-card-header"><div class="apparatus-card-title">'+app+'</div><div class="apparatus-card-sub">Top '+QUALS_PER+' · Level '+activeLevel+' · '+activeRegion+'</div></div>';
+    html+='<div class="apparatus-card"><div class="apparatus-card-header"><div class="apparatus-card-title">'+app+'</div><div class="apparatus-card-sub">Top '+(qualsPerApp[app]||QUALS_PER)+' · Level '+activeLevel+' · '+activeRegion+'</div></div>';
     html+='<table class="qualifier-table"><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
     var pos=0;
     list.forEach(function(q){
@@ -512,7 +524,8 @@ function renderPage() {
   });
   html+='</div>';
 
-  html+='<div class="full-list-title">Full Qualifiers List<span class="full-list-count">'+currentQ.length+' of '+(GIRLS_APPARATUS.length*QUALS_PER)+' places filled</span></div>';
+  var totalQ=GIRLS_APPARATUS.reduce(function(t,a){return t+(qualsPerApp[a]||QUALS_PER);},0);
+  html+='<div class="full-list-title">Full Qualifiers List<span class="full-list-count">'+currentQ.length+' of '+totalQ+' places filled</span></div>';
   html+='<div class="export-bar">';
   html+='<button class="export-btn export-excel" onclick="exportExcel()">⬇ Download Excel</button>';
   html+='<button class="export-btn export-pdf" onclick="exportPDF()">⬇ Download PDF</button>';
