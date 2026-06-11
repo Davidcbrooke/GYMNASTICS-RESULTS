@@ -76,8 +76,18 @@
   .unavail-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--red-light); }
   .restore-btn { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(22,163,74,0.3); background: var(--green-light); color: var(--green); white-space: nowrap; }
   .restore-btn:hover { background: rgba(22,163,74,0.15); }
-  .export-bar { display: flex; gap: 10px; margin-bottom: 14px; }
-  .export-btn { padding: 9px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
+  .filter-toggle { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin-bottom: 20px; box-shadow: var(--shadow); flex-wrap: wrap; }
+  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 24px; cursor: pointer; transition: 0.2s; }
+  .toggle-slider:before { content:""; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+  input:checked + .toggle-slider { background: var(--navy); }
+  input:checked + .toggle-slider:before { transform: translateX(20px); }
+  .export-bar { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; align-items: flex-end; }
+  .export-group { display: flex; flex-direction: column; gap: 6px; }
+  .export-group-label { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.08em; }
+  .export-btns { display: flex; gap: 8px; }
+  .export-btn { padding: 9px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; }
   .export-excel { background: #16a34a; color: #fff; }
   .export-excel:hover { background: #15803d; }
   .export-pdf { background: var(--accent); color: #fff; }
@@ -98,15 +108,6 @@
   .unavail-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); text-transform: uppercase; }
   .unavail-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); }
   .unavail-table tr:last-child td { border-bottom: none; }
-  .filter-toggle { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin-bottom: 20px; box-shadow: var(--shadow); }
-  .filter-toggle-label { font-size: 13px; font-weight: 600; color: var(--navy); }
-  .filter-toggle-sub { font-size: 11px; color: var(--text-light); margin-top: 1px; }
-  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
-  .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 24px; cursor: pointer; transition: 0.2s; }
-  .toggle-slider:before { content:""; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
-  input:checked + .toggle-slider { background: var(--navy); }
-  input:checked + .toggle-slider:before { transform: translateX(20px); }
   .empty-msg { text-align: center; padding: 40px; color: var(--text-light); background: #fff; border-radius: 12px; box-shadow: var(--shadow); font-size: 14px; }
   .confirm-overlay { position: fixed; inset: 0; background: rgba(26,35,64,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
   .confirm-modal { background: #fff; border-radius: 16px; padding: 32px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(26,35,64,0.3); text-align: center; }
@@ -115,14 +116,11 @@
   .confirm-btns { display: flex; gap: 10px; }
   .confirm-yes { flex: 1; padding: 11px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .confirm-no { flex: 1; padding: 11px; background: var(--off-white); color: var(--text-mid); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  @media (max-width: 900px) {
-    .apparatus-grid { grid-template-columns: 1fr; }
-    .summary-bar { grid-template-columns: repeat(2, 1fr); }
-  }
   @media (max-width: 768px) {
     .page-body { padding: 16px; }
     .tab-row { padding: 0 12px; }
     .page-header { padding: 16px; }
+    .summary-bar { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -155,7 +153,7 @@
     <div class="page-header-inner">
       <div>
         <div class="page-title">National Finals Qualifiers</div>
-        <div class="page-sub">Girls · Top 3 per apparatus · 12 places per Level per Region · Min. 3 apparatus</div>
+        <div class="page-sub">Girls · Top places per apparatus · Per Level · Per Region · Min. 3 apparatus</div>
       </div>
       <div class="header-right">
         <div id="unavail-badge" style="display:none" class="unavail-count-badge" onclick="scrollToUnavailable()"></div>
@@ -184,13 +182,14 @@ var BRANCH = "main";
 var PASSWORD = "saadi2026";
 var GIRLS_APPARATUS = ["Floor", "Uneven Bars", "Vault", "Balance Beam"];
 var QUALS_PER = 3;
-var LEVELS = ["A", "B", "C"];
-var REGIONS = ["N. Ireland", "West Midlands", "East", "South West", "East Midlands"];
+var qualsPerApp = {"Floor":3,"Uneven Bars":3,"Vault":3,"Balance Beam":3};
+var LEVELS = ["A","B","C"];
+var REGIONS = ["N. Ireland","West Midlands","East","South West","East Midlands"];
 var UNAVAIL_FILE = "unavailable.json";
 var NAMES_FILE = "gymnast-names.xlsx";
 
-var RAW = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/" + BRANCH + "/";
-var API = "https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/";
+var RAW = "https://raw.githubusercontent.com/"+GITHUB_USER+"/"+GITHUB_REPO+"/"+BRANCH+"/";
+var API = "https://api.github.com/repos/"+GITHUB_USER+"/"+GITHUB_REPO+"/contents/";
 
 var allData = [];
 var activeLevel = "A";
@@ -202,8 +201,6 @@ var pendingFn = null;
 var TOKEN = "";
 var currentQ = [];
 var minApparatus = 3;
-var QUALS_PER = 3;
-var qualsPerApp = { "Floor": 3, "Uneven Bars": 3, "Vault": 3, "Balance Beam": 3 };
 
 function doLogin() {
   var pw = document.getElementById("password-input").value;
@@ -222,12 +219,12 @@ function doLogin() {
   }
 }
 
-function setStatus(s, m) {
-  document.getElementById("status-dot").className = "status-dot " + s;
+function setStatus(s,m) {
+  document.getElementById("status-dot").className = "status-dot "+s;
   document.getElementById("status-text").textContent = m;
 }
 
-function showConfirm(title, sub, label, fn) {
+function showConfirm(title,sub,label,fn) {
   document.getElementById("confirm-title").textContent = title;
   document.getElementById("confirm-sub").textContent = sub;
   document.getElementById("confirm-yes-btn").textContent = label;
@@ -244,67 +241,63 @@ document.getElementById("confirm-yes-btn").addEventListener("click", function() 
 });
 
 function fetchNames() {
-  fetch(RAW + NAMES_FILE)
-    .then(function(r) { return r.arrayBuffer(); })
-    .then(function(buf) {
-      var wb = XLSX.read(new Uint8Array(buf), { type:"array" });
-      var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:"" });
-      rows.forEach(function(r) {
+  fetch(RAW+NAMES_FILE)
+    .then(function(r){return r.arrayBuffer();})
+    .then(function(buf){
+      var wb = XLSX.read(new Uint8Array(buf),{type:"array"});
+      XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""}).forEach(function(r){
         var id = String(r["Mid"]||r["BG Number"]||r["Member ID"]||"").trim();
         var fn = String(r["FirstName"]||r["First Name"]||"").trim();
         var ln = String(r["LastName"]||r["Last Name"]||"").trim();
-        if (id) names[id] = (fn + " " + ln).trim();
+        if (id) names[id] = (fn+" "+ln).trim();
       });
     })
-    .catch(function(e) { console.warn("Names:", e); });
+    .catch(function(e){console.warn("Names:",e);});
 }
 
-function getName(id) { return names[id] || ""; }
+function getName(id) { return names[id]||""; }
 
 function fetchUnavail() {
-  fetch(API + UNAVAIL_FILE + "?ref=" + BRANCH, {
-    headers: { "Authorization": "token " + TOKEN, "Accept": "application/vnd.github.v3+json" }
-  })
-  .then(function(r) { if (r.status === 404) return null; return r.json(); })
-  .then(function(d) {
-    if (!d) return;
-    unavailSha = d.sha;
-    var ids = JSON.parse(atob(d.content.replace(/\n/g,"")));
-    unavailIds = new Set(ids);
-    updateBadge();
-    renderPage();
-  })
-  .catch(function(e) { console.warn("Unavail fetch:", e); });
+  fetch(API+UNAVAIL_FILE+"?ref="+BRANCH,{headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json"}})
+    .then(function(r){if(r.status===404)return null;return r.json();})
+    .then(function(d){
+      if (!d) return;
+      unavailSha = d.sha;
+      unavailIds = new Set(JSON.parse(atob(d.content.replace(/\n/g,""))));
+      updateBadge();
+      renderPage();
+    })
+    .catch(function(e){console.warn("Unavail:",e);});
 }
 
 function saveUnavail() {
-  var body = { message:"Update unavailable list", content:btoa(JSON.stringify(Array.from(unavailIds))), branch:BRANCH };
+  var body = {message:"Update unavailable list",content:btoa(JSON.stringify(Array.from(unavailIds))),branch:BRANCH};
   if (unavailSha) body.sha = unavailSha;
   setStatus("loading","Saving...");
-  fetch(API + UNAVAIL_FILE, {
+  fetch(API+UNAVAIL_FILE,{
     method:"PUT",
-    headers:{ "Authorization":"token "+TOKEN, "Accept":"application/vnd.github.v3+json", "Content-Type":"application/json" },
+    headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json","Content-Type":"application/json"},
     body:JSON.stringify(body)
   })
-  .then(function(r) { if (!r.ok) return r.json().then(function(e){ throw new Error(e.message||r.status); }); return r.json(); })
-  .then(function(d) { unavailSha = d.content.sha; setStatus("ok","Saved"); setTimeout(function(){ setStatus("ok","Data loaded"); },2000); })
-  .catch(function(e) { setStatus("error","Save failed: "+e.message); alert("Could not save: "+e.message); });
+  .then(function(r){if(!r.ok)return r.json().then(function(e){throw new Error(e.message||r.status);});return r.json();})
+  .then(function(d){unavailSha=d.content.sha;setStatus("ok","Saved");setTimeout(function(){setStatus("ok","Data loaded");},2000);})
+  .catch(function(e){setStatus("error","Save failed: "+e.message);alert("Could not save: "+e.message);});
 }
 
-function markUnavail(id, club) {
-  showConfirm("Mark as Unavailable?", "Member ID "+id+(club?" ("+club+")":"")+" will be removed from all qualifier spots. This will be saved across all devices.", "Mark Unavailable", function() {
-    unavailIds.add(id); saveUnavail(); updateBadge(); renderPage();
+function markUnavail(id,club) {
+  showConfirm("Mark as Unavailable?","Member ID "+id+(club?" ("+club+")":"")+" will be removed from all qualifier spots. This will be saved across all devices.","Mark Unavailable",function(){
+    unavailIds.add(id);saveUnavail();updateBadge();renderPage();
   });
 }
 function restoreGymnast(id) {
-  showConfirm("Restore Gymnast?", "Member ID "+id+" will be reinstated as available.", "Restore", function() {
-    unavailIds.delete(id); saveUnavail(); updateBadge(); renderPage();
+  showConfirm("Restore Gymnast?","Member ID "+id+" will be reinstated as available.","Restore",function(){
+    unavailIds.delete(id);saveUnavail();updateBadge();renderPage();
   });
 }
 function updateBadge() {
   var b = document.getElementById("unavail-badge");
-  if (unavailIds.size > 0) { b.style.display=""; b.textContent=unavailIds.size+" Unavailable"; }
-  else { b.style.display="none"; }
+  if (unavailIds.size>0){b.style.display="";b.textContent=unavailIds.size+" Unavailable";}
+  else{b.style.display="none";}
 }
 function scrollToUnavailable() {
   var el = document.getElementById("unavail-section");
@@ -313,167 +306,164 @@ function scrollToUnavailable() {
 
 function loadData() {
   setStatus("loading","Loading...");
-  fetch(API + "?ref=" + BRANCH, { headers:{"Accept":"application/vnd.github.v3+json"} })
-    .then(function(r) { return r.json(); })
-    .then(function(files) {
-      var xl = files.filter(function(f) { return f.type==="file" && f.name.toLowerCase().endsWith(".xlsx") && f.name.toLowerCase()!==NAMES_FILE; });
-      return Promise.all(xl.map(function(f) { return loadFile(f.name); }));
+  fetch(API+"?ref="+BRANCH,{headers:{"Accept":"application/vnd.github.v3+json"}})
+    .then(function(r){return r.json();})
+    .then(function(files){
+      var xl = files.filter(function(f){return f.type==="file"&&f.name.toLowerCase().endsWith(".xlsx")&&f.name.toLowerCase()!==NAMES_FILE;});
+      return Promise.all(xl.map(function(f){return loadFile(f.name);}));
     })
-    .then(function(results) {
-      allData = [];
-      results.forEach(function(e) { if (e) allData = allData.concat(e); });
+    .then(function(results){
+      allData=[];
+      results.forEach(function(e){if(e)allData=allData.concat(e);});
       setStatus("ok","Data loaded");
       renderTabs();
       renderPage();
     })
-    .catch(function(e) { console.error(e); setStatus("error","Failed to load"); });
+    .catch(function(e){console.error(e);setStatus("error","Failed to load");});
 }
 
 function loadFile(name) {
-  return fetch(RAW + name)
-    .then(function(r) { return r.arrayBuffer(); })
-    .then(function(buf) {
-      var wb = XLSX.read(new Uint8Array(buf), {type:"array"});
-      var out = [];
-      wb.SheetNames.forEach(function(sn) {
-        XLSX.utils.sheet_to_json(wb.Sheets[sn], {defval:""}).forEach(function(r) {
-          var score = parseFloat(r["Final Score"]||r["FinalScore"]||r["Score"]||"");
-          if (isNaN(score)) return;
-          var id = String(r["Member ID"]||r["BG Number"]||"").trim();
-          if (!id) return;
-          var gender = String(r["Gender"]||"").trim().toLowerCase();
-          if (gender && gender !== "girls") return;
+  return fetch(RAW+name)
+    .then(function(r){return r.arrayBuffer();})
+    .then(function(buf){
+      var wb = XLSX.read(new Uint8Array(buf),{type:"array"});
+      var out=[];
+      wb.SheetNames.forEach(function(sn){
+        XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:""}).forEach(function(r){
+          var score=parseFloat(r["Final Score"]||r["FinalScore"]||r["Score"]||"");
+          if(isNaN(score))return;
+          var id=String(r["Member ID"]||r["BG Number"]||"").trim();
+          if(!id)return;
+          var gender=String(r["Gender"]||"").trim().toLowerCase();
+          if(gender&&gender!=="girls")return;
           out.push({
-            memberId: id,
-            club: String(r["Club"]||"").trim(),
-            ageCategory: String(r["Age Category"]||r["AgeCategory"]||"").trim(),
-            level: String(r["Level"]||"").trim().toUpperCase(),
-            score: score,
-            region: normRegion(String(r["Region"]||"").trim()),
-            trainingHrs: normHrs(String(r["Training Hrs"]||r["TrainingHrs"]||r["Training Hours"]||"").trim()),
-            apparatus: sn
+            memberId:id,
+            club:String(r["Club"]||"").trim(),
+            ageCategory:String(r["Age Category"]||r["AgeCategory"]||"").trim(),
+            level:String(r["Level"]||"").trim().toUpperCase(),
+            score:score,
+            region:normRegion(String(r["Region"]||"").trim()),
+            trainingHrs:normHrs(String(r["Training Hrs"]||r["TrainingHrs"]||r["Training Hours"]||"").trim()),
+            apparatus:sn
           });
         });
       });
       return out;
     })
-    .catch(function() { return []; });
+    .catch(function(){return[];});
 }
 
 function normRegion(v) {
-  if (!v) return "";
-  var l = v.toLowerCase();
-  if (l.indexOf("northern ireland")>=0||l.indexOf("n. ireland")>=0||l.indexOf("n.ireland")>=0) return "N. Ireland";
+  if(!v)return"";
+  var l=v.toLowerCase();
+  if(l.indexOf("northern ireland")>=0||l.indexOf("n. ireland")>=0||l.indexOf("n.ireland")>=0)return"N. Ireland";
   return v;
 }
 function normHrs(v) {
-  var l = v.toLowerCase().replace(/\s/g,"");
-  if (!l) return "";
-  if (l.indexOf("6-10")>=0||l==="10"||l==="10hrs") return "6-10hrs";
-  if (l.indexOf("2-5")>=0) return "2-5hrs";
+  var l=v.toLowerCase().replace(/\s/g,"");
+  if(!l)return"";
+  if(l.indexOf("6-10")>=0||l==="10"||l==="10hrs")return"6-10hrs";
+  if(l.indexOf("2-5")>=0)return"2-5hrs";
   return v;
 }
 
-function buildScores(level, region) {
-  var g = {};
-  allData.forEach(function(e) {
-    if (e.level!==level||e.region!==region) return;
-    if (!g[e.memberId]) g[e.memberId]={memberId:e.memberId,club:e.club,ageCategory:e.ageCategory,trainingHrs:e.trainingHrs,scores:{},total:0};
+function buildScores(level,region) {
+  var g={};
+  allData.forEach(function(e){
+    if(e.level!==level||e.region!==region)return;
+    if(!g[e.memberId])g[e.memberId]={memberId:e.memberId,club:e.club,ageCategory:e.ageCategory,trainingHrs:e.trainingHrs,scores:{},total:0};
     var gy=g[e.memberId];
-    if (e.club) gy.club=e.club;
-    if (!gy.scores[e.apparatus]||e.score>gy.scores[e.apparatus]) gy.scores[e.apparatus]=e.score;
+    if(e.club)gy.club=e.club;
+    if(!gy.scores[e.apparatus]||e.score>gy.scores[e.apparatus])gy.scores[e.apparatus]=e.score;
   });
-  Object.values(g).forEach(function(gy){ gy.total=0; Object.values(gy.scores).forEach(function(s){gy.total+=s;}); gy.total=Math.round(gy.total*1000)/1000; });
-  var eligible={}, total=Object.keys(g).length;
+  Object.values(g).forEach(function(gy){gy.total=0;Object.values(gy.scores).forEach(function(s){gy.total+=s;});gy.total=Math.round(gy.total*1000)/1000;});
+  var eligible={},total=Object.keys(g).length;
   Object.keys(g).forEach(function(id){
     var cnt=GIRLS_APPARATUS.filter(function(a){return g[id].scores[a]!==undefined;}).length;
-    if (minApparatus===0||cnt>=3) eligible[id]=g[id];
+    if(minApparatus===0||cnt>=3)eligible[id]=g[id];
   });
-  return {eligible:eligible,total:total,eligibleCount:Object.keys(eligible).length};
+  return{eligible:eligible,total:total,eligibleCount:Object.keys(eligible).length};
 }
 
-function computeQuals(level, region) {
-  var res = buildScores(level, region);
-  var g = res.eligible;
-  var qualIds = new Set();
-  var byApp = {};
-  var allQ = [];
+function computeQuals(level,region) {
+  var res=buildScores(level,region);
+  var g=res.eligible;
+  var qualIds=new Set();
+  var byApp={};
+  var allQ=[];
 
-  GIRLS_APPARATUS.forEach(function(app) {
-    var ranked = Object.values(g)
+  GIRLS_APPARATUS.forEach(function(app){
+    var spots=qualsPerApp[app]||QUALS_PER;
+    var ranked=Object.values(g)
       .filter(function(gy){return gy.scores[app]!==undefined;})
-      .sort(function(a,b){ var d=b.scores[app]-a.scores[app]; return d!==0?d:b.total-a.total; });
+      .sort(function(a,b){var d=b.scores[app]-a.scores[app];return d!==0?d:b.total-a.total;});
 
-    var list=[], spots=qualsPerApp[app]||QUALS_PER, i=0;
-    while (i<ranked.length) {
-      var gy=ranked[i], sc=gy.scores[app];
+    var list=[],i=0;
+    while(i<ranked.length){
+      var gy=ranked[i],sc=gy.scores[app];
       var tb=(ranked[i-1]&&ranked[i-1].scores[app]===sc)||(ranked[i+1]&&ranked[i+1].scores[app]===sc);
 
-      if (unavailIds.has(gy.memberId)) {
-        list.push({gy:gy,sc:sc,unavail:true,tb:tb}); i++; continue;
+      if(unavailIds.has(gy.memberId)){
+        list.push({gy:gy,sc:sc,unavail:true,tb:tb});i++;continue;
       }
-      if (qualIds.has(gy.memberId)) {
-        if (list.length<QUALS_PER+4) list.push({gy:gy,sc:sc,skipped:true,tb:tb});
-        i++; continue;
+      if(qualIds.has(gy.memberId)){
+        if(list.length<spots+4)list.push({gy:gy,sc:sc,skipped:true,tb:tb});
+        i++;continue;
       }
-      if (spots>0) {
+      if(spots>0){
         var promoted=list.some(function(q){return q.skipped||q.promoted||q.unavail;});
         list.push({gy:gy,sc:sc,tb:tb,promoted:promoted});
         qualIds.add(gy.memberId);
         allQ.push({gy:gy,app:app,sc:sc,promoted:promoted});
         spots--;
       } else {
-        if (list.filter(function(q){return q.nextUp;}).length<2) list.push({gy:gy,sc:sc,nextUp:true,tb:tb});
+        if(list.filter(function(q){return q.nextUp;}).length<2)list.push({gy:gy,sc:sc,nextUp:true,tb:tb});
         else break;
       }
       i++;
     }
     byApp[app]=list;
   });
-  return {byApp:byApp,allQ:allQ,total:res.total,eligibleCount:res.eligibleCount};
+  return{byApp:byApp,allQ:allQ,total:res.total,eligibleCount:res.eligibleCount};
 }
 
 function renderTabs() {
-  document.getElementById("level-tabs").innerHTML = LEVELS.map(function(l){
-    return '<button class="tab-btn'+(l===activeLevel?" active":"")+'" onclick="switchLevel(\''+l+'\')">Level '+l+'</button>';
+  document.getElementById("level-tabs").innerHTML=LEVELS.map(function(l){
+    return'<button class="tab-btn'+(l===activeLevel?" active":"")+'" onclick="switchLevel(\''+l+'\')">Level '+l+'</button>';
   }).join("");
-  document.getElementById("region-tabs").innerHTML = REGIONS.map(function(r){
-    return '<button class="tab-btn'+(r===activeRegion?" active":"")+'" onclick="switchRegion(\''+esc(r)+'\')">'+esc(r)+'</button>';
+  document.getElementById("region-tabs").innerHTML=REGIONS.map(function(r){
+    return'<button class="tab-btn'+(r===activeRegion?" active":"")+'" onclick="switchRegion(\''+esc(r)+'\')">'+esc(r)+'</button>';
   }).join("");
 }
-function updateAppPlaces(app, val) { var n=parseInt(val); if (!isNaN(n)&&n>=1) { qualsPerApp[app]=n; QUALS_PER=n; renderPage(); } }
-function updatePlaces(val) { var n=parseInt(val); if (!isNaN(n)&&n>=1) { QUALS_PER=n; renderPage(); } }
-function toggleEligibility(checked) { minApparatus = checked ? 3 : 0; renderPage(); }
 function switchLevel(l){activeLevel=l;renderTabs();renderPage();}
 function switchRegion(r){activeRegion=r;renderTabs();renderPage();}
+function toggleEligibility(checked){minApparatus=checked?3:0;renderPage();}
+function updateAppPlaces(app,val){var n=parseInt(val);if(!isNaN(n)&&n>=1){qualsPerApp[app]=n;QUALS_PER=n;renderPage();}}
 
 function renderPage() {
   var res=computeQuals(activeLevel,activeRegion);
   currentQ=res.allQ;
-  var excluded=res.total-res.eligibleCount;
+  var totalPlaces=GIRLS_APPARATUS.reduce(function(t,a){return t+(qualsPerApp[a]||QUALS_PER);},0);
   var html="";
 
-  // Eligibility toggle and places control
-  var totalPlaces = GIRLS_APPARATUS.reduce(function(t,a){return t+(qualsPerApp[a]||3);},0);
-  html+='<div class="filter-toggle" style="flex-wrap:wrap;gap:14px;">';
+  // Controls bar
+  html+='<div class="filter-toggle">';
   html+='<div style="display:flex;align-items:center;gap:12px;">';
-  html+='<label class="toggle-switch"><input type="checkbox" id="eligibility-toggle" '+(minApparatus===3?"checked":"")+' onchange="toggleEligibility(this.checked)"><span class="toggle-slider"></span></label>';
-  html+='<div><div class="filter-toggle-label">3+ Apparatus Only</div>';
-  html+='<div class="filter-toggle-sub">'+(minApparatus===3?"3+ apparatus only":"All gymnasts")+'</div></div>';
+  html+='<label class="toggle-switch"><input type="checkbox" '+(minApparatus===3?"checked":"")+' onchange="toggleEligibility(this.checked)"><span class="toggle-slider"></span></label>';
+  html+='<div><div style="font-size:13px;font-weight:600;color:var(--navy);">3+ Apparatus Only</div>';
+  html+='<div style="font-size:11px;color:var(--text-light);">'+(minApparatus===3?"3+ apparatus only":"All gymnasts")+'</div></div>';
   html+='</div>';
-  html+='<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-left:auto;">';
+  html+='<div style="margin-left:auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">';
   html+='<div style="font-size:11px;color:var(--text-light);font-weight:600;">PLACES PER APPARATUS <span style="color:var(--navy);">(Total: '+totalPlaces+')</span></div>';
   GIRLS_APPARATUS.forEach(function(a){
     html+='<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">';
-    html+='<div style="font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;">'+a.split(' ')[0]+'</div>';
-    html+='<input type="number" min="1" max="20" value="'+(qualsPerApp[a]||3)+'" onchange="updateAppPlaces(\''+a+'\',this.value)" style="width:52px;padding:5px 8px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-weight:700;color:var(--navy);text-align:center;outline:none;">';
+    html+='<div style="font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;">'+a.split(" ")[0]+'</div>';
+    html+='<input type="number" min="1" max="20" value="'+(qualsPerApp[a]||QUALS_PER)+'" onchange="updateAppPlaces(\''+a+'\',this.value)" style="width:52px;padding:5px 8px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-weight:700;color:var(--navy);text-align:center;outline:none;">';
     html+='</div>';
   });
-  html+='</div>';
-  html+='</div>';
+  html+='</div></div>';
 
-  if (excluded>0) html+='<div class="excluded-note">⚠ <strong>'+excluded+' gymnast'+(excluded!==1?'s':'')+' excluded</strong> — fewer than 3 apparatus.</div>';
-
+  // Summary
   html+='<div class="summary-bar">';
   GIRLS_APPARATUS.forEach(function(a){
     var cnt=(res.byApp[a]||[]).filter(function(q){return !q.skipped&&!q.nextUp&&!q.unavail;}).length;
@@ -482,8 +472,9 @@ function renderPage() {
   });
   html+='</div>';
 
-  if (res.eligibleCount===0){html+='<div class="empty-msg">No eligible gymnasts for Level '+activeLevel+' in '+activeRegion+'.</div>';document.getElementById("page-body").innerHTML=html;return;}
+  if(res.eligibleCount===0){html+='<div class="empty-msg">No eligible gymnasts for Level '+activeLevel+' in '+activeRegion+'.</div>';document.getElementById("page-body").innerHTML=html;return;}
 
+  // Apparatus cards
   html+='<div class="apparatus-grid">';
   GIRLS_APPARATUS.forEach(function(app){
     var list=res.byApp[app]||[];
@@ -491,7 +482,7 @@ function renderPage() {
     html+='<table class="qualifier-table"><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Club</th><th>Score</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
     var pos=0;
     list.forEach(function(q){
-      if (!q.skipped&&!q.nextUp&&!q.unavail) pos++;
+      if(!q.skipped&&!q.nextUp&&!q.unavail)pos++;
       var rc=pos===1?"pos-1":pos===2?"pos-2":pos===3?"pos-3":"";
       var rowCls=q.unavail?"unavail-row":q.nextUp?"next-up-row":q.promoted?"promoted-row":"";
       var strike=q.unavail?"text-decoration:line-through;":"";
@@ -503,14 +494,14 @@ function renderPage() {
       html+='<td style="font-size:11px;'+strike+'">'+esc(q.gy.club||"—")+'</td>';
       html+='<td class="score-cell" style="'+strike+'">'+q.sc.toFixed(3)+(q.tb&&!q.nextUp&&!q.unavail?'<span class="tiebreak-note">TB</span>':'')+'</td>';
       html+='<td style="font-size:11px;color:var(--text-light);'+strike+'">'+q.gy.total.toFixed(3)+'</td>';
-      if (q.unavail) {
+      if(q.unavail){
         html+='<td><span style="font-size:10px;color:var(--accent);font-weight:700;">✗ Unavailable</span></td>';
         html+='<td><button class="restore-btn" onclick="restoreGymnast(\''+esc(q.gy.memberId)+'\')">Restore</button></td>';
-      } else if (q.nextUp) {
+      } else if(q.nextUp){
         html+='<td style="font-size:10px;color:var(--gold);font-weight:600;">Next up</td><td></td>';
-      } else if (q.skipped) {
+      } else if(q.skipped){
         html+='<td style="font-size:10px;color:var(--text-light);">Already qualified</td><td></td>';
-      } else if (q.promoted) {
+      } else if(q.promoted){
         html+='<td><span class="promoted-badge">★ Promoted</span></td>';
         html+='<td><button class="unavail-btn" onclick="markUnavail(\''+esc(q.gy.memberId)+'\',\''+esc(q.gy.club)+'\')">Mark Unavailable</button></td>';
       } else {
@@ -519,18 +510,22 @@ function renderPage() {
       }
       html+='</tr>';
     });
-    if (!list.length) html+='<tr><td colspan="8" style="padding:16px;text-align:center;color:var(--text-light);font-size:12px;">No scores</td></tr>';
+    if(!list.length)html+='<tr><td colspan="8" style="padding:16px;text-align:center;color:var(--text-light);font-size:12px;">No scores</td></tr>';
     html+='</tbody></table></div>';
   });
   html+='</div>';
 
-  var totalQ=GIRLS_APPARATUS.reduce(function(t,a){return t+(qualsPerApp[a]||QUALS_PER);},0);
-  html+='<div class="full-list-title">Full Qualifiers List<span class="full-list-count">'+currentQ.length+' of '+totalQ+' places filled</span></div>';
+  // Export bar
   html+='<div class="export-bar">';
-  html+='<button class="export-btn export-excel" onclick="exportExcel()">⬇ Download Excel</button>';
-  html+='<button class="export-btn export-pdf" onclick="exportPDF()">⬇ Download PDF</button>';
+  html+='<div class="export-group"><div class="export-group-label">Current Level ('+activeLevel+') — '+activeRegion+'</div>';
+  html+='<div class="export-btns"><button class="export-btn export-excel" onclick="exportExcel()">⬇ Excel</button><button class="export-btn export-pdf" onclick="exportPDF()">⬇ PDF</button></div></div>';
+  html+='<div style="width:1px;background:var(--border);align-self:stretch;"></div>';
+  html+='<div class="export-group"><div class="export-group-label">Finalist Programme — All Levels — '+activeRegion+'</div>';
+  html+='<div class="export-btns"><button class="export-btn export-excel" onclick="exportFinalistExcel()">⬇ Excel</button><button class="export-btn export-pdf" onclick="exportFinalistPDF()">⬇ PDF</button></div></div>';
   html+='</div>';
 
+  // Full list
+  html+='<div class="full-list-title">Full Qualifiers List<span class="full-list-count">'+currentQ.length+' of '+totalPlaces+' places filled</span></div>';
   html+='<table class="full-table"><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
   currentQ.forEach(function(q,i){
     var name=getName(q.gy.memberId);
@@ -547,10 +542,10 @@ function renderPage() {
     html+='<td><button class="unavail-btn" onclick="markUnavail(\''+esc(q.gy.memberId)+'\',\''+esc(q.gy.club)+'\')">Mark Unavailable</button></td>';
     html+='</tr>';
   });
-  if (!currentQ.length) html+='<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text-light);">No qualifiers yet</td></tr>';
+  if(!currentQ.length)html+='<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text-light);">No qualifiers yet</td></tr>';
   html+='</tbody></table>';
 
-  if (unavailIds.size>0){
+  if(unavailIds.size>0){
     html+='<div class="unavail-section" id="unavail-section"><div class="unavail-section-title">Unavailable Gymnasts ('+unavailIds.size+' marked)</div>';
     html+='<table class="unavail-table"><thead><tr><th>Member ID</th><th>Name</th><th>Reason</th><th></th></tr></thead><tbody>';
     Array.from(unavailIds).forEach(function(id){
@@ -562,32 +557,87 @@ function renderPage() {
   document.getElementById("page-body").innerHTML=html;
 }
 
-function exportExcel(){
-  var headers=["#","Member ID","Name","Club","Qualifies On","Score","Total","Age Cat.","Training Hrs"];
+function exportExcel() {
+  var headers=["#","Name","Club","Qualifies On","Score","Total","Age Cat.","Training Hrs"];
   var rows=[headers];
   currentQ.forEach(function(q,i){
-    rows.push([i+1,q.gy.memberId,getName(q.gy.memberId)||"",q.gy.club||"",q.app+(q.promoted?" (Promoted)":""),q.sc,q.gy.total,q.gy.ageCategory||"",q.gy.trainingHrs||""]);
+    rows.push([i+1,getName(q.gy.memberId)||"—",q.gy.club||"—",q.app+(q.promoted?" (Promoted)":""),q.sc,q.gy.total,q.gy.ageCategory||"—",q.gy.trainingHrs||"—"]);
   });
   var ws=XLSX.utils.aoa_to_sheet(rows);
-  ws["!cols"]=[{wch:4},{wch:12},{wch:22},{wch:36},{wch:20},{wch:8},{wch:8},{wch:10},{wch:12}];
+  ws["!cols"]=[{wch:4},{wch:24},{wch:36},{wch:20},{wch:8},{wch:8},{wch:10},{wch:12}];
   var wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,"Qualifiers");
   var buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
   var a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
   a.download="Qualifiers_Level"+activeLevel+"_"+activeRegion.replace(/\s/g,"_")+".xlsx";
-  document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);},100);
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);},100);
 }
 
-function exportPDF(){
+function exportPDF() {
   var win=window.open("","_blank");
+  var totalPlaces=GIRLS_APPARATUS.reduce(function(t,a){return t+(qualsPerApp[a]||QUALS_PER);},0);
   var rows=currentQ.map(function(q,i){
-    return '<tr><td>'+(i+1)+'</td><td>'+esc(q.gy.memberId)+'</td><td><strong>'+esc(getName(q.gy.memberId)||"—")+'</strong></td><td>'+esc(q.gy.club||"—")+'</td><td>'+esc(q.app)+(q.promoted?' <em>(Promoted)</em>':'')+'</td><td>'+q.sc.toFixed(3)+'</td><td><strong>'+q.gy.total.toFixed(3)+'</strong></td><td>'+esc(q.gy.ageCategory||"—")+'</td><td>'+esc(q.gy.trainingHrs||"—")+'</td></tr>';
+    return'<tr><td>'+(i+1)+'</td><td><strong>'+esc(getName(q.gy.memberId)||"—")+'</strong></td><td>'+esc(q.gy.club||"—")+'</td><td>'+esc(q.app)+(q.promoted?' <em>(P)</em>':'')+'</td><td>'+q.sc.toFixed(3)+'</td><td><strong>'+q.gy.total.toFixed(3)+'</strong></td><td>'+esc(q.gy.ageCategory||"—")+'</td><td>'+esc(q.gy.trainingHrs||"—")+'</td></tr>';
   }).join("");
-  win.document.write('<!DOCTYPE html><html><head><title>Qualifiers Level '+activeLevel+' '+activeRegion+'</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#1a2340;}h1{font-size:18px;margin-bottom:4px;}h2{font-size:13px;font-weight:400;color:#8a96a8;margin-bottom:20px;}table{width:100%;border-collapse:collapse;font-size:12px;}thead tr{background:#1a2340;color:#fff;}th{padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;}td{padding:8px 10px;border-bottom:1px solid #e2e6ed;}tr:nth-child(even){background:#f7f8fa;}.footer{margin-top:20px;font-size:11px;color:#8a96a8;}</style></head><body><h1>National Finals Qualifiers — Level '+activeLevel+' — '+esc(activeRegion)+'</h1><h2>'+currentQ.length+' qualifiers · Girls · Top 3 per apparatus</h2><table><thead><tr><th>#</th><th>Member ID</th><th>Name</th><th>Club</th><th>Qualifies On</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th></tr></thead><tbody>'+rows+'</tbody></table><div class="footer">Generated '+new Date().toLocaleDateString("en-GB")+'</div></body></html>');
-  win.document.close();
-  win.focus();
+  if(!rows)rows='<tr><td colspan="8" style="text-align:center;color:#8a96a8;">No qualifiers yet</td></tr>';
+  win.document.write(pdfShell("Level "+activeLevel+" — "+activeRegion,currentQ.length+"/"+totalPlaces,rows));
+  win.document.close();win.focus();
   setTimeout(function(){win.print();},500);
+}
+
+function exportFinalistExcel() {
+  var wb=XLSX.utils.book_new();
+  REGIONS.forEach(function(region){
+    var wsData=[];
+    wsData.push(["National Finals Qualifiers — "+region]);
+    wsData.push(["Generated: "+new Date().toLocaleDateString("en-GB")]);
+    wsData.push([]);
+    LEVELS.forEach(function(level){
+      var res=computeQuals(level,region);
+      var tp=GIRLS_APPARATUS.reduce(function(t,a){return t+(qualsPerApp[a]||QUALS_PER);},0);
+      wsData.push(["LEVEL "+level+" ("+res.allQ.length+"/"+tp+" places filled)"]);
+      wsData.push(["#","Name","Club","Qualifies On","Score","Total","Age Cat.","Training Hrs"]);
+      if(res.allQ.length===0){
+        wsData.push(["No qualifiers yet","","","","","","",""]);
+      } else {
+        res.allQ.forEach(function(q,i){
+          wsData.push([i+1,getName(q.gy.memberId)||"—",q.gy.club||"—",q.app+(q.promoted?" (Promoted)":""),q.sc,q.gy.total,q.gy.ageCategory||"—",q.gy.trainingHrs||"—"]);
+        });
+      }
+      wsData.push([]);
+    });
+    var ws=XLSX.utils.aoa_to_sheet(wsData);
+    ws["!cols"]=[{wch:4},{wch:24},{wch:36},{wch:20},{wch:8},{wch:8},{wch:10},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws,region.substring(0,31));
+  });
+  var buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+  a.download="Finalist_Programme_All_Regions.xlsx";
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);},100);
+}
+
+function exportFinalistPDF() {
+  var win=window.open("","_blank");
+  var levelsHtml=LEVELS.map(function(level){
+    var res=computeQuals(level,activeRegion);
+    var tp=GIRLS_APPARATUS.reduce(function(t,a){return t+(qualsPerApp[a]||QUALS_PER);},0);
+    var rows=res.allQ.map(function(q,i){
+      return'<tr><td>'+(i+1)+'</td><td><strong>'+esc(getName(q.gy.memberId)||"—")+'</strong></td><td>'+esc(q.gy.club||"—")+'</td><td>'+esc(q.app)+(q.promoted?' <em>(P)</em>':'')+'</td><td>'+q.sc.toFixed(3)+'</td><td><strong>'+q.gy.total.toFixed(3)+'</strong></td><td>'+esc(q.gy.ageCategory||"—")+'</td><td>'+esc(q.gy.trainingHrs||"—")+'</td></tr>';
+    }).join("");
+    if(!rows)rows='<tr><td colspan="8" style="text-align:center;color:#8a96a8;">No qualifiers yet</td></tr>';
+    return'<div class="level-block"><div class="level-title">Level '+level+' <span class="level-count">'+res.allQ.length+'/'+tp+'</span></div><table><thead><tr><th>#</th><th>Name</th><th>Club</th><th>Apparatus</th><th>Score</th><th>Total</th><th>Age</th><th>Hrs</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }).join("");
+  win.document.write('<!DOCTYPE html><html><head><title>Finalist Programme — '+activeRegion+'</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#1a2340;max-width:900px;margin:0 auto;}h1{font-size:20px;margin-bottom:2px;}h2{font-size:13px;font-weight:400;color:#8a96a8;margin-bottom:24px;}.level-block{margin-bottom:28px;}.level-title{font-size:15px;font-weight:700;padding:8px 0;border-bottom:2px solid #1a2340;margin-bottom:10px;}.level-count{font-size:12px;font-weight:400;color:#8a96a8;margin-left:8px;}table{width:100%;border-collapse:collapse;font-size:12px;}thead tr{background:#1a2340;color:#fff;}th{padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;}td{padding:7px 10px;border-bottom:1px solid #e2e6ed;}tr:nth-child(even){background:#f7f8fa;}.footer{margin-top:20px;font-size:11px;color:#8a96a8;}@media print{.level-block{page-break-inside:avoid;}}</style></head><body><h1>Finalist Programme — '+esc(activeRegion)+'</h1><h2>Girls · Levels A, B &amp; C</h2>'+levelsHtml+'<div class="footer">Generated '+new Date().toLocaleDateString("en-GB")+'</div></body></html>');
+  win.document.close();win.focus();
+  setTimeout(function(){win.print();},500);
+}
+
+function pdfShell(title,count,rows){
+  return'<!DOCTYPE html><html><head><title>Qualifiers '+title+'</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#1a2340;}h1{font-size:18px;margin-bottom:4px;}h2{font-size:13px;font-weight:400;color:#8a96a8;margin-bottom:20px;}table{width:100%;border-collapse:collapse;font-size:12px;}thead tr{background:#1a2340;color:#fff;}th{padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;}td{padding:8px 10px;border-bottom:1px solid #e2e6ed;}tr:nth-child(even){background:#f7f8fa;}.footer{margin-top:20px;font-size:11px;color:#8a96a8;}</style></head><body><h1>National Finals Qualifiers — '+title+'</h1><h2>'+count+' places filled · Girls</h2><table><thead><tr><th>#</th><th>Name</th><th>Club</th><th>Apparatus</th><th>Score</th><th>Total</th><th>Age Cat.</th><th>Training Hrs</th></tr></thead><tbody>'+rows+'</tbody></table><div class="footer">Generated '+new Date().toLocaleDateString("en-GB")+'</div></body></html>';
 }
 
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
