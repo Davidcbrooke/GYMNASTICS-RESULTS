@@ -44,6 +44,7 @@
   aside.palette{
     width:200px; flex:0 0 200px; background:#fff; border-right:1px solid var(--line); padding:14px; overflow-y:auto;
   }
+  .palette-title{ font-weight:700; color:var(--navy); font-size:.9rem; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid var(--gold); }
   aside.palette h2{ font-size:.8rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:14px 0 6px; }
   aside.palette h2:first-child{ margin-top:0; }
   .chip{
@@ -320,7 +321,7 @@ const CONFIG = {
   owner: 'Davidcbrooke',
   repo: 'GYMNASTICS-RESULTS',
   path: 'rota_data.json',
-  branch: 'main',
+  branch: '',
   token: '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',
   password: 'SAADI1234#'
 };
@@ -420,7 +421,9 @@ function renderTabs(){
 
 function renderPalette(){
   const el = document.getElementById('palette');
-  el.innerHTML = '<h2>Floor</h2>';
+  el.innerHTML = '';
+  const title = document.createElement('div'); title.className='palette-title'; title.textContent = '🖐 Drag onto a session';
+  el.appendChild(title);
   const groups = {
     "Floor": ["FLOOR 1","FLOOR 2","FLOOR 3","FULL FLOOR"],
     "Bars": ["BARS","BARS PITSIDE","HIGH BAR","P-BARS"],
@@ -431,7 +434,6 @@ function renderPalette(){
     "Rooms": ["PINK ROOM","BLUE ROOM","DANCE STUDIO","CAFE"],
     "Other": ["TBC"]
   };
-  el.innerHTML = '';
   Object.entries(groups).forEach(([label, codes])=>{
     const h = document.createElement('h2'); h.textContent = label; el.appendChild(h);
     codes.forEach(code=>{
@@ -528,6 +530,7 @@ function buildLane(label, blocksWithMeta, min, max, meta){
     }
     DATA[currentDay][meta.section].push(newBlock);
     render();
+    scheduleAutoSave();
   };
   for(let t=min - (min%30 || 30) + 30; t<=max; t+=30){
     if(t<min) continue;
@@ -572,11 +575,13 @@ function buildLane(label, blocksWithMeta, min, max, meta){
       if(data.startsWith('palette:')){
         block.location = data.split(':')[1];
         render();
+        scheduleAutoSave();
       } else if(data.startsWith('block:')){
         const [, srcSection, srcIdx] = data.split(':');
         const src = DATA[currentDay][srcSection][parseInt(srcIdx)];
         const tmp = src.location; src.location = block.location; block.location = tmp;
         render();
+        scheduleAutoSave();
       }
     };
     div.onclick = ()=> openModal(section, idx);
@@ -606,6 +611,7 @@ function buildLane(label, blocksWithMeta, min, max, meta){
           block.end = fmtTime(block.end_min);
           delete div._pendingEnd;
           render();
+          scheduleAutoSave();
         }
       };
       document.addEventListener('mousemove', onMove);
@@ -730,12 +736,14 @@ function addGroup(section){
   if(!name || !name.trim()) return;
   createSessionBlock(section, name.trim());
   render();
+  scheduleAutoSave();
 }
 
 function addBlock(meta, min, max){
   const groupName = meta.section==='squad' ? meta.lane : meta.colour;
   createSessionBlock(meta.section, groupName, {start_min: Math.max(min, Math.round(min/5)*5)});
   render();
+  scheduleAutoSave();
 }
 
 // ---- Add Group modal ----
@@ -776,6 +784,7 @@ function submitAddGroup(){
   const idx = createSessionBlock(section, groupName);
   closeAddGroupModal();
   render();
+  scheduleAutoSave();
   setTimeout(()=> openModal(section, idx), 50);
 }
 
@@ -856,6 +865,7 @@ function submitAddRotation(){
   createSessionBlock(section, groupName, {start_min:sMin, end_min:eMin, location:selectedRotationLocation, title});
   closeAddRotationModal();
   render();
+  scheduleAutoSave();
 }
 
 function render(){
@@ -914,6 +924,7 @@ function deleteBlock(){
   DATA[currentDay][editing.section].splice(editing.idx, 1);
   closeModal();
   render();
+  scheduleAutoSave();
 }
 function parseTimeToMin(t){
   t = t.trim().toLowerCase();
@@ -949,6 +960,7 @@ function saveModal(){
   }
   closeModal();
   render();
+  scheduleAutoSave();
 }
 
 // ---- Export / Import ----
@@ -968,6 +980,7 @@ function importData(event){
       const imported = JSON.parse(e.target.result);
       Object.assign(DATA, imported);
       render();
+      scheduleAutoSave();
     }catch(err){ alert('Could not read that file: '+err.message); }
   };
   reader.readAsText(file);
@@ -1241,9 +1254,13 @@ function ghHeaders(){
 }
 async function fetchData(){
   try{
-    const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}?ref=${CONFIG.branch}`;
+    const ref = CONFIG.branch ? `?ref=${CONFIG.branch}` : '';
+    const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}${ref}`;
     const res = await fetch(url, {headers: ghHeaders()});
-    if(!res.ok) throw new Error('HTTP '+res.status);
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      throw new Error('HTTP '+res.status+(err.message? ' — '+err.message : ''));
+    }
     const json = await res.json();
     currentSha = json.sha;
     DATA = JSON.parse(b64DecodeUnicode(json.content));
@@ -1265,8 +1282,8 @@ async function saveToGitHub(){
     const body = {
       message: 'Update rotation data — '+new Date().toLocaleString(),
       content: b64EncodeUnicode(JSON.stringify(DATA, null, 1)),
-      branch: CONFIG.branch
     };
+    if(CONFIG.branch) body.branch = CONFIG.branch;
     if(currentSha) body.sha = currentSha;
     const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`;
     const res = await fetch(url, {
@@ -1276,7 +1293,12 @@ async function saveToGitHub(){
     });
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
-      throw new Error(err.message || ('HTTP '+res.status));
+      // sha mismatch / file already exists with different sha - refetch and retry once
+      if(res.status===409 || res.status===422){
+        await fetchData();
+        return saveToGitHub();
+      }
+      throw new Error('HTTP '+res.status+(err.message? ' — '+err.message : ''));
     }
     const json = await res.json();
     currentSha = json.content.sha;
@@ -1284,15 +1306,25 @@ async function saveToGitHub(){
     status.textContent = 'Saved '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     setTimeout(()=>{ btn.textContent='💾 Save to GitHub'; btn.disabled=false; }, 2000);
   }catch(e){
-    alert('Could not save to GitHub: '+e.message);
+    console.error('GitHub save error', e);
+    status.textContent = 'Save failed: '+e.message;
     btn.textContent='💾 Save to GitHub'; btn.disabled=false;
-    status.textContent = 'Save failed';
   }
+}
+
+let autoSaveTimer = null;
+function scheduleAutoSave(){
+  const status = document.getElementById('saveStatus');
+  if(!CONFIG.token || CONFIG.token==='PASTE_YOUR_GITHUB_TOKEN_HERE') return;
+  status.textContent = 'Unsaved changes…';
+  if(autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(()=>{ saveToGitHub(); }, 2500);
 }
 
 // ---- Startup ----
 async function init(){
   await fetchData();
+  renderPalette();
   render();
   setTimeout(scrollToNow, 100);
   setInterval(updateLiveIndicators, 1000);
