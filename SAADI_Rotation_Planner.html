@@ -137,6 +137,18 @@
 
   .legend-note{ font-size:.7rem; color:var(--muted); margin-top:6px; }
 
+  .quick-actions{ display:flex; gap:10px; margin-bottom:14px; }
+  .btn-quick{
+    background:var(--navy); color:#fff; border:2px solid var(--gold); padding:10px 18px; border-radius:6px; font-weight:700; cursor:pointer; font-size:.85rem;
+  }
+  .btn-quick:hover{ background:var(--navy-2); }
+  body.live-mode .quick-actions{ display:none; }
+
+  .chip-grid{ display:flex; flex-wrap:wrap; gap:6px; max-height:160px; overflow-y:auto; padding:8px; border:1px solid var(--line); border-radius:5px; }
+  .chip-grid .chip{ margin:0; }
+  .chip-grid .chip.selected{ outline:3px solid var(--navy); }
+  .chip-grid .chip.new-loc{ background:#fff; border:1px dashed var(--muted); color:var(--muted); }
+
   body.live-mode aside.palette{ display:none; }
   body.live-mode .legend-note{ display:none; }
   body.live-mode .lane-add{ display:none; }
@@ -199,6 +211,10 @@
 <div class="app">
   <aside class="palette" id="palette"></aside>
   <main>
+    <div class="quick-actions">
+      <button class="btn-quick" onclick="openAddGroupModal()">➕ Add Group</button>
+      <button class="btn-quick" onclick="openAddRotationModal()">➕ Add Rotation</button>
+    </div>
     <div id="timeline"></div>
     <div class="legend-note">Drag a coloured chip from the left onto any block to set its location. Drag one block onto another to swap their locations. Click a block to edit its details, or use "+ Add session" under a group to add a new block.</div>
   </main>
@@ -234,6 +250,66 @@
     <div id="summaryModalBody" style="max-height:360px; overflow-y:auto;"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeSummaryModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="addGroupModalBg">
+  <div class="modal">
+    <h3>Add a Group</h3>
+    <label>Section</label>
+    <select id="ag_section" onchange="refreshAddGroupOptions()">
+      <option value="squad">Squad</option>
+      <option value="recreational">Recreational</option>
+    </select>
+    <label>Group</label>
+    <select id="ag_group" onchange="toggleAddGroupNew()"></select>
+    <div id="ag_new_wrap" style="display:none;">
+      <label>New group name</label>
+      <input type="text" id="ag_new_name" placeholder="e.g. WAG Pearl 3">
+    </div>
+    <div class="legend-note">Pick an existing group to add another session to it, or choose "+ New group" to create a fresh row.</div>
+    <div class="modal-actions">
+      <span style="flex:1"></span>
+      <button class="btn-cancel" onclick="closeAddGroupModal()">Cancel</button>
+      <button class="btn-save" onclick="submitAddGroup()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="addRotationModalBg">
+  <div class="modal">
+    <h3>Add a Rotation</h3>
+    <label>Group</label>
+    <select id="ar_group" onchange="toggleAddRotationNewGroup()"></select>
+    <div id="ar_new_group_wrap" style="display:none;">
+      <div class="row">
+        <div>
+          <label>Section</label>
+          <select id="ar_new_section">
+            <option value="squad">Squad</option>
+            <option value="recreational">Recreational</option>
+          </select>
+        </div>
+        <div>
+          <label>New group name</label>
+          <input type="text" id="ar_new_group_name" placeholder="e.g. Yellow">
+        </div>
+      </div>
+    </div>
+    <label>Location</label>
+    <div id="ar_location_chips" class="chip-grid"></div>
+    <div class="row">
+      <div><label>Start</label><input type="text" id="ar_start" placeholder="e.g. 4:00pm"></div>
+      <div><label>End</label><input type="text" id="ar_end" placeholder="e.g. 4:30pm"></div>
+    </div>
+    <label>Activity (optional)</label>
+    <input type="text" id="ar_title">
+    <div class="legend-note">The colours above show each piece's usual colour, just to help you pick the right one. On the Recreational timeline, a session is shown in its group's own colour (e.g. Orange) rather than the piece colour.</div>
+    <div class="modal-actions">
+      <span style="flex:1"></span>
+      <button class="btn-cancel" onclick="closeAddRotationModal()">Cancel</button>
+      <button class="btn-save" onclick="submitAddRotation()">Add</button>
     </div>
   </div>
 </div>
@@ -300,13 +376,14 @@ const GROUP_COLOURS = {
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 const DAY_BY_JSDAY = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 let currentDay = "Monday";
-let PX_PER_MIN = 7;
+let PX_PER_MIN = 14;
 let currentMin = 0, currentMax = 0;
 let laneLabelMap = {};
 let liveMode = false;
 let alertsEnabled = false;
 let audioCtx = null;
 let lastPingKey = null;
+let lastActiveSig = null;
 
 function getTodayName(){ return DAY_BY_JSDAY[new Date().getDay()]; }
 function nowMinutes(){
@@ -574,21 +651,27 @@ function renderTimeline(){
   const conflictFlags = computeConflicts(allBlocks.map(x=>x.block));
   allBlocks.forEach((x,i)=> x.conflict = conflictFlags[i]);
 
+  const filterActive = liveMode;
+  const nowMin = nowMinutes();
+  const isActive = (blocksWithMeta)=> blocksWithMeta.some(x=> nowMin>=x.block.start_min && nowMin<x.block.end_min);
+
   // Squad section
   {
     const h = document.createElement('div'); h.className='section-title';
     h.innerHTML = 'Squads <button class="btn-add" style="margin-left:10px;" onclick="addGroup(\'squad\')">+ Add group</button>';
     el.appendChild(h);
-    const squadLanes = [...new Set(dayData.squad.map(b=>b.lane))];
-    if(squadLanes.length){
-      const laneDefs = squadLanes.map(laneName=>({
-        label: laneName,
-        blocksWithMeta: allBlocks.filter(x=>x.section==='squad' && x.block.lane===laneName),
-        meta: {section:'squad', lane:laneName}
-      }));
+    let squadLanes = [...new Set(dayData.squad.map(b=>b.lane))];
+    let laneDefs = squadLanes.map(laneName=>({
+      label: laneName,
+      blocksWithMeta: allBlocks.filter(x=>x.section==='squad' && x.block.lane===laneName),
+      meta: {section:'squad', lane:laneName}
+    }));
+    if(filterActive) laneDefs = laneDefs.filter(d=> isActive(d.blocksWithMeta));
+    if(laneDefs.length){
       el.appendChild(buildTimelineWrap(min, max, laneDefs));
     } else {
-      const p = document.createElement('p'); p.style.color='var(--muted)'; p.style.fontSize='.8rem'; p.textContent='No squad groups yet for '+currentDay+'.';
+      const p = document.createElement('p'); p.style.color='var(--muted)'; p.style.fontSize='.8rem';
+      p.textContent = filterActive ? 'No squads currently in session.' : 'No squad groups yet for '+currentDay+'.';
       el.appendChild(p);
     }
   }
@@ -602,15 +685,17 @@ function renderTimeline(){
     const idx = c=> { const i = order.indexOf(c); return i===-1 ? 999 : i; };
     const colours = [...new Set(dayData.recreational.map(b=>b.colour))]
       .sort((a,b)=> idx(a)-idx(b));
-    if(colours.length){
-      const laneDefs = colours.map(colour=>({
-        label: colour,
-        blocksWithMeta: allBlocks.filter(x=>x.section==='recreational' && x.block.colour===colour),
-        meta: {section:'recreational', cls:null, colour:colour}
-      }));
+    let laneDefs = colours.map(colour=>({
+      label: colour,
+      blocksWithMeta: allBlocks.filter(x=>x.section==='recreational' && x.block.colour===colour),
+      meta: {section:'recreational', cls:null, colour:colour}
+    }));
+    if(filterActive) laneDefs = laneDefs.filter(d=> isActive(d.blocksWithMeta));
+    if(laneDefs.length){
       el.appendChild(buildTimelineWrap(min, max, laneDefs));
     } else {
-      const p = document.createElement('p'); p.style.color='var(--muted)'; p.style.fontSize='.8rem'; p.textContent='No recreational groups yet for '+currentDay+'.';
+      const p = document.createElement('p'); p.style.color='var(--muted)'; p.style.fontSize='.8rem';
+      p.textContent = filterActive ? 'No recreational groups currently in session.' : 'No recreational groups yet for '+currentDay+'.';
       el.appendChild(p);
     }
   }
@@ -620,39 +705,156 @@ function renderTimeline(){
   }
 }
 
+function createSessionBlock(section, groupName, overrides={}){
+  const {min} = getDayBounds(DATA[currentDay]);
+  const start_min = overrides.start_min !== undefined ? overrides.start_min : Math.round(min/5)*5;
+  const end_min = overrides.end_min !== undefined ? overrides.end_min : start_min+30;
+  const newBlock = {
+    start: fmtTime(start_min), end: fmtTime(end_min),
+    start_min, end_min,
+    location: overrides.location || 'TBC',
+    title: overrides.title || '', raw:''
+  };
+  if(section==='squad'){
+    newBlock.lane = groupName;
+  } else {
+    newBlock.class=''; newBlock.colour=groupName; newBlock.lane=groupName;
+    newBlock.block = overrides.title || 'New session';
+  }
+  DATA[currentDay][section].push(newBlock);
+  return DATA[currentDay][section].length-1;
+}
+
 function addGroup(section){
   const name = prompt(section==='squad' ? 'Name of the new squad/group:' : 'Name of the new colour group:');
   if(!name || !name.trim()) return;
-  const start_min = Math.round(getDayBounds(DATA[currentDay]).min/5)*5;
-  const end_min = start_min+30;
-  const newBlock = {
-    start: fmtTime(start_min), end: fmtTime(end_min),
-    start_min, end_min, location:'TBC', title:'', raw:''
-  };
-  if(section==='squad'){
-    newBlock.lane = name.trim();
-  } else {
-    newBlock.class=''; newBlock.colour=name.trim(); newBlock.lane=name.trim(); newBlock.block='New session';
-  }
-  DATA[currentDay][section].push(newBlock);
+  createSessionBlock(section, name.trim());
   render();
 }
 
 function addBlock(meta, min, max){
-  const start_min = Math.max(min, Math.round(min/5)*5);
-  const end_min = Math.min(max, start_min+30);
-  const newBlock = {
-    start: fmtTime(start_min), end: fmtTime(end_min),
-    start_min, end_min, location:'TBC', title:'', raw:''
-  };
-  if(meta.section==='squad'){
-    newBlock.lane = meta.lane;
+  const groupName = meta.section==='squad' ? meta.lane : meta.colour;
+  createSessionBlock(meta.section, groupName, {start_min: Math.max(min, Math.round(min/5)*5)});
+  render();
+}
+
+// ---- Add Group modal ----
+function openAddGroupModal(){
+  document.getElementById('ag_section').value = 'squad';
+  refreshAddGroupOptions();
+  document.getElementById('ag_new_name').value = '';
+  document.getElementById('addGroupModalBg').classList.add('open');
+}
+function closeAddGroupModal(){
+  document.getElementById('addGroupModalBg').classList.remove('open');
+}
+function refreshAddGroupOptions(){
+  const section = document.getElementById('ag_section').value;
+  const sel = document.getElementById('ag_group');
+  const dayData = DATA[currentDay];
+  const names = section==='squad'
+    ? [...new Set(dayData.squad.map(b=>b.lane))]
+    : [...new Set(dayData.recreational.map(b=>b.colour))];
+  sel.innerHTML = names.map(n=>'<option value="'+n+'">'+n+'</option>').join('')
+    + '<option value="__new__">+ New group...</option>';
+  toggleAddGroupNew();
+}
+function toggleAddGroupNew(){
+  document.getElementById('ag_new_wrap').style.display =
+    document.getElementById('ag_group').value==='__new__' ? 'block' : 'none';
+}
+function submitAddGroup(){
+  const section = document.getElementById('ag_section').value;
+  const groupSel = document.getElementById('ag_group').value;
+  let groupName;
+  if(groupSel==='__new__'){
+    groupName = document.getElementById('ag_new_name').value.trim();
+    if(!groupName){ alert('Please enter a name for the new group.'); return; }
   } else {
-    newBlock.class = meta.cls || ''; newBlock.colour = meta.colour;
-    newBlock.lane = meta.colour;
-    newBlock.block = 'New session';
+    groupName = groupSel;
   }
-  DATA[currentDay][meta.section].push(newBlock);
+  const idx = createSessionBlock(section, groupName);
+  closeAddGroupModal();
+  render();
+  setTimeout(()=> openModal(section, idx), 50);
+}
+
+// ---- Add Rotation modal ----
+let selectedRotationLocation = 'TBC';
+function openAddRotationModal(){
+  const sel = document.getElementById('ar_group');
+  const dayData = DATA[currentDay];
+  let opts = [...new Set(dayData.squad.map(b=>b.lane))].map(n=>'<option value="squad|'+n+'">'+n+' (Squad)</option>')
+    .concat([...new Set(dayData.recreational.map(b=>b.colour))].map(n=>'<option value="recreational|'+n+'">'+n+' (Recreational)</option>'));
+  sel.innerHTML = opts.join('') + '<option value="__new__">+ New group...</option>';
+  toggleAddRotationNewGroup();
+  selectedRotationLocation = 'TBC';
+  renderLocationChips();
+  const {min} = getDayBounds(dayData);
+  const startMin = Math.round(min/5)*5;
+  document.getElementById('ar_start').value = fmtTime(startMin);
+  document.getElementById('ar_end').value = fmtTime(startMin+30);
+  document.getElementById('ar_title').value = '';
+  document.getElementById('addRotationModalBg').classList.add('open');
+}
+function closeAddRotationModal(){
+  document.getElementById('addRotationModalBg').classList.remove('open');
+}
+function toggleAddRotationNewGroup(){
+  document.getElementById('ar_new_group_wrap').style.display =
+    document.getElementById('ar_group').value==='__new__' ? 'block' : 'none';
+}
+function renderLocationChips(){
+  const el = document.getElementById('ar_location_chips');
+  el.innerHTML = '';
+  LOCATIONS.forEach(l=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (l.code==='TBC' ? ' tbc':'') + (l.code===selectedRotationLocation ? ' selected':'');
+    chip.textContent = l.code;
+    if(l.code!=='TBC') chip.style.background = l.color;
+    chip.onclick = ()=>{ selectedRotationLocation = l.code; renderLocationChips(); };
+    el.appendChild(chip);
+  });
+  const newChip = document.createElement('div');
+  newChip.className = 'chip new-loc';
+  newChip.textContent = '+ New location';
+  newChip.onclick = ()=>{
+    const name = prompt('Name for the new location (e.g. STORE ROOM):');
+    if(name && name.trim()){
+      const code = name.trim().toUpperCase();
+      if(!LOC_MAP[code]){
+        const palette = ["#7C9D96","#A2845E","#6E7F80","#9C7C9C","#8A9B6E","#B08968"];
+        const color = palette[LOCATIONS.length % palette.length];
+        LOCATIONS.push({code, color});
+        LOC_MAP[code] = {code, color};
+        renderPalette();
+      }
+      selectedRotationLocation = code;
+      renderLocationChips();
+    }
+  };
+  el.appendChild(newChip);
+}
+function submitAddRotation(){
+  const groupSel = document.getElementById('ar_group').value;
+  let section, groupName;
+  if(groupSel==='__new__'){
+    section = document.getElementById('ar_new_section').value;
+    groupName = document.getElementById('ar_new_group_name').value.trim();
+    if(!groupName){ alert('Please enter a name for the new group.'); return; }
+  } else {
+    const parts = groupSel.split('|');
+    section = parts[0]; groupName = parts.slice(1).join('|');
+  }
+  const sMin = parseTimeToMin(document.getElementById('ar_start').value);
+  const eMin = parseTimeToMin(document.getElementById('ar_end').value);
+  if(sMin===null || eMin===null || eMin<=sMin){
+    alert('Please enter valid start and end times (e.g. 4:00pm and 4:30pm), with end after start.');
+    return;
+  }
+  const title = document.getElementById('ar_title').value;
+  createSessionBlock(section, groupName, {start_min:sMin, end_min:eMin, location:selectedRotationLocation, title});
+  closeAddRotationModal();
   render();
 }
 
@@ -895,6 +1097,7 @@ function isFullscreen(){
 function exitLiveMode(){
   if(!liveMode) return;
   liveMode = false;
+  lastActiveSig = null;
   document.getElementById('liveBtn').textContent = '▶ Go Live';
   document.body.classList.remove('live-mode');
   alertsEnabled = false;
@@ -902,6 +1105,7 @@ function exitLiveMode(){
   document.querySelectorAll('.now-line').forEach(l=> l.style.display='none');
   document.querySelectorAll('.block.active-now').forEach(b=> b.classList.remove('active-now'));
   document.querySelectorAll('.lane-label.flash').forEach(l=> l.classList.remove('flash'));
+  render();
 }
 
 function toggleLive(){
@@ -924,6 +1128,14 @@ function toggleLive(){
 
 document.addEventListener('fullscreenchange', ()=>{ if(!isFullscreen()) exitLiveMode(); });
 document.addEventListener('webkitfullscreenchange', ()=>{ if(!isFullscreen()) exitLiveMode(); });
+
+function activeLaneSignature(dayData, nowMin){
+  const sq = [...new Set(dayData.squad.map(b=>b.lane))]
+    .filter(lane=> dayData.squad.some(b=> b.lane===lane && nowMin>=b.start_min && nowMin<b.end_min));
+  const rec = [...new Set(dayData.recreational.map(b=>b.colour))]
+    .filter(c=> dayData.recreational.some(b=> b.colour===c && nowMin>=b.start_min && nowMin<b.end_min));
+  return sq.join(',')+'|'+rec.join(',');
+}
 
 function hasNextBlock(blocks, b, section){
   return blocks.some(o=> o!==b
@@ -956,6 +1168,13 @@ function updateLiveIndicators(){
 
   const nowMin = nowMinutes();
   const inRange = nowMin>=currentMin && nowMin<=currentMax;
+
+  const sig = activeLaneSignature(DATA[currentDay], nowMin);
+  if(sig !== lastActiveSig){
+    lastActiveSig = sig;
+    render();
+    setTimeout(scrollToNow, 50);
+  }
 
   document.querySelectorAll('.tracks-col').forEach(tc=>{
     let line = tc.querySelector('.now-line');
