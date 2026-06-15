@@ -65,12 +65,12 @@
   .ruler .ruler-track{ position:relative; height:24px; border-bottom:1px solid var(--line); flex:1; }
   .ruler .tick{ position:absolute; top:0; bottom:0; border-left:1px solid var(--line); font-size:.68rem; color:var(--muted); padding-left:3px; }
 
-  .lane{ display:flex; align-items:stretch; border-bottom:1px solid var(--line); }
+  .lane{ display:flex; align-items:stretch; border-bottom:1px solid var(--line); min-height:46px; }
   .lane:hover{ background:rgba(201,162,39,.06); }
   .lane-label{
     flex:0 0 170px; padding:6px 8px; font-size:.78rem; font-weight:600; color:var(--navy); display:flex; align-items:center; background:#fff; border-right:1px solid var(--line); position:sticky; left:0; z-index:3;
   }
-  .lane-track{ position:relative; flex:1; min-height:34px; }
+  .lane-track{ position:relative; flex:1; min-height:46px; }
   .lane-add{
     flex:0 0 22px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); font-weight:700; background:#fff; border-right:1px solid var(--line); font-size:.9rem;
   }
@@ -78,15 +78,20 @@
   .grid-line{ position:absolute; top:0; bottom:0; border-left:1px dashed rgba(0,0,0,.05); }
 
   .block{
-    position:absolute; top:3px; bottom:3px; border-radius:4px; color:#fff; font-size:.7rem; font-weight:600;
-    padding:3px 6px; overflow:hidden; cursor:pointer; border:1px solid rgba(0,0,0,.15);
-    display:flex; flex-direction:column; justify-content:center; line-height:1.15;
+    position:absolute; top:3px; bottom:3px; border-radius:4px; color:#fff; font-size:.6rem; font-weight:600;
+    padding:2px 4px; overflow:hidden; cursor:pointer; border:1px solid rgba(0,0,0,.15);
+    display:flex; flex-direction:column; justify-content:center; line-height:1.1;
   }
-  .block .loc{ font-weight:700; }
-  .block .ttl{ font-weight:400; opacity:.9; font-size:.65rem; }
+  .block .loc{ font-weight:700; font-size:.62rem; white-space:nowrap; }
+  .block .ttl{ font-weight:400; opacity:.9; font-size:.56rem; white-space:nowrap; }
   .block.tbc{ background:repeating-linear-gradient(45deg,#eee,#eee 6px,#ddd 6px,#ddd 12px); color:var(--muted); border:1px dashed var(--muted); }
   .block.dragover{ outline:2px solid var(--navy); }
   .block.conflict{ outline:2px solid var(--red); box-shadow:0 0 0 3px rgba(163,38,56,.25); }
+  .resize-handle{
+    position:absolute; top:0; right:0; bottom:0; width:7px; cursor:ew-resize; background:rgba(255,255,255,.0);
+  }
+  .resize-handle:hover{ background:rgba(255,255,255,.45); }
+  .block.resizing{ z-index:10; }
 
   /* Modal */
   .modal-bg{ position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:50; }
@@ -108,6 +113,16 @@
   }
   .btn-add:hover{ background:var(--navy-2); }
 
+  .live-clock{ font-family:'Courier New',monospace; font-size:1rem; font-weight:700; color:var(--gold); margin-right:6px; letter-spacing:1px; }
+
+  .now-line{ position:absolute; top:0; bottom:0; width:3px; background:var(--red); z-index:7; box-shadow:0 0 6px var(--red); display:none; pointer-events:none; }
+  .now-line::before{ content:''; position:absolute; top:-7px; left:-5px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:7px solid var(--red); }
+
+  .block.active-now{ box-shadow:0 0 0 3px var(--gold), 0 0 14px rgba(201,162,39,.7); z-index:6; }
+
+  @keyframes flashLane{ 0%,100%{ background:var(--paper); color:var(--navy); } 50%{ background:var(--red); color:#fff; } }
+  .lane-label.flash{ animation: flashLane .7s ease-in-out infinite; }
+
   .legend-note{ font-size:.7rem; color:var(--muted); margin-top:6px; }
 </style>
 </head>
@@ -115,6 +130,8 @@
 <header>
   <h1>SAADI <span>Rotation Planner</span></h1>
   <div class="top-actions">
+    <span id="liveClock" class="live-clock"></span>
+    <button id="alertBtn" onclick="toggleAlerts()">🔔 Enable Rotation Alerts</button>
     <button onclick="exportData()">Download data (JSON)</button>
     <button onclick="document.getElementById('importFile').click()">Load saved data</button>
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
@@ -132,7 +149,7 @@
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h3 id="modalTitle">Edit session</h3>
-    <label>Group / Colour</label>
+    <label>Group / Colour name (renames the whole row)</label>
     <input type="text" id="f_lane">
     <div class="row">
       <div><label>Start</label><input type="text" id="f_start" placeholder="e.g. 4:00pm"></div>
@@ -180,8 +197,19 @@ const FLOOR_GROUP = ["FLOOR 1","FLOOR 2","FLOOR 3","FULL FLOOR"];
 const NO_CONFLICT = ["TBC","CAFE"];
 
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const DAY_BY_JSDAY = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 let currentDay = "Monday";
-let PX_PER_MIN = 3;
+let PX_PER_MIN = 3.5;
+let currentMin = 0, currentMax = 0;
+let alertsEnabled = false;
+let audioCtx = null;
+let lastPingKey = null;
+
+function getTodayName(){ return DAY_BY_JSDAY[new Date().getDay()]; }
+function nowMinutes(){
+  const d = new Date();
+  return d.getHours()*60 + d.getMinutes() + d.getSeconds()/60;
+}
 
 function fmtTime(mins){
   let h = Math.floor(mins/60), m = mins%60;
@@ -283,6 +311,8 @@ function buildRuler(min,max){
 function buildLane(label, blocksWithMeta, min, max, meta){
   const width = (max-min)*PX_PER_MIN;
   const lane = document.createElement('div'); lane.className='lane';
+  lane.dataset.section = meta.section;
+  lane.dataset.laneKey = meta.section==='squad' ? meta.lane : meta.colour;
   const lbl = document.createElement('div'); lbl.className='lane-label';
   lbl.innerHTML = '<span>'+label+'</span>';
   lane.appendChild(lbl);
@@ -327,6 +357,39 @@ function buildLane(label, blocksWithMeta, min, max, meta){
       }
     };
     div.onclick = ()=> openModal(section, idx);
+
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    handle.draggable = false;
+    handle.onclick = e=> e.stopPropagation();
+    handle.onmousedown = (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      const startX = e.clientX;
+      const origEnd = block.end_min;
+      div.classList.add('resizing');
+      const onMove = (ev)=>{
+        const deltaPx = ev.clientX - startX;
+        let deltaMin = Math.round(deltaPx/PX_PER_MIN/5)*5;
+        let newEnd = Math.max(block.start_min+5, origEnd+deltaMin);
+        div.style.width = Math.max((newEnd-block.start_min)*PX_PER_MIN - 2, 18)+'px';
+        div._pendingEnd = newEnd;
+      };
+      const onUp = ()=>{
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        div.classList.remove('resizing');
+        if(div._pendingEnd!==undefined){
+          block.end_min = div._pendingEnd;
+          block.end = fmtTime(block.end_min);
+          delete div._pendingEnd;
+          render();
+        }
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    };
+    div.appendChild(handle);
+
     track.appendChild(div);
   });
   lane.appendChild(track);
@@ -338,6 +401,7 @@ function renderTimeline(){
   el.innerHTML = '';
   const dayData = DATA[currentDay];
   const {min,max} = getDayBounds(dayData);
+  currentMin = min; currentMax = max;
 
   const allBlocks = [
     ...dayData.squad.map((b,i)=>({block:b, section:'squad', idx:i})),
@@ -347,41 +411,68 @@ function renderTimeline(){
   allBlocks.forEach((x,i)=> x.conflict = conflictFlags[i]);
 
   // Squad section
-  if(dayData.squad.length){
-    const h = document.createElement('div'); h.className='section-title'; h.textContent='Squads';
+  {
+    const h = document.createElement('div'); h.className='section-title';
+    h.innerHTML = 'Squads <button class="btn-add" style="margin-left:10px;" onclick="addGroup(\'squad\')">+ Add group</button>';
     el.appendChild(h);
-    const wrap = document.createElement('div'); wrap.className='timeline-wrap';
-    wrap.appendChild(buildRuler(min,max));
     const squadLanes = [...new Set(dayData.squad.map(b=>b.lane))];
-    squadLanes.forEach(laneName=>{
-      const blocksWithMeta = allBlocks.filter(x=>x.section==='squad' && x.block.lane===laneName);
-      wrap.appendChild(buildLane(laneName, blocksWithMeta, min, max, {section:'squad', lane:laneName}));
-    });
-    el.appendChild(wrap);
-  }
-
-  // Recreational section, grouped by class
-  if(dayData.recreational.length){
-    const h = document.createElement('div'); h.className='section-title'; h.textContent='Recreational';
-    el.appendChild(h);
-    const classes = [...new Set(dayData.recreational.map(b=>b.class))];
-    classes.forEach(cls=>{
-      const ch = document.createElement('div'); ch.className='rec-class-title'; ch.textContent=cls;
-      el.appendChild(ch);
+    if(squadLanes.length){
       const wrap = document.createElement('div'); wrap.className='timeline-wrap';
       wrap.appendChild(buildRuler(min,max));
-      const colourLanes = [...new Set(dayData.recreational.filter(b=>b.class===cls).map(b=>b.colour))];
-      colourLanes.forEach(colour=>{
-        const blocksWithMeta = allBlocks.filter(x=>x.section==='recreational' && x.block.class===cls && x.block.colour===colour);
-        wrap.appendChild(buildLane(colour, blocksWithMeta, min, max, {section:'recreational', cls:cls, colour:colour}));
+      squadLanes.forEach(laneName=>{
+        const blocksWithMeta = allBlocks.filter(x=>x.section==='squad' && x.block.lane===laneName);
+        wrap.appendChild(buildLane(laneName, blocksWithMeta, min, max, {section:'squad', lane:laneName}));
       });
       el.appendChild(wrap);
-    });
+    } else {
+      const p = document.createElement('p'); p.style.color='var(--muted)'; p.style.fontSize='.8rem'; p.textContent='No squad groups yet for '+currentDay+'.';
+      el.appendChild(p);
+    }
+  }
+
+  // Recreational section - one row per colour group, spanning all classes
+  {
+    const h = document.createElement('div'); h.className='section-title';
+    h.innerHTML = 'Recreational <button class="btn-add" style="margin-left:10px;" onclick="addGroup(\'recreational\')">+ Add group</button>';
+    el.appendChild(h);
+    const order = ['Orange','Yellow','Blue','Green','Red','Purple'];
+    const colours = [...new Set(dayData.recreational.map(b=>b.colour))]
+      .sort((a,b)=> order.indexOf(a)-order.indexOf(b));
+    if(colours.length){
+      const wrap = document.createElement('div'); wrap.className='timeline-wrap';
+      wrap.appendChild(buildRuler(min,max));
+      colours.forEach(colour=>{
+        const blocksWithMeta = allBlocks.filter(x=>x.section==='recreational' && x.block.colour===colour);
+        wrap.appendChild(buildLane(colour, blocksWithMeta, min, max, {section:'recreational', cls:null, colour:colour}));
+      });
+      el.appendChild(wrap);
+    } else {
+      const p = document.createElement('p'); p.style.color='var(--muted)'; p.style.fontSize='.8rem'; p.textContent='No recreational groups yet for '+currentDay+'.';
+      el.appendChild(p);
+    }
   }
 
   if(dayData.squad.length===0 && dayData.recreational.length===0){
-    el.innerHTML = '<p style="color:var(--muted); padding:20px;">No sessions recorded for '+currentDay+'.</p>';
+    el.innerHTML += '<p style="color:var(--muted); padding:10px 0;">No sessions recorded for '+currentDay+' yet — use "+ Add group" above to start building it out.</p>';
   }
+}
+
+function addGroup(section){
+  const name = prompt(section==='squad' ? 'Name of the new squad/group:' : 'Name of the new colour group:');
+  if(!name || !name.trim()) return;
+  const start_min = Math.round(getDayBounds(DATA[currentDay]).min/5)*5;
+  const end_min = start_min+30;
+  const newBlock = {
+    start: fmtTime(start_min), end: fmtTime(end_min),
+    start_min, end_min, location:'TBC', title:'', raw:''
+  };
+  if(section==='squad'){
+    newBlock.lane = name.trim();
+  } else {
+    newBlock.class=''; newBlock.colour=name.trim(); newBlock.lane=name.trim(); newBlock.block='New session';
+  }
+  DATA[currentDay][section].push(newBlock);
+  render();
 }
 
 function addBlock(meta, min, max){
@@ -394,8 +485,8 @@ function addBlock(meta, min, max){
   if(meta.section==='squad'){
     newBlock.lane = meta.lane;
   } else {
-    newBlock.class = meta.cls; newBlock.colour = meta.colour;
-    newBlock.lane = meta.cls+' - '+meta.colour;
+    newBlock.class = meta.cls || ''; newBlock.colour = meta.colour;
+    newBlock.lane = meta.colour;
     newBlock.block = 'New session';
   }
   DATA[currentDay][meta.section].push(newBlock);
@@ -414,12 +505,32 @@ function openModal(section, idx){
   const b = DATA[currentDay][section][idx];
   document.getElementById('modalTitle').textContent = (section==='squad'? b.lane : b.colour+' — '+b.block);
   document.getElementById('f_lane').value = section==='squad' ? b.lane : b.colour;
-  document.getElementById('f_lane').disabled = true;
+  document.getElementById('f_lane').disabled = false;
   document.getElementById('f_start').value = b.start;
   document.getElementById('f_end').value = b.end;
   document.getElementById('f_title').value = b.title || '';
   const sel = document.getElementById('f_location');
-  sel.innerHTML = LOCATIONS.map(l=>'<option value="'+l.code+'"'+(l.code===b.location?' selected':'')+'>'+l.code+'</option>').join('');
+  sel.innerHTML = LOCATIONS.map(l=>'<option value="'+l.code+'"'+(l.code===b.location?' selected':'')+'>'+l.code+'</option>').join('')
+    + '<option value="__new__">+ Add new location...</option>';
+  sel.onchange = ()=>{
+    if(sel.value==='__new__'){
+      const name = prompt('Name for the new location (e.g. STORE ROOM):');
+      if(name && name.trim()){
+        const code = name.trim().toUpperCase();
+        if(!LOC_MAP[code]){
+          const palette = ["#7C9D96","#A2845E","#6E7F80","#9C7C9C","#8A9B6E","#B08968"];
+          const color = palette[LOCATIONS.length % palette.length];
+          LOCATIONS.push({code, color});
+          LOC_MAP[code] = {code, color};
+          renderPalette();
+        }
+        sel.innerHTML = LOCATIONS.map(l=>'<option value="'+l.code+'"'+(l.code===code?' selected':'')+'>'+l.code+'</option>').join('')
+          + '<option value="__new__">+ Add new location...</option>';
+      } else {
+        sel.value = b.location;
+      }
+    }
+  };
   document.getElementById('modalBg').classList.add('open');
 }
 function closeModal(){
@@ -449,6 +560,15 @@ function saveModal(){
   b.start = newStart; b.end = newEnd; b.start_min = sMin; b.end_min = eMin;
   b.location = document.getElementById('f_location').value;
   b.title = document.getElementById('f_title').value;
+
+  const newName = document.getElementById('f_lane').value.trim();
+  const oldName = editing.section==='squad' ? b.lane : b.colour;
+  if(newName && newName !== oldName){
+    DATA[currentDay][editing.section].forEach(blk=>{
+      if(editing.section==='squad' && blk.lane===oldName) blk.lane = newName;
+      if(editing.section==='recreational' && blk.colour===oldName) blk.colour = newName;
+    });
+  }
   closeModal();
   render();
 }
@@ -475,7 +595,110 @@ function importData(event){
   reader.readAsText(file);
 }
 
+// ---- Live tracking ----
+function playPing(){
+  if(!alertsEnabled) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    [880, 1320].forEach((freq, i)=>{
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = freq;
+      o.connect(g); g.connect(audioCtx.destination);
+      const start = audioCtx.currentTime + i*0.18;
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(0.25, start+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, start+0.5);
+      o.start(start); o.stop(start+0.55);
+    });
+  }catch(e){}
+}
+
+function toggleAlerts(){
+  alertsEnabled = !alertsEnabled;
+  document.getElementById('alertBtn').textContent = alertsEnabled ? '🔕 Rotation Alerts On' : '🔔 Enable Rotation Alerts';
+  if(alertsEnabled){
+    try{
+      audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+      if(audioCtx.state==='suspended') audioCtx.resume();
+    }catch(e){}
+    playPing();
+  }
+}
+
+function hasNextBlock(blocks, b, section){
+  return blocks.some(o=> o!==b
+    && (section==='squad' ? o.lane===b.lane : o.colour===b.colour)
+    && o.start_min === b.end_min);
+}
+
+function scrollToNow(){
+  const wrap = document.querySelector('.timeline-wrap');
+  if(!wrap) return;
+  const nowMin = nowMinutes();
+  if(nowMin < currentMin || nowMin > currentMax) return;
+  const target = 170 + (nowMin-currentMin)*PX_PER_MIN;
+  const m = document.querySelector('main');
+  m.scrollLeft = Math.max(0, target - m.clientWidth/2);
+}
+
+function updateLiveIndicators(){
+  const now = new Date();
+  document.getElementById('liveClock').textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+
+  const today = getTodayName();
+  if(today !== currentDay && DATA[today]){
+    currentDay = today;
+    render();
+    setTimeout(scrollToNow, 50);
+    return;
+  }
+
+  const nowMin = nowMinutes();
+  const inRange = nowMin>=currentMin && nowMin<=currentMax;
+
+  document.querySelectorAll('.timeline-wrap').forEach(wrap=>{
+    let line = wrap.querySelector('.now-line');
+    if(!line){ line = document.createElement('div'); line.className='now-line'; wrap.appendChild(line); }
+    if(inRange){
+      line.style.left = (170 + (nowMin-currentMin)*PX_PER_MIN)+'px';
+      line.style.display='block';
+    } else {
+      line.style.display='none';
+    }
+  });
+
+  let shouldPing = false;
+  document.querySelectorAll('.lane').forEach(lane=>{
+    const section = lane.dataset.section;
+    const blocks = DATA[currentDay][section];
+    let flashing = false;
+    lane.querySelectorAll('.block').forEach(div=>{
+      const idx = parseInt(div.dataset.idx);
+      const b = blocks[idx];
+      const active = nowMin >= b.start_min && nowMin < b.end_min;
+      div.classList.toggle('active-now', active);
+      const diff = nowMin - b.end_min;
+      if(diff >= -0.5 && diff <= 1.5 && hasNextBlock(blocks, b, section)){
+        flashing = true;
+        if(diff >= 0 && diff < 1) shouldPing = true;
+      }
+    });
+    const lbl = lane.querySelector('.lane-label');
+    if(lbl) lbl.classList.toggle('flash', flashing);
+  });
+
+  if(shouldPing){
+    const key = currentDay+':'+Math.floor(nowMin);
+    if(lastPingKey !== key){ playPing(); lastPingKey = key; }
+  }
+}
+
+currentDay = getTodayName();
+if(!DATA[currentDay]) currentDay = "Monday";
 render();
+setTimeout(scrollToNow, 100);
+setInterval(updateLiveIndicators, 1000);
 </script>
 </body>
 </html>
