@@ -66,17 +66,18 @@
   .tracks-col{ flex:1; min-width:0; overflow-x:auto; position:relative; display:flex; flex-direction:column; }
 
   .lane-label{
-    min-height:38px; padding:6px 8px; font-size:.78rem; font-weight:600; color:var(--navy); display:flex; align-items:center; background:#fff; border-bottom:1px solid var(--line);
+    height:38px; padding:6px 8px; font-size:.78rem; font-weight:600; color:var(--navy); display:flex; align-items:center; background:#fff; border-bottom:1px solid var(--line); overflow:hidden;
   }
+  .lane-label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; width:100%; }
   .lane-label.ruler-label{
-    min-height:24px; font-weight:700; color:var(--muted); font-size:.72rem; position:sticky; top:0; background:var(--paper); z-index:5;
+    height:24px; font-weight:700; color:var(--muted); font-size:.72rem; position:sticky; top:0; background:var(--paper); z-index:5;
   }
   .ruler-track{ position:relative; height:24px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--paper); z-index:5; }
   .ruler-track .tick{ position:absolute; top:0; bottom:0; border-left:1px solid var(--line); font-size:.68rem; color:var(--muted); padding-left:3px; }
 
-  .lane-row{ display:flex; align-items:stretch; border-bottom:1px solid var(--line); min-height:38px; }
+  .lane-row{ display:flex; align-items:stretch; border-bottom:1px solid var(--line); height:38px; }
   .lane-row:hover{ background:rgba(201,162,39,.06); }
-  .lane-track{ position:relative; flex:1; min-height:38px; }
+  .lane-track{ position:relative; flex:1; height:38px; }
   .lane-add{
     flex:0 0 22px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); font-weight:700; background:#fff; border-right:1px solid var(--line); font-size:.9rem;
   }
@@ -147,7 +148,7 @@
   body.live-mode .live-clock{ font-size:1.3rem; }
   body.live-mode main{ padding:6px 10px; }
   body.live-mode .section-title{ margin:10px 0 4px; font-size:.85rem; }
-  body.live-mode .lane-label, body.live-mode .lane-row, body.live-mode .lane-track{ min-height:34px; }
+  body.live-mode .lane-label, body.live-mode .lane-row, body.live-mode .lane-track{ height:34px; }
   body.live-mode .block .loc{ font-size:.68rem; }
   body.live-mode .block .disc, body.live-mode .block .ttl{ font-size:.6rem; }
 
