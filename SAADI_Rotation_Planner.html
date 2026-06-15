@@ -150,6 +150,11 @@
   .chip-grid .chip.selected{ outline:3px solid var(--navy); }
   .chip-grid .chip.new-loc{ background:#fff; border:1px dashed var(--muted); color:var(--muted); }
 
+  .swatch-row{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 2px; }
+  .swatch{ width:30px; height:30px; border-radius:50%; cursor:pointer; border:2px solid transparent; box-shadow:0 0 0 1px rgba(0,0,0,.1) inset; }
+  .swatch.selected{ border-color:var(--navy); box-shadow:0 0 0 2px var(--navy); }
+  .swatch.auto{ background:repeating-linear-gradient(45deg,#eee,#eee 4px,#ddd 4px,#ddd 8px); display:flex; align-items:center; justify-content:center; font-size:.6rem; color:var(--muted); font-weight:700; }
+
   body.live-mode aside.palette{ display:none; }
   body.live-mode .legend-note{ display:none; }
   body.live-mode .lane-add{ display:none; }
@@ -236,6 +241,8 @@
     <input type="text" id="f_discipline" disabled>
     <label>Activity (optional)</label>
     <input type="text" id="f_title">
+    <label>Colour (optional)</label>
+    <div id="f_colour_swatches" class="swatch-row"></div>
     <div class="modal-actions">
       <button class="btn-delete" onclick="deleteBlock()">Delete session</button>
       <span style="flex:1"></span>
@@ -306,6 +313,8 @@
     </div>
     <label>Activity (optional)</label>
     <input type="text" id="ar_title">
+    <label>Colour (optional)</label>
+    <div id="ar_colour_swatches" class="swatch-row"></div>
     <div class="legend-note">The colours above show each piece's usual colour, just to help you pick the right one. On the Recreational timeline, a session is shown in its group's own colour (e.g. Orange) rather than the piece colour.</div>
     <div class="modal-actions">
       <span style="flex:1"></span>
@@ -369,6 +378,30 @@ const GROUP_COLOURS = {
   Orange: '#FF9F40', Yellow: '#FFD93D', Blue: '#6FA8DC',
   Green: '#8BC34A', Red: '#FF6B6B', Purple: '#C792EA'
 };
+
+const SWATCH_COLOURS = ['#FF6B6B','#FF9F40','#FFD93D','#8BC34A','#4CAF8E','#6FA8DC','#7C9D96','#C792EA','#B08968','#9C7C9C'];
+function isLightColour(hex){
+  const c = hex.replace('#','');
+  const r = parseInt(c.substr(0,2),16), g = parseInt(c.substr(2,2),16), b = parseInt(c.substr(4,2),16);
+  return (0.299*r + 0.587*g + 0.114*b)/255 > 0.6;
+}
+function renderColourSwatches(container, current, onSelect){
+  container.innerHTML = '';
+  const auto = document.createElement('div');
+  auto.className = 'swatch auto' + (!current ? ' selected':'');
+  auto.textContent = 'Auto';
+  auto.title = 'Use the automatic colour';
+  auto.onclick = ()=> onSelect(null);
+  container.appendChild(auto);
+  SWATCH_COLOURS.forEach(hex=>{
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (current===hex ? ' selected':'');
+    sw.style.background = hex;
+    sw.title = hex;
+    sw.onclick = ()=> onSelect(hex);
+    container.appendChild(sw);
+  });
+}
 
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 const DAY_BY_JSDAY = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -543,13 +576,18 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   blocksWithMeta.forEach(({block, conflict, section, idx})=>{
     const div = document.createElement('div');
     const groupColour = section==='recreational' ? GROUP_COLOURS[block.colour] : null;
+    const customColour = block.color || null;
+    const effectiveColour = customColour || groupColour;
+    const lightBg = customColour ? isLightColour(customColour) : !!groupColour;
     div.className = 'block'
-      + (block.location==='TBC' && !groupColour ? ' tbc':'')
-      + (groupColour ? ' group-coloured':'')
+      + (block.location==='TBC' && !effectiveColour ? ' tbc':'')
+      + (effectiveColour && lightBg ? ' group-coloured':'')
       + (conflict?' conflict':'');
     div.style.left = ((block.start_min-min)*PX_PER_MIN)+'px';
     div.style.width = Math.max((block.end_min-block.start_min)*PX_PER_MIN - 2, 18)+'px';
-    if(groupColour){
+    if(customColour){
+      div.style.background = customColour;
+    } else if(groupColour){
       div.style.background = groupColour;
     } else if(block.location!=='TBC' && LOC_MAP[block.location]){
       div.style.background = LOC_MAP[block.location].color;
@@ -717,6 +755,7 @@ function createSessionBlock(section, groupName, overrides={}){
     location: overrides.location || 'TBC',
     title: overrides.title || '', raw:''
   };
+  if(overrides.color) newBlock.color = overrides.color;
   if(section==='squad'){
     newBlock.lane = groupName;
   } else {
@@ -786,6 +825,13 @@ function submitAddGroup(){
 
 // ---- Add Rotation modal ----
 let selectedRotationLocation = 'TBC';
+let selectedRotationColour = null;
+function refreshRotationColourSwatches(){
+  renderColourSwatches(document.getElementById('ar_colour_swatches'), selectedRotationColour, (hex)=>{
+    selectedRotationColour = hex;
+    refreshRotationColourSwatches();
+  });
+}
 function openAddRotationModal(){
   const sel = document.getElementById('ar_group');
   const dayData = DATA[currentDay];
@@ -795,6 +841,8 @@ function openAddRotationModal(){
   toggleAddRotationNewGroup();
   selectedRotationLocation = 'TBC';
   renderLocationChips();
+  selectedRotationColour = null;
+  refreshRotationColourSwatches();
   const {min} = getDayBounds(dayData);
   const startMin = Math.round(min/5)*5;
   document.getElementById('ar_start').value = fmtTime(startMin);
@@ -858,7 +906,9 @@ function submitAddRotation(){
     return;
   }
   const title = document.getElementById('ar_title').value;
-  createSessionBlock(section, groupName, {start_min:sMin, end_min:eMin, location:selectedRotationLocation, title});
+  const overrides = {start_min:sMin, end_min:eMin, location:selectedRotationLocation, title};
+  if(selectedRotationColour) overrides.color = selectedRotationColour;
+  createSessionBlock(section, groupName, overrides);
   closeAddRotationModal();
   render();
   scheduleAutoSave();
@@ -875,6 +925,13 @@ function render(){
 
 // ---- Modal ----
 let editing = null;
+let selectedBlockColour = null;
+function refreshModalColourSwatches(){
+  renderColourSwatches(document.getElementById('f_colour_swatches'), selectedBlockColour, (hex)=>{
+    selectedBlockColour = hex;
+    refreshModalColourSwatches();
+  });
+}
 function openModal(section, idx){
   editing = {section, idx};
   const b = DATA[currentDay][section][idx];
@@ -908,6 +965,8 @@ function openModal(section, idx){
     }
     document.getElementById('f_discipline').value = getDiscipline(sel.value) || '—';
   };
+  selectedBlockColour = b.color || null;
+  refreshModalColourSwatches();
   document.getElementById('modalBg').classList.add('open');
 }
 function closeModal(){
@@ -945,6 +1004,8 @@ function saveModal(){
   b.start = newStart; b.end = newEnd; b.start_min = sMin; b.end_min = eMin;
   b.location = document.getElementById('f_location').value;
   b.title = document.getElementById('f_title').value;
+  if(selectedBlockColour) b.color = selectedBlockColour;
+  else delete b.color;
 
   const newName = document.getElementById('f_lane').value.trim();
   const oldName = editing.section==='squad' ? b.lane : b.colour;
