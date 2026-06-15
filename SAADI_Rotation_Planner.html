@@ -109,6 +109,8 @@
   .btn-save:hover{ background:var(--gold-2); }
   .btn-cancel{ background:#eee; color:var(--ink); }
   .btn-cancel:hover{ background:#ddd; }
+  .btn-delete{ background:var(--red); color:#fff; }
+  .btn-delete:hover{ background:#8a1f2f; }
   .btn-add{
     margin-top:8px; background:var(--navy); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:.78rem; font-weight:600;
   }
@@ -125,6 +127,15 @@
   .lane-label.flash{ animation: flashLane .7s ease-in-out infinite; }
 
   .legend-note{ font-size:.7rem; color:var(--muted); margin-top:6px; }
+
+  body.live-mode aside.palette{ display:none; }
+  body.live-mode .legend-note{ display:none; }
+  body.live-mode .lane-add{ display:none; }
+  body.live-mode .section-title .btn-add{ display:none; }
+  body.live-mode .top-actions button:not(#liveBtn){ display:none; }
+  body.live-mode header h1{ font-size:1.6rem; }
+  body.live-mode .live-clock{ font-size:1.4rem; }
+  body.live-mode main{ padding:8px; }
 
   .totals-table{ border-collapse:collapse; font-size:.78rem; width:100%; background:#fff; }
   .totals-table th, .totals-table td{ border:1px solid var(--line); padding:6px 8px; text-align:center; }
@@ -175,6 +186,8 @@
     <label>Activity (optional)</label>
     <input type="text" id="f_title">
     <div class="modal-actions">
+      <button class="btn-delete" onclick="deleteBlock()">Delete session</button>
+      <span style="flex:1"></span>
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
       <button class="btn-save" onclick="saveModal()">Save</button>
     </div>
@@ -263,7 +276,7 @@ function renderTabs(){
     const b = document.createElement('button');
     b.textContent = d;
     if(d===currentDay) b.className='active';
-    b.onclick = ()=>{ currentDay=d; if(liveMode){ liveMode=false; document.getElementById('liveBtn').textContent='▶ Go Live'; } render(); };
+    b.onclick = ()=>{ currentDay=d; exitLiveMode(); render(); };
     el.appendChild(b);
   });
   const sep = document.createElement('span');
@@ -272,7 +285,7 @@ function renderTabs(){
   const wt = document.createElement('button');
   wt.textContent = 'Weekly Totals';
   if(currentDay==='Weekly Totals') wt.className='active';
-  wt.onclick = ()=>{ currentDay='Weekly Totals'; if(liveMode){ liveMode=false; document.getElementById('liveBtn').textContent='▶ Go Live'; } render(); };
+  wt.onclick = ()=>{ currentDay='Weekly Totals'; exitLiveMode(); render(); };
   el.appendChild(wt);
 }
 
@@ -592,6 +605,13 @@ function closeModal(){
   document.getElementById('modalBg').classList.remove('open');
   editing = null;
 }
+function deleteBlock(){
+  if(!editing) return;
+  if(!confirm('Delete this session? This cannot be undone.')) return;
+  DATA[currentDay][editing.section].splice(editing.idx, 1);
+  closeModal();
+  render();
+}
 function parseTimeToMin(t){
   t = t.trim().toLowerCase();
   const m = t.match(/(\d+):?(\d*)\s*(am|pm)/);
@@ -724,7 +744,7 @@ function openSummaryModal(lane, disc, list){
     row.onclick = ()=>{
       closeSummaryModal();
       currentDay = item.day;
-      if(liveMode){ liveMode=false; document.getElementById('liveBtn').textContent='▶ Go Live'; }
+      if(liveMode){ exitLiveMode(); }
       render();
       setTimeout(()=> openModal(item.section, item.idx), 50);
     };
@@ -758,30 +778,51 @@ function playPing(){
   }catch(e){}
 }
 
-function toggleLive(){
-  liveMode = !liveMode;
-  const btn = document.getElementById('liveBtn');
-  if(liveMode){
-    btn.textContent = '⏸ Exit Live View';
-    alertsEnabled = true;
-    try{
-      audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
-      if(audioCtx.state==='suspended') audioCtx.resume();
-    }catch(e){}
-    playPing();
-    currentDay = getTodayName();
-    if(!DATA[currentDay]) currentDay = 'Monday';
-    render();
-    setTimeout(scrollToNow, 100);
-  } else {
-    btn.textContent = '▶ Go Live';
-    alertsEnabled = false;
-    // clear any live styling
-    document.querySelectorAll('.now-line').forEach(l=> l.style.display='none');
-    document.querySelectorAll('.block.active-now').forEach(b=> b.classList.remove('active-now'));
-    document.querySelectorAll('.lane-label.flash').forEach(l=> l.classList.remove('flash'));
-  }
+function enterFullscreen(){
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  if(req) req.call(el);
 }
+function exitFullscreen(){
+  const ex = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+  if(ex) ex.call(document);
+}
+function isFullscreen(){
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+}
+
+function exitLiveMode(){
+  if(!liveMode) return;
+  liveMode = false;
+  document.getElementById('liveBtn').textContent = '▶ Go Live';
+  document.body.classList.remove('live-mode');
+  alertsEnabled = false;
+  if(isFullscreen()) exitFullscreen();
+  document.querySelectorAll('.now-line').forEach(l=> l.style.display='none');
+  document.querySelectorAll('.block.active-now').forEach(b=> b.classList.remove('active-now'));
+  document.querySelectorAll('.lane-label.flash').forEach(l=> l.classList.remove('flash'));
+}
+
+function toggleLive(){
+  if(liveMode){ exitLiveMode(); return; }
+  liveMode = true;
+  document.getElementById('liveBtn').textContent = '⏸ Exit Live View';
+  document.body.classList.add('live-mode');
+  enterFullscreen();
+  alertsEnabled = true;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+  }catch(e){}
+  playPing();
+  currentDay = getTodayName();
+  if(!DATA[currentDay]) currentDay = 'Monday';
+  render();
+  setTimeout(scrollToNow, 100);
+}
+
+document.addEventListener('fullscreenchange', ()=>{ if(!isFullscreen()) exitLiveMode(); });
+document.addEventListener('webkitfullscreenchange', ()=>{ if(!isFullscreen()) exitLiveMode(); });
 
 function hasNextBlock(blocks, b, section){
   return blocks.some(o=> o!==b
