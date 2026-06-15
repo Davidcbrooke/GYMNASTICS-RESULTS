@@ -478,10 +478,24 @@ function renderPalette(){
       chip.draggable = true;
       chip.textContent = code;
       if(code!=='TBC') chip.style.background = LOC_MAP[code].color;
-      chip.ondragstart = e=> e.dataTransfer.setData('text/plain','palette:'+code);
+      chip.ondragstart = e=>{ e.dataTransfer.setData('text/plain','palette:'+code); e.dataTransfer.effectAllowed='copy'; };
       el.appendChild(chip);
     });
   });
+  const knownCodes = new Set(Object.values(groups).flat());
+  const customLocations = LOCATIONS.filter(l=> !knownCodes.has(l.code));
+  if(customLocations.length){
+    const h = document.createElement('h2'); h.textContent = 'Custom'; el.appendChild(h);
+    customLocations.forEach(l=>{
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.draggable = true;
+      chip.textContent = l.code;
+      chip.style.background = l.color;
+      chip.ondragstart = e=>{ e.dataTransfer.setData('text/plain','palette:'+l.code); e.dataTransfer.effectAllowed='copy'; };
+      el.appendChild(chip);
+    });
+  }
   const hint = document.createElement('div');
   hint.className = 'palette-hint';
   hint.textContent = 'Drag any chip onto a session block to set its location.';
@@ -543,7 +557,8 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   row.dataset.laneKey = meta.section==='squad' ? meta.lane : meta.colour;
 
   const track = document.createElement('div'); track.className='lane-track'; track.style.width=width+'px';
-  track.ondragover = e=> e.preventDefault();
+  track.ondragenter = e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; };
+  track.ondragover = e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; };
   track.ondrop = e=>{
     e.preventDefault();
     const data = e.dataTransfer.getData('text/plain');
@@ -607,8 +622,9 @@ function buildLane(label, blocksWithMeta, min, max, meta){
     div.draggable = true;
     div.dataset.section = section;
     div.dataset.idx = idx;
-    div.ondragstart = e=> e.dataTransfer.setData('text/plain','block:'+section+':'+idx);
-    div.ondragover = e=>{ e.preventDefault(); div.classList.add('dragover'); };
+    div.ondragstart = e=> { e.dataTransfer.setData('text/plain','block:'+section+':'+idx); e.dataTransfer.effectAllowed='copyMove'; };
+    div.ondragenter = e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; div.classList.add('dragover'); };
+    div.ondragover = e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; div.classList.add('dragover'); };
     div.ondragleave = ()=> div.classList.remove('dragover');
     div.ondrop = e=>{
       e.preventDefault(); e.stopPropagation(); div.classList.remove('dragover');
