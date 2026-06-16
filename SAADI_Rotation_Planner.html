@@ -101,6 +101,10 @@
   .block.group-coloured .disc{ opacity:.7; }
   .block.dragover{ outline:2px solid var(--navy); }
   .block.conflict{ outline:2px solid var(--red); box-shadow:0 0 0 3px rgba(163,38,56,.25); }
+  body.live-mode .block{ top:2px; bottom:2px; padding:0 5px; gap:4px; font-size:.68rem; border-radius:4px; }
+  body.live-mode .block .loc{ font-size:.68rem; }
+  body.live-mode .block .disc{ font-size:.62rem; }
+  body.live-mode .block .ttl{ font-size:.62rem; }
   .resize-handle{
     position:absolute; top:0; right:0; bottom:0; width:7px; cursor:ew-resize; background:rgba(255,255,255,.0);
   }
@@ -174,6 +178,7 @@
   body.live-mode main{ padding:6px 10px; }
   body.live-mode .section-title{ margin:10px 0 4px; font-size:.85rem; }
   body.live-mode .lane-label, body.live-mode .lane-row, body.live-mode .lane-track{ height:34px; }
+  body.live-mode .lane-label{ padding:3px 6px; font-size:.74rem; }
   body.live-mode .ruler-track{ height:28px; }
   body.live-mode .lane-label.ruler-label{ height:28px; }
   body.live-mode .tracks-col{ overflow-x:hidden; }
