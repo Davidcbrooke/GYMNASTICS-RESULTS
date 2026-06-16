@@ -1436,9 +1436,12 @@ function toggleLive(){
   playPing();
   currentDay = getTodayName();
   if(!DATA[currentDay]) currentDay = 'Monday';
-  PX_PER_MIN = calcLivePxPerMin();
-  render();
-  setTimeout(scrollToNow, 100);
+  // fetch latest data from Firebase before rendering live view
+  fetchData().then(()=>{
+    PX_PER_MIN = calcLivePxPerMin();
+    render();
+    setTimeout(scrollToNow, 100);
+  });
 }
 
 document.addEventListener('fullscreenchange', ()=>{ if(!isFullscreen()) exitLiveMode(); });
@@ -1601,13 +1604,14 @@ async function init(){
   render();
   setTimeout(scrollToNow, 100);
   setInterval(updateLiveIndicators, 1000);
-  // periodically refresh from GitHub while live, to pick up edits made elsewhere
+  // refresh from Firebase every 30s while live, to pick up edits made elsewhere
   setInterval(async ()=>{
     if(liveMode){
       await fetchData();
+      PX_PER_MIN = calcLivePxPerMin();
       render();
     }
-  }, 5*60*1000);
+  }, 30*1000);
 }
 </script>
 </body>
