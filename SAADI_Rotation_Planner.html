@@ -172,6 +172,9 @@
   body.live-mode main{ padding:6px 10px; }
   body.live-mode .section-title{ margin:10px 0 4px; font-size:.85rem; }
   body.live-mode .lane-label, body.live-mode .lane-row, body.live-mode .lane-track{ height:34px; }
+  body.live-mode .ruler-track{ height:28px; }
+  body.live-mode .lane-label.ruler-label{ height:28px; }
+  body.live-mode .tracks-col{ overflow-x:hidden; }
   body.live-mode .block .loc{ font-size:.68rem; }
   body.live-mode .block .disc, body.live-mode .block .ttl{ font-size:.6rem; }
 
@@ -433,7 +436,18 @@ function renderColourSwatches(container, current, onSelect){
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 const DAY_BY_JSDAY = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 let currentDay = "Monday";
+const BASE_PX_PER_MIN = 14;
 let PX_PER_MIN = 14;
+
+function calcLivePxPerMin(){
+  // available width = screen width minus labels column (170px)
+  const availW = (window.innerWidth || screen.width) - 170 - 22; // 22 = lane-add
+  const dayData = DATA[currentDay] || DATA['Monday'];
+  const {min, max} = getDayBounds(dayData);
+  const span = max - min;
+  if(span <= 0) return BASE_PX_PER_MIN;
+  return Math.max(4, availW / span);
+}
 let currentMin = 0, currentMax = 0;
 let laneLabelMap = {};
 let liveMode = false;
@@ -1077,11 +1091,12 @@ function openModal(section, idx){
   };
   selectedBlockColour = b.color || null;
   refreshModalColourSwatches();
-  // reset repeat-day checkboxes
+  // set repeat-day checkboxes — pre-tick any days this block is already linked to
+  const linkedDays = b.linkedId ? getAllLinkedDays(b.linkedId, currentDay) : [];
   document.querySelectorAll('#f_repeat_days input[type=checkbox]').forEach(cb=>{
-    cb.checked = false;
     cb.disabled = (cb.value === currentDay);
     cb.parentElement.style.opacity = cb.disabled ? '0.4' : '1';
+    cb.checked = linkedDays.includes(cb.value);
   });
   document.getElementById('modalBg').classList.add('open');
 }
@@ -1124,6 +1139,25 @@ function parseTimeToMin(t){
   if(ap==='am' && h===12) h=0;
   return h*60+mi;
 }
+
+function genLinkedId(){
+  return 'link_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+}
+
+function getAllLinkedDays(linkedId, excludeDay){
+  const days = [];
+  Object.keys(DATA).forEach(day=>{
+    if(day === excludeDay) return;
+    const all = [...(DATA[day].squad||[]), ...(DATA[day].recreational||[])];
+    if(all.some(b=> b.linkedId === linkedId)) days.push(day);
+  });
+  return days;
+}
+
+function findLinkedBlock(day, linkedId, section){
+  return (DATA[day][section]||[]).find(b=> b.linkedId === linkedId);
+}
+
 function saveModal(){
   if(!editing) return;
   const b = DATA[currentDay][editing.section][editing.idx];
@@ -1149,13 +1183,39 @@ function saveModal(){
     });
   }
 
-  // copy to any ticked repeat days
-  const repeatDays = [...document.querySelectorAll('#f_repeat_days input[type=checkbox]:checked')].map(cb=>cb.value);
-  repeatDays.forEach(day=>{
-    if(day===currentDay) return;
-    const copy = JSON.parse(JSON.stringify(b));
-    DATA[day][editing.section].push(copy);
-  });
+  // handle linked days
+  const tickedDays = [...document.querySelectorAll('#f_repeat_days input[type=checkbox]:checked')].map(cb=>cb.value);
+  const section = editing.section;
+  if(tickedDays.length > 0 && !b.linkedId) b.linkedId = genLinkedId();
+  const linkedId = b.linkedId;
+
+  if(linkedId){
+    const allDays = Object.keys(DATA).filter(d=> d!=='Weekly Totals');
+    allDays.forEach(day=>{
+      if(day===currentDay) return;
+      const existing = findLinkedBlock(day, linkedId, section);
+      if(tickedDays.includes(day)){
+        if(existing){
+          existing.start=b.start; existing.end=b.end;
+          existing.start_min=b.start_min; existing.end_min=b.end_min;
+          existing.location=b.location; existing.title=b.title;
+          if(b.color) existing.color=b.color; else delete existing.color;
+          if(newName && newName!==oldName){
+            if(section==='squad') existing.lane=newName;
+            else existing.colour=newName;
+          }
+        } else {
+          const copy = JSON.parse(JSON.stringify(b));
+          DATA[day][section].push(copy);
+        }
+      } else {
+        if(existing){
+          const idx2 = DATA[day][section].indexOf(existing);
+          if(idx2>-1) DATA[day][section].splice(idx2,1);
+        }
+      }
+    });
+  }
 
   closeModal();
   render();
@@ -1317,6 +1377,7 @@ function exitLiveMode(){
   document.querySelectorAll('.now-line').forEach(l=> l.style.display='none');
   document.querySelectorAll('.block.active-now').forEach(b=> b.classList.remove('active-now'));
   document.querySelectorAll('.lane-label.flash').forEach(l=> l.classList.remove('flash'));
+  PX_PER_MIN = BASE_PX_PER_MIN;
   render();
 }
 
@@ -1334,6 +1395,7 @@ function toggleLive(){
   playPing();
   currentDay = getTodayName();
   if(!DATA[currentDay]) currentDay = 'Monday';
+  PX_PER_MIN = calcLivePxPerMin();
   render();
   setTimeout(scrollToNow, 100);
 }
