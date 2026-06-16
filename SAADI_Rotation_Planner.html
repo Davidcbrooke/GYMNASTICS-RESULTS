@@ -32,7 +32,7 @@
   }
   .top-actions button:hover{ background:var(--gold-2); }
   .powered-by{ display:flex; align-items:center; gap:8px; color:#cfd6e4; font-size:.75rem; font-weight:600; }
-  .powered-by img{ height:26px; display:block; }
+  .powered-by img{ height:26px; display:block; mix-blend-mode:screen; }
   body.live-mode .powered-by{ display:none; }
   .day-tabs{
     display:flex; gap:4px; padding:10px 16px 0; background:var(--navy-2); overflow-x:auto; flex:0 0 auto;
@@ -73,9 +73,9 @@
     height:38px; padding:6px 8px; font-size:.78rem; font-weight:600; color:var(--navy); display:flex; align-items:center; background:#fff; border-bottom:1px solid var(--line); overflow:hidden;
   }
   .lane-label span.lane-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
-  .lane-drag-handle{ flex-shrink:0; cursor:grab; opacity:0.3; font-size:1.1rem; margin-right:4px; line-height:1; }
-  .lane-label:hover .lane-drag-handle{ opacity:0.8; }
-  .lane-drag-handle:active{ cursor:grabbing; }
+  .lane-move-btn{ background:none; border:none; cursor:pointer; color:var(--navy); opacity:0.25; font-size:.65rem; padding:0 1px; line-height:1; flex-shrink:0; }
+  .lane-label:hover .lane-move-btn{ opacity:0.7; }
+  .lane-move-btn:hover{ opacity:1 !important; color:var(--gold); }
   .lane-label.ruler-label{
     height:24px; font-weight:700; color:var(--muted); font-size:.72rem; position:sticky; top:0; background:var(--paper); z-index:5;
   }
@@ -145,6 +145,7 @@
   .lane-label.flash{ animation: flashLane .7s ease-in-out infinite; }
 
   .legend-note{ font-size:.7rem; color:var(--muted); margin-top:6px; }
+  .day-check{ display:flex; align-items:center; gap:3px; font-size:.75rem; font-weight:600; color:var(--navy); cursor:pointer; background:#f0f4ff; border-radius:4px; padding:3px 7px; }
 
   .quick-actions{ display:flex; gap:10px; margin-bottom:14px; }
   .btn-quick{
@@ -220,9 +221,6 @@
     <button id="liveBtn" onclick="toggleLive()">▶ Go Live</button>
     <button id="saveGitBtn" onclick="saveToFirebase()">💾 Save</button>
     <span id="saveStatus" class="save-status"></span>
-    <button onclick="exportData()">Download data (JSON)</button>
-    <button onclick="document.getElementById('importFile').click()">Load saved data</button>
-    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
   </div>
 </header>
 <div class="day-tabs" id="dayTabs"></div>
@@ -289,6 +287,17 @@
       <input type="text" id="ag_new_name" placeholder="e.g. WAG Pearl 3">
     </div>
     <div class="legend-note">Pick an existing group to add another session to it, or choose "+ New group" to create a fresh row.</div>
+    <label style="margin-top:8px;">Also add to days</label>
+    <div id="ag_repeat_days" style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px;">
+      <label class="day-check"><input type="checkbox" value="Monday"> Mon</label>
+      <label class="day-check"><input type="checkbox" value="Tuesday"> Tue</label>
+      <label class="day-check"><input type="checkbox" value="Wednesday"> Wed</label>
+      <label class="day-check"><input type="checkbox" value="Thursday"> Thu</label>
+      <label class="day-check"><input type="checkbox" value="Friday"> Fri</label>
+      <label class="day-check"><input type="checkbox" value="Saturday"> Sat</label>
+      <label class="day-check"><input type="checkbox" value="Sunday"> Sun</label>
+    </div>
+    <div class="legend-note">Ticked days will also get this group added (you can edit times per-day afterwards).</div>
     <div class="modal-actions">
       <span style="flex:1"></span>
       <button class="btn-cancel" onclick="closeAddGroupModal()">Cancel</button>
@@ -475,14 +484,31 @@ function renderPalette(){
     "Rooms": ["PINK ROOM","BLUE ROOM","DANCE STUDIO","CAFE"],
     "Other": ["TBC"]
   };
+  const PALETTE_COLORS = ["#7c9ebd","#5b8fa8","#4a7a8a","#6b9e8c","#8bc34a","#c9a227","#e07b39","#c0392b","#9b59b6","#7f8c8d"];
+  function addLocationToGroup(groupLabel){
+    const name = prompt('New location name for ' + groupLabel + ':');
+    if(!name || !name.trim()) return;
+    const code = name.trim().toUpperCase();
+    if(LOCATIONS.find(l=>l.code===code)){ alert('That location already exists.'); return; }
+    const color = PALETTE_COLORS[LOCATIONS.length % PALETTE_COLORS.length];
+    LOCATIONS.push({code, color, discipline: groupLabel});
+    LOC_MAP[code] = {color, discipline: groupLabel};
+    renderPalette();
+  }
   Object.entries(groups).forEach(([label, codes])=>{
-    const h = document.createElement('h2'); h.textContent = label; el.appendChild(h);
+    const hWrap = document.createElement('div'); hWrap.style.cssText='display:flex;align-items:center;justify-content:space-between;';
+    const h = document.createElement('h2'); h.textContent = label;
+    const addBtn = document.createElement('button'); addBtn.textContent='+'; addBtn.title='Add location to '+label;
+    addBtn.style.cssText='background:none;border:1px solid var(--gold);color:var(--gold);border-radius:3px;cursor:pointer;font-size:.8rem;font-weight:700;padding:0 5px;line-height:1.4;';
+    addBtn.onclick = ()=> addLocationToGroup(label);
+    hWrap.appendChild(h); hWrap.appendChild(addBtn);
+    el.appendChild(hWrap);
     codes.forEach(code=>{
       const chip = document.createElement('div');
       chip.className = 'chip' + (code==='TBC' ? ' tbc':'');
       chip.draggable = true;
       chip.textContent = code;
-      if(code!=='TBC') chip.style.background = LOC_MAP[code].color;
+      if(code!=='TBC') chip.style.background = LOC_MAP[code] ? LOC_MAP[code].color : '#888';
       chip.ondragstart = e=>{ e.dataTransfer.setData('text/plain','palette:'+code); e.dataTransfer.effectAllowed='copy'; };
       el.appendChild(chip);
     });
@@ -490,7 +516,13 @@ function renderPalette(){
   const knownCodes = new Set(Object.values(groups).flat());
   const customLocations = LOCATIONS.filter(l=> !knownCodes.has(l.code));
   if(customLocations.length){
-    const h = document.createElement('h2'); h.textContent = 'Custom'; el.appendChild(h);
+    const hWrap = document.createElement('div'); hWrap.style.cssText='display:flex;align-items:center;justify-content:space-between;';
+    const h = document.createElement('h2'); h.textContent = 'Custom';
+    const addBtn = document.createElement('button'); addBtn.textContent='+'; addBtn.title='Add custom location';
+    addBtn.style.cssText='background:none;border:1px solid var(--gold);color:var(--gold);border-radius:3px;cursor:pointer;font-size:.8rem;font-weight:700;padding:0 5px;line-height:1.4;';
+    addBtn.onclick = ()=> addLocationToGroup('Custom');
+    hWrap.appendChild(h); hWrap.appendChild(addBtn);
+    el.appendChild(hWrap);
     customLocations.forEach(l=>{
       const chip = document.createElement('div');
       chip.className = 'chip';
@@ -553,53 +585,68 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   const width = (max-min)*PX_PER_MIN;
   const laneKey = meta.section+'|'+(meta.section==='squad' ? meta.lane : meta.colour);
 
-  function doLaneReorder(fromKey){
-    const toKey = laneKey;
-    if(fromKey===toKey) return;
-    const section = fromKey.split('|')[0];
-    if(section !== toKey.split('|')[0]) return; // can't reorder across sections
-    const fromName = fromKey.split('|')[1];
-    const toName = toKey.split('|')[1];
+  const lbl = document.createElement('div'); lbl.className='lane-label';
+  const nameSpan = document.createElement('span'); nameSpan.className='lane-name'; nameSpan.textContent=label;
+
+  const upBtn = document.createElement('button'); upBtn.className='lane-move-btn'; upBtn.textContent='▲'; upBtn.title='Move up';
+  const dnBtn = document.createElement('button'); dnBtn.className='lane-move-btn'; dnBtn.textContent='▼'; dnBtn.title='Move down';
+
+  function moveLane(dir){
+    const section = meta.section;
+    const keyField = section==='squad' ? 'lane' : 'colour';
+    const myName = meta.section==='squad' ? meta.lane : meta.colour;
     const dayBlocks = DATA[currentDay][section];
-    const fromBlocks = dayBlocks.filter(b=>(section==='squad'?b.lane:b.colour)===fromName);
-    const toBlocks   = dayBlocks.filter(b=>(section==='squad'?b.lane:b.colour)===toName);
-    if(!fromBlocks.length || !toBlocks.length) return;
-    const fromIdx = dayBlocks.indexOf(fromBlocks[0]);
-    const toIdx   = dayBlocks.indexOf(toBlocks[0]);
-    let reordered = dayBlocks.filter(b=>(section==='squad'?b.lane:b.colour)!==fromName);
-    if(fromIdx < toIdx){
-      const insertAt = reordered.indexOf(toBlocks[toBlocks.length-1])+1;
-      reordered.splice(insertAt, 0, ...fromBlocks);
+    const uniqueNames = [...new Set(dayBlocks.map(b=>b[keyField]))];
+    const myIdx = uniqueNames.indexOf(myName);
+    const swapIdx = myIdx + dir;
+    if(swapIdx < 0 || swapIdx >= uniqueNames.length) return;
+    const swapName = uniqueNames[swapIdx];
+    const myBlocks   = dayBlocks.filter(b=>b[keyField]===myName);
+    const swapBlocks = dayBlocks.filter(b=>b[keyField]===swapName);
+    const others     = dayBlocks.filter(b=>b[keyField]!==myName && b[keyField]!==swapName);
+    let reordered;
+    if(dir === -1){
+      // moving up: swap goes after my blocks
+      reordered = dayBlocks.filter(b=>b[keyField]!==swapName);
+      const insertAt = reordered.indexOf(myBlocks[myBlocks.length-1])+1;
+      reordered.splice(insertAt, 0, ...swapBlocks);
     } else {
-      const insertAt = reordered.indexOf(toBlocks[0]);
-      reordered.splice(insertAt, 0, ...fromBlocks);
+      // moving down: swap goes before my blocks
+      reordered = dayBlocks.filter(b=>b[keyField]!==swapName);
+      const insertAt = reordered.indexOf(myBlocks[0]);
+      reordered.splice(insertAt, 0, ...swapBlocks);
     }
     DATA[currentDay][section] = reordered;
     render(); scheduleAutoSave();
   }
 
-  const lbl = document.createElement('div'); lbl.className='lane-label';
-  const handle = document.createElement('span'); handle.className='lane-drag-handle'; handle.textContent='⠿'; handle.title='Drag to reorder';
-  const nameSpan = document.createElement('span'); nameSpan.className='lane-name'; nameSpan.textContent=label;
-  lbl.appendChild(handle); lbl.appendChild(nameSpan);
+  upBtn.onclick = e=>{ e.stopPropagation(); moveLane(-1); };
+  dnBtn.onclick = e=>{ e.stopPropagation(); moveLane(1); };
 
-  // drag starts only from the handle
-  handle.draggable = true;
-  handle.ondragstart = e=>{ e.dataTransfer.setData('text/plain','lane:'+laneKey); e.dataTransfer.effectAllowed='move'; e.stopPropagation(); };
+  // double-click name to edit
+  nameSpan.ondblclick = e=>{
+    e.stopPropagation();
+    const section = meta.section;
+    const keyField = section==='squad' ? 'lane' : 'colour';
+    const oldName = section==='squad' ? meta.lane : meta.colour;
+    const input = document.createElement('input');
+    input.value = oldName;
+    input.style.cssText = 'width:100%;font-size:.78rem;font-weight:600;border:1px solid var(--gold);border-radius:3px;padding:1px 3px;';
+    nameSpan.replaceWith(input);
+    input.focus(); input.select();
+    function commitRename(){
+      const newName = input.value.trim();
+      if(newName && newName !== oldName){
+        DATA[currentDay][section].forEach(b=>{ if(b[keyField]===oldName) b[keyField]=newName; if(b.lane===oldName) b.lane=newName; });
+        scheduleAutoSave();
+      }
+      render();
+    }
+    input.onblur = commitRename;
+    input.onkeydown = e2=>{ if(e2.key==='Enter') input.blur(); if(e2.key==='Escape'){ input.value=oldName; input.blur(); } };
+  };
 
-  // drop target is the whole label
-  lbl.ondragover = e=>{ 
-    const d = e.dataTransfer.types.includes('text/plain');
-    if(!d) return;
-    e.preventDefault(); e.dataTransfer.dropEffect='move'; lbl.style.outline='2px dashed var(--gold)'; 
-  };
-  lbl.ondragleave = ()=>{ lbl.style.outline=''; };
-  lbl.ondrop = e=>{
-    e.preventDefault(); lbl.style.outline='';
-    const from = e.dataTransfer.getData('text/plain');
-    if(!from.startsWith('lane:')) return;
-    doLaneReorder(from.slice(5));
-  };
+  lbl.appendChild(upBtn); lbl.appendChild(dnBtn); lbl.appendChild(nameSpan);
   laneLabelMap[laneKey] = lbl;
 
   const row = document.createElement('div'); row.className='lane-row';
@@ -613,7 +660,6 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   track.ondrop = e=>{
     e.preventDefault(); lbl.style.outline='';
     const data = e.dataTransfer.getData('text/plain');
-    if(data.startsWith('lane:')){ doLaneReorder(data.slice(5)); return; }
     if(!data.startsWith('palette:')) return;
     const code = data.split(':')[1];
     const rect = track.getBoundingClientRect();
@@ -802,8 +848,8 @@ function renderTimeline(){
     el.appendChild(h);
     const order = ['Orange','Yellow','Blue','Green','Red','Purple'];
     const idx = c=> { const i = order.indexOf(c); return i===-1 ? 999 : i; };
-    const colours = [...new Set(dayData.recreational.map(b=>b.colour))]
-      .sort((a,b)=> idx(a)-idx(b));
+    // use DATA order (first appearance) rather than hardcoded colour sort
+    const colours = [...new Set(dayData.recreational.map(b=>b.colour))];
     let laneDefs = colours.map(colour=>({
       label: colour,
       blocksWithMeta: allBlocks.filter(x=>x.section==='recreational' && x.block.colour===colour),
@@ -865,6 +911,12 @@ function openAddGroupModal(){
   document.getElementById('ag_section').value = 'squad';
   refreshAddGroupOptions();
   document.getElementById('ag_new_name').value = '';
+  // reset repeat-day checkboxes, unchecking current day
+  document.querySelectorAll('#ag_repeat_days input[type=checkbox]').forEach(cb=>{
+    cb.checked = false;
+    cb.disabled = (cb.value === currentDay);
+    cb.parentElement.style.opacity = cb.disabled ? '0.4' : '1';
+  });
   document.getElementById('addGroupModalBg').classList.add('open');
 }
 function closeAddGroupModal(){
@@ -895,7 +947,20 @@ function submitAddGroup(){
   } else {
     groupName = groupSel;
   }
+  // add to current day
   const idx = createSessionBlock(section, groupName);
+  // add to any ticked repeat days
+  const repeatDays = [...document.querySelectorAll('#ag_repeat_days input[type=checkbox]:checked')].map(cb=>cb.value);
+  repeatDays.forEach(day=>{
+    if(day===currentDay) return;
+    const {min} = getDayBounds(DATA[day]);
+    const startMin = Math.round(min/5)*5;
+    const endMin = startMin+30;
+    const newBlock = { start:fmtTime(startMin), end:fmtTime(endMin), start_min:startMin, end_min:endMin, location:'TBC', title:'', raw:'' };
+    if(section==='squad'){ newBlock.lane=groupName; }
+    else { newBlock.lane=groupName; newBlock.colour=groupName; newBlock.class=''; newBlock.block='Session'; }
+    DATA[day][section].push(newBlock);
+  });
   closeAddGroupModal();
   render();
   scheduleAutoSave();
