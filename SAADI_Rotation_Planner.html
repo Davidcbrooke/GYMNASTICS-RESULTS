@@ -553,26 +553,17 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   const width = (max-min)*PX_PER_MIN;
   const laneKey = meta.section+'|'+(meta.section==='squad' ? meta.lane : meta.colour);
 
-  const lbl = document.createElement('div'); lbl.className='lane-label';
-  lbl.innerHTML = '<span class="lane-drag-handle" title="Drag to reorder">⠿</span><span class="lane-name">'+label+'</span>';
-  lbl.draggable = true;
-  lbl.dataset.laneKey = laneKey;
-  lbl.ondragstart = e=>{ e.dataTransfer.setData('text/plain','lane:'+laneKey); e.dataTransfer.effectAllowed='move'; e.stopPropagation(); };
-  lbl.ondragover = e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; lbl.style.outline='2px dashed var(--gold)'; };
-  lbl.ondragleave = ()=>{ lbl.style.outline=''; };
-  lbl.ondrop = e=>{
-    e.preventDefault(); lbl.style.outline='';
-    const from = e.dataTransfer.getData('text/plain');
-    if(!from.startsWith('lane:')) return;
-    const fromKey = from.slice(5);
+  function doLaneReorder(fromKey){
     const toKey = laneKey;
     if(fromKey===toKey) return;
     const section = fromKey.split('|')[0];
+    if(section !== toKey.split('|')[0]) return; // can't reorder across sections
     const fromName = fromKey.split('|')[1];
     const toName = toKey.split('|')[1];
     const dayBlocks = DATA[currentDay][section];
     const fromBlocks = dayBlocks.filter(b=>(section==='squad'?b.lane:b.colour)===fromName);
     const toBlocks   = dayBlocks.filter(b=>(section==='squad'?b.lane:b.colour)===toName);
+    if(!fromBlocks.length || !toBlocks.length) return;
     const fromIdx = dayBlocks.indexOf(fromBlocks[0]);
     const toIdx   = dayBlocks.indexOf(toBlocks[0]);
     let reordered = dayBlocks.filter(b=>(section==='squad'?b.lane:b.colour)!==fromName);
@@ -585,6 +576,29 @@ function buildLane(label, blocksWithMeta, min, max, meta){
     }
     DATA[currentDay][section] = reordered;
     render(); scheduleAutoSave();
+  }
+
+  const lbl = document.createElement('div'); lbl.className='lane-label';
+  const handle = document.createElement('span'); handle.className='lane-drag-handle'; handle.textContent='⠿'; handle.title='Drag to reorder';
+  const nameSpan = document.createElement('span'); nameSpan.className='lane-name'; nameSpan.textContent=label;
+  lbl.appendChild(handle); lbl.appendChild(nameSpan);
+
+  // drag starts only from the handle
+  handle.draggable = true;
+  handle.ondragstart = e=>{ e.dataTransfer.setData('text/plain','lane:'+laneKey); e.dataTransfer.effectAllowed='move'; e.stopPropagation(); };
+
+  // drop target is the whole label
+  lbl.ondragover = e=>{ 
+    const d = e.dataTransfer.types.includes('text/plain');
+    if(!d) return;
+    e.preventDefault(); e.dataTransfer.dropEffect='move'; lbl.style.outline='2px dashed var(--gold)'; 
+  };
+  lbl.ondragleave = ()=>{ lbl.style.outline=''; };
+  lbl.ondrop = e=>{
+    e.preventDefault(); lbl.style.outline='';
+    const from = e.dataTransfer.getData('text/plain');
+    if(!from.startsWith('lane:')) return;
+    doLaneReorder(from.slice(5));
   };
   laneLabelMap[laneKey] = lbl;
 
@@ -599,7 +613,7 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   track.ondrop = e=>{
     e.preventDefault(); lbl.style.outline='';
     const data = e.dataTransfer.getData('text/plain');
-    if(data.startsWith('lane:')){ lbl.ondrop(e); return; }
+    if(data.startsWith('lane:')){ doLaneReorder(data.slice(5)); return; }
     if(!data.startsWith('palette:')) return;
     const code = data.split(':')[1];
     const rect = track.getBoundingClientRect();
@@ -980,12 +994,18 @@ function submitAddRotation(){
 }
 
 function render(){
+  // save scroll position before re-render
+  const savedScroll = (document.querySelector('.tracks-col') || {}).scrollLeft || 0;
   renderTabs();
   if(currentDay==='Weekly Totals'){
     renderWeeklyTotals();
   } else {
     renderTimeline();
     syncTrackScroll();
+    // restore scroll position
+    if(savedScroll > 0){
+      document.querySelectorAll('.tracks-col').forEach(tc=>{ tc.scrollLeft = savedScroll; });
+    }
   }
 }
 
