@@ -1158,6 +1158,7 @@ function openModal(section, idx){
 function closeModal(){
   document.getElementById('modalBg').classList.remove('open');
   editing = null;
+  saveToFirebase();
 }
 function deleteBlock(){
   if(!editing) return;
