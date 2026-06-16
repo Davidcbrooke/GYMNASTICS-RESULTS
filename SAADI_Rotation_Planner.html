@@ -124,6 +124,8 @@
   .btn-cancel:hover{ background:#ddd; }
   .btn-delete{ background:var(--red); color:#fff; }
   .btn-delete:hover{ background:#8a1f2f; }
+  .btn-delete-group{ background:#7b2d2d; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:700; cursor:pointer; font-size:.82rem; }
+  .btn-delete-group:hover{ background:#5c1f1f; }
   .btn-dupe{ background:#6c757d; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:700; cursor:pointer; font-size:.82rem; }
   .btn-dupe:hover{ background:#5a6268; }
   .btn-add{
@@ -264,6 +266,7 @@
     <div class="modal-actions">
       <button class="btn-delete" onclick="deleteBlock()">Delete</button>
       <button class="btn-dupe" onclick="duplicateBlock()">⧉ Duplicate</button>
+      <button class="btn-delete-group" onclick="deleteGroup()">✕ Delete Group</button>
       <span style="flex:1"></span>
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
       <button class="btn-save" onclick="saveModal()">Save</button>
@@ -558,28 +561,41 @@ function buildLane(label, blocksWithMeta, min, max, meta){
     const section = meta.section;
     const keyField = section==='squad' ? 'lane' : 'colour';
     const myName = meta.section==='squad' ? meta.lane : meta.colour;
-    const dayBlocks = DATA[currentDay][section];
-    const uniqueNames = [...new Set(dayBlocks.map(b=>b[keyField]))];
-    const myIdx = uniqueNames.indexOf(myName);
-    const swapIdx = myIdx + dir;
-    if(swapIdx < 0 || swapIdx >= uniqueNames.length) return;
-    const swapName = uniqueNames[swapIdx];
-    const myBlocks   = dayBlocks.filter(b=>b[keyField]===myName);
-    const swapBlocks = dayBlocks.filter(b=>b[keyField]===swapName);
-    const others     = dayBlocks.filter(b=>b[keyField]!==myName && b[keyField]!==swapName);
-    let reordered;
-    if(dir === -1){
-      // moving up: swap goes after my blocks
-      reordered = dayBlocks.filter(b=>b[keyField]!==swapName);
-      const insertAt = reordered.indexOf(myBlocks[myBlocks.length-1])+1;
-      reordered.splice(insertAt, 0, ...swapBlocks);
-    } else {
-      // moving down: swap goes before my blocks
-      reordered = dayBlocks.filter(b=>b[keyField]!==swapName);
-      const insertAt = reordered.indexOf(myBlocks[0]);
-      reordered.splice(insertAt, 0, ...swapBlocks);
+
+    function reorderDay(day){
+      const dayBlocks = DATA[day][section];
+      const uniqueNames = [...new Set(dayBlocks.map(b=>b[keyField]))];
+      const myIdx = uniqueNames.indexOf(myName);
+      if(myIdx === -1) return;
+      const swapIdx = myIdx + dir;
+      if(swapIdx < 0 || swapIdx >= uniqueNames.length) return;
+      const swapName = uniqueNames[swapIdx];
+      const myBlocks   = dayBlocks.filter(b=>b[keyField]===myName);
+      const swapBlocks = dayBlocks.filter(b=>b[keyField]===swapName);
+      let reordered;
+      if(dir === -1){
+        reordered = dayBlocks.filter(b=>b[keyField]!==swapName);
+        const insertAt = reordered.indexOf(myBlocks[myBlocks.length-1])+1;
+        reordered.splice(insertAt, 0, ...swapBlocks);
+      } else {
+        reordered = dayBlocks.filter(b=>b[keyField]!==swapName);
+        const insertAt = reordered.indexOf(myBlocks[0]);
+        reordered.splice(insertAt, 0, ...swapBlocks);
+      }
+      DATA[day][section] = reordered;
     }
-    DATA[currentDay][section] = reordered;
+
+    // apply to current day
+    reorderDay(currentDay);
+
+    // apply to all linked days (any block in this group has a linkedId)
+    const myBlocks = DATA[currentDay][section].filter(b=>b[keyField]===myName);
+    const linkedId = myBlocks.find(b=>b.linkedId)?.linkedId;
+    if(linkedId){
+      const linkedDays = getAllLinkedDays(linkedId, currentDay);
+      linkedDays.forEach(day=> reorderDay(day));
+    }
+
     render(); scheduleAutoSave();
   }
 
@@ -1109,6 +1125,31 @@ function deleteBlock(){
   if(!editing) return;
   if(!confirm('Delete this session? This cannot be undone.')) return;
   DATA[currentDay][editing.section].splice(editing.idx, 1);
+  closeModal();
+  render();
+  scheduleAutoSave();
+}
+function deleteGroup(){
+  if(!editing) return;
+  const section = editing.section;
+  const keyField = section==='squad' ? 'lane' : 'colour';
+  const b = DATA[currentDay][section][editing.idx];
+  const groupName = b[keyField];
+  const linkedId = b.linkedId;
+
+  // find all linked days
+  const linkedDays = linkedId ? getAllLinkedDays(linkedId, currentDay) : [];
+  const allAffected = [currentDay, ...linkedDays];
+
+  const msg = linkedDays.length > 0
+    ? `Delete the entire "${groupName}" group on ${allAffected.join(', ')}? This cannot be undone.`
+    : `Delete the entire "${groupName}" group (all sessions on ${currentDay})? This cannot be undone.`;
+  if(!confirm(msg)) return;
+
+  allAffected.forEach(day=>{
+    DATA[day][section] = DATA[day][section].filter(blk=> blk[keyField] !== groupName);
+  });
+
   closeModal();
   render();
   scheduleAutoSave();
