@@ -72,9 +72,9 @@
   .lane-label{
     height:38px; padding:6px 8px; font-size:.78rem; font-weight:600; color:var(--navy); display:flex; align-items:center; background:#fff; border-bottom:1px solid var(--line); overflow:hidden;
   }
-  .lane-label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; width:100%; }
-  .lane-drag-handle{ width:14px; flex-shrink:0; cursor:grab; opacity:0.4; font-size:1rem; display:inline-block; }
-  .lane-label:hover .lane-drag-handle{ opacity:0.9; }
+  .lane-label span.lane-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
+  .lane-drag-handle{ flex-shrink:0; cursor:grab; opacity:0.3; font-size:1.1rem; margin-right:4px; line-height:1; }
+  .lane-label:hover .lane-drag-handle{ opacity:0.8; }
   .lane-drag-handle:active{ cursor:grabbing; }
   .lane-label.ruler-label{
     height:24px; font-weight:700; color:var(--muted); font-size:.72rem; position:sticky; top:0; background:var(--paper); z-index:5;
@@ -554,7 +554,7 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   const laneKey = meta.section+'|'+(meta.section==='squad' ? meta.lane : meta.colour);
 
   const lbl = document.createElement('div'); lbl.className='lane-label';
-  lbl.innerHTML = '<span class="lane-drag-handle" title="Drag to reorder">⠿</span><span>'+label+'</span>';
+  lbl.innerHTML = '<span class="lane-drag-handle" title="Drag to reorder">⠿</span><span class="lane-name">'+label+'</span>';
   lbl.draggable = true;
   lbl.dataset.laneKey = laneKey;
   lbl.ondragstart = e=>{ e.dataTransfer.setData('text/plain','lane:'+laneKey); e.dataTransfer.effectAllowed='move'; e.stopPropagation(); };
@@ -593,11 +593,13 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   row.dataset.laneKey = meta.section==='squad' ? meta.lane : meta.colour;
 
   const track = document.createElement('div'); track.className='lane-track'; track.style.width=width+'px';
-  track.ondragenter = e=>{ e.preventDefault(); e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed==='copyMove' ? 'move' : 'copy'; };
-  track.ondragover = e=>{ e.preventDefault(); e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed==='copyMove' ? 'move' : 'copy'; };
+  track.ondragenter = e=>{ e.preventDefault(); e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed==='move' ? 'move' : 'copy'; };
+  track.ondragover = e=>{ e.preventDefault(); e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed==='move' ? 'move' : 'copy'; if(e.dataTransfer.effectAllowed==='move') lbl.style.outline='2px dashed var(--gold)'; };
+  track.ondragleave = ()=>{ lbl.style.outline=''; };
   track.ondrop = e=>{
-    e.preventDefault();
+    e.preventDefault(); lbl.style.outline='';
     const data = e.dataTransfer.getData('text/plain');
+    if(data.startsWith('lane:')){ lbl.ondrop(e); return; }
     if(!data.startsWith('palette:')) return;
     const code = data.split(':')[1];
     const rect = track.getBoundingClientRect();
