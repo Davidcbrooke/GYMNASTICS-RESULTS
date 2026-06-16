@@ -252,6 +252,17 @@
     <input type="text" id="f_title">
     <label>Colour (optional)</label>
     <div id="f_colour_swatches" class="swatch-row"></div>
+    <label style="margin-top:8px;">Repeat on days</label>
+    <div id="f_repeat_days" style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px;">
+      <label class="day-check"><input type="checkbox" value="Monday"> M</label>
+      <label class="day-check"><input type="checkbox" value="Tuesday"> T</label>
+      <label class="day-check"><input type="checkbox" value="Wednesday"> W</label>
+      <label class="day-check"><input type="checkbox" value="Thursday"> T</label>
+      <label class="day-check"><input type="checkbox" value="Friday"> F</label>
+      <label class="day-check"><input type="checkbox" value="Saturday"> S</label>
+      <label class="day-check"><input type="checkbox" value="Sunday"> S</label>
+    </div>
+    <div class="legend-note">Ticked days will get a copy of this session at the same time.</div>
     <div class="modal-actions">
       <button class="btn-delete" onclick="deleteBlock()">Delete session</button>
       <span style="flex:1"></span>
@@ -1136,6 +1147,12 @@ function openModal(section, idx){
   };
   selectedBlockColour = b.color || null;
   refreshModalColourSwatches();
+  // reset repeat-day checkboxes
+  document.querySelectorAll('#f_repeat_days input[type=checkbox]').forEach(cb=>{
+    cb.checked = false;
+    cb.disabled = (cb.value === currentDay);
+    cb.parentElement.style.opacity = cb.disabled ? '0.4' : '1';
+  });
   document.getElementById('modalBg').classList.add('open');
 }
 function closeModal(){
@@ -1184,6 +1201,15 @@ function saveModal(){
       if(editing.section==='recreational' && blk.colour===oldName) blk.colour = newName;
     });
   }
+
+  // copy to any ticked repeat days
+  const repeatDays = [...document.querySelectorAll('#f_repeat_days input[type=checkbox]:checked')].map(cb=>cb.value);
+  repeatDays.forEach(day=>{
+    if(day===currentDay) return;
+    const copy = JSON.parse(JSON.stringify(b));
+    DATA[day][editing.section].push(copy);
+  });
+
   closeModal();
   render();
   scheduleAutoSave();
