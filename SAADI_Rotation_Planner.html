@@ -73,6 +73,9 @@
     height:38px; padding:6px 8px; font-size:.78rem; font-weight:600; color:var(--navy); display:flex; align-items:center; background:#fff; border-bottom:1px solid var(--line); overflow:hidden;
   }
   .lane-label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; width:100%; }
+  .lane-drag-handle{ width:14px; flex-shrink:0; cursor:grab; opacity:0.4; font-size:1rem; display:inline-block; }
+  .lane-label:hover .lane-drag-handle{ opacity:0.9; }
+  .lane-drag-handle:active{ cursor:grabbing; }
   .lane-label.ruler-label{
     height:24px; font-weight:700; color:var(--muted); font-size:.72rem; position:sticky; top:0; background:var(--paper); z-index:5;
   }
@@ -551,7 +554,38 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   const laneKey = meta.section+'|'+(meta.section==='squad' ? meta.lane : meta.colour);
 
   const lbl = document.createElement('div'); lbl.className='lane-label';
-  lbl.innerHTML = '<span>'+label+'</span>';
+  lbl.innerHTML = '<span class="lane-drag-handle" title="Drag to reorder">⠿</span><span>'+label+'</span>';
+  lbl.draggable = true;
+  lbl.dataset.laneKey = laneKey;
+  lbl.ondragstart = e=>{ e.dataTransfer.setData('text/plain','lane:'+laneKey); e.dataTransfer.effectAllowed='move'; e.stopPropagation(); };
+  lbl.ondragover = e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; lbl.style.outline='2px dashed var(--gold)'; };
+  lbl.ondragleave = ()=>{ lbl.style.outline=''; };
+  lbl.ondrop = e=>{
+    e.preventDefault(); lbl.style.outline='';
+    const from = e.dataTransfer.getData('text/plain');
+    if(!from.startsWith('lane:')) return;
+    const fromKey = from.slice(5);
+    const toKey = laneKey;
+    if(fromKey===toKey) return;
+    const section = fromKey.split('|')[0];
+    const fromName = fromKey.split('|')[1];
+    const toName = toKey.split('|')[1];
+    const dayBlocks = DATA[currentDay][section];
+    const fromBlocks = dayBlocks.filter(b=>(section==='squad'?b.lane:b.colour)===fromName);
+    const toBlocks   = dayBlocks.filter(b=>(section==='squad'?b.lane:b.colour)===toName);
+    const fromIdx = dayBlocks.indexOf(fromBlocks[0]);
+    const toIdx   = dayBlocks.indexOf(toBlocks[0]);
+    let reordered = dayBlocks.filter(b=>(section==='squad'?b.lane:b.colour)!==fromName);
+    if(fromIdx < toIdx){
+      const insertAt = reordered.indexOf(toBlocks[toBlocks.length-1])+1;
+      reordered.splice(insertAt, 0, ...fromBlocks);
+    } else {
+      const insertAt = reordered.indexOf(toBlocks[0]);
+      reordered.splice(insertAt, 0, ...fromBlocks);
+    }
+    DATA[currentDay][section] = reordered;
+    render(); scheduleAutoSave();
+  };
   laneLabelMap[laneKey] = lbl;
 
   const row = document.createElement('div'); row.className='lane-row';
@@ -559,8 +593,8 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   row.dataset.laneKey = meta.section==='squad' ? meta.lane : meta.colour;
 
   const track = document.createElement('div'); track.className='lane-track'; track.style.width=width+'px';
-  track.ondragenter = e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; };
-  track.ondragover = e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; };
+  track.ondragenter = e=>{ e.preventDefault(); e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed==='copyMove' ? 'move' : 'copy'; };
+  track.ondragover = e=>{ e.preventDefault(); e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed==='copyMove' ? 'move' : 'copy'; };
   track.ondrop = e=>{
     e.preventDefault();
     const data = e.dataTransfer.getData('text/plain');
