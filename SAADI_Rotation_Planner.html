@@ -134,6 +134,13 @@
   .lane-bin{ flex-shrink:0; background:none; border:none; cursor:pointer; opacity:0; font-size:.85rem; padding:0 2px; line-height:1; color:var(--red); transition:opacity .15s; }
   .lane-label:hover .lane-bin{ opacity:0.5; }
   .lane-bin:hover{ opacity:1 !important; }
+  .lane-copy{ flex-shrink:0; background:none; border:none; cursor:pointer; opacity:0; font-size:.85rem; padding:0 2px; line-height:1; color:var(--navy); transition:opacity .15s; }
+  .lane-label:hover .lane-copy{ opacity:0.5; }
+  .lane-copy:hover{ opacity:1 !important; }
+  .lane-label.paste-ready{ outline:2px dashed var(--gold); background:rgba(201,162,39,.08); cursor:context-menu; }
+  .lane-label.paste-ready:hover{ background:rgba(201,162,39,.18); }
+  #toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--navy); color:#fff; padding:10px 20px; border-radius:6px; font-size:.85rem; font-weight:600; opacity:0; transition:opacity .25s, transform .25s; pointer-events:none; z-index:9999; }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .btn-add{
     margin-top:8px; background:var(--navy); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:.78rem; font-weight:600;
   }
@@ -172,6 +179,7 @@
   body.live-mode .legend-note{ display:none; }
   body.live-mode .lane-add{ display:none; }
   body.live-mode .lane-bin{ display:none; }
+  body.live-mode .lane-copy{ display:none; }
   body.live-mode .lane-move-btn{ display:none; }
   body.live-mode .section-title .btn-add{ display:none; }
   body.live-mode .top-actions button:not(#liveBtn){ display:none; }
@@ -261,17 +269,6 @@
     <input type="text" id="f_title">
     <label>Colour (optional)</label>
     <div id="f_colour_swatches" class="swatch-row"></div>
-    <label style="margin-top:8px;">Repeat on days</label>
-    <div id="f_repeat_days" style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px;">
-      <label class="day-check"><input type="checkbox" value="Monday"> M</label>
-      <label class="day-check"><input type="checkbox" value="Tuesday"> T</label>
-      <label class="day-check"><input type="checkbox" value="Wednesday"> W</label>
-      <label class="day-check"><input type="checkbox" value="Thursday"> T</label>
-      <label class="day-check"><input type="checkbox" value="Friday"> F</label>
-      <label class="day-check"><input type="checkbox" value="Saturday"> S</label>
-      <label class="day-check"><input type="checkbox" value="Sunday"> S</label>
-    </div>
-    <div class="legend-note">Ticked days will get a copy of this session at the same time.</div>
     <div class="modal-actions">
       <button class="btn-delete" onclick="deleteBlock()">Delete</button>
       <button class="btn-dupe" onclick="duplicateBlock()">⧉ Duplicate</button>
@@ -307,17 +304,6 @@
       <input type="text" id="ag_new_name" placeholder="e.g. WAG Pearl 3">
     </div>
     <div class="legend-note">Pick an existing group to add another session to it, or choose "+ New group" to create a fresh row.</div>
-    <label style="margin-top:8px;">Also add to days</label>
-    <div id="ag_repeat_days" style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px;">
-      <label class="day-check"><input type="checkbox" value="Monday"> Mon</label>
-      <label class="day-check"><input type="checkbox" value="Tuesday"> Tue</label>
-      <label class="day-check"><input type="checkbox" value="Wednesday"> Wed</label>
-      <label class="day-check"><input type="checkbox" value="Thursday"> Thu</label>
-      <label class="day-check"><input type="checkbox" value="Friday"> Fri</label>
-      <label class="day-check"><input type="checkbox" value="Saturday"> Sat</label>
-      <label class="day-check"><input type="checkbox" value="Sunday"> Sun</label>
-    </div>
-    <div class="legend-note">Ticked days will also get this group added (you can edit times per-day afterwards).</div>
     <div class="modal-actions">
       <span style="flex:1"></span>
       <button class="btn-cancel" onclick="closeAddGroupModal()">Cancel</button>
@@ -498,15 +484,6 @@ function renderTabs(){
   if(currentDay==='Weekly Totals') wt.className='active';
   wt.onclick = ()=>{ currentDay='Weekly Totals'; exitLiveMode(); render(); };
   el.appendChild(wt);
-  const sep2 = document.createElement('span');
-  sep2.style.cssText = 'flex:0 0 1px; background:rgba(255,255,255,.2); margin:6px 6px;';
-  el.appendChild(sep2);
-  const rt = document.createElement('button');
-  rt.textContent = '📋 Rec Template';
-  rt.style.cssText = 'background:rgba(201,162,39,.25);';
-  if(currentDay==='Rec Template') rt.className='active';
-  rt.onclick = ()=>{ currentDay='Rec Template'; exitLiveMode(); render(); };
-  el.appendChild(rt);
 }
 
 const PALETTE_GROUPS = {
@@ -602,17 +579,8 @@ function buildLane(label, blocksWithMeta, min, max, meta){
       DATA[day][section] = reordered;
     }
 
-    // apply to current day
+    // apply to current day only
     reorderDay(currentDay);
-
-    // apply to all linked days (any block in this group has a linkedId)
-    const myBlocks = DATA[currentDay][section].filter(b=>b[keyField]===myName);
-    const linkedId = myBlocks.find(b=>b.linkedId)?.linkedId;
-    if(linkedId){
-      const linkedDays = getAllLinkedDays(linkedId, currentDay);
-      linkedDays.forEach(day=> reorderDay(day));
-    }
-
     render(); scheduleAutoSave();
   }
 
@@ -652,22 +620,55 @@ function buildLane(label, blocksWithMeta, min, max, meta){
     const section = meta.section;
     const keyField = section==='squad' ? 'lane' : 'colour';
     const groupName = section==='squad' ? meta.lane : meta.colour;
-    // find linkedId from any block in this group
-    const groupBlocks = DATA[currentDay][section].filter(b=>b[keyField]===groupName);
-    const linkedId = groupBlocks.find(b=>b.linkedId)?.linkedId;
-    const linkedDays = linkedId ? getAllLinkedDays(linkedId, currentDay) : [];
-    const allAffected = [currentDay, ...linkedDays];
-    const msg = linkedDays.length > 0
-      ? `Delete the entire "${groupName}" group on ${allAffected.join(', ')}?\n\nThis cannot be undone.`
-      : `Delete the entire "${groupName}" group (all sessions on ${currentDay})?\n\nThis cannot be undone.`;
-    if(!confirm(msg)) return;
-    allAffected.forEach(day=>{
-      DATA[day][section] = DATA[day][section].filter(b=>b[keyField]!==groupName);
-    });
+    if(!confirm(`Delete the entire "${groupName}" group (all sessions on ${currentDay})?\n\nThis cannot be undone.`)) return;
+    DATA[currentDay][section] = DATA[currentDay][section].filter(b=>b[keyField]!==groupName);
     render(); scheduleAutoSave();
   };
 
-  lbl.appendChild(upBtn); lbl.appendChild(dnBtn); lbl.appendChild(nameSpan); lbl.appendChild(binBtn); lbl.appendChild(binBtn);
+  // copy button
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'lane-copy';
+  copyBtn.textContent = '⎘';
+  copyBtn.title = 'Copy ' + label + ' row';
+  copyBtn.onclick = e=>{
+    e.stopPropagation();
+    const section = meta.section;
+    const keyField = section==='squad' ? 'lane' : 'colour';
+    const groupName = section==='squad' ? meta.lane : meta.colour;
+    const blocks = DATA[currentDay][section].filter(b=>b[keyField]===groupName);
+    copiedRow = { section, groupName, blocks: JSON.parse(JSON.stringify(blocks)) };
+    // flash all labels to show paste is ready
+    document.querySelectorAll('.lane-label').forEach(l=>l.classList.add('paste-ready'));
+    // show toast
+    showToast('Row copied — right-click any group label to paste');
+  };
+
+  // right-click to paste
+  lbl.oncontextmenu = e=>{
+    if(!copiedRow) return;
+    e.preventDefault();
+    const section = meta.section;
+    const keyField = section==='squad' ? 'lane' : 'colour';
+    const targetName = section==='squad' ? meta.lane : meta.colour;
+    const newName = copiedRow.groupName === targetName
+      ? copiedRow.groupName + ' (copy)'
+      : copiedRow.groupName;
+    const newBlocks = copiedRow.blocks.map(b=>{
+      const copy = JSON.parse(JSON.stringify(b));
+      if(section==='squad') copy.lane = newName;
+      else { copy.colour = newName; copy.lane = newName; }
+      return copy;
+    });
+    // add after the target group
+    const targetIdx = DATA[currentDay][section].findLastIndex(b=>b[keyField]===targetName);
+    DATA[currentDay][section].splice(targetIdx+1, 0, ...newBlocks);
+    document.querySelectorAll('.lane-label').forEach(l=>l.classList.remove('paste-ready'));
+    copiedRow = null;
+    render(); scheduleAutoSave();
+    showToast('Pasted "' + newName + '" after "' + targetName + '"');
+  };
+
+  lbl.appendChild(upBtn); lbl.appendChild(dnBtn); lbl.appendChild(nameSpan); lbl.appendChild(copyBtn); lbl.appendChild(binBtn);
   laneLabelMap[laneKey] = lbl;
 
   const row = document.createElement('div'); row.className='lane-row';
@@ -931,12 +932,6 @@ function openAddGroupModal(){
   document.getElementById('ag_section').value = 'squad';
   refreshAddGroupOptions();
   document.getElementById('ag_new_name').value = '';
-  // reset repeat-day checkboxes, unchecking current day
-  document.querySelectorAll('#ag_repeat_days input[type=checkbox]').forEach(cb=>{
-    cb.checked = false;
-    cb.disabled = (cb.value === currentDay);
-    cb.parentElement.style.opacity = cb.disabled ? '0.4' : '1';
-  });
   document.getElementById('addGroupModalBg').classList.add('open');
 }
 function closeAddGroupModal(){
@@ -967,20 +962,7 @@ function submitAddGroup(){
   } else {
     groupName = groupSel;
   }
-  // add to current day
   const idx = createSessionBlock(section, groupName);
-  // add to any ticked repeat days
-  const repeatDays = [...document.querySelectorAll('#ag_repeat_days input[type=checkbox]:checked')].map(cb=>cb.value);
-  repeatDays.forEach(day=>{
-    if(day===currentDay) return;
-    const {min} = getDayBounds(DATA[day]);
-    const startMin = Math.round(min/5)*5;
-    const endMin = startMin+30;
-    const newBlock = { start:fmtTime(startMin), end:fmtTime(endMin), start_min:startMin, end_min:endMin, location:'TBC', title:'', raw:'' };
-    if(section==='squad'){ newBlock.lane=groupName; }
-    else { newBlock.lane=groupName; newBlock.colour=groupName; newBlock.class=''; newBlock.block='Session'; }
-    DATA[day][section].push(newBlock);
-  });
   closeAddGroupModal();
   render();
   scheduleAutoSave();
@@ -1083,8 +1065,6 @@ function render(){
   renderTabs();
   if(currentDay==='Weekly Totals'){
     renderWeeklyTotals();
-  } else if(currentDay==='Rec Template'){
-    renderRecTemplate();
   } else {
     renderTimeline();
     syncTrackScroll();
@@ -1149,13 +1129,6 @@ function openModal(section, idx){
   };
   selectedBlockColour = b.color || null;
   refreshModalColourSwatches();
-  // set repeat-day checkboxes — pre-tick any days this block is already linked to
-  const linkedDays = b.linkedId ? getAllLinkedDays(b.linkedId, currentDay) : [];
-  document.querySelectorAll('#f_repeat_days input[type=checkbox]').forEach(cb=>{
-    cb.disabled = (cb.value === currentDay);
-    cb.parentElement.style.opacity = cb.disabled ? '0.4' : '1';
-    cb.checked = linkedDays.includes(cb.value);
-  });
   document.getElementById('modalBg').classList.add('open');
 }
 function closeModal(){
@@ -1177,21 +1150,8 @@ function deleteGroup(){
   const keyField = section==='squad' ? 'lane' : 'colour';
   const b = DATA[currentDay][section][editing.idx];
   const groupName = b[keyField];
-  const linkedId = b.linkedId;
-
-  // find all linked days
-  const linkedDays = linkedId ? getAllLinkedDays(linkedId, currentDay) : [];
-  const allAffected = [currentDay, ...linkedDays];
-
-  const msg = linkedDays.length > 0
-    ? `Delete the entire "${groupName}" group on ${allAffected.join(', ')}? This cannot be undone.`
-    : `Delete the entire "${groupName}" group (all sessions on ${currentDay})? This cannot be undone.`;
-  if(!confirm(msg)) return;
-
-  allAffected.forEach(day=>{
-    DATA[day][section] = DATA[day][section].filter(blk=> blk[keyField] !== groupName);
-  });
-
+  if(!confirm(`Delete the entire "${groupName}" group (all sessions on ${currentDay})? This cannot be undone.`)) return;
+  DATA[currentDay][section] = DATA[currentDay][section].filter(blk=> blk[keyField] !== groupName);
   closeModal();
   render();
   scheduleAutoSave();
@@ -1223,23 +1183,8 @@ function parseTimeToMin(t){
   return h*60+mi;
 }
 
-function genLinkedId(){
-  return 'link_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-}
 
-function getAllLinkedDays(linkedId, excludeDay){
-  const days = [];
-  Object.keys(DATA).forEach(day=>{
-    if(day === excludeDay) return;
-    const all = [...(DATA[day].squad||[]), ...(DATA[day].recreational||[])];
-    if(all.some(b=> b.linkedId === linkedId)) days.push(day);
-  });
-  return days;
-}
 
-function findLinkedBlock(day, linkedId, section){
-  return (DATA[day][section]||[]).find(b=> b.linkedId === linkedId);
-}
 
 function saveModal(){
   if(!editing) return;
@@ -1263,40 +1208,6 @@ function saveModal(){
     DATA[currentDay][editing.section].forEach(blk=>{
       if(editing.section==='squad' && blk.lane===oldName) blk.lane = newName;
       if(editing.section==='recreational' && blk.colour===oldName) blk.colour = newName;
-    });
-  }
-
-  // handle linked days
-  const tickedDays = [...document.querySelectorAll('#f_repeat_days input[type=checkbox]:checked')].map(cb=>cb.value);
-  const section = editing.section;
-  if(tickedDays.length > 0 && !b.linkedId) b.linkedId = genLinkedId();
-  const linkedId = b.linkedId;
-
-  if(linkedId){
-    const allDays = Object.keys(DATA).filter(d=> d!=='Weekly Totals');
-    allDays.forEach(day=>{
-      if(day===currentDay) return;
-      const existing = findLinkedBlock(day, linkedId, section);
-      if(tickedDays.includes(day)){
-        if(existing){
-          existing.start=b.start; existing.end=b.end;
-          existing.start_min=b.start_min; existing.end_min=b.end_min;
-          existing.location=b.location; existing.title=b.title;
-          if(b.color) existing.color=b.color; else delete existing.color;
-          if(newName && newName!==oldName){
-            if(section==='squad') existing.lane=newName;
-            else existing.colour=newName;
-          }
-        } else {
-          const copy = JSON.parse(JSON.stringify(b));
-          DATA[day][section].push(copy);
-        }
-      } else {
-        if(existing){
-          const idx2 = DATA[day][section].indexOf(existing);
-          if(idx2>-1) DATA[day][section].splice(idx2,1);
-        }
-      }
     });
   }
 
@@ -1335,208 +1246,6 @@ function fmtDuration(mins){
   if(h===0) return m+'m';
   if(m===0) return h+'h';
   return h+'h '+m+'m';
-}
-
-// ---- Rec Template ----
-function renderRecTemplate(){
-  const main = document.getElementById('timeline');
-  if(!main){ return; }
-  const container = main.parentElement;
-  container.innerHTML = '';
-
-  // ensure template store exists
-  if(!DATA.__REC_TEMPLATE__) DATA.__REC_TEMPLATE__ = { slots: [] };
-  const tmpl = DATA.__REC_TEMPLATE__;
-
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'padding:20px; max-width:800px;';
-
-  // Header
-  const h = document.createElement('h2');
-  h.style.cssText = 'color:var(--navy); margin:0 0 6px;';
-  h.textContent = 'Recreational Class Template';
-  wrap.appendChild(h);
-
-  const sub = document.createElement('p');
-  sub.style.cssText = 'color:var(--muted); font-size:.85rem; margin:0 0 20px;';
-  sub.textContent = 'Define your standard recreational classes here once. Then apply them to any days of the week — they will overwrite the recreational section for those days.';
-  wrap.appendChild(sub);
-
-  // Slot list
-  const slotList = document.createElement('div');
-  slotList.id = 'rec-slot-list';
-
-  function renderSlots(){
-    slotList.innerHTML = '';
-    if(tmpl.slots.length === 0){
-      const empty = document.createElement('p');
-      empty.style.cssText = 'color:var(--muted); font-style:italic; font-size:.85rem;';
-      empty.textContent = 'No template classes yet. Click "+ Add Class" to get started.';
-      slotList.appendChild(empty);
-    }
-    tmpl.slots.forEach((slot, i)=>{
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:10px 14px; background:#fff; border:1px solid var(--line); border-radius:6px; margin-bottom:8px;';
-
-      const info = document.createElement('div');
-      info.style.cssText = 'flex:1; font-size:.85rem; font-weight:600; color:var(--navy);';
-      info.textContent = `${slot.name}  •  ${slot.start} – ${slot.end}  •  ${slot.colours.length} colour group${slot.colours.length!==1?'s':''}`;
-
-      const editBtn = document.createElement('button');
-      editBtn.textContent = '✏ Edit';
-      editBtn.style.cssText = 'background:var(--navy); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:.78rem; font-weight:600;';
-      editBtn.onclick = ()=> openSlotEditor(i);
-
-      const delBtn = document.createElement('button');
-      delBtn.textContent = '🗑';
-      delBtn.style.cssText = 'background:none; border:1px solid var(--red); color:var(--red); padding:5px 8px; border-radius:4px; cursor:pointer; font-size:.78rem;';
-      delBtn.onclick = ()=>{ if(confirm('Remove this template class?')){ tmpl.slots.splice(i,1); renderSlots(); scheduleAutoSave(); } };
-
-      row.appendChild(info); row.appendChild(editBtn); row.appendChild(delBtn);
-      slotList.appendChild(row);
-    });
-  }
-
-  wrap.appendChild(slotList);
-  renderSlots();
-
-  // Add class button
-  const addBtn = document.createElement('button');
-  addBtn.textContent = '+ Add Class';
-  addBtn.style.cssText = 'background:var(--gold); color:var(--navy); border:none; padding:9px 18px; border-radius:5px; font-weight:700; cursor:pointer; font-size:.85rem; margin-bottom:24px;';
-  addBtn.onclick = ()=> openSlotEditor(-1);
-  wrap.appendChild(addBtn);
-
-  // Divider
-  const div = document.createElement('hr');
-  div.style.cssText = 'border:none; border-top:2px solid var(--gold); margin:8px 0 20px;';
-  wrap.appendChild(div);
-
-  // Apply section
-  const applyH = document.createElement('h3');
-  applyH.style.cssText = 'color:var(--navy); margin:0 0 8px;';
-  applyH.textContent = 'Apply template to days';
-  wrap.appendChild(applyH);
-
-  const applyNote = document.createElement('p');
-  applyNote.style.cssText = 'color:var(--muted); font-size:.82rem; margin:0 0 14px;';
-  applyNote.textContent = 'Ticked days will have their recreational section replaced with the template classes above. Existing recreational data for those days will be overwritten.';
-  wrap.appendChild(applyNote);
-
-  const dayRow = document.createElement('div');
-  dayRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;';
-  const applyDays = [];
-  DAYS.forEach(day=>{
-    const lbl = document.createElement('label');
-    lbl.className = 'day-check';
-    lbl.style.cssText = 'font-size:.82rem; padding:5px 10px;';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox'; cb.value = day;
-    cb.onchange = ()=>{
-      const idx2 = applyDays.indexOf(day);
-      if(cb.checked && idx2===-1) applyDays.push(day);
-      else if(!cb.checked && idx2>-1) applyDays.splice(idx2,1);
-    };
-    lbl.appendChild(cb);
-    lbl.appendChild(document.createTextNode(' '+day.slice(0,3)));
-    dayRow.appendChild(lbl);
-  });
-  wrap.appendChild(dayRow);
-
-  const applyBtn = document.createElement('button');
-  applyBtn.textContent = '▶ Apply to selected days';
-  applyBtn.style.cssText = 'background:var(--navy); color:#fff; border:none; padding:10px 22px; border-radius:5px; font-weight:700; cursor:pointer; font-size:.9rem;';
-  applyBtn.onclick = ()=>{
-    if(tmpl.slots.length === 0){ alert('Add some template classes first.'); return; }
-    if(applyDays.length === 0){ alert('Select at least one day to apply to.'); return; }
-    if(!confirm(`Apply template to ${applyDays.join(', ')}?\n\nThis will overwrite the recreational section for those days.`)) return;
-    applyDays.forEach(day=>{
-      DATA[day].recreational = [];
-      tmpl.slots.forEach(slot=>{
-        const sMin = parseTimeToMin(slot.start);
-        const eMin = parseTimeToMin(slot.end);
-        const warmupEnd = sMin + 10;
-        const cooldownStart = eMin - 5;
-        const rotStart = warmupEnd;
-        const rotEnd = cooldownStart;
-        const perRot = Math.floor((rotEnd - rotStart) / slot.rotations.length);
-        slot.colours.forEach((colour, ci)=>{
-          // warm up
-          DATA[day].recreational.push({ lane:colour, colour, class:slot.name, block:'Warm Up', start:slot.start, end:fmtTime(warmupEnd), start_min:sMin, end_min:warmupEnd, location:slot.warmupLocation||'TBC', title:'Warm Up', raw:'Warm Up' });
-          // rotations — latin square offset by colour index
-          slot.rotations.forEach((loc, ri)=>{
-            const rs = rotStart + ri * perRot;
-            const re = rs + perRot;
-            const colourLocIdx = (ci + ri) % slot.rotations.length;
-            DATA[day].recreational.push({ lane:colour, colour, class:slot.name, block:'Rotation '+(ri+1), start:fmtTime(rs), end:fmtTime(re), start_min:rs, end_min:re, location:slot.rotations[colourLocIdx], title:'Rotation '+(ri+1), raw:'Rotation '+(ri+1) });
-          });
-          // cool down
-          DATA[day].recreational.push({ lane:colour, colour, class:slot.name, block:'Cool Down', start:fmtTime(cooldownStart), end:slot.end, start_min:cooldownStart, end_min:eMin, location:null, title:'Cool Down', raw:'Cool Down' });
-        });
-      });
-    });
-    scheduleAutoSave();
-    alert('Template applied to ' + applyDays.join(', ') + '!');
-  };
-  wrap.appendChild(applyBtn);
-
-  container.appendChild(wrap);
-
-  // ---- Slot editor modal (inline) ----
-  function openSlotEditor(slotIdx){
-    const isNew = slotIdx === -1;
-    const slot = isNew ? { name:'', start:'4:00pm', end:'5:00pm', colours:['Orange','Yellow','Blue','Green','Red','Purple'], rotations:['BARS','FLOOR 1','VAULT MAIN'], warmupLocation:'TBC' } : JSON.parse(JSON.stringify(tmpl.slots[slotIdx]));
-
-    let overlay = document.getElementById('recSlotOverlay');
-    if(overlay) overlay.remove();
-    overlay = document.createElement('div');
-    overlay.id = 'recSlotOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center;';
-
-    const box = document.createElement('div');
-    box.style.cssText = 'background:#fff;border-radius:10px;padding:24px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;';
-
-    box.innerHTML = `
-      <h3 style="margin:0 0 16px;color:var(--navy)">${isNew?'New':'Edit'} Template Class</h3>
-      <label style="font-size:.8rem;font-weight:600;color:var(--navy)">Class name (e.g. Rec 4-5pm)</label>
-      <input id="se_name" type="text" value="${slot.name}" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid #ccc;border-radius:4px;margin-bottom:12px;font-size:.85rem;">
-      <div style="display:flex;gap:12px;margin-bottom:12px;">
-        <div style="flex:1"><label style="font-size:.8rem;font-weight:600;color:var(--navy)">Start time</label>
-        <input id="se_start" type="text" value="${slot.start}" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid #ccc;border-radius:4px;font-size:.85rem;"></div>
-        <div style="flex:1"><label style="font-size:.8rem;font-weight:600;color:var(--navy)">End time</label>
-        <input id="se_end" type="text" value="${slot.end}" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid #ccc;border-radius:4px;font-size:.85rem;"></div>
-      </div>
-      <label style="font-size:.8rem;font-weight:600;color:var(--navy)">Colour groups (one per line)</label>
-      <textarea id="se_colours" rows="6" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid #ccc;border-radius:4px;font-size:.85rem;margin-bottom:12px;">${slot.colours.join('\n')}</textarea>
-      <label style="font-size:.8rem;font-weight:600;color:var(--navy)">Rotation locations (one per line — groups rotate through these)</label>
-      <textarea id="se_rotations" rows="4" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid #ccc;border-radius:4px;font-size:.85rem;margin-bottom:12px;">${slot.rotations.join('\n')}</textarea>
-      <label style="font-size:.8rem;font-weight:600;color:var(--navy)">Warm-up location</label>
-      <input id="se_warmup" type="text" value="${slot.warmupLocation||'TBC'}" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid #ccc;border-radius:4px;font-size:.85rem;margin-bottom:16px;">
-      <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button id="se_cancel" style="background:#eee;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:600;">Cancel</button>
-        <button id="se_save" style="background:var(--gold);color:var(--navy);border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:700;">Save Class</button>
-      </div>`;
-
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-
-    document.getElementById('se_cancel').onclick = ()=> overlay.remove();
-    document.getElementById('se_save').onclick = ()=>{
-      const name = document.getElementById('se_name').value.trim();
-      const start = document.getElementById('se_start').value.trim();
-      const end = document.getElementById('se_end').value.trim();
-      const colours = document.getElementById('se_colours').value.split('\n').map(s=>s.trim()).filter(Boolean);
-      const rotations = document.getElementById('se_rotations').value.split('\n').map(s=>s.trim()).filter(Boolean);
-      const warmupLocation = document.getElementById('se_warmup').value.trim();
-      if(!name||!start||!end||colours.length===0||rotations.length===0){ alert('Please fill in all fields.'); return; }
-      const saved = {name, start, end, colours, rotations, warmupLocation};
-      if(isNew) tmpl.slots.push(saved);
-      else tmpl.slots[slotIdx] = saved;
-      overlay.remove();
-      renderSlots();
-      scheduleAutoSave();
-    };
-  }
 }
 
 function renderWeeklyTotals(){
@@ -1852,7 +1561,16 @@ async function saveToFirebase(){
   }
 }
 
-let autoSaveTimer = null;
+let copiedRow = null;
+
+function showToast(msg){
+  let t = document.getElementById('toast');
+  if(!t){ t = document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=> t.classList.remove('show'), 2500);
+}
 function scheduleAutoSave(){
   const status = document.getElementById('saveStatus');
   status.textContent = 'Unsaved changes…';
