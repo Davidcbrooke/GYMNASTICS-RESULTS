@@ -78,7 +78,10 @@
 
   .lane-row{ display:flex; align-items:stretch; border-bottom:1px solid var(--line); height:38px; }
   .lane-row:hover{ background:rgba(201,162,39,.06); }
-  .lane-track{ position:relative; flex:1; height:38px; }
+  .lane-track{ position:relative; flex:1; height:38px; overflow:visible; }
+  .grid-cell{ height:100%; box-sizing:border-box; cursor:crosshair; }
+  .grid-cell.half-hour{ border-left:1px solid var(--line); }
+  .grid-cell.drag-hover{ background:rgba(212,175,55,0.3) !important; }
   .lane-add{
     flex:0 0 22px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); font-weight:700; background:#fff; border-right:1px solid var(--line); font-size:.9rem;
   }
@@ -599,37 +602,57 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   row.dataset.section = meta.section;
   row.dataset.laneKey = meta.section==='squad' ? meta.lane : meta.colour;
 
-  const track = document.createElement('div'); track.className='lane-track'; track.style.width=width+'px';
-  track.style.cursor = 'crosshair';
-  track.onclick = e=>{
-    // only fire if clicking empty track (not a block)
-    if(e.target !== track) return;
-    const rect = track.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    let startMin = Math.round((min + offsetX/PX_PER_MIN)/5)*5;
-    startMin = Math.max(min, Math.min(startMin, max-30));
-    const endMin = Math.min(max, startMin+30);
-    const newBlock = {
-      start: fmtTime(startMin), end: fmtTime(endMin),
-      start_min: startMin, end_min: endMin, location: 'TBC', title:'', raw:''
+  const totalCells = (max - min) / 5;
+  const CELL_W = PX_PER_MIN * 5;
+
+  const track = document.createElement('div');
+  track.className = 'lane-track grid-track';
+  track.style.width = (totalCells * CELL_W) + 'px';
+  track.style.position = 'relative';
+  track.style.height = '38px';
+
+  // 5-min cell overlay for drop targets
+  const cellBar = document.createElement('div');
+  cellBar.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:grid;grid-template-columns:repeat('+totalCells+','+CELL_W+'px);z-index:1;pointer-events:none;';
+  for(let i=0; i<totalCells; i++){
+    const cellMin = min + i*5;
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell' + (cellMin%30===0 && cellMin!==min ? ' half-hour':'');
+    cell.dataset.t = cellMin;
+    cell.style.pointerEvents = 'all';
+    cell.ondragover = e=>{ e.preventDefault(); cell.classList.add('drag-hover'); };
+    cell.ondragleave = ()=>{ cell.classList.remove('drag-hover'); };
+    cell.ondrop = e=>{
+      e.preventDefault(); e.stopPropagation();
+      cellBar.querySelectorAll('.grid-cell').forEach(c=>c.classList.remove('drag-hover'));
+      const data = e.dataTransfer.getData('text/plain');
+      if(data.startsWith('block:')){
+        const parts = data.split(':');
+        const srcSection = parts[1], srcIdx = parseInt(parts[2]), dur = parseInt(parts[3]);
+        const b = DATA[currentDay][srcSection][srcIdx];
+        b.start_min = cellMin;
+        b.end_min = cellMin + dur;
+        b.start = fmtTime(b.start_min);
+        b.end = fmtTime(b.end_min);
+        render(); scheduleAutoSave();
+      }
     };
-    if(meta.section==='squad'){
-      newBlock.lane = meta.lane;
-    } else {
-      newBlock.class = meta.cls || ''; newBlock.colour = meta.colour;
-      newBlock.lane = meta.colour; newBlock.block = 'New session';
-    }
-    DATA[currentDay][meta.section].push(newBlock);
-    const idx = DATA[currentDay][meta.section].length - 1;
-    render();
-    scheduleAutoSave();
-    setTimeout(()=> openModal(meta.section, idx), 50);
-  };
-  for(let t=min - (min%30 || 30) + 30; t<=max; t+=30){
-    if(t<min) continue;
-    const gl = document.createElement('div'); gl.className='grid-line'; gl.style.left=((t-min)*PX_PER_MIN)+'px';
-    track.appendChild(gl);
+    cell.onclick = e=>{
+      if(e.target !== cell) return;
+      const startMin = cellMin;
+      const endMin = Math.min(max, startMin+30);
+      const newBlock = {start:fmtTime(startMin),end:fmtTime(endMin),start_min:startMin,end_min:endMin,location:'TBC',title:'',raw:''};
+      if(meta.section==='squad'){ newBlock.lane=meta.lane; }
+      else { newBlock.class=meta.cls||''; newBlock.colour=meta.colour; newBlock.lane=meta.colour; newBlock.block='New session'; }
+      DATA[currentDay][meta.section].push(newBlock);
+      const idx = DATA[currentDay][meta.section].length-1;
+      render(); scheduleAutoSave();
+      setTimeout(()=> openModal(meta.section, idx), 50);
+    };
+    cellBar.appendChild(cell);
   }
+  track.appendChild(cellBar);
+
   const addBtn = document.createElement('div');
   addBtn.className = 'lane-add';
   addBtn.textContent = '+';
@@ -637,89 +660,70 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   addBtn.onclick = ()=> addBlock(meta, min, max);
   row.appendChild(addBtn);
 
+  // render blocks absolutely on top of cells
   blocksWithMeta.forEach(({block, conflict, section, idx})=>{
-    const div = document.createElement('div');
+    const dur = block.end_min - block.start_min;
     const groupColour = section==='recreational' ? GROUP_COLOURS[block.colour] : null;
     const customColour = block.color || null;
     const effectiveColour = customColour || groupColour;
     const lightBg = customColour ? isLightColour(customColour) : !!groupColour;
+    const div = document.createElement('div');
     div.className = 'block'
       + (block.location==='TBC' && !effectiveColour ? ' tbc':'')
       + (effectiveColour && lightBg ? ' group-coloured':'')
       + (conflict?' conflict':'');
+    div.style.position = 'absolute';
     div.style.left = ((block.start_min-min)*PX_PER_MIN)+'px';
-    div.style.width = Math.max((block.end_min-block.start_min)*PX_PER_MIN - 2, 18)+'px';
-    if(customColour){
-      div.style.background = customColour;
-    } else if(groupColour){
-      div.style.background = groupColour;
-    } else if(block.location!=='TBC' && LOC_MAP[block.location]){
-      div.style.background = LOC_MAP[block.location].color;
-    }
+    div.style.width = Math.max(dur*PX_PER_MIN-2, 18)+'px';
+    div.style.top = '0'; div.style.height = '100%'; div.style.zIndex = '3';
+    if(customColour){ div.style.background=customColour; }
+    else if(groupColour){ div.style.background=groupColour; }
+    else if(block.location!=='TBC' && LOC_MAP[block.location]){ div.style.background=LOC_MAP[block.location].color; }
     const disc = getDiscipline(block.location);
     div.innerHTML = '<span class="loc">'+block.location+'</span>'
-      + (disc ? '<span class="disc">'+disc+'</span>' : '')
-      + (block.title ? '<span class="ttl">'+block.title+'</span>' : '');
-    div.title = label+': '+block.start+'–'+block.end+(block.title? ' · '+block.title:'');
+      +(disc?'<span class="disc">'+disc+'</span>':'')
+      +(block.title?'<span class="ttl">'+block.title+'</span>':'');
+    div.title = label+': '+block.start+'-'+block.end+(block.title?' - '+block.title:'');
     div.draggable = true;
-    div.dataset.section = section;
-    div.dataset.idx = idx;
-    div.ondragstart = e=> { e.dataTransfer.setData('text/plain','block:'+section+':'+idx); e.dataTransfer.effectAllowed='copyMove'; };
-    div.ondragenter = e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; div.classList.add('dragover'); };
-    div.ondragover = e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; div.classList.add('dragover'); };
-    div.ondragleave = ()=> div.classList.remove('dragover');
-    div.ondrop = e=>{
-      e.preventDefault(); e.stopPropagation(); div.classList.remove('dragover');
-      const data = e.dataTransfer.getData('text/plain');
-      if(data.startsWith('palette:')){
-        block.location = data.split(':')[1];
-        render();
-        scheduleAutoSave();
-      } else if(data.startsWith('block:')){
-        const [, srcSection, srcIdx] = data.split(':');
-        const src = DATA[currentDay][srcSection][parseInt(srcIdx)];
-        const tmp = src.location; src.location = block.location; block.location = tmp;
-        render();
-        scheduleAutoSave();
-      }
+    div.ondragstart = e=>{
+      e.dataTransfer.setData('text/plain','block:'+section+':'+idx+':'+dur);
+      e.dataTransfer.effectAllowed='move';
+      setTimeout(()=>{ div.style.opacity='0.35'; },0);
     };
-    div.onclick = ()=> openModal(section, idx);
+    div.ondragend = ()=>{ div.style.opacity=''; };
+    div.onclick = e=>{ e.stopPropagation(); openModal(section, idx); };
 
     const handle = document.createElement('div');
     handle.className = 'resize-handle';
     handle.draggable = false;
     handle.onclick = e=> e.stopPropagation();
-    handle.onmousedown = (e)=>{
+    handle.onmousedown = e=>{
       e.preventDefault(); e.stopPropagation();
-      const startX = e.clientX;
-      const origEnd = block.end_min;
+      const startX = e.clientX, origEnd = block.end_min;
       div.classList.add('resizing');
-      const onMove = (ev)=>{
+      const onMove = ev=>{
         const deltaPx = ev.clientX - startX;
         let deltaMin = Math.round(deltaPx/PX_PER_MIN/5)*5;
         let newEnd = Math.max(block.start_min+5, origEnd+deltaMin);
-        div.style.width = Math.max((newEnd-block.start_min)*PX_PER_MIN - 2, 18)+'px';
+        div.style.width = Math.max((newEnd-block.start_min)*PX_PER_MIN-2,18)+'px';
         div._pendingEnd = newEnd;
       };
       const onUp = ()=>{
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
         div.classList.remove('resizing');
         if(div._pendingEnd!==undefined){
-          block.end_min = div._pendingEnd;
-          block.end = fmtTime(block.end_min);
-          delete div._pendingEnd;
-          render();
-          scheduleAutoSave();
+          block.end_min=div._pendingEnd; block.end=fmtTime(block.end_min);
+          delete div._pendingEnd; render(); scheduleAutoSave();
         }
       };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
     };
     div.appendChild(handle);
-
     track.appendChild(div);
   });
+
   row.appendChild(track);
   return {label: lbl, row};
 }
