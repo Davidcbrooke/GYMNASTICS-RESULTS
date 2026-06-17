@@ -499,11 +499,14 @@ const PALETTE_GROUPS = {
 
 function renderPalette(){ /* palette removed */ }
 
+const DAY_MIN_START = 8 * 60; // 8:00am hard floor
+const DAY_MAX_END = 20 * 60;  // 8:00pm hard ceiling
+
 function getDayBounds(dayData){
   const all = [...dayData.squad, ...dayData.recreational];
-  if(all.length===0) return {min:8*60, max:20*60};
-  let min = Math.min(...all.map(b=>b.start_min));
-  let max = Math.max(...all.map(b=>b.end_min));
+  if(all.length===0) return {min: DAY_MIN_START, max: DAY_MAX_END};
+  let min = Math.min(DAY_MIN_START, Math.min(...all.map(b=>b.start_min)));
+  let max = Math.max(DAY_MAX_END, Math.max(...all.map(b=>b.end_min)));
   return {min, max};
 }
 
@@ -892,8 +895,13 @@ function renderTimeline(){
 }
 
 function createSessionBlock(section, groupName, overrides={}){
-  const {min} = getDayBounds(DATA[currentDay]);
-  const start_min = overrides.start_min !== undefined ? overrides.start_min : Math.round(min/5)*5;
+  const {min, max} = getDayBounds(DATA[currentDay]);
+  // default new block to 4pm, or day min if data exists after 4pm
+  const allBlocks = [...DATA[currentDay].squad, ...DATA[currentDay].recreational];
+  const defaultStart = allBlocks.length > 0
+    ? Math.round(Math.min(...allBlocks.map(b=>b.start_min)) / 5) * 5
+    : 16 * 60; // 4pm
+  const start_min = overrides.start_min !== undefined ? overrides.start_min : defaultStart;
   const end_min = overrides.end_min !== undefined ? overrides.end_min : start_min+30;
   const newBlock = {
     start: fmtTime(start_min), end: fmtTime(end_min),
@@ -1134,7 +1142,8 @@ function openModal(section, idx){
 function closeModal(){
   document.getElementById('modalBg').classList.remove('open');
   editing = null;
-  scheduleAutoSave();
+  // save immediately so new blocks are never lost
+  saveToFirebase();
 }
 function deleteBlock(){
   if(!editing) return;
