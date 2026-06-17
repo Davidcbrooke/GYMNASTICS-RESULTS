@@ -472,9 +472,13 @@ const BASE_PX_PER_MIN = 14;
 let PX_PER_MIN = 14;
 
 function calcLivePxPerMin(){
-  // available width = screen width minus labels column (170px)
-  const availW = (window.innerWidth || screen.width) - 170 - 22; // 22 = lane-add
   const dayData = DATA[currentDay] || DATA['Monday'];
+  const allGroupNames = [
+    ...new Set(dayData.squad.map(b=>b.lane)),
+    ...new Set(dayData.recreational.map(b=>b.colour))
+  ];
+  const lblW = measureLabelWidth(allGroupNames);
+  const availW = (window.innerWidth || screen.width) - lblW - 22;
   const {min, max} = getDayBounds(dayData);
   const span = max - min;
   if(span <= 0) return BASE_PX_PER_MIN;
@@ -860,9 +864,27 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   return {label: lbl, row};
 }
 
-function buildTimelineWrap(min, max, laneDefs){
+function measureLabelWidth(names){
+  // measure text width using canvas
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.font = '600 .78rem sans-serif';
+  const PADDING = 60; // space for ▲▼ buttons + copy + bin + padding
+  const MIN_W = 140;
+  const MAX_W = 260;
+  let maxW = MIN_W;
+  names.forEach(n=>{
+    const w = ctx.measureText(n).width + PADDING;
+    if(w > maxW) maxW = w;
+  });
+  return Math.min(Math.ceil(maxW), MAX_W);
+}
+
+function buildTimelineWrap(min, max, laneDefs, labelWidth=170){
   const wrap = document.createElement('div'); wrap.className='timeline-wrap';
   const labelsCol = document.createElement('div'); labelsCol.className='labels-col';
+  labelsCol.style.flex = `0 0 ${labelWidth}px`;
+  labelsCol.style.width = `${labelWidth}px`;
   const tracksCol = document.createElement('div'); tracksCol.className='tracks-col';
   const ruler = buildRuler(min,max);
   labelsCol.appendChild(ruler.label);
@@ -896,6 +918,13 @@ function renderTimeline(){
   const conflictFlags = computeConflicts(allBlocks.map(x=>x.block));
   allBlocks.forEach((x,i)=> x.conflict = conflictFlags[i]);
 
+  // measure all group names together for consistent label column width
+  const allGroupNames = [
+    ...new Set(dayData.squad.map(b=>b.lane)),
+    ...new Set(dayData.recreational.map(b=>b.colour))
+  ];
+  const labelWidth = measureLabelWidth(allGroupNames);
+
   const filterActive = liveMode;
   const nowMin = nowMinutes();
   const isActive = (blocksWithMeta)=> blocksWithMeta.some(x=> nowMin>=x.block.start_min && nowMin<x.block.end_min);
@@ -913,7 +942,7 @@ function renderTimeline(){
     }));
     if(filterActive) laneDefs = laneDefs.filter(d=> isActive(d.blocksWithMeta));
     if(laneDefs.length){
-      el.appendChild(buildTimelineWrap(min, max, laneDefs));
+      el.appendChild(buildTimelineWrap(min, max, laneDefs, labelWidth));
     } else {
       const p = document.createElement('p'); p.style.color='var(--muted)'; p.style.fontSize='.8rem';
       p.textContent = filterActive ? 'No squads currently in session.' : 'No squad groups yet for '+currentDay+'.';
@@ -937,7 +966,7 @@ function renderTimeline(){
     }));
     if(filterActive) laneDefs = laneDefs.filter(d=> isActive(d.blocksWithMeta));
     if(laneDefs.length){
-      el.appendChild(buildTimelineWrap(min, max, laneDefs));
+      el.appendChild(buildTimelineWrap(min, max, laneDefs, labelWidth));
     } else {
       const p = document.createElement('p'); p.style.color='var(--muted)'; p.style.fontSize='.8rem';
       p.textContent = filterActive ? 'No recreational groups currently in session.' : 'No recreational groups yet for '+currentDay+'.';
