@@ -265,6 +265,7 @@
     <div class="quick-actions">
       <button class="btn-quick" onclick="openAddGroupModal()">➕ Add Group</button>
       <button class="btn-quick" onclick="openAddRotationModal()">➕ Add Rotation</button>
+      <button class="btn-quick" onclick="applyOrderToAllDays()" style="background:var(--navy);" title="Apply the current day's group order to all other days">↕ Apply Order to All Days</button>
     </div>
     <div id="timeline"></div>
     <div class="legend-note">Click anywhere on a timeline row to add a new session at that time. Click an existing block to edit it.</div>
@@ -1683,6 +1684,51 @@ async function saveToFirebase(){
     status.textContent = 'Save failed: '+e.message;
     btn.textContent='💾 Save'; btn.disabled=false;
   }
+}
+
+function applyOrderToAllDays(){
+  if(!confirm(`Apply the group order from ${currentDay} to all other days?\n\nThis reorders squads and recreational groups on every other day to match ${currentDay}. Groups that don't exist on other days are left at the end.`)) return;
+
+  const dayData = DATA[currentDay];
+
+  // get current day's ordered lane names for each section
+  const squadOrder = [...new Set(dayData.squad.map(b=>b.lane))];
+  const recOrder   = [...new Set(dayData.recreational.map(b=>b.colour))];
+
+  DAYS.forEach(day=>{
+    if(day === currentDay) return;
+
+    // reorder squad
+    if(squadOrder.length > 0){
+      const existing = [...new Set(DATA[day].squad.map(b=>b.lane))];
+      const sorted = [
+        ...squadOrder.filter(n=> existing.includes(n)),
+        ...existing.filter(n=> !squadOrder.includes(n)) // extras at end
+      ];
+      const reordered = [];
+      sorted.forEach(lane=>{
+        DATA[day].squad.filter(b=>b.lane===lane).forEach(b=> reordered.push(b));
+      });
+      DATA[day].squad = reordered;
+    }
+
+    // reorder recreational
+    if(recOrder.length > 0){
+      const existing = [...new Set(DATA[day].recreational.map(b=>b.colour))];
+      const sorted = [
+        ...recOrder.filter(n=> existing.includes(n)),
+        ...existing.filter(n=> !recOrder.includes(n))
+      ];
+      const reordered = [];
+      sorted.forEach(colour=>{
+        DATA[day].recreational.filter(b=>b.colour===colour).forEach(b=> reordered.push(b));
+      });
+      DATA[day].recreational = reordered;
+    }
+  });
+
+  scheduleAutoSave();
+  showToast(`Group order from ${currentDay} applied to all days`);
 }
 
 let copiedRow = null;
