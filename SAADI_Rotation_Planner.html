@@ -1134,7 +1134,7 @@ function openModal(section, idx){
 function closeModal(){
   document.getElementById('modalBg').classList.remove('open');
   editing = null;
-  saveToFirebase();
+  scheduleAutoSave();
 }
 function deleteBlock(){
   if(!editing) return;
@@ -1526,8 +1526,16 @@ async function fetchData(){
     const json = await res.json();
     if(json){
       DATA = json;
+      // ensure every day has both squad and recreational arrays
+      const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      days.forEach(day=>{
+        if(!DATA[day]) DATA[day] = {squad:[], recreational:[]};
+        if(!DATA[day].squad) DATA[day].squad = [];
+        if(!DATA[day].recreational) DATA[day].recreational = [];
+        // strip any leftover linkedId fields
+        [...DATA[day].squad, ...DATA[day].recreational].forEach(b=>{ delete b.linkedId; });
+      });
     } else {
-      // nothing saved yet - seed the database with the built-in data
       DATA = JSON.parse(JSON.stringify(INITIAL_DATA));
       await saveToFirebase();
     }
