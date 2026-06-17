@@ -84,11 +84,39 @@
   .lane-row{ display:flex; align-items:stretch; border-bottom:1px solid var(--line); height:38px; }
   .lane-row:hover{ background:rgba(201,162,39,.06); }
   .lane-track{ position:relative; flex:1; height:38px; overflow:visible; }
+  /* 5-min grid drawn as CSS background — always visible beneath blocks */
+  .grid-track{
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent calc(var(--cell5) - 1px),
+        rgba(0,0,0,.06) calc(var(--cell5) - 1px),
+        rgba(0,0,0,.06) var(--cell5)
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent calc(var(--cell15) - 1px),
+        rgba(0,0,0,.10) calc(var(--cell15) - 1px),
+        rgba(0,0,0,.10) var(--cell15)
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent calc(var(--cell30) - 1px),
+        rgba(0,0,0,.15) calc(var(--cell30) - 1px),
+        rgba(0,0,0,.15) var(--cell30)
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent calc(var(--cell60) - 2px),
+        rgba(0,0,0,.25) calc(var(--cell60) - 2px),
+        rgba(0,0,0,.25) var(--cell60)
+      );
+  }
   .grid-cell{ height:100%; box-sizing:border-box; cursor:crosshair; }
-  .grid-cell.five-min{ border-left:1px solid rgba(0,0,0,.04); }
-  .grid-cell.quarter-hour{ border-left:1px solid rgba(0,0,0,.08); }
-  .grid-cell.half-hour{ border-left:1px solid rgba(0,0,0,.15); }
-  .grid-cell.hour-mark{ border-left:2px solid rgba(0,0,0,.25); }
   .grid-cell.drag-hover{ background:rgba(212,175,55,0.3) !important; }
   .lane-add{
     flex:0 0 22px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); font-weight:700; background:#fff; border-right:1px solid var(--line); font-size:.9rem;
@@ -702,6 +730,11 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   track.style.width = (totalCells * CELL_W) + 'px';
   track.style.position = 'relative';
   track.style.height = '38px';
+  // set CSS vars for the background grid pattern
+  track.style.setProperty('--cell5',  (PX_PER_MIN * 5)  + 'px');
+  track.style.setProperty('--cell15', (PX_PER_MIN * 15) + 'px');
+  track.style.setProperty('--cell30', (PX_PER_MIN * 30) + 'px');
+  track.style.setProperty('--cell60', (PX_PER_MIN * 60) + 'px');
 
   // 5-min cell overlay for drop targets
   const cellBar = document.createElement('div');
