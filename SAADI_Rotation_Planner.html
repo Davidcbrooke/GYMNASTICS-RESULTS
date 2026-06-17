@@ -75,13 +75,20 @@
   .ruler-row{ display:flex; align-items:stretch; }
   .ruler-spacer{ flex:0 0 22px; background:var(--paper); border-right:1px solid var(--line); position:sticky; top:0; z-index:5; }
   .ruler-track{ position:relative; flex:1; height:24px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--paper); z-index:5; }
-  .ruler-track .tick{ position:absolute; top:0; bottom:0; border-left:1px solid var(--line); font-size:.68rem; color:var(--muted); padding-left:3px; }
+  .ruler-track .tick{ position:absolute; bottom:0; border-left:1px solid var(--line); }
+  .ruler-track .tick-hour{ top:0; border-left:2px solid rgba(0,0,0,.3); font-size:.7rem; color:var(--navy); font-weight:700; padding-left:3px; }
+  .ruler-track .tick-half{ top:6px; border-left:1px solid rgba(0,0,0,.2); font-size:.65rem; color:var(--muted); padding-left:3px; }
+  .ruler-track .tick-quarter{ top:14px; border-left:1px solid rgba(0,0,0,.12); height:8px; }
+  .ruler-track .tick-five{ top:18px; border-left:1px solid rgba(0,0,0,.06); height:4px; }
 
   .lane-row{ display:flex; align-items:stretch; border-bottom:1px solid var(--line); height:38px; }
   .lane-row:hover{ background:rgba(201,162,39,.06); }
   .lane-track{ position:relative; flex:1; height:38px; overflow:visible; }
   .grid-cell{ height:100%; box-sizing:border-box; cursor:crosshair; }
-  .grid-cell.half-hour{ border-left:1px solid var(--line); }
+  .grid-cell.five-min{ border-left:1px solid rgba(0,0,0,.04); }
+  .grid-cell.quarter-hour{ border-left:1px solid rgba(0,0,0,.08); }
+  .grid-cell.half-hour{ border-left:1px solid rgba(0,0,0,.15); }
+  .grid-cell.hour-mark{ border-left:2px solid rgba(0,0,0,.25); }
   .grid-cell.drag-hover{ background:rgba(212,175,55,0.3) !important; }
   .lane-add{
     flex:0 0 22px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); font-weight:700; background:#fff; border-right:1px solid var(--line); font-size:.9rem;
@@ -534,11 +541,20 @@ function buildRuler(min,max){
   const width = (max-min)*PX_PER_MIN;
   const label = document.createElement('div'); label.className='lane-label ruler-label'; label.textContent='Time';
   const track = document.createElement('div'); track.className='ruler-track'; track.style.width=width+'px';
-  for(let t=min - (min%30 || 30) + 30; t<=max; t+=30){
-    if(t<min) continue;
-    const tick = document.createElement('div'); tick.className='tick';
+  // 5-min tick marks
+  for(let t=min; t<=max; t+=5){
+    if(t===min) continue;
+    const tick = document.createElement('div');
+    if(t%60===0){
+      tick.className='tick tick-hour'; tick.textContent=fmtTime(t);
+    } else if(t%30===0){
+      tick.className='tick tick-half'; tick.textContent=fmtTime(t);
+    } else if(t%15===0){
+      tick.className='tick tick-quarter';
+    } else {
+      tick.className='tick tick-five';
+    }
     tick.style.left = ((t-min)*PX_PER_MIN)+'px';
-    tick.textContent = fmtTime(t);
     track.appendChild(tick);
   }
   return {label, track};
@@ -693,7 +709,14 @@ function buildLane(label, blocksWithMeta, min, max, meta){
   for(let i=0; i<totalCells; i++){
     const cellMin = min + i*5;
     const cell = document.createElement('div');
-    cell.className = 'grid-cell' + (cellMin%30===0 && cellMin!==min ? ' half-hour':'');
+    const isHour = cellMin % 60 === 0 && cellMin !== min;
+    const isHalf = cellMin % 30 === 0 && !isHour && cellMin !== min;
+    const isQuarter = cellMin % 15 === 0 && !isHour && !isHalf;
+    cell.className = 'grid-cell'
+      + (isHour ? ' hour-mark' : '')
+      + (isHalf ? ' half-hour' : '')
+      + (isQuarter ? ' quarter-hour' : '')
+      + (!isHour && !isHalf && !isQuarter ? ' five-min' : '');
     cell.dataset.t = cellMin;
     cell.style.pointerEvents = 'all';
     cell.ondragover = e=>{ e.preventDefault(); cell.classList.add('drag-hover'); };
@@ -1078,6 +1101,16 @@ function render(){
     syncTrackScroll();
     if(savedScroll > 0){
       document.querySelectorAll('.tracks-col').forEach(tc=>{ tc.scrollLeft = savedScroll; });
+    } else {
+      // scroll to first block or 4pm (960 mins) if no scroll saved
+      const scrollToMin = Math.max(0, (currentMin < 480 ? currentMin : Math.min(...[
+        ...(DATA[currentDay]?.squad||[]),
+        ...(DATA[currentDay]?.recreational||[])
+      ].map(b=>b.start_min).filter(Boolean).concat([960]))) - currentMin);
+      const scrollPx = scrollToMin * PX_PER_MIN;
+      setTimeout(()=>{
+        document.querySelectorAll('.tracks-col').forEach(tc=>{ tc.scrollLeft = scrollPx; });
+      }, 50);
     }
   }
 }
