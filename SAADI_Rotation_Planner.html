@@ -84,37 +84,21 @@
   .lane-row{ display:flex; align-items:stretch; border-bottom:1px solid var(--line); height:38px; }
   .lane-row:hover{ background:rgba(201,162,39,.06); }
   .lane-track{ position:relative; flex:1; height:38px; overflow:visible; }
-  /* 5-min grid drawn as CSS background — always visible beneath blocks */
+  /* 5-min grid — CSS background always tiles the full track width */
   .grid-track{
+    background-color:#fff;
     background-image:
-      repeating-linear-gradient(
-        90deg,
-        transparent 0px,
-        transparent calc(var(--cell5) - 1px),
-        rgba(0,0,0,.06) calc(var(--cell5) - 1px),
-        rgba(0,0,0,.06) var(--cell5)
-      ),
-      repeating-linear-gradient(
-        90deg,
-        transparent 0px,
-        transparent calc(var(--cell15) - 1px),
-        rgba(0,0,0,.10) calc(var(--cell15) - 1px),
-        rgba(0,0,0,.10) var(--cell15)
-      ),
-      repeating-linear-gradient(
-        90deg,
-        transparent 0px,
-        transparent calc(var(--cell30) - 1px),
-        rgba(0,0,0,.15) calc(var(--cell30) - 1px),
-        rgba(0,0,0,.15) var(--cell30)
-      ),
-      repeating-linear-gradient(
-        90deg,
-        transparent 0px,
-        transparent calc(var(--cell60) - 2px),
-        rgba(0,0,0,.25) calc(var(--cell60) - 2px),
-        rgba(0,0,0,.25) var(--cell60)
-      );
+      linear-gradient(90deg, rgba(0,0,0,.20) 2px, transparent 2px),
+      linear-gradient(90deg, rgba(0,0,0,.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,.03) 1px, transparent 1px);
+    background-size:
+      var(--cell60) 100%,
+      var(--cell30) 100%,
+      var(--cell15) 100%,
+      var(--cell5)  100%;
+    background-repeat: repeat-x;
+    background-position: 0 0;
   }
   .grid-cell{ height:100%; box-sizing:border-box; cursor:crosshair; }
   .grid-cell.drag-hover{ background:rgba(212,175,55,0.3) !important; }
@@ -760,16 +744,44 @@ function buildLane(label, blocksWithMeta, min, max, meta){
     cell.ondragleave = ()=>{ cell.classList.remove('drag-hover'); };
     cell.ondrop = e=>{
       e.preventDefault(); e.stopPropagation();
-      cellBar.querySelectorAll('.grid-cell').forEach(c=>c.classList.remove('drag-hover'));
+      // clear all drag-hover highlights across the whole page
+      document.querySelectorAll('.grid-cell.drag-hover').forEach(c=>c.classList.remove('drag-hover'));
       const data = e.dataTransfer.getData('text/plain');
       if(data.startsWith('block:')){
         const parts = data.split(':');
         const srcSection = parts[1], srcIdx = parseInt(parts[2]), dur = parseInt(parts[3]);
         const b = DATA[currentDay][srcSection][srcIdx];
+        // update time
         b.start_min = cellMin;
         b.end_min = cellMin + dur;
         b.start = fmtTime(b.start_min);
         b.end = fmtTime(b.end_min);
+        // move to target group/row if different
+        const targetSection = meta.section;
+        const targetGroup = targetSection==='squad' ? meta.lane : meta.colour;
+        if(targetSection === srcSection){
+          // same section — just change the lane/colour
+          if(targetSection==='squad'){
+            b.lane = targetGroup;
+          } else {
+            b.colour = targetGroup;
+            b.lane = targetGroup;
+          }
+        } else {
+          // different section — remove from source, add to target
+          DATA[currentDay][srcSection].splice(srcIdx, 1);
+          const newBlock = Object.assign({}, b);
+          if(targetSection==='squad'){
+            newBlock.lane = targetGroup;
+            delete newBlock.colour; delete newBlock.class; delete newBlock.block;
+          } else {
+            newBlock.colour = targetGroup;
+            newBlock.lane = targetGroup;
+            newBlock.class = newBlock.class || '';
+            newBlock.block = newBlock.block || 'Session';
+          }
+          DATA[currentDay][targetSection].push(newBlock);
+        }
         render(); scheduleAutoSave();
       }
     };
