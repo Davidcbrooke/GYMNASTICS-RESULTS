@@ -23,24 +23,30 @@
   body { font-family: var(--font); background: var(--off-white); color: var(--text); min-height: 100vh; font-size: 14px; }
 
   /* NAV */
-  .top-nav { background: var(--navy); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px; border-bottom: 3px solid var(--red); }
-  .brand { color: var(--white); font-size: 0.95rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-  .brand span { color: rgba(255,255,255,0.45); font-weight: 400; margin-left: 6px; text-transform: none; letter-spacing: 0; font-size: 0.9rem; }
-  .nav-tabs { display: flex; }
-  .nav-tab { background: none; border: none; color: rgba(255,255,255,0.55); padding: 0 20px; height: 56px; font-size: 0.78rem; font-family: var(--font); cursor: pointer; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; border-bottom: 3px solid transparent; margin-bottom: -3px; transition: all 0.15s; }
+  .top-nav { background: var(--navy); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 52px; border-bottom: 3px solid var(--red); gap: 8px; }
+  .brand { color: var(--white); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
+  .brand span { display: none; }
+  .nav-tabs { display: flex; flex-shrink: 0; }
+  .nav-tab { background: none; border: none; color: rgba(255,255,255,0.55); padding: 0 12px; height: 52px; font-size: 0.72rem; font-family: var(--font); cursor: pointer; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; border-bottom: 3px solid transparent; margin-bottom: -3px; transition: all 0.15s; white-space: nowrap; }
   .nav-tab:hover { color: var(--white); }
   .nav-tab.active { color: var(--white); border-bottom-color: var(--red); }
+  @media (min-width: 600px) {
+    .top-nav { padding: 0 24px; height: 56px; }
+    .brand { font-size: 0.95rem; letter-spacing: 0.08em; }
+    .brand span { display: inline; }
+    .nav-tab { padding: 0 20px; height: 56px; font-size: 0.78rem; letter-spacing: 0.08em; }
+  }
   .panel { display: none; }
   .panel.active { display: block; }
 
   /* HERO */
-  .hero { background: var(--navy); padding: 52px 28px 42px; text-align: center; }
-  .hero-kicker { display: inline-block; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; padding: 4px 16px; border-radius: 2px; margin-bottom: 22px; }
-  .hero h1 { color: var(--white); font-size: clamp(1.9rem,4vw,2.8rem); font-weight: 700; line-height: 1.15; margin-bottom: 14px; }
+  .hero { background: var(--navy); padding: 36px 20px 32px; text-align: center; }
+  .hero-kicker { display: inline-block; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; padding: 4px 16px; border-radius: 2px; margin-bottom: 18px; }
+  .hero h1 { color: var(--white); font-size: clamp(1.5rem,5vw,2.8rem); font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
   .hero h1 em { color: var(--red); font-style: normal; }
-  .hero p { color: rgba(255,255,255,0.6); font-size: 0.92rem; max-width: 520px; margin: 0 auto 28px; line-height: 1.65; }
-  .hero-badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  .hero-badge { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.75); padding: 7px 16px; border-radius: 3px; font-size: 0.77rem; font-weight: 500; }
+  .hero p { color: rgba(255,255,255,0.6); font-size: 0.88rem; max-width: 520px; margin: 0 auto 22px; line-height: 1.6; }
+  .hero-badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .hero-badge { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 3px; font-size: 0.74rem; font-weight: 500; }
 
   /* BOOKING LAYOUT */
   .booking-section { max-width: 1080px; margin: 0 auto; padding: 36px 20px 48px; display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start; }
@@ -80,6 +86,14 @@
   .comp-reveal-inner { padding: 9px 15px; font-size: 0.77rem; color: var(--navy); background: #fdf6f5; }
   .comp-reveal-inner strong { color: var(--red); }
   .no-comps { text-align: center; padding: 56px 20px; color: var(--grey-mid); font-size: 0.86rem; background: var(--white); border: 1px solid var(--border); }
+
+  /* COMPETITION ICONS */
+  .comp-icons { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .comp-icon { display: inline-flex; align-items: center; gap: 4px; background: var(--grey-light); border: 1px solid var(--border); border-radius: 2px; padding: 2px 7px; font-size: 0.68rem; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; }
+  .comp-icon.gender-girls { background: #fce8f3; border-color: #e8a0cc; color: #8c1a5e; }
+  .comp-icon.gender-boys  { background: #e8f0fe; border-color: #9ab5f5; color: #1a3a8c; }
+  .comp-icon.gender-both  { background: #ede8fe; border-color: #b09af5; color: #3a1a8c; }
+  .comp-icon.apparatus    { background: #fff8e6; border-color: #f5d87a; color: #7a5c00; }
 
   /* MULTI-SELECT COMP CARDS */
   .comp-card { cursor: default; }
@@ -199,6 +213,37 @@
   .footer { background: var(--navy); border-top: 3px solid var(--red); padding: 20px 24px; text-align: center; margin-top: 40px; }
   .footer p { color: rgba(255,255,255,0.38); font-size: 0.71rem; line-height: 1.8; }
   .footer strong { color: rgba(255,255,255,0.65); }
+
+  /* MOBILE */
+  @media (max-width: 500px) {
+    .hero { padding: 28px 16px 26px; }
+    .hero-kicker { font-size: 0.62rem; letter-spacing: 0.12em; padding: 3px 12px; margin-bottom: 14px; }
+    .hero h1 { font-size: 1.55rem; line-height: 1.2; margin-bottom: 10px; }
+    .hero p { font-size: 0.83rem; margin-bottom: 18px; }
+    .hero-badge { font-size: 0.7rem; padding: 5px 10px; width: 100%; justify-content: center; text-align: center; }
+    .hero-badges { flex-direction: column; align-items: stretch; gap: 6px; padding: 0 10px; }
+    .booking-section { padding: 20px 14px 36px; gap: 20px; }
+    .comp-card-header { grid-template-columns: 48px 1fr auto; gap: 10px; padding: 11px 12px; }
+    .date-badge .dbday { font-size: 1.2rem; }
+    .ci-name { font-size: 0.82rem; }
+    .ci-meta { font-size: 0.68rem; }
+    .comp-right { min-width: 70px; }
+    .spots { font-size: 0.72rem; }
+    .comp-check-row { padding: 8px 12px; gap: 8px; }
+    .spaces-input { width: 60px; }
+    .form-card { position: static; }
+    .fc-body { padding: 14px 16px; }
+    .admin-dash { padding: 16px 14px; }
+    .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .admin-grid { gap: 14px; }
+    .pc-body { padding: 12px; }
+    .form-row2 { grid-template-columns: 1fr; gap: 0; }
+    .table-toolbar { padding: 10px 12px; }
+    .table-toolbar input { width: 160px; }
+    .bk-table th, .bk-table td { padding: 8px 10px; font-size: 0.72rem; }
+    .modal { margin: 10px; }
+    .modal-body { padding: 14px; }
+  }
 
   /* EDIT MODAL */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(13,27,62,0.6); z-index: 1000; align-items: center; justify-content: center; }
@@ -345,6 +390,26 @@
             <div class="fg"><label>Max Club Places</label><input type="number" id="ac-max" placeholder="e.g. 20" min="1"></div>
           </div>
           <div class="fg"><label>Level / Category</label><input type="text" id="ac-level" placeholder="e.g. Level A/B, Open, Finals"></div>
+          <div class="form-row2">
+            <div class="fg">
+              <label>Gender</label>
+              <select id="ac-gender">
+                <option value="">&#8212; Select &#8212;</option>
+                <option value="girls">Girls</option>
+                <option value="boys">Boys</option>
+                <option value="both">Boys &amp; Girls</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>Apparatus</label>
+              <select id="ac-apparatus">
+                <option value="">&#8212; Select &#8212;</option>
+                <option value="2piece">2 Piece</option>
+                <option value="4piece">4 Piece</option>
+                <option value="6piece">6 Piece</option>
+              </select>
+            </div>
+          </div>
           <div class="fg"><label>Full Address</label><input type="text" id="ac-address" placeholder="e.g. 1 Arena Way, Newcastle upon Tyne"></div>
           <div class="fg"><label>Postcode</label><input type="text" id="ac-postcode" placeholder="e.g. NE4 7NA"></div>
           <button class="btn-add" id="btn-add-comp" onclick="window.addCompetition()">+ Add to Calendar</button>
@@ -377,9 +442,40 @@
             <th>Ref</th><th>Club</th><th>Region</th><th>Competition</th>
             <th>Comp Date</th><th>Est. Gymnasts</th><th>Email</th><th>Phone</th><th>Booked On</th>
           </tr></thead>
-          <tbody id="bk-tbody"><tr><td colspan="9" class="no-rows">Loading&hellip;</td></tr></tbody>
+          <tbody id="bk-tbody"><tr><td colspan="10" class="no-rows">Loading&hellip;</td></tr></tbody>
         </table>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT BOOKING MODAL -->
+<div class="modal-overlay" id="edit-booking-modal">
+  <div class="modal">
+    <div class="modal-head">
+      &#x270F;&#xFE0F; Edit Booking
+      <button class="modal-close" onclick="window.closeBookingModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="eb-id">
+      <div class="fg"><label>Club Name</label><input type="text" id="eb-club"></div>
+      <div class="fg">
+        <label>Region</label>
+        <select id="eb-region">
+          <option value="">&#8212; Select region &#8212;</option>
+          <option>East</option><option>East Midlands</option><option>London</option>
+          <option>North East</option><option>North West</option><option>Northern Ireland</option>
+          <option>Scotland</option><option>South East</option><option>South West</option>
+          <option>Wales</option><option>West Midlands</option><option>Yorkshire</option>
+        </select>
+      </div>
+      <div class="fg"><label>Est. Gymnasts</label><input type="number" id="eb-spaces" min="1"></div>
+      <div class="fg"><label>Email</label><input type="email" id="eb-email"></div>
+      <div class="fg"><label>Phone</label><input type="tel" id="eb-phone"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="window.closeBookingModal()">Cancel</button>
+      <button class="btn-save" onclick="window.saveBookingEdit()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -403,6 +499,26 @@
         <div class="fg"><label>Max Club Places</label><input type="number" id="edit-max" min="1"></div>
       </div>
       <div class="fg"><label>Level / Category</label><input type="text" id="edit-level"></div>
+      <div class="form-row2">
+        <div class="fg">
+          <label>Gender</label>
+          <select id="edit-gender">
+            <option value="">&#8212; Select &#8212;</option>
+            <option value="girls">Girls</option>
+            <option value="boys">Boys</option>
+            <option value="both">Boys &amp; Girls</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Apparatus</label>
+          <select id="edit-apparatus">
+            <option value="">&#8212; Select &#8212;</option>
+            <option value="2piece">2 Piece</option>
+            <option value="4piece">4 Piece</option>
+            <option value="6piece">6 Piece</option>
+          </select>
+        </div>
+      </div>
       <div class="fg"><label>Full Address</label><input type="text" id="edit-address"></div>
       <div class="fg"><label>Postcode</label><input type="text" id="edit-postcode"></div>
     </div>
@@ -504,7 +620,9 @@ function renderCalendar() {
       '<div class="comp-card-header">' +
       '<div class="date-badge"><div class="dbday">' + d.getDate() + '</div><div class="dbmon">' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase() + '</div></div>' +
       '<div><div class="ci-name">' + c.name + '</div>' +
-      '<div class="ci-meta"><span>&#x1F4CD; ' + (c.venue||'TBC') + '</span><span>&#x1F3C5; ' + (c.level||'') + '</span>' + mapLink + '</div></div>' +
+      '<div class="ci-meta"><span>&#x1F4CD; ' + (c.venue||'TBC') + '</span><span>&#x1F3C5; ' + (c.level||'') + '</span>' + mapLink + '</div>' +
+      buildIcons(c) +
+      '</div>' +
       '<div class="comp-right"><div class="spots' + (left<=3&&!unavail?' low':'') + '">' + spotsHtml + '</div><span class="pill ' + sc + '">' + st + '</span></div>' +
       '</div>' +
       (!unavail ? '<div class="comp-check-row">' +
@@ -655,21 +773,37 @@ window.adminLogout = function() {
 };
 
 // ══ ADMIN: ADD COMPETITION ══
+// ══ ICON HELPER ══
+function buildIcons(c) {
+  let icons = '';
+  if (c.gender === 'girls')  icons += '<span class="comp-icon gender-girls">&#x2640; Girls</span>';
+  if (c.gender === 'boys')   icons += '<span class="comp-icon gender-boys">&#x2642; Boys</span>';
+  if (c.gender === 'both')   icons += '<span class="comp-icon gender-both">&#x2640;&#x2642; Mixed</span>';
+  if (c.apparatus === '2piece') icons += '<span class="comp-icon apparatus">&#x2756; 2 Piece</span>';
+  if (c.apparatus === '4piece') icons += '<span class="comp-icon apparatus">&#x2756; 4 Piece</span>';
+  if (c.apparatus === '6piece') icons += '<span class="comp-icon apparatus">&#x2756; 6 Piece</span>';
+  return icons ? '<div class="comp-icons">' + icons + '</div>' : '';
+}
+
 window.addCompetition = async function() {
-  const name     = document.getElementById('ac-name').value.trim();
-  const date     = document.getElementById('ac-date').value;
-  const region   = document.getElementById('ac-region').value.trim();
-  const venue    = document.getElementById('ac-venue').value.trim();
-  const max      = parseInt(document.getElementById('ac-max').value) || 20;
-  const level    = document.getElementById('ac-level').value.trim();
-  const address  = document.getElementById('ac-address').value.trim();
-  const postcode = document.getElementById('ac-postcode').value.trim();
+  const name      = document.getElementById('ac-name').value.trim();
+  const date      = document.getElementById('ac-date').value;
+  const region    = document.getElementById('ac-region').value.trim();
+  const venue     = document.getElementById('ac-venue').value.trim();
+  const max       = parseInt(document.getElementById('ac-max').value) || 20;
+  const level     = document.getElementById('ac-level').value.trim();
+  const gender    = document.getElementById('ac-gender').value;
+  const apparatus = document.getElementById('ac-apparatus').value;
+  const address   = document.getElementById('ac-address').value.trim();
+  const postcode  = document.getElementById('ac-postcode').value.trim();
   if (!name||!date) return alert('Please enter at least a name and date.');
   const btn = document.getElementById('btn-add-comp');
   btn.disabled=true; btn.textContent='Saving\u2026';
   try {
-    await addDoc(compsCol, { name, date, region, venue, maxPlaces:max, level, address, postcode, createdAt:new Date().toISOString() });
+    await addDoc(compsCol, { name, date, region, venue, maxPlaces:max, level, gender, apparatus, address, postcode, createdAt:new Date().toISOString() });
     ['ac-name','ac-date','ac-region','ac-venue','ac-max','ac-level','ac-address','ac-postcode'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('ac-gender').value='';
+    document.getElementById('ac-apparatus').value='';
   } catch(e) { alert('Error saving: ' + e.message); }
   btn.disabled=false; btn.textContent='+ Add to Calendar';
 };
@@ -729,7 +863,7 @@ function renderBookingsTable() {
     (!fcomp || b.compId === fcomp)
   );
   const tbody = document.getElementById('bk-tbody');
-  if (!filtered.length) { tbody.innerHTML='<tr><td colspan="9" class="no-rows">No bookings match the current filter</td></tr>'; return; }
+  if (!filtered.length) { tbody.innerHTML='<tr><td colspan="10" class="no-rows">No bookings match the current filter</td></tr>'; return; }
   tbody.innerHTML = filtered.map(b => {
     const compDate = b.compDate ? new Date(b.compDate+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '&mdash;';
     const bookedOn = new Date(b.bookedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
@@ -743,6 +877,10 @@ function renderBookingsTable() {
       '<td>' + b.email + '</td>' +
       '<td>' + b.phone + '</td>' +
       '<td>' + bookedOn + '</td>' +
+      '<td style="white-space:nowrap">' +
+        '<button class="btn-edit" onclick="window.editBooking(\'' + b.id + '\')">&#x270F; Edit</button> ' +
+        '<button class="btn-del" onclick="window.deleteBooking(\'' + b.id + '\')">&#x2715;</button>' +
+      '</td>' +
       '</tr>';
   }).join('');
 }
@@ -751,15 +889,17 @@ function renderBookingsTable() {
 window.openEditModal = function(id) {
   const c = allCompetitions.find(x => x.id === id);
   if (!c) return;
-  document.getElementById('edit-id').value       = id;
-  document.getElementById('edit-name').value     = c.name    || '';
-  document.getElementById('edit-date').value     = c.date    || '';
-  document.getElementById('edit-region').value   = c.region  || '';
-  document.getElementById('edit-venue').value    = c.venue   || '';
-  document.getElementById('edit-max').value      = c.maxPlaces || 20;
-  document.getElementById('edit-level').value    = c.level   || '';
-  document.getElementById('edit-address').value  = c.address || '';
-  document.getElementById('edit-postcode').value = c.postcode|| '';
+  document.getElementById('edit-id').value         = id;
+  document.getElementById('edit-name').value       = c.name      || '';
+  document.getElementById('edit-date').value       = c.date      || '';
+  document.getElementById('edit-region').value     = c.region    || '';
+  document.getElementById('edit-venue').value      = c.venue     || '';
+  document.getElementById('edit-max').value        = c.maxPlaces || 20;
+  document.getElementById('edit-level').value      = c.level     || '';
+  document.getElementById('edit-gender').value     = c.gender    || '';
+  document.getElementById('edit-apparatus').value  = c.apparatus || '';
+  document.getElementById('edit-address').value    = c.address   || '';
+  document.getElementById('edit-postcode').value   = c.postcode  || '';
   document.getElementById('edit-modal').classList.add('open');
 };
 
@@ -771,14 +911,16 @@ window.saveEdit = async function() {
   const id = document.getElementById('edit-id').value;
   if (!id) return;
   const updated = {
-    name:      document.getElementById('edit-name').value.trim(),
-    date:      document.getElementById('edit-date').value,
-    region:    document.getElementById('edit-region').value.trim(),
-    venue:     document.getElementById('edit-venue').value.trim(),
-    maxPlaces: parseInt(document.getElementById('edit-max').value) || 20,
-    level:     document.getElementById('edit-level').value.trim(),
-    address:   document.getElementById('edit-address').value.trim(),
-    postcode:  document.getElementById('edit-postcode').value.trim(),
+    name:       document.getElementById('edit-name').value.trim(),
+    date:       document.getElementById('edit-date').value,
+    region:     document.getElementById('edit-region').value.trim(),
+    venue:      document.getElementById('edit-venue').value.trim(),
+    maxPlaces:  parseInt(document.getElementById('edit-max').value) || 20,
+    level:      document.getElementById('edit-level').value.trim(),
+    gender:     document.getElementById('edit-gender').value,
+    apparatus:  document.getElementById('edit-apparatus').value,
+    address:    document.getElementById('edit-address').value.trim(),
+    postcode:   document.getElementById('edit-postcode').value.trim(),
   };
   if (!updated.name || !updated.date) return alert('Name and date are required.');
   try {
@@ -790,6 +932,52 @@ window.saveEdit = async function() {
 // close modal on overlay click
 document.getElementById('edit-modal').addEventListener('click', function(e) {
   if (e.target === this) closeEditModal();
+});
+
+// ══ BOOKING EDIT / DELETE ══
+window.editBooking = function(id) {
+  const b = allBookings.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('eb-id').value     = id;
+  document.getElementById('eb-club').value   = b.club   || '';
+  document.getElementById('eb-region').value = b.region || '';
+  document.getElementById('eb-spaces').value = b.spaces || b.gymnasts || '';
+  document.getElementById('eb-email').value  = b.email  || '';
+  document.getElementById('eb-phone').value  = b.phone  || '';
+  document.getElementById('edit-booking-modal').classList.add('open');
+};
+
+window.closeBookingModal = function() {
+  document.getElementById('edit-booking-modal').classList.remove('open');
+};
+
+window.saveBookingEdit = async function() {
+  const id = document.getElementById('eb-id').value;
+  if (!id) return;
+  const updated = {
+    club:    document.getElementById('eb-club').value.trim(),
+    region:  document.getElementById('eb-region').value,
+    spaces:  parseInt(document.getElementById('eb-spaces').value) || 0,
+    email:   document.getElementById('eb-email').value.trim(),
+    phone:   document.getElementById('eb-phone').value.trim(),
+  };
+  try {
+    await updateDoc(doc(db,'ngl_bookings',id), updated);
+    closeBookingModal();
+  } catch(e) { alert('Error saving: ' + e.message); }
+};
+
+window.deleteBooking = async function(id) {
+  const b = allBookings.find(x => x.id === id);
+  if (!b) return;
+  if (!confirm('Delete booking for ' + b.club + ' (' + (b.compName||'') + ')? This cannot be undone.')) return;
+  try {
+    await deleteDoc(doc(db,'ngl_bookings',id));
+  } catch(e) { alert('Error deleting: ' + e.message); }
+};
+
+document.getElementById('edit-booking-modal').addEventListener('click', function(e) {
+  if (e.target === this) window.closeBookingModal();
 });
 
 // ══ EXPORT CSV ══
