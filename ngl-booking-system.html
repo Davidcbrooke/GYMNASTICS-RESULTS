@@ -265,10 +265,18 @@
             <label>Region <span class="req">*</span></label>
             <select id="f-region">
               <option value="">&#8212; Select region &#8212;</option>
-              <option>North East</option><option>North West</option><option>Yorkshire</option>
-              <option>East Midlands</option><option>West Midlands</option><option>East of England</option>
-              <option>South East</option><option>South West</option><option>London</option>
-              <option>Scotland</option><option>Wales</option>
+              <option>East</option>
+              <option>East Midlands</option>
+              <option>London</option>
+              <option>North East</option>
+              <option>North West</option>
+              <option>Northern Ireland</option>
+              <option>Scotland</option>
+              <option>South East</option>
+              <option>South West</option>
+              <option>Wales</option>
+              <option>West Midlands</option>
+              <option>Yorkshire</option>
             </select>
           </div>
           <div class="fg"><label>Contact Email <span class="req">*</span></label><input type="email" id="f-email" placeholder="club@example.com"></div>
@@ -319,7 +327,7 @@
       <div class="stat-tile"><div class="sv" id="stat-comps">&#x2014;</div><div class="sl">Competitions</div></div>
       <div class="stat-tile"><div class="sv" id="stat-bookings">&#x2014;</div><div class="sl">Bookings</div></div>
       <div class="stat-tile"><div class="sv" id="stat-clubs">&#x2014;</div><div class="sl">Clubs Registered</div></div>
-      <div class="stat-tile"><div class="sv red" id="stat-gymnasts">&#x2014;</div><div class="sl">Spaces Reserved</div></div>
+      <div class="stat-tile"><div class="sv red" id="stat-gymnasts">&#x2014;</div><div class="sl">Gymnasts Planned</div></div>
     </div>
 
     <div class="admin-grid">
@@ -367,7 +375,7 @@
         <table class="bk-table">
           <thead><tr>
             <th>Ref</th><th>Club</th><th>Region</th><th>Competition</th>
-            <th>Comp Date</th><th>Spaces</th><th>Email</th><th>Phone</th><th>Booked On</th>
+            <th>Comp Date</th><th>Est. Gymnasts</th><th>Email</th><th>Phone</th><th>Booked On</th>
           </tr></thead>
           <tbody id="bk-tbody"><tr><td colspan="9" class="no-rows">Loading&hellip;</td></tr></tbody>
         </table>
@@ -502,7 +510,7 @@ function renderCalendar() {
       (!unavail ? '<div class="comp-check-row">' +
         '<label><input type="checkbox" class="comp-checkbox" id="chk-' + c.id + '"' + (isSel?' checked':'') +
         ' onchange="window.toggleComp(\'' + c.id + '\',this.checked)"> Enter this competition</label>' +
-        '<span class="spaces-label">Spaces:</span>' +
+        '<span class="spaces-label">Est. gymnasts:</span>' +
         '<input type="number" class="spaces-input" id="spc-' + c.id + '" value="' + spaces + '" min="1" max="' + left + '"' +
         (isSel?'':' disabled') +
         ' oninput="window.updateSpaces(\'' + c.id + '\',this.value)">' +
@@ -786,7 +794,7 @@ document.getElementById('edit-modal').addEventListener('click', function(e) {
 
 // ══ EXPORT CSV ══
 window.exportCSV = function() {
-  const hdr = ['Reference','Club','Region','Competition','Competition Date','Spaces','Email','Phone','Booked On'];
+  const hdr = ['Reference','Club','Region','Competition','Competition Date','Est. Gymnasts','Email','Phone','Booked On'];
   const rows = allBookings.map(b => {
     const compDate = b.compDate ? new Date(b.compDate+'T00:00:00').toLocaleDateString('en-GB') : '';
     return [b.reference||b.id, b.club, b.region, b.compName||'', compDate, b.spaces||b.gymnasts||'', b.email, b.phone, new Date(b.bookedAt).toLocaleDateString('en-GB')]
