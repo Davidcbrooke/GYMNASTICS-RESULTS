@@ -81,6 +81,24 @@
   .comp-reveal-inner strong { color: var(--red); }
   .no-comps { text-align: center; padding: 56px 20px; color: var(--grey-mid); font-size: 0.86rem; background: var(--white); border: 1px solid var(--border); }
 
+  /* MULTI-SELECT COMP CARDS */
+  .comp-card { cursor: default; }
+  .comp-card:hover { border-left-color: var(--grey-mid); box-shadow: 0 2px 10px rgba(13,27,62,0.07); }
+  .comp-card.selected { border-left-color: var(--red); background: #fefcfc; box-shadow: 0 2px 14px rgba(192,57,43,0.1); }
+  .comp-check-row { display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-top: 1px solid var(--border); background: #fdf6f5; }
+  .comp-check-row label { font-size: 0.75rem; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; }
+  .comp-checkbox { width: 17px; height: 17px; accent-color: var(--red); cursor: pointer; flex-shrink: 0; }
+  .spaces-input { width: 72px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 2px; font-size: 0.84rem; font-family: var(--font); text-align: center; }
+  .spaces-input:focus { outline: none; border-color: var(--red); }
+  .spaces-label { font-size: 0.72rem; color: var(--grey-mid); white-space: nowrap; }
+
+  /* SELECTED SUMMARY in form */
+  .sel-summary { margin-bottom: 15px; }
+  .sel-summary-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #fdf6f5; border: 1px solid rgba(192,57,43,0.18); border-left: 3px solid var(--red); border-radius: 2px; margin-bottom: 6px; font-size: 0.77rem; color: var(--navy); }
+  .sel-summary-item .si-name { font-weight: 700; flex: 1; }
+  .sel-summary-item .si-spaces { font-size: 0.72rem; color: var(--grey-mid); white-space: nowrap; margin-left: 8px; }
+  .sel-empty { background: var(--grey-light); color: var(--grey-mid); text-align: center; border: 1px dashed var(--border); padding: 9px 12px; border-radius: 2px; font-size: 0.77rem; margin-bottom: 15px; }
+
   /* BOOKING FORM */
   .form-card { background: var(--white); border: 1px solid var(--border); position: sticky; top: 16px; }
   .fc-head { background: var(--navy); padding: 15px 20px; border-bottom: 3px solid var(--red); }
@@ -226,7 +244,7 @@
     <div>
       <div class="eyebrow">2027 Season</div>
       <div class="sec-title">Available Competitions</div>
-      <div class="sec-sub">Click a competition to select it, then complete your registration on the right.</div>
+      <div class="sec-sub">Tick the competitions you want to enter and set how many spaces you need, then complete your details on the right.</div>
       <div id="comp-list">
         <div class="loading-bar"><div class="spinner"></div> Loading competition calendar&hellip;</div>
       </div>
@@ -239,7 +257,9 @@
           <p>Book now &mdash; no payment required until October 2026</p>
         </div>
         <div class="fc-body">
-          <div id="sel-banner" class="sel-banner empty">&#8592; Select a competition to begin</div>
+          <div class="sel-summary" id="sel-summary">
+            <div class="sel-empty">&#8592; Tick competitions on the left to begin</div>
+          </div>
           <div class="fg"><label>Club Name <span class="req">*</span></label><input type="text" id="f-club" placeholder="e.g. Northgate Gymnastics Club"></div>
           <div class="fg">
             <label>Region <span class="req">*</span></label>
@@ -251,18 +271,13 @@
               <option>Scotland</option><option>Wales</option>
             </select>
           </div>
-          <div class="fg">
-            <label>Number of Gymnasts <span class="req">*</span></label>
-            <input type="number" id="f-gymnasts" min="1" max="300" placeholder="e.g. 12">
-            <div class="hint">Approximate &mdash; can be confirmed in October 2026</div>
-          </div>
           <div class="fg"><label>Contact Email <span class="req">*</span></label><input type="email" id="f-email" placeholder="club@example.com"></div>
           <div class="fg"><label>Contact Phone <span class="req">*</span></label><input type="tel" id="f-phone" placeholder="07xxx xxxxxx"></div>
-          <button class="btn-book" id="btn-submit" onclick="submitBooking()">Reserve Our Place &#8594;</button>
+          <button class="btn-book" id="btn-submit" onclick="submitBooking()">Reserve Our Places &#8594;</button>
           <div class="submit-error" id="submit-error"></div>
           <div class="guarantee-box">
             <span>&#x1F512;</span>
-            <div><strong>Booking guarantee:</strong> Your place is reserved the moment you submit. No payment taken now &mdash; final confirmation and invoicing in October 2026.</div>
+            <div><strong>Booking guarantee:</strong> Your places are reserved the moment you submit. No payment taken now &mdash; final confirmation and invoicing in October 2026.</div>
           </div>
         </div>
       </div>
@@ -273,9 +288,10 @@
     <div class="success-wrap">
       <div class="s-icon">&#x1F3C5;</div>
       <h2>You're on the list!</h2>
-      <p>Your club's place has been reserved. We'll be in touch ahead of October 2026 to confirm entries and arrange payment.</p>
-      <div class="success-ref" id="success-ref">NGL-XXXXXX</div>
-      <p style="font-size:0.77rem;margin-bottom:24px">Keep your reference number safe. If you need to make changes, contact your NGL administrator quoting this reference.</p>
+      <p>Your club's places have been reserved for: <strong id="success-comps"></strong></p>
+      <p style="margin-top:8px">We'll be in touch ahead of October 2026 to confirm entries and arrange payment.</p>
+      <div class="success-ref" id="success-ref" style="margin-top:20px">NGL-XXXXXX</div>
+      <p style="font-size:0.77rem;margin-bottom:24px;margin-top:12px">Keep your reference number safe. If you need to make changes, contact your NGL administrator quoting this reference.</p>
       <button class="btn-again" onclick="resetForm()">Make Another Booking</button>
     </div>
   </div>
@@ -303,7 +319,7 @@
       <div class="stat-tile"><div class="sv" id="stat-comps">&#x2014;</div><div class="sl">Competitions</div></div>
       <div class="stat-tile"><div class="sv" id="stat-bookings">&#x2014;</div><div class="sl">Bookings</div></div>
       <div class="stat-tile"><div class="sv" id="stat-clubs">&#x2014;</div><div class="sl">Clubs Registered</div></div>
-      <div class="stat-tile"><div class="sv red" id="stat-gymnasts">&#x2014;</div><div class="sl">Gymnasts Planned</div></div>
+      <div class="stat-tile"><div class="sv red" id="stat-gymnasts">&#x2014;</div><div class="sl">Spaces Reserved</div></div>
     </div>
 
     <div class="admin-grid">
@@ -351,7 +367,7 @@
         <table class="bk-table">
           <thead><tr>
             <th>Ref</th><th>Club</th><th>Region</th><th>Competition</th>
-            <th>Comp Date</th><th>Gymnasts</th><th>Email</th><th>Phone</th><th>Booked On</th>
+            <th>Comp Date</th><th>Spaces</th><th>Email</th><th>Phone</th><th>Booked On</th>
           </tr></thead>
           <tbody id="bk-tbody"><tr><td colspan="9" class="no-rows">Loading&hellip;</td></tr></tbody>
         </table>
@@ -418,6 +434,9 @@ onSnapshot(query(bookingsCol, orderBy('bookedAt', 'desc')), snap => {
   updateStats();
 });
 
+// ══ SELECTION STATE: map of compId -> spaces ══
+let selections = {}; // { compId: spacesCount }
+
 // ══ PUBLIC CALENDAR ══
 function renderCalendar() {
   const el = document.getElementById('comp-list');
@@ -426,66 +445,95 @@ function renderCalendar() {
     return;
   }
   el.innerHTML = allCompetitions.map(c => {
-    const d     = new Date(c.date + 'T00:00:00');
-    const past  = d < new Date();
+    const d      = new Date(c.date + 'T00:00:00');
+    const past   = d < new Date();
     const booked = allBookings.filter(b => b.compId === c.id).length;
     const left   = (c.maxPlaces || 20) - booked;
     const pct    = booked / (c.maxPlaces || 20);
-    const isSel  = c.id === selId;
+    const isSel  = !!selections[c.id];
+    const spaces = selections[c.id] || 1;
 
     let sc = 'open', st = 'Open', spotsHtml = left + ' places left';
-    if (past)        { sc='closed';  st='Closed';       spotsHtml = '&mdash;'; }
-    else if (pct>=1) { sc='full';    st='Full';          spotsHtml = 'Full'; }
+    if (past)          { sc='closed';  st='Closed';       spotsHtml = '&mdash;'; }
+    else if (pct>=1)   { sc='full';    st='Full';          spotsHtml = 'Full'; }
     else if (pct>=0.75){ sc='filling'; st='Filling fast'; }
 
     const unavail = past || pct >= 1;
-    return '<div class="comp-card' + (isSel?' selected':'') + (unavail?' unavailable':'') + '"' +
-      (unavail ? '' : ' onclick="window.selectComp(\'' + c.id + '\')"') + '>' +
+    const mapLink = c.postcode
+      ? ' &middot; <a href="https://maps.google.com/?q=' + encodeURIComponent((c.address||c.venue) + ' ' + c.postcode) + '" target="_blank" style="color:var(--red);font-weight:700;text-decoration:none">&#x1F5FA; Map</a>'
+      : '';
+
+    return '<div class="comp-card' + (isSel?' selected':'') + (unavail?' unavailable':'') + '" id="cc-' + c.id + '">' +
       '<div class="comp-card-header">' +
       '<div class="date-badge"><div class="dbday">' + d.getDate() + '</div><div class="dbmon">' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase() + '</div></div>' +
       '<div><div class="ci-name">' + c.name + '</div>' +
-      '<div class="ci-meta"><span>&#x1F4CD; ' + (c.venue||'TBC') + '</span><span>&#x1F3C5; ' + (c.level||'') + '</span></div></div>' +
+      '<div class="ci-meta"><span>&#x1F4CD; ' + (c.venue||'TBC') + '</span><span>&#x1F3C5; ' + (c.level||'') + '</span>' + mapLink + '</div></div>' +
       '<div class="comp-right"><div class="spots' + (left<=3&&!unavail?' low':'') + '">' + spotsHtml + '</div><span class="pill ' + sc + '">' + st + '</span></div>' +
       '</div>' +
-      '<div class="comp-reveal"><div class="comp-reveal-inner">&#x2705; Selected &mdash; <strong>' + c.name + '</strong> &middot; ' + d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) +
-      (c.postcode ? ' &middot; <a href="https://maps.google.com/?q=' + encodeURIComponent((c.address||c.venue) + ' ' + c.postcode) + '" target="_blank" style="color:var(--red);font-weight:700;text-decoration:none">&#x1F5FA; View on Map</a>' : '') +
-      '</div></div>' +
+      (!unavail ? '<div class="comp-check-row">' +
+        '<label><input type="checkbox" class="comp-checkbox" id="chk-' + c.id + '"' + (isSel?' checked':'') +
+        ' onchange="window.toggleComp('' + c.id + '',this.checked)"> Enter this competition</label>' +
+        '<span class="spaces-label">Spaces:</span>' +
+        '<input type="number" class="spaces-input" id="spc-' + c.id + '" value="' + spaces + '" min="1" max="' + left + '"' +
+        (isSel?'':' disabled') +
+        ' oninput="window.updateSpaces('' + c.id + '',this.value)">' +
+        '</div>' : '') +
       '</div>';
   }).join('');
 }
 
-window.selectComp = function(id) {
-  selId = id;
-  const c  = allCompetitions.find(x => x.id === id);
-  if (!c) return;
-  renderCalendar();
-  const sb = document.getElementById('sel-banner');
-  sb.className = 'sel-banner filled';
-  sb.innerHTML = '<strong>&#x1F4C5; ' + c.name + '</strong>' +
-    new Date(c.date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) +
-    ' &middot; ' + (c.venue||'TBC');
+window.toggleComp = function(id, checked) {
+  if (checked) {
+    const spcEl = document.getElementById('spc-' + id);
+    selections[id] = spcEl ? (parseInt(spcEl.value)||1) : 1;
+    if (spcEl) spcEl.disabled = false;
+  } else {
+    delete selections[id];
+    const spcEl = document.getElementById('spc-' + id);
+    if (spcEl) spcEl.disabled = true;
+  }
+  const card = document.getElementById('cc-' + id);
+  if (card) card.classList.toggle('selected', checked);
+  updateSummary();
 };
+
+window.updateSpaces = function(id, val) {
+  if (selections[id] !== undefined) {
+    selections[id] = parseInt(val) || 1;
+    updateSummary();
+  }
+};
+
+function updateSummary() {
+  const el = document.getElementById('sel-summary');
+  const ids = Object.keys(selections);
+  if (!ids.length) {
+    el.innerHTML = '<div class="sel-empty">&#8592; Tick competitions on the left to begin</div>';
+    return;
+  }
+  el.innerHTML = ids.map(id => {
+    const c = allCompetitions.find(x => x.id === id);
+    if (!c) return '';
+    const d = new Date(c.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    return '<div class="sel-summary-item"><span class="si-name">&#x2705; ' + c.name + '</span><span class="si-spaces">' + d + ' &middot; ' + selections[id] + ' space' + (selections[id]!==1?'s':'') + '</span></div>';
+  }).join('');
+}
 
 // ══ SUBMIT BOOKING ══
 window.submitBooking = async function() {
-  const club     = document.getElementById('f-club').value.trim();
-  const region   = document.getElementById('f-region').value;
-  const gymnasts = parseInt(document.getElementById('f-gymnasts').value);
-  const email    = document.getElementById('f-email').value.trim();
-  const phone    = document.getElementById('f-phone').value.trim();
-  const errBox   = document.getElementById('submit-error');
+  const club   = document.getElementById('f-club').value.trim();
+  const region = document.getElementById('f-region').value;
+  const email  = document.getElementById('f-email').value.trim();
+  const phone  = document.getElementById('f-phone').value.trim();
+  const errBox = document.getElementById('submit-error');
   errBox.style.display = 'none';
 
-  if (!selId)               return showErr('Please select a competition first.');
-  if (!club)                return showErr('Please enter your club name.');
-  if (!region)              return showErr('Please select your region.');
-  if (!gymnasts||gymnasts<1)return showErr('Please enter the number of gymnasts.');
+  const selIds = Object.keys(selections);
+  if (!selIds.length)               return showErr('Please tick at least one competition.');
+  if (!club)                        return showErr('Please enter your club name.');
+  if (!region)                      return showErr('Please select your region.');
   if (!email||!email.includes('@')) return showErr('Please enter a valid email address.');
-  if (!phone)               return showErr('Please enter a contact phone number.');
-
-  const comp = allCompetitions.find(x => x.id === selId);
-  const booked = allBookings.filter(b => b.compId === selId).length;
-  if (booked >= (comp.maxPlaces||20)) return showErr('Sorry, this competition is now full.');
+  if (!phone)                       return showErr('Please enter a contact phone number.');
 
   const btn = document.getElementById('btn-submit');
   btn.disabled = true;
@@ -493,22 +541,36 @@ window.submitBooking = async function() {
 
   const ref = 'NGL-' + Math.random().toString(36).substr(2,6).toUpperCase();
   try {
-    await addDoc(bookingsCol, {
-      reference: ref,
-      compId:    selId,
-      compName:  comp.name,
-      compDate:  comp.date,
-      club, region, gymnasts, email, phone,
-      bookedAt:  new Date().toISOString()
+    // Create one booking record per selected competition
+    const promises = selIds.map(compId => {
+      const comp   = allCompetitions.find(x => x.id === compId);
+      const spaces = selections[compId] || 1;
+      return addDoc(bookingsCol, {
+        reference: ref,
+        compId,
+        compName:  comp.name,
+        compDate:  comp.date,
+        spaces,
+        club, region, email, phone,
+        bookedAt:  new Date().toISOString()
+      });
     });
+    await Promise.all(promises);
+
     document.getElementById('booking-section').style.display = 'none';
     document.getElementById('success-screen').classList.add('show');
     document.getElementById('success-ref').textContent = ref;
+    // Show summary on success screen
+    const compList = selIds.map(id => {
+      const c = allCompetitions.find(x=>x.id===id);
+      return (c ? c.name : id) + ' (' + selections[id] + ' space' + (selections[id]!==1?'s':'') + ')';
+    }).join(', ');
+    document.getElementById('success-comps').textContent = compList;
     window.scrollTo({top:0,behavior:'smooth'});
   } catch(e) {
     showErr('Something went wrong. Please try again. (' + e.message + ')');
     btn.disabled = false;
-    btn.textContent = 'Reserve Our Place \u2192';
+    btn.textContent = 'Reserve Our Places \u2192';
   }
 };
 
@@ -519,15 +581,13 @@ function showErr(msg) {
 }
 
 window.resetForm = function() {
-  selId = null;
-  ['f-club','f-gymnasts','f-email','f-phone'].forEach(i => document.getElementById(i).value='');
+  selections = {};
+  ['f-club','f-email','f-phone'].forEach(i => document.getElementById(i).value='');
   document.getElementById('f-region').value='';
   document.getElementById('submit-error').style.display='none';
-  const sb = document.getElementById('sel-banner');
-  sb.className='sel-banner empty';
-  sb.textContent='\u2190 Select a competition to begin';
+  updateSummary();
   const btn = document.getElementById('btn-submit');
-  btn.disabled=false; btn.textContent='Reserve Our Place \u2192';
+  btn.disabled=false; btn.textContent='Reserve Our Places \u2192';
   document.getElementById('success-screen').classList.remove('show');
   document.getElementById('booking-section').style.display='';
   renderCalendar();
@@ -605,7 +665,7 @@ function renderAdminComps() {
 // ══ ADMIN: STATS ══
 function updateStats() {
   if (!adminLoggedIn) return;
-  const gyms  = allBookings.reduce((s,b)=>s+(b.gymnasts||0),0);
+  const gyms  = allBookings.reduce((s,b)=>s+(b.spaces||b.gymnasts||0),0);
   const clubs = [...new Set(allBookings.map(b=>b.club))].length;
   document.getElementById('stat-comps').textContent    = allCompetitions.length;
   document.getElementById('stat-bookings').textContent = allBookings.length;
@@ -642,7 +702,7 @@ function renderBookingsTable() {
       '<td>' + b.region + '</td>' +
       '<td>' + (b.compName||'') + '</td>' +
       '<td>' + compDate + '</td>' +
-      '<td class="td-num">' + b.gymnasts + '</td>' +
+      '<td class="td-num">' + (b.spaces||b.gymnasts||'&mdash;') + '</td>' +
       '<td>' + b.email + '</td>' +
       '<td>' + b.phone + '</td>' +
       '<td>' + bookedOn + '</td>' +
@@ -697,10 +757,10 @@ document.getElementById('edit-modal').addEventListener('click', function(e) {
 
 // ══ EXPORT CSV ══
 window.exportCSV = function() {
-  const hdr = ['Reference','Club','Region','Competition','Competition Date','Gymnasts','Email','Phone','Booked On'];
+  const hdr = ['Reference','Club','Region','Competition','Competition Date','Spaces','Email','Phone','Booked On'];
   const rows = allBookings.map(b => {
     const compDate = b.compDate ? new Date(b.compDate+'T00:00:00').toLocaleDateString('en-GB') : '';
-    return [b.reference||b.id, b.club, b.region, b.compName||'', compDate, b.gymnasts, b.email, b.phone, new Date(b.bookedAt).toLocaleDateString('en-GB')]
+    return [b.reference||b.id, b.club, b.region, b.compName||'', compDate, b.spaces||b.gymnasts||'', b.email, b.phone, new Date(b.bookedAt).toLocaleDateString('en-GB')]
       .map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(',');
   });
   const csv = [hdr.join(','), ...rows].join('\n');
