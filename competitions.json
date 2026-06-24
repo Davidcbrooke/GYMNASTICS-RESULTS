@@ -1,0 +1,51 @@
+{
+  "season": "2026/27",
+  "lastUpdated": "2026-06-24",
+  "competitions": [
+    {
+      "id": "c1",
+      "name": "North East Regional — Round 1",
+      "date": "2026-11-14",
+      "region": "North East",
+      "venue": "Newcastle Sports Arena",
+      "maxPlaces": 20,
+      "level": "Level A/B"
+    },
+    {
+      "id": "c2",
+      "name": "Yorkshire & Humber Qualifier",
+      "date": "2026-11-21",
+      "region": "Yorkshire",
+      "venue": "Leeds Gymnastics Centre",
+      "maxPlaces": 16,
+      "level": "Open"
+    },
+    {
+      "id": "c3",
+      "name": "North West Regional — Round 1",
+      "date": "2026-12-05",
+      "region": "North West",
+      "venue": "Manchester Regional Arena",
+      "maxPlaces": 24,
+      "level": "Level A/B/C"
+    },
+    {
+      "id": "c4",
+      "name": "East Midlands Open",
+      "date": "2027-01-17",
+      "region": "East Midlands",
+      "venue": "Nottingham Gymnastics Hub",
+      "maxPlaces": 18,
+      "level": "Open"
+    },
+    {
+      "id": "c5",
+      "name": "NGL National Finals 2027",
+      "date": "2027-03-14",
+      "region": "National",
+      "venue": "Telford International Centre",
+      "maxPlaces": 80,
+      "level": "Finals"
+    }
+  ]
+}
