@@ -222,8 +222,8 @@
 <nav class="top-nav">
   <div class="brand">NGL <span>Competition Booking System</span></div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPanel('public',this)">Book a Competition</button>
-    <button class="nav-tab" onclick="showPanel('admin',this)">Admin &#x1F512;</button>
+    <button class="nav-tab active" onclick="window.showPanel('public',this)">Book a Competition</button>
+    <button class="nav-tab" onclick="window.showPanel('admin',this)">Admin &#x1F512;</button>
   </div>
 </nav>
 
@@ -273,7 +273,7 @@
           </div>
           <div class="fg"><label>Contact Email <span class="req">*</span></label><input type="email" id="f-email" placeholder="club@example.com"></div>
           <div class="fg"><label>Contact Phone <span class="req">*</span></label><input type="tel" id="f-phone" placeholder="07xxx xxxxxx"></div>
-          <button class="btn-book" id="btn-submit" onclick="submitBooking()">Reserve Our Places &#8594;</button>
+          <button class="btn-book" id="btn-submit" onclick="window.submitBooking()">Reserve Our Places &#8594;</button>
           <div class="submit-error" id="submit-error"></div>
           <div class="guarantee-box">
             <span>&#x1F512;</span>
@@ -292,7 +292,7 @@
       <p style="margin-top:8px">We'll be in touch ahead of October 2026 to confirm entries and arrange payment.</p>
       <div class="success-ref" id="success-ref" style="margin-top:20px">NGL-XXXXXX</div>
       <p style="font-size:0.77rem;margin-bottom:24px;margin-top:12px">Keep your reference number safe. If you need to make changes, contact your NGL administrator quoting this reference.</p>
-      <button class="btn-again" onclick="resetForm()">Make Another Booking</button>
+      <button class="btn-again" onclick="window.resetForm()">Make Another Booking</button>
     </div>
   </div>
 </div>
@@ -303,8 +303,8 @@
   <div class="admin-login-wrap" id="admin-login">
     <div class="al-head">&#x1F510; Admin Login<p>NGL Booking System &mdash; Administrator Access</p></div>
     <div class="al-body">
-      <div class="fg"><label>Password</label><input type="password" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
-      <button class="btn-signin" onclick="adminLogin()">Sign In</button>
+      <div class="fg"><label>Password</label><input type="password" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')window.adminLogin()"></div>
+      <button class="btn-signin" onclick="window.adminLogin()">Sign In</button>
       <div class="al-err" id="al-err">Incorrect password. Please try again.</div>
     </div>
   </div>
@@ -312,7 +312,7 @@
   <div class="admin-dash" id="admin-dash" style="display:none">
     <div class="dash-top">
       <div><h2>NGL Booking Dashboard</h2><p>Live data from Firebase &mdash; updates in real time</p></div>
-      <button class="btn-logout" onclick="adminLogout()">Sign Out</button>
+      <button class="btn-logout" onclick="window.adminLogout()">Sign Out</button>
     </div>
 
     <div class="stats-row" id="stats-row">
@@ -339,7 +339,7 @@
           <div class="fg"><label>Level / Category</label><input type="text" id="ac-level" placeholder="e.g. Level A/B, Open, Finals"></div>
           <div class="fg"><label>Full Address</label><input type="text" id="ac-address" placeholder="e.g. 1 Arena Way, Newcastle upon Tyne"></div>
           <div class="fg"><label>Postcode</label><input type="text" id="ac-postcode" placeholder="e.g. NE4 7NA"></div>
-          <button class="btn-add" id="btn-add-comp" onclick="addCompetition()">+ Add to Calendar</button>
+          <button class="btn-add" id="btn-add-comp" onclick="window.addCompetition()">+ Add to Calendar</button>
         </div>
       </div>
 
@@ -357,10 +357,10 @@
       <div class="pc-head">
         &#x1F4DD; Club Bookings
         <span class="pc-badge" id="bk-count">0</span>
-        <button class="btn-export" style="margin-left:auto" onclick="exportCSV()">&#x2B07; Export CSV</button>
+        <button class="btn-export" style="margin-left:auto" onclick="window.exportCSV()">&#x2B07; Export CSV</button>
       </div>
       <div class="table-toolbar">
-        <input type="text" id="bk-search" placeholder="Search club name&hellip;" oninput="filterBookings()">
+        <input type="text" id="bk-search" placeholder="Search club name&hellip;" oninput="window.filterBookings()">
         <select id="bk-filter" onchange="filterBookings()"><option value="">All competitions</option></select>
       </div>
       <div style="overflow-x:auto">
@@ -501,11 +501,11 @@ function renderCalendar() {
       '</div>' +
       (!unavail ? '<div class="comp-check-row">' +
         '<label><input type="checkbox" class="comp-checkbox" id="chk-' + c.id + '"' + (isSel?' checked':'') +
-        ' onchange="window.toggleComp('' + c.id + '',this.checked)"> Enter this competition</label>' +
+        ' onchange="window.toggleComp(\'' + c.id + '\',this.checked)"> Enter this competition</label>' +
         '<span class="spaces-label">Spaces:</span>' +
         '<input type="number" class="spaces-input" id="spc-' + c.id + '" value="' + spaces + '" min="1" max="' + left + '"' +
         (isSel?'':' disabled') +
-        ' oninput="window.updateSpaces('' + c.id + '',this.value)">' +
+        ' oninput="window.updateSpaces(\'' + c.id + '\',this.value)">' +
         '</div>' : '') +
       '</div>';
   }).join('');
