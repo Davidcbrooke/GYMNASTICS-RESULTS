@@ -809,6 +809,31 @@ window.addCompetition = async function() {
 };
 
 // ══ ADMIN: DELETE COMPETITION ══
+window.duplicateComp = async function(id) {
+  const c = allCompetitions.find(x => x.id === id);
+  if (!c) return;
+  // Open the edit modal pre-filled with copied data but blank date so admin must set it
+  const copy = Object.assign({}, c);
+  delete copy.id;
+  copy.name = c.name + ' (Copy)';
+  copy.date = '';
+  // Temporarily store copy data and open modal in "new" mode
+  document.getElementById('edit-id').value         = '__duplicate__';
+  document.getElementById('edit-name').value       = copy.name;
+  document.getElementById('edit-date').value       = '';
+  document.getElementById('edit-region').value     = copy.region    || '';
+  document.getElementById('edit-venue').value      = copy.venue     || '';
+  document.getElementById('edit-max').value        = copy.maxPlaces || 20;
+  document.getElementById('edit-level').value      = copy.level     || '';
+  document.getElementById('edit-gender').value     = copy.gender    || '';
+  document.getElementById('edit-apparatus').value  = copy.apparatus || '';
+  document.getElementById('edit-address').value    = copy.address   || '';
+  document.getElementById('edit-postcode').value   = copy.postcode  || '';
+  // Change modal title and save button to reflect "create" mode
+  document.querySelector('#edit-modal .modal-head').childNodes[0].textContent = '\u2398 Duplicate Competition \u2014 set a new date';
+  document.getElementById('edit-modal').classList.add('open');
+};
+
 window.deleteComp = async function(id) {
   if (!confirm('Remove this competition? Existing bookings will be kept.')) return;
   await deleteDoc(doc(db,'ngl_competitions',id));
@@ -828,6 +853,7 @@ function renderAdminComps() {
       '<span class="acl-reg">' + (c.region||'') + '</span>' +
       '<span class="acl-spots">' + booked + '/' + (c.maxPlaces||20) + '</span>' +
       '<button class="btn-edit" onclick="window.openEditModal(\'' + c.id + '\')">&#x270F; Edit</button>' +
+      '<button class="btn-edit" style="color:var(--navy)" onclick="window.duplicateComp(\'' + c.id + '\')">&#x2398; Copy</button>' +
       '<button class="btn-del" onclick="window.deleteComp(\'' + c.id + '\')">&#x2715;</button>' +
       '</div>';
   }).join('');
@@ -905,12 +931,13 @@ window.openEditModal = function(id) {
 
 window.closeEditModal = function() {
   document.getElementById('edit-modal').classList.remove('open');
+  document.querySelector('#edit-modal .modal-head').childNodes[0].textContent = '\u270F\uFE0F Edit Competition';
 };
 
 window.saveEdit = async function() {
   const id = document.getElementById('edit-id').value;
   if (!id) return;
-  const updated = {
+  const data = {
     name:       document.getElementById('edit-name').value.trim(),
     date:       document.getElementById('edit-date').value,
     region:     document.getElementById('edit-region').value.trim(),
@@ -922,10 +949,18 @@ window.saveEdit = async function() {
     address:    document.getElementById('edit-address').value.trim(),
     postcode:   document.getElementById('edit-postcode').value.trim(),
   };
-  if (!updated.name || !updated.date) return alert('Name and date are required.');
+  if (!data.name || !data.date) return alert('Name and date are required.');
   try {
-    await updateDoc(doc(db,'ngl_competitions',id), updated);
+    if (id === '__duplicate__') {
+      // Create as new competition
+      data.createdAt = new Date().toISOString();
+      await addDoc(compsCol, data);
+    } else {
+      await updateDoc(doc(db,'ngl_competitions',id), data);
+    }
     closeEditModal();
+    // Reset modal title back to default
+    document.querySelector('#edit-modal .modal-head').childNodes[0].textContent = '\u270F\uFE0F Edit Competition';
   } catch(e) { alert('Error saving: ' + e.message); }
 };
 
