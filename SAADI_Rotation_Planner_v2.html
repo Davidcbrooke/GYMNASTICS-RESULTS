@@ -109,29 +109,31 @@ header h1 span{ color:var(--gold); }
 /* ---- LIVE / TIMELINE VIEW ---- */
 .live-view{ flex:1; overflow:hidden; background:var(--navy); flex-direction:column; }
 .live-view.active{ display:flex; }
-.timeline-container{ flex:1; overflow:hidden; display:flex; flex-direction:column; }
-.timeline-section-label{ color:var(--gold); font-size:.75rem; font-weight:700; padding:6px 12px 2px; text-transform:uppercase; letter-spacing:1px; flex:0 0 auto; }
-.timeline-scroll{ flex:1; overflow-x:auto; overflow-y:auto; }
-.timeline-inner{ position:relative; }
+.timeline-container{ flex:1; overflow:hidden; display:flex; flex-direction:column; position:relative; }
+/* single scroll container - overflow both axes */
+.timeline-scroll-outer{ flex:1; overflow:auto; position:relative; }
+.timeline-inner-wrap{ display:inline-block; min-width:100%; }
 
-/* timeline rows */
-.tl-wrap{ display:flex; flex-direction:column; }
-.tl-ruler{ display:flex; height:28px; position:sticky; top:0; z-index:10; background:var(--navy); }
-.tl-ruler-spacer{ flex:0 0 var(--lbl-w); background:var(--navy); border-right:2px solid rgba(255,255,255,.2); }
-.tl-ruler-ticks{ position:relative; flex:1; }
-.tl-ruler-ticks .tick{ position:absolute; top:0; bottom:0; border-left:1px solid rgba(255,255,255,.2); font-size:.65rem; color:rgba(255,255,255,.7); padding-left:3px; padding-top:6px; white-space:nowrap; }
-.tl-ruler-ticks .tick.hour{ border-left:2px solid rgba(255,255,255,.5); font-weight:700; color:#fff; }
+/* ruler sticks to top, labels stick to left */
+.tl-ruler{ display:flex; height:32px; position:sticky; top:0; z-index:20; background:var(--navy); border-bottom:2px solid rgba(255,255,255,.15); }
+.tl-ruler-spacer{ flex-shrink:0; background:var(--navy); border-right:2px solid rgba(255,255,255,.2); }
+.tl-ruler-ticks{ position:relative; flex-shrink:0; }
+.tl-ruler-ticks .tick{ position:absolute; top:0; bottom:0; border-left:1px solid rgba(255,255,255,.2); font-size:.65rem; color:rgba(255,255,255,.7); padding-left:3px; padding-top:8px; white-space:nowrap; }
+.tl-ruler-ticks .tick.hour{ border-left:2px solid rgba(255,255,255,.5); font-weight:700; color:#fff; font-size:.72rem; }
 
-.tl-row{ display:flex; height:38px; border-bottom:1px solid rgba(255,255,255,.08); }
-.tl-label{ flex:0 0 var(--lbl-w); border-right:2px solid rgba(255,255,255,.15); display:flex; align-items:center; padding:0 10px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.9); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:var(--navy); position:sticky; left:0; z-index:5; }
-.tl-track{ position:relative; flex:1; }
-.tl-block{ position:absolute; top:3px; bottom:3px; border-radius:4px; display:flex; align-items:center; padding:0 6px; overflow:hidden; font-size:.68rem; font-weight:600; color:#fff; white-space:nowrap; }
+.tl-section-sep{ height:26px; display:flex; align-items:center; background:rgba(255,255,255,.05); position:sticky; left:0; width:100%; }
+.tl-section-sep span{ font-size:.7rem; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:1px; padding-left:12px; }
+
+.tl-row{ display:flex; height:42px; border-bottom:1px solid rgba(255,255,255,.08); }
+.tl-label{ flex-shrink:0; border-right:2px solid rgba(255,255,255,.15); display:flex; align-items:center; padding:0 10px; font-size:.78rem; font-weight:600; color:rgba(255,255,255,.9); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:var(--navy); position:sticky; left:0; z-index:10; }
+.tl-track{ position:relative; flex-shrink:0; }
+.tl-block{ position:absolute; top:3px; bottom:3px; border-radius:4px; display:flex; align-items:center; padding:0 6px; overflow:hidden; font-size:.72rem; font-weight:600; color:#fff; white-space:nowrap; }
 .tl-block .b-loc{ flex:1; overflow:hidden; text-overflow:ellipsis; }
-.tl-block .b-time{ opacity:.75; font-size:.62rem; margin-left:4px; flex-shrink:0; }
-.tl-now-line{ position:absolute; top:0; bottom:0; width:2px; background:var(--red); z-index:20; pointer-events:none; }
-.tl-now-line::before{ content:''; position:absolute; top:-4px; left:-4px; width:10px; height:10px; background:var(--red); border-radius:50%; }
-.tl-section-sep{ height:24px; background:rgba(255,255,255,.05); display:flex; align-items:center; padding:0 12px; }
-.tl-section-sep span{ font-size:.7rem; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:1px; }
+.tl-block .b-time{ opacity:.75; font-size:.65rem; margin-left:4px; flex-shrink:0; }
+.tl-block.dim{ opacity:0.4; }
+/* global now-line spans full height of scroll content */
+.tl-now-line-global{ position:absolute; top:0; bottom:0; width:3px; background:var(--red); z-index:25; pointer-events:none; }
+.tl-now-line-global::before{ content:''; position:absolute; top:32px; left:-5px; width:13px; height:13px; background:var(--red); border-radius:50%; border:2px solid #fff; }
 .tl-block.flash{ animation:flash-anim 1s ease-in-out infinite; }
 @keyframes flash-anim{ 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
 
@@ -1022,54 +1024,55 @@ function renderTimeline(day){
   const container=document.getElementById('timelineContainer');
   container.innerHTML='';
   const {min,max}=getDayBounds(day);
-  const lblW=180;
-  container.style.setProperty('--lbl-w',lblW+'px');
+  const lblW=200;
   const width=(max-min)*PX_PER_MIN;
+  const totalW=lblW+width;
 
-  // build squad and rec sections
+  // single outer scroll container
+  const outer=document.createElement('div'); outer.className='timeline-scroll-outer'; outer.id='tlScroll';
+  const inner=document.createElement('div'); inner.className='timeline-inner-wrap'; inner.style.width=totalW+'px';
+
+  // global ruler (sticky top)
+  const ruler=document.createElement('div'); ruler.className='tl-ruler'; ruler.style.width=totalW+'px';
+  const rSpacer=document.createElement('div'); rSpacer.className='tl-ruler-spacer'; rSpacer.style.width=lblW+'px';
+  const rTicks=document.createElement('div'); rTicks.className='tl-ruler-ticks'; rTicks.style.width=width+'px';
+  for(let t=min;t<=max;t+=30){
+    if(t===min) continue;
+    const tick=document.createElement('div');
+    tick.className='tick'+(t%60===0?' hour':'');
+    tick.style.left=((t-min)*PX_PER_MIN)+'px';
+    tick.textContent=fmtTime(t);
+    rTicks.appendChild(tick);
+  }
+  ruler.appendChild(rSpacer); ruler.appendChild(rTicks);
+  inner.appendChild(ruler);
+
+  // global now-line (spans full height, positioned over tracks area)
+  const nowLineGlobal=document.createElement('div'); nowLineGlobal.className='tl-now-line-global'; nowLineGlobal.id='tlNowLine';
+  nowLineGlobal.style.left=lblW+'px'; // will be updated by updateNowLine
+  inner.appendChild(nowLineGlobal);
+
+  // build sections
   ['squad','recreational'].forEach(section=>{
     const groups=DATA.groups.filter(g=>g.section===section&&(g.days||DAYS).includes(day));
     if(groups.length===0) return;
 
-    const sep=document.createElement('div'); sep.className='tl-section-sep';
-    sep.innerHTML=`<span>${section==='squad'?'Squads':'Recreational'}</span>`;
-    container.appendChild(sep);
+    const sep=document.createElement('div'); sep.className='tl-section-sep'; sep.style.width=totalW+'px';
+    sep.innerHTML=`<span>${section==='squad'?'Squads':'Recreational — Week ${currentWeek}'}</span>`;
+    inner.appendChild(sep);
 
-    const wrap=document.createElement('div'); wrap.className='tl-wrap';
-
-    // ruler
-    const ruler=document.createElement('div'); ruler.className='tl-ruler';
-    const rSpacer=document.createElement('div'); rSpacer.className='tl-ruler-spacer'; rSpacer.style.width=lblW+'px';
-    const rTicks=document.createElement('div'); rTicks.className='tl-ruler-ticks'; rTicks.style.position='relative'; rTicks.style.width=width+'px';
-    for(let t=min;t<=max;t+=30){
-      if(t===min) continue;
-      const tick=document.createElement('div');
-      tick.className='tick'+(t%60===0?' hour':'');
-      tick.style.left=((t-min)*PX_PER_MIN)+'px';
-      tick.textContent=fmtTime(t);
-      rTicks.appendChild(tick);
-    }
-    ruler.appendChild(rSpacer); ruler.appendChild(rTicks);
-    wrap.appendChild(ruler);
-
-    // rows
     groups.forEach(group=>{
       const sessions=(DATA.sessions[day]&&DATA.sessions[day][group.id])||[];
-      const row=document.createElement('div'); row.className='tl-row';
-      const lbl=document.createElement('div'); lbl.className='tl-label'; lbl.textContent=group.name;
-      const track=document.createElement('div'); track.className='tl-track';
-      track.style.cssText=`width:${width}px;position:relative;`;
-      // grid background
-      track.style.backgroundImage=`
-        linear-gradient(90deg,rgba(255,255,255,.15) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px)`;
+      const row=document.createElement('div'); row.className='tl-row'; row.style.width=totalW+'px';
+      const lbl=document.createElement('div'); lbl.className='tl-label'; lbl.style.width=lblW+'px'; lbl.textContent=group.name;
+      const track=document.createElement('div'); track.className='tl-track'; track.style.width=width+'px';
+      track.style.backgroundImage='linear-gradient(90deg,rgba(255,255,255,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px)';
       track.style.backgroundSize=`${PX_PER_MIN*60}px 100%,${PX_PER_MIN*30}px 100%,${PX_PER_MIN*5}px 100%`;
 
       sessions.forEach(s=>{
-        const activeLoc = getSessionLocation(s);
+        const activeLoc=getSessionLocation(s);
         const loc=getLocationByName(activeLoc);
-        const bg=loc?loc.colour:'#888';
+        const bg=loc?loc.colour:'#555';
         const light=isLight(bg);
         const block=document.createElement('div'); block.className='tl-block';
         block.style.left=((s.start_min-min)*PX_PER_MIN)+'px';
@@ -1082,52 +1085,67 @@ function renderTimeline(day){
         track.appendChild(block);
       });
 
-      // now line
-      const nowLine=document.createElement('div'); nowLine.className='tl-now-line'; nowLine.dataset.section=section;
-      nowLine.style.display='none'; track.appendChild(nowLine);
-
       row.appendChild(lbl); row.appendChild(track);
-      wrap.appendChild(row);
+      inner.appendChild(row);
     });
-
-    const scroll=document.createElement('div'); scroll.className='timeline-scroll';
-    scroll.appendChild(wrap); container.appendChild(scroll);
   });
 
-  // scroll to now
+  outer.appendChild(inner);
+  container.appendChild(outer);
+  // store bounds for now-line calculations
+  container.dataset.min=min; container.dataset.max=max; container.dataset.lblW=lblW;
+
+  // scroll to now on load
   setTimeout(()=>{
     const nowMin=nowMinutes();
-    const {min}=getDayBounds(day);
     const scrollTo=Math.max(0,(nowMin-min-30)*PX_PER_MIN);
-    container.querySelectorAll('.timeline-scroll').forEach(s=>s.scrollLeft=scrollTo);
+    outer.scrollLeft=scrollTo;
+    updateNowLine();
   },100);
 }
 
 function updateNowLine(){
   if(!liveMode) return;
-  const day=getTodayName();
-  const {min,max}=getDayBounds(day);
+  const container=document.getElementById('timelineContainer');
+  const min=parseInt(container.dataset.min||480);
+  const max=parseInt(container.dataset.max||1200);
+  const lblW=parseInt(container.dataset.lblW||200);
   const nowMin=nowMinutes();
-  const left=(nowMin-min)*PX_PER_MIN;
-  document.querySelectorAll('.tl-now-line').forEach(line=>{
-    if(nowMin>=min&&nowMin<=max){ line.style.display='block'; line.style.left=left+'px'; }
-    else line.style.display='none';
-  });
-  // highlight active blocks
+  const nowLine=document.getElementById('tlNowLine');
+  const outer=document.getElementById('tlScroll');
+  if(!nowLine||!outer) return;
+  if(nowMin>=min&&nowMin<=max){
+    nowLine.style.display='block';
+    const nowPx=lblW+(nowMin-min)*PX_PER_MIN;
+    nowLine.style.left=nowPx+'px';
+    // auto-scroll to keep now-line 1/3 from the left edge of the visible area
+    const visibleW=outer.clientWidth;
+    const targetScroll=nowPx-lblW-(visibleW-lblW)*0.33;
+    const currentScroll=outer.scrollLeft;
+    // only scroll if now-line is near the edge (within 60px) to avoid jarring movement
+    const nowLineVisible=nowPx-currentScroll;
+    if(nowLineVisible<lblW+60 || nowLineVisible>visibleW-60){
+      outer.scrollLeft=Math.max(0,targetScroll);
+    }
+  } else {
+    nowLine.style.display='none';
+  }
+  // dim inactive blocks, highlight active
   document.querySelectorAll('.tl-block').forEach(b=>{
     const s=parseInt(b.dataset.startMin), e=parseInt(b.dataset.endMin);
-    b.style.opacity=(nowMin>=s&&nowMin<e)?'1':'0.5';
+    if(nowMin>=s&&nowMin<e){ b.classList.remove('dim'); }
+    else { b.classList.add('dim'); }
   });
 }
 
 function checkFlash(){
   if(!liveMode) return;
   const nowMin=nowMinutes();
-  const nearRotation=document.querySelectorAll('.tl-block');
-  nearRotation.forEach(b=>{
+  document.querySelectorAll('.tl-block').forEach(b=>{
     const s=parseInt(b.dataset.startMin);
     const diff=s-nowMin;
-    if(diff>-1.5&&diff<0.5) b.classList.add('flash');
+    // flash label for 90 secs before rotation change
+    if(diff>-1.5&&diff<1.5) b.classList.add('flash');
     else b.classList.remove('flash');
   });
 }
