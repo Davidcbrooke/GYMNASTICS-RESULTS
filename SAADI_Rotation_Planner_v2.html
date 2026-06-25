@@ -492,7 +492,7 @@ function checkPassword(){
   if(document.getElementById('pwInput').value===CONFIG.password){
     document.body.classList.remove('locked');
     document.getElementById('gate').style.display='none';
-    init();
+    init().catch(e=>{ console.error('Init error:',e); alert('Error starting app: '+e.message); });
   } else {
     document.getElementById('pwInput').value='';
     document.getElementById('pwInput').placeholder='Incorrect — try again';
@@ -714,7 +714,6 @@ function openSessionModal(day, groupId, sessionIdx){
   document.getElementById('sessionModal').classList.add('open');
   // reset repeat-day checkboxes — disable current day, uncheck all
   const dayValues={Monday:'Mon',Tuesday:'Tue',Wednesday:'Wed',Thursday:'Thu',Friday:'Fri',Saturday:'Sat',Sunday:'Sun'};
-  const group=getGroupById(groupId);
   const activeDays=group.days||DAYS;
   document.querySelectorAll('#sm_days input').forEach(cb=>{
     const isCurrentDay = cb.value===day;
@@ -1094,7 +1093,16 @@ function checkFlash(){
 // INIT
 // ================================================================
 async function init(){
-  await fetchData();
+  try{
+    await fetchData();
+  }catch(e){
+    console.warn('fetchData failed:', e);
+  }
+  // ensure DATA structure is valid
+  if(!DATA.groups) DATA.groups=[];
+  if(!DATA.locations) DATA.locations=[];
+  if(!DATA.sessions) DATA.sessions={};
+  DAYS.forEach(d=>{ if(!DATA.sessions[d]) DATA.sessions[d]={}; });
   renderTabs();
   renderWeekTable();
   // live clock tick for header
