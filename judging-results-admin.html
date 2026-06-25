@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NGL Judging Results — Admin</title>
+<style>
+  :root {
+    --navy: #0D2060;
+    --navy-light: #1a3080;
+    --red: #CC0000;
+    --gold: #C8A84B;
+    --white: #ffffff;
+    --grey-bg: #f4f6fb;
+    --grey-border: #dde3f0;
+    --grey-text: #4a5568;
+    --green: #1a7a3e;
+    --green-bg: #e8f7ee;
+    --red-bg: #fdeaea;
+    --amber: #b35c00;
+    --amber-bg: #fff4e0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; background: var(--grey-bg); color: #1a202c; min-height: 100vh; }
+
+  /* ── Header ── */
+  .page-header { background: var(--navy); color: white; padding: 18px 32px; display: flex; align-items: center; gap: 16px; }
+  .header-logo { background: var(--red); color: white; font-weight: 900; font-size: 20px; padding: 7px 13px; border-radius: 4px; letter-spacing: 1px; flex-shrink: 0; }
+  .header-text h1 { font-size: 18px; font-weight: 700; }
+  .header-text p { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+
+  /* ── Login screen ── */
+  .login-wrap { max-width: 400px; margin: 80px auto; background: white; border-radius: 12px; border: 1px solid var(--grey-border); padding: 40px 36px; text-align: center; }
+  .login-wrap h2 { font-size: 22px; color: var(--navy); margin-bottom: 8px; }
+  .login-wrap p { font-size: 14px; color: var(--grey-text); margin-bottom: 28px; }
+  .login-wrap input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--grey-border); border-radius: 6px; font-size: 15px; outline: none; margin-bottom: 14px; transition: border-color 0.15s; }
+  .login-wrap input:focus { border-color: var(--navy); }
+  .login-error { color: var(--red); font-size: 13px; margin-bottom: 12px; display: none; }
+
+  /* ── Buttons ── */
+  .btn { display: inline-block; padding: 11px 28px; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: background 0.15s; }
+  .btn-primary { background: var(--navy); color: white; width: 100%; }
+  .btn-primary:hover { background: var(--navy-light); }
+  .btn-sm { padding: 7px 16px; font-size: 13px; }
+  .btn-outline { background: white; color: var(--navy); border: 2px solid var(--navy); }
+  .btn-outline:hover { background: var(--grey-bg); }
+  .btn-red { background: var(--red); color: white; }
+  .btn-red:hover { background: #aa0000; }
+
+  /* ── Admin body ── */
+  .admin-body { max-width: 1100px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  /* ── Stats bar ── */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: white; border-radius: 10px; border: 1px solid var(--grey-border); padding: 18px 16px; text-align: center; }
+  .stat-card .sv { font-size: 28px; font-weight: 900; color: var(--navy); }
+  .stat-card .sl { font-size: 12px; color: var(--grey-text); margin-top: 4px; }
+  .stat-card .sv.green { color: var(--green); }
+  .stat-card .sv.red { color: var(--red); }
+  .stat-card .sv.amber { color: var(--amber); }
+
+  /* ── Toolbar ── */
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+  .toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .toolbar h2 { font-size: 16px; font-weight: 700; color: var(--navy); }
+  .search-input { padding: 8px 12px; border: 1.5px solid var(--grey-border); border-radius: 6px; font-size: 14px; outline: none; width: 200px; transition: border-color 0.15s; }
+  .search-input:focus { border-color: var(--navy); }
+  .filter-select { padding: 8px 10px; border: 1.5px solid var(--grey-border); border-radius: 6px; font-size: 14px; outline: none; background: white; cursor: pointer; }
+
+  /* ── Table ── */
+  .table-wrap { background: white; border-radius: 10px; border: 1px solid var(--grey-border); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead tr { background: var(--navy); color: white; }
+  thead th { padding: 12px 14px; text-align: left; font-weight: 700; font-size: 12px; letter-spacing: 0.5px; white-space: nowrap; }
+  thead th.sortable { cursor: pointer; user-select: none; }
+  thead th.sortable:hover { background: var(--navy-light); }
+  tbody tr { border-bottom: 1px solid var(--grey-border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f8f9ff; }
+  tbody td { padding: 12px 14px; vertical-align: middle; }
+  .td-name { font-weight: 700; color: var(--navy); }
+  .td-anon { color: var(--grey-text); font-style: italic; }
+
+  /* ── Grade badges ── */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  .badge-distinction { background: var(--green-bg); color: var(--green); }
+  .badge-pass { background: var(--amber-bg); color: var(--amber); }
+  .badge-fail { background: var(--red-bg); color: var(--red); }
+
+  /* ── Score bar ── */
+  .score-cell { display: flex; align-items: center; gap: 8px; }
+  .score-bar-wrap { width: 80px; background: var(--grey-border); border-radius: 4px; height: 6px; flex-shrink: 0; }
+  .score-bar { height: 6px; border-radius: 4px; }
+  .score-num { font-weight: 700; font-size: 13px; min-width: 36px; }
+
+  /* ── Expand row ── */
+  .expand-btn { background: none; border: none; cursor: pointer; color: var(--navy); font-size: 18px; padding: 0 4px; line-height: 1; }
+  .detail-row { display: none; }
+  .detail-row.open { display: table-row; }
+  .detail-cell { padding: 0 14px 16px 14px !important; background: var(--grey-bg); }
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; padding-top: 12px; }
+  .cat-item { background: white; border-radius: 6px; border: 1px solid var(--grey-border); padding: 10px 12px; font-size: 13px; }
+  .cat-item .cn { color: var(--grey-text); font-size: 11px; margin-bottom: 3px; }
+  .cat-item .cv { font-weight: 700; color: var(--navy); font-size: 15px; }
+
+  /* ── Empty / loading ── */
+  .state-msg { text-align: center; padding: 48px 20px; color: var(--grey-text); font-size: 15px; }
+  .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--grey-border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── CSV export ── */
+  .export-row { margin-top: 18px; text-align: right; }
+
+  @media (max-width: 700px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .page-header { padding: 14px 16px; }
+    .admin-body { padding: 20px 12px 40px; }
+    thead th:nth-child(5), tbody td:nth-child(5) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<div class="page-header">
+  <div class="header-logo">NGL</div>
+  <div class="header-text">
+    <h1>Judging Results — Admin</h1>
+    <p>NGL 2027 Girls Artistic · ngl_judging_results</p>
+  </div>
+</div>
+
+<!-- Login -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <h2>Admin Access</h2>
+    <p>Enter the admin password to view judging results.</p>
+    <input type="password" id="pwInput" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()">
+    <div class="login-error" id="loginError">Incorrect password. Please try again.</div>
+    <button class="btn btn-primary" onclick="checkPw()">Log in →</button>
+  </div>
+</div>
+
+<!-- Admin -->
+<div id="adminScreen" style="display:none;">
+  <div class="admin-body">
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-card"><div class="sv" id="statTotal">—</div><div class="sl">Total Attempts</div></div>
+      <div class="stat-card"><div class="sv green" id="statPass">—</div><div class="sl">Passed</div></div>
+      <div class="stat-card"><div class="sv red" id="statFail">—</div><div class="sl">Not Yet Passed</div></div>
+      <div class="stat-card"><div class="sv amber" id="statAvg">—</div><div class="sl">Average Score</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <h2>All Results</h2>
+        <input class="search-input" id="searchInput" type="text" placeholder="Search by name…" oninput="renderTable()">
+        <select class="filter-select" id="gradeFilter" onchange="renderTable()">
+          <option value="">All grades</option>
+          <option value="Distinction">Distinction</option>
+          <option value="Pass">Pass</option>
+          <option value="Not yet passed">Not yet passed</option>
+        </select>
+      </div>
+      <button class="btn btn-sm btn-outline" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <div id="loadingState" class="state-msg">
+        <div class="spinner"></div><br>Loading results…
+      </div>
+      <div id="emptyState" class="state-msg" style="display:none;">No results found.</div>
+      <table id="resultsTable" style="display:none;">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="sortable" onclick="sortBy('name')">Name ⇅</th>
+            <th class="sortable" onclick="sortBy('score_pct')">Score ⇅</th>
+            <th>Grade</th>
+            <th class="sortable" onclick="sortBy('submittedAt')">Date ⇅</th>
+            <th>Correct / Total</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const PASSWORD = "ngl2026";
+
+// ── Firebase ───────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:            "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
+  authDomain:        "saadi-rotation.firebaseapp.com",
+  databaseURL:       "https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "saadi-rotation",
+  storageBucket:     "saadi-rotation.firebasestorage.app",
+  messagingSenderId: "1066734803675",
+  appId:             "1:1066734803675:web:0188fd601adea7db08cafe",
+  measurementId:     "G-K3V2BRCVF6"
+});
+const db = firebase.firestore();
+
+// ── Auth ───────────────────────────────────────────────────
+function checkPw() {
+  const val = document.getElementById('pwInput').value;
+  if (val === PASSWORD) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    loadResults();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwInput').focus();
+  }
+}
+
+// ── Data ───────────────────────────────────────────────────
+let allResults = [];
+let sortKey = 'submittedAt';
+let sortDir = -1; // -1 = desc, 1 = asc
+
+async function loadResults() {
+  try {
+    const snap = await db.collection('ngl_judging_results')
+      .orderBy('submittedAt', 'desc')
+      .get();
+
+    allResults = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    updateStats();
+    renderTable();
+    document.getElementById('loadingState').style.display = 'none';
+  } catch(err) {
+    document.getElementById('loadingState').innerHTML =
+      '<span style="color:var(--red)">Error loading results: ' + err.message + '</span>';
+  }
+}
+
+function updateStats() {
+  const total = allResults.length;
+  const passed = allResults.filter(r => r.grade === 'Distinction' || r.grade === 'Pass').length;
+  const failed = allResults.filter(r => r.grade === 'Not yet passed').length;
+  const avg = total ? Math.round(allResults.reduce((s, r) => s + (r.score_pct || 0), 0) / total) : 0;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statPass').textContent  = passed;
+  document.getElementById('statFail').textContent  = failed;
+  document.getElementById('statAvg').textContent   = avg + '%';
+}
+
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = key === 'submittedAt' ? -1 : 1; }
+  renderTable();
+}
+
+function renderTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const grade  = document.getElementById('gradeFilter').value;
+
+  let rows = allResults.filter(r => {
+    const nameMatch  = (r.name || '').toLowerCase().includes(search);
+    const gradeMatch = !grade || r.grade === grade;
+    return nameMatch && gradeMatch;
+  });
+
+  rows.sort((a, b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (sortKey === 'submittedAt') {
+      av = av ? av.toMillis() : 0;
+      bv = bv ? bv.toMillis() : 0;
+    }
+    if (sortKey === 'name') {
+      av = (av || '').toLowerCase();
+      bv = (bv || '').toLowerCase();
+    }
+    if (av < bv) return -1 * sortDir;
+    if (av > bv) return  1 * sortDir;
+    return 0;
+  });
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    document.getElementById('resultsTable').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('resultsTable').style.display = 'table';
+  document.getElementById('emptyState').style.display = 'none';
+
+  rows.forEach((r, i) => {
+    const pct   = r.score_pct || 0;
+    const color = pct >= 85 ? 'var(--green)' : pct >= 70 ? 'var(--amber)' : 'var(--red)';
+    const badgeCls = r.grade === 'Distinction' ? 'badge-distinction' : r.grade === 'Pass' ? 'badge-pass' : 'badge-fail';
+
+    let dateStr = '—';
+    if (r.submittedAt && r.submittedAt.toDate) {
+      const d = r.submittedAt.toDate();
+      dateStr = d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) +
+                ' ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    const nameDisplay = (r.name && r.name !== 'Anonymous')
+      ? '<span class="td-name">' + escHtml(r.name) + '</span>'
+      : '<span class="td-anon">Anonymous</span>';
+
+    // Main row
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><button class="expand-btn" onclick="toggleDetail('detail-${i}')" title="View category breakdown">▸</button></td>
+      <td>${nameDisplay}</td>
+      <td>
+        <div class="score-cell">
+          <div class="score-bar-wrap"><div class="score-bar" style="width:${pct}%;background:${color}"></div></div>
+          <span class="score-num" style="color:${color}">${pct}%</span>
+        </div>
+      </td>
+      <td><span class="badge ${badgeCls}">${escHtml(r.grade || '—')}</span></td>
+      <td style="font-size:13px;color:var(--grey-text)">${dateStr}</td>
+      <td style="font-size:13px;">${r.correct ?? '—'} / ${r.total ?? '—'}</td>
+    `;
+    tbody.appendChild(tr);
+
+    // Detail row
+    const dtr = document.createElement('tr');
+    dtr.className = 'detail-row';
+    dtr.id = 'detail-' + i;
+    const cats = r.categories || {};
+    let catHtml = '<div class="cat-grid">';
+    Object.entries(cats).forEach(([cat, data]) => {
+      const label = cat.replace(/_/g, ' ');
+      const cp = data.pct !== undefined ? data.pct : Math.round((data.correct / data.total) * 100);
+      const cc = data.correct !== undefined ? data.correct : '?';
+      const ct = data.total !== undefined ? data.total : '?';
+      catHtml += `<div class="cat-item"><div class="cn">${escHtml(label)}</div><div class="cv">${cc}/${ct} <span style="font-size:12px;font-weight:400;color:var(--grey-text)">(${cp}%)</span></div></div>`;
+    });
+    catHtml += '</div>';
+    dtr.innerHTML = '<td class="detail-cell" colspan="6">' + catHtml + '</td>';
+    tbody.appendChild(dtr);
+  });
+}
+
+function toggleDetail(id) {
+  const el = document.getElementById(id);
+  const btn = el.previousSibling.querySelector('.expand-btn');
+  const isOpen = el.classList.contains('open');
+  el.classList.toggle('open');
+  btn.textContent = isOpen ? '▸' : '▾';
+}
+
+// ── CSV export ─────────────────────────────────────────────
+function exportCSV() {
+  if (!allResults.length) return;
+  const headers = ['Name','Score %','Grade','Correct','Total','Date'];
+  const rows = allResults.map(r => {
+    let dateStr = '';
+    if (r.submittedAt && r.submittedAt.toDate) {
+      dateStr = r.submittedAt.toDate().toLocaleString('en-GB');
+    }
+    return [
+      r.name || 'Anonymous',
+      r.score_pct || 0,
+      r.grade || '',
+      r.correct ?? '',
+      r.total ?? '',
+      dateStr
+    ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'ngl-judging-results.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
