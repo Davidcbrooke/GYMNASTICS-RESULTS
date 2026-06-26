@@ -208,6 +208,7 @@ header h1 span{ color:var(--gold); }
       <span id="liveClock" class="header-clock"></span>
       <button id="liveBtn" onclick="enterLive()">▶ Go Live</button>
       <button class="secondary" onclick="saveNow()">💾 Save</button>
+      <button class="secondary" onclick="exportData()">⬇ Export</button>
       <span id="saveStatus" class="save-status"></span>
       <div class="week-toggle">
         <button id="weekABtn" class="week-btn active" onclick="setWeek('A')">Week A</button>
@@ -539,6 +540,16 @@ function checkPassword(){
 // FIREBASE
 // ================================================================
 let saveTimer=null;
+function exportData(){
+  const json=JSON.stringify(DATA,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='SAADI_rotation_data.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data exported — ready to import into NGL planner');
+}
+
 function scheduleAutoSave(){
   const s=document.getElementById('saveStatus');
   s.textContent='Unsaved changes…';
@@ -571,6 +582,7 @@ async function fetchData(){
     const json=await res.json();
     if(json && json.groups){
       DATA=json;
+      if(!DATA.sessions) DATA.sessions={};
       DAYS.forEach(d=>{ if(!DATA.sessions[d]) DATA.sessions[d]={}; });
     }
   }catch(e){
@@ -629,6 +641,7 @@ function startRealtimeListener(){
         const payload=JSON.parse(e.data);
         if(payload && payload.data && payload.data.groups){
           DATA=payload.data;
+          if(!DATA.sessions) DATA.sessions={};
           DAYS.forEach(d=>{ if(!DATA.sessions[d]) DATA.sessions[d]={}; });
           if(currentTab==='planner') renderWeekTable();
           if(currentTab==='settings') renderSettings();
