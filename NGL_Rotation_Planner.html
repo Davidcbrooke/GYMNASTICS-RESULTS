@@ -48,7 +48,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
 header{ background:var(--navy); color:#fff; padding:10px 20px; display:flex; align-items:center; gap:16px; flex:0 0 auto; }
 header h1{ font-size:1.1rem; font-weight:700; white-space:nowrap; }
 header h1 span{ color:var(--gold); }
-header h1 .club-name{ color:rgba(255,255,255,.7); font-size:.85rem; font-weight:400; margin-left:8px; }
+header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margin-left:8px; }
 .header-actions{ display:flex; align-items:center; gap:8px; flex:1; justify-content:center; }
 .header-actions button{ background:var(--gold); color:var(--navy); border:none; padding:8px 14px; border-radius:5px; font-weight:700; font-size:.82rem; cursor:pointer; white-space:nowrap; }
 .header-actions button:hover{ background:var(--gold2); }
@@ -586,7 +586,10 @@ async function dbPut(path,data){
 async function loadClubData(){
   try{
     const profile=await dbGet(`clubs/${currentClubId}/profile`);
-    if(profile) document.getElementById('clubNameHeader').textContent='— '+profile.clubName;
+    if(profile && profile.clubName){
+      document.getElementById('clubNameHeader').textContent='— '+profile.clubName;
+      document.title = profile.clubName + ' — NGL Rotation Planner';
+    }
     const rota=await dbGet(`clubs/${currentClubId}/rota`);
     if(rota&&rota.groups){
       DATA=rota;
