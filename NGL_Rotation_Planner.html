@@ -572,13 +572,21 @@ auth.onAuthStateChanged(async user=>{
 // ================================================================
 // DATABASE HELPERS
 // ================================================================
+async function getAuthToken(){
+  if(!currentUser) return null;
+  try{ return await currentUser.getIdToken(); }catch(e){ return null; }
+}
 async function dbGet(path){
-  const res=await fetch(`${DB_URL}/${path}.json`);
+  const token=await getAuthToken();
+  const url=`${DB_URL}/${path}.json`+(token?`?auth=${token}`:'');
+  const res=await fetch(url);
   if(!res.ok) throw new Error('HTTP '+res.status);
   return res.json();
 }
 async function dbPut(path,data){
-  const res=await fetch(`${DB_URL}/${path}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const token=await getAuthToken();
+  const url=`${DB_URL}/${path}.json`+(token?`?auth=${token}`:'');
+  const res=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   if(!res.ok) throw new Error('HTTP '+res.status);
   return res.json();
 }
@@ -626,8 +634,10 @@ async function saveNow(){
 
 function startRealtimeListener(){
   if(realtimeSource) realtimeSource.close();
-  try{
-    realtimeSource=new EventSource(`${DB_URL}/clubs/${currentClubId}/rota.json`);
+  getAuthToken().then(token=>{
+    const url=`${DB_URL}/clubs/${currentClubId}/rota.json`+(token?`?auth=${token}`:'');
+    try{
+      realtimeSource=new EventSource(url);
     realtimeSource.addEventListener('put',e=>{
       if(Date.now()-lastSaveTime<3000) return;
       try{
@@ -643,7 +653,8 @@ function startRealtimeListener(){
       }catch(err){}
     });
     realtimeSource.onerror=()=>{ realtimeSource.close(); setTimeout(startRealtimeListener,5000); };
-  }catch(e){}
+    }catch(e){}
+  });
 }
 
 // ================================================================
