@@ -601,6 +601,7 @@ async function loadClubData(){
     const rota=await dbGet(`clubs/${currentClubId}/rota`);
     if(rota&&rota.groups){
       DATA=rota;
+      if(!DATA.sessions) DATA.sessions={};
       DAYS.forEach(d=>{ if(!DATA.sessions[d]) DATA.sessions[d]={}; });
     } else {
       DATA={groups:[],locations:[],sessions:{}};
@@ -681,6 +682,7 @@ function getDayBounds(day){
 }
 
 function getConflicts(day){
+  if(!DATA.sessions||!DATA.sessions[day]) return new Set();
   const all=[];
   DATA.groups.forEach(g=>{ const sessions=(DATA.sessions[day]&&DATA.sessions[day][g.id])||[]; sessions.forEach((s,i)=>all.push({gid:g.id,idx:i,loc:getSessionLocation(s),s:s.start_min,e:s.start_min+s.duration})); });
   const keys=new Set();
@@ -1093,8 +1095,9 @@ async function renderAdmin(){
   el.innerHTML='<p style="color:var(--muted);font-size:.85rem;">Loading clubs...</p>';
   try{
     const clubs = await dbGet('clubs');
+    console.log('Admin clubs fetch result:', clubs);
     if(!clubs){ el.innerHTML='<p style="color:var(--muted);font-style:italic;padding:20px 0;">No clubs registered yet.</p>'; return; }
-    allClubs = Object.entries(clubs).map(([uid,data])=>({uid,...data}));
+    allClubs = Object.entries(clubs).map(([uid,data])=>({ uid, profile:data.profile||{}, rota:data.rota||{} }));
 
     const now=new Date(); const thisMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     const total=allClubs.length;
@@ -1139,7 +1142,8 @@ async function renderAdmin(){
         <tbody>${tbody}</tbody>
       </table>`;
   }catch(e){
-    el.innerHTML=`<p style="color:var(--red);">Failed to load clubs: ${e.message}</p>`;
+    console.error('Admin load error:', e);
+    el.innerHTML=`<p style="color:var(--red);">Failed to load clubs: ${e.message}</p><p style="color:var(--muted);font-size:.75rem;margin-top:8px;">Check browser console for details.</p>`;
   }
 }
 
