@@ -131,6 +131,8 @@ header h1 span{ color:var(--gold); }
 .tl-block .b-loc{ flex:1; overflow:hidden; text-overflow:ellipsis; }
 .tl-block .b-time{ opacity:.75; font-size:.65rem; margin-left:4px; flex-shrink:0; }
 .tl-block.dim{ opacity:0.4; }
+  .tl-block.conflict{ outline:2px solid #ff4444; box-shadow:0 0 0 3px rgba(255,68,68,.3); z-index:2; }
+  .session-chip.conflict{ outline:2px solid #ff4444; box-shadow:0 0 0 2px rgba(255,68,68,.25); }
 /* global now-line spans full height of scroll content */
 .tl-now-line-global{ position:absolute; top:0; bottom:0; width:3px; background:var(--red); z-index:25; pointer-events:none; }
 .tl-now-line-global::before{ content:''; position:absolute; top:32px; left:-5px; width:13px; height:13px; background:var(--red); border-radius:50%; border:2px solid #fff; }
@@ -547,11 +549,12 @@ function scheduleAutoSave(){
 async function saveNow(){
   const btn=document.querySelector('button[onclick="saveNow()"]');
   if(btn){ btn.textContent='💾 Saving…'; btn.disabled=true; }
+  lastSaveTime=Date.now();
   try{
     const url=`${CONFIG.databaseURL}/${CONFIG.path}.json`;
     const res=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(DATA)});
     if(!res.ok) throw new Error('HTTP '+res.status);
-    const now=new Date(); 
+    const now=new Date();
     document.getElementById('saveStatus').textContent=`Saved ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
   }catch(e){
     document.getElementById('saveStatus').textContent='Save failed';
@@ -568,12 +571,91 @@ async function fetchData(){
     const json=await res.json();
     if(json && json.groups){
       DATA=json;
-      // ensure sessions object exists for all days
       DAYS.forEach(d=>{ if(!DATA.sessions[d]) DATA.sessions[d]={}; });
     }
   }catch(e){
     console.warn('Firebase load failed, using empty data',e);
     document.getElementById('saveStatus').textContent='Firebase offline — changes not saved';
+  }
+}
+
+// ---- Real-time listener via Firebase SSE ----
+
+// locations that are shared/flexible — no conflict flagged
+const NO_CONFLICT = ['TBC'];
+
+function getConflictsForDay(day){
+  // collect all sessions across all groups with their location (week-aware)
+  const allSessions = [];
+  DATA.groups.forEach(group=>{
+    const sessions = (DATA.sessions[day]&&DATA.sessions[day][group.id])||[];
+    sessions.forEach((s,idx)=>{
+      allSessions.push({
+        groupId: group.id,
+        groupName: group.name,
+        idx,
+        location: getSessionLocation(s),
+        start_min: s.start_min,
+        end_min: s.start_min + s.duration
+      });
+    });
+  });
+  // find conflicts: same location, overlapping time
+  const conflictKeys = new Set();
+  for(let i=0; i<allSessions.length; i++){
+    for(let j=i+1; j<allSessions.length; j++){
+      const a=allSessions[i], b=allSessions[j];
+      if(NO_CONFLICT.includes(a.location)||NO_CONFLICT.includes(b.location)) continue;
+      if(a.location !== b.location) continue;
+      if(a.start_min >= b.end_min || b.start_min >= a.end_min) continue;
+      // overlap found
+      conflictKeys.add(`${a.groupId}:${a.idx}`);
+      conflictKeys.add(`${b.groupId}:${b.idx}`);
+    }
+  }
+  return conflictKeys;
+}
+let realtimeSource=null;
+let lastSaveTime=0;
+
+function startRealtimeListener(){
+  if(realtimeSource) realtimeSource.close();
+  const url=`${CONFIG.databaseURL}/${CONFIG.path}.json`;
+  try{
+    realtimeSource = new EventSource(url);
+    realtimeSource.addEventListener('put', e=>{
+      if(Date.now()-lastSaveTime < 3000) return; // ignore our own saves
+      try{
+        const payload=JSON.parse(e.data);
+        if(payload && payload.data && payload.data.groups){
+          DATA=payload.data;
+          DAYS.forEach(d=>{ if(!DATA.sessions[d]) DATA.sessions[d]={}; });
+          if(currentTab==='planner') renderWeekTable();
+          if(currentTab==='settings') renderSettings();
+          if(liveMode){ renderTimeline(getTodayName()); }
+          showToast('📡 Updated by another user');
+        }
+      }catch(err){ console.warn('SSE parse error',err); }
+    });
+    realtimeSource.addEventListener('patch', e=>{
+      if(Date.now()-lastSaveTime < 3000) return;
+      fetchData().then(()=>{
+        if(currentTab==='planner') renderWeekTable();
+        if(currentTab==='settings') renderSettings();
+        if(liveMode){ renderTimeline(getTodayName()); }
+        showToast('📡 Updated by another user');
+      });
+    });
+    realtimeSource.onerror = ()=>{
+      realtimeSource.close();
+      setTimeout(startRealtimeListener, 5000);
+    };
+  }catch(e){
+    console.warn('SSE not supported, falling back to 30s polling');
+    setInterval(()=>{
+      if(Date.now()-lastSaveTime < 3000) return;
+      fetchData().then(()=>{ if(currentTab==='planner') renderWeekTable(); });
+    }, 30000);
   }
 }
 
@@ -654,8 +736,10 @@ function renderSectionRows(tbody, section, label){
       }
       const sessions=(DATA.sessions[day]&&DATA.sessions[day][group.id])||[];
       const chips=document.createElement('div'); chips.className='session-chips';
+      const dayConflicts=getConflictsForDay(day);
       sessions.forEach((s,idx)=>{
         const chip=document.createElement('div'); chip.className='session-chip';
+        if(dayConflicts.has(`${group.id}:${idx}`)) chip.classList.add('conflict');
         const activeLoc = getSessionLocation(s);
         const loc=getLocationByName(activeLoc);
         chip.style.background=loc?loc.colour:'#888';
@@ -1052,6 +1136,9 @@ function renderTimeline(day){
   nowLineGlobal.style.left=lblW+'px'; // will be updated by updateNowLine
   inner.appendChild(nowLineGlobal);
 
+  // compute conflicts for this day
+  const conflicts=getConflictsForDay(day);
+
   // build sections
   ['squad','recreational'].forEach(section=>{
     const groups=DATA.groups.filter(g=>g.section===section&&(g.days||DAYS).includes(day));
@@ -1075,6 +1162,7 @@ function renderTimeline(day){
         const bg=loc?loc.colour:'#555';
         const light=isLight(bg);
         const block=document.createElement('div'); block.className='tl-block';
+        if(conflicts.has(`${group.id}:${sessions.indexOf(s)}`)) block.classList.add('conflict');
         block.style.left=((s.start_min-min)*PX_PER_MIN)+'px';
         block.style.width=Math.max(s.duration*PX_PER_MIN-2,18)+'px';
         block.style.background=bg;
@@ -1159,13 +1247,17 @@ async function init(){
   }catch(e){
     console.warn('fetchData failed:', e);
   }
-  // ensure DATA structure is valid
   if(!DATA.groups) DATA.groups=[];
   if(!DATA.locations) DATA.locations=[];
   if(!DATA.sessions) DATA.sessions={};
   DAYS.forEach(d=>{ if(!DATA.sessions[d]) DATA.sessions[d]={}; });
   renderTabs();
   renderWeekTable();
+  // start real-time sync
+  startRealtimeListener();
+  // add 📡 indicator to save status
+  document.getElementById('saveStatus').textContent='📡 Live sync active';
+  setTimeout(()=>{ document.getElementById('saveStatus').textContent=''; }, 2000);
   // live clock tick for header
   setInterval(()=>{
     if(!liveMode){
