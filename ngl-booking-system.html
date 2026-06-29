@@ -214,6 +214,12 @@
   .footer p { color: rgba(255,255,255,0.38); font-size: 0.71rem; line-height: 1.8; }
   .footer strong { color: rgba(255,255,255,0.65); }
 
+  /* WAITLIST */
+  .pill.waitlist { background: #fff3e0; color: #b06000; }
+  .waitlist-banner { background: #fff8e6; border: 1px solid #f5d87a; border-left: 3px solid #d4a017; border-radius: 2px; padding: 10px 13px; font-size: 0.78rem; color: #7a5c00; margin-bottom: 15px; line-height: 1.5; }
+  .waitlist-banner strong { display: block; font-size: 0.84rem; margin-bottom: 2px; color: #5a4000; }
+  .comp-icon.waitlist-icon { background: #fff3e0; border-color: #f5d87a; color: #b06000; }
+
   /* MOBILE */
   @media (max-width: 500px) {
     .hero { padding: 28px 16px 26px; }
@@ -341,8 +347,8 @@
     <div class="success-wrap">
       <div class="s-icon">&#x1F3C5;</div>
       <h2>You're on the list!</h2>
-      <p>Your club's places have been reserved for: <strong id="success-comps"></strong></p>
-      <p style="margin-top:8px">We'll be in touch ahead of October 2026 to confirm entries and arrange payment.</p>
+      <p>Your club has been registered for: <strong id="success-comps"></strong></p>
+      <p style="margin-top:8px" id="success-note">We'll be in touch ahead of October 2026 to confirm entries and arrange payment. If you have joined a waiting list, you will be contacted if a place becomes available.</p>
       <div class="success-ref" id="success-ref" style="margin-top:20px">NGL-XXXXXX</div>
       <p style="font-size:0.77rem;margin-bottom:24px;margin-top:12px">Keep your reference number safe. If you need to make changes, contact your NGL administrator quoting this reference.</p>
       <button class="btn-again" onclick="window.resetForm()">Make Another Booking</button>
@@ -583,6 +589,7 @@ onSnapshot(query(compsCol, orderBy('date')), snap => {
 // ══ LISTEN TO BOOKINGS (live) ══
 onSnapshot(query(bookingsCol, orderBy('bookedAt', 'desc')), snap => {
   allBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderCalendar();
   if (adminLoggedIn) renderBookingsTable();
   updateStats();
 });
@@ -600,7 +607,7 @@ function renderCalendar() {
   el.innerHTML = allCompetitions.map(c => {
     const d      = new Date(c.date + 'T00:00:00');
     const past   = d < new Date();
-    const booked = allBookings.filter(b => b.compId === c.id).length;
+    const booked = allBookings.filter(b => b.compId === c.id && !b.waitlist).reduce((sum, b) => sum + (parseInt(b.spaces) || 1), 0);
     const left   = (c.maxPlaces || 20) - booked;
     const pct    = booked / (c.maxPlaces || 20);
     const isSel  = !!selections[c.id];
@@ -611,36 +618,50 @@ function renderCalendar() {
     else if (pct>=1)   { sc='full';    st='Full';          spotsHtml = 'Full'; }
     else if (pct>=0.75){ sc='filling'; st='Filling fast'; }
 
-    const unavail = past || pct >= 1;
+    const isPast  = past;
+    const isFull  = !past && pct >= 1;
+    const isWait  = selections[c.id] && selections[c.id].waitlist;
+    const waitCount = allBookings.filter(b => b.compId === c.id && b.waitlist).length;
+    if (isFull && waitCount) spotsHtml = waitCount + ' waiting';
+
     const mapLink = c.postcode
       ? ' &middot; <a href="https://maps.google.com/?q=' + encodeURIComponent((c.address||c.venue) + ' ' + c.postcode) + '" target="_blank" style="color:var(--red);font-weight:700;text-decoration:none">&#x1F5FA; Map</a>'
       : '';
 
-    return '<div class="comp-card' + (isSel?' selected':'') + (unavail?' unavailable':'') + '" id="cc-' + c.id + '">' +
+    return '<div class="comp-card' + ((isSel||isWait)?' selected':'') + (isPast?' unavailable':'') + '" id="cc-' + c.id + '">' +
       '<div class="comp-card-header">' +
       '<div class="date-badge"><div class="dbday">' + d.getDate() + '</div><div class="dbmon">' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase() + '</div></div>' +
       '<div><div class="ci-name">' + c.name + '</div>' +
       '<div class="ci-meta"><span>&#x1F4CD; ' + (c.venue||'TBC') + '</span><span>&#x1F3C5; ' + (c.level||'') + '</span>' + mapLink + '</div>' +
       buildIcons(c) +
       '</div>' +
-      '<div class="comp-right"><div class="spots' + (left<=3&&!unavail?' low':'') + '">' + spotsHtml + '</div><span class="pill ' + sc + '">' + st + '</span></div>' +
+      '<div class="comp-right"><div class="spots' + (left<=3&&!isPast&&!isFull?' low':'') + '">' + spotsHtml + '</div><span class="pill ' + sc + '">' + st + '</span></div>' +
       '</div>' +
-      (!unavail ? '<div class="comp-check-row">' +
+      (!isPast && !isFull ?
+        '<div class="comp-check-row">' +
         '<label><input type="checkbox" class="comp-checkbox" id="chk-' + c.id + '"' + (isSel?' checked':'') +
-        ' onchange="window.toggleComp(\'' + c.id + '\',this.checked)"> Enter this competition</label>' +
+        ' onchange="window.toggleComp(\'' + c.id + '\',this.checked,false)"> Enter this competition</label>' +
         '<span class="spaces-label">Est. gymnasts:</span>' +
         '<input type="number" class="spaces-input" id="spc-' + c.id + '" value="' + spaces + '" min="1" max="' + left + '"' +
         (isSel?'':' disabled') +
         ' oninput="window.updateSpaces(\'' + c.id + '\',this.value)">' +
-        '</div>' : '') +
+        '</div>'
+      : !isPast && isFull ?
+        '<div class="comp-check-row" style="background:#fff8e6;border-top:1px solid #f5d87a">' +
+        '<label><input type="checkbox" class="comp-checkbox" id="chk-' + c.id + '"' + (isWait?' checked':'') +
+        ' onchange="window.toggleComp(\'' + c.id + '\',this.checked,true)" style="accent-color:#d4a017">' +
+        ' &#x23F3; Join the waiting list for this competition</label>' +
+        '</div>'
+      : '') +
       '</div>';
   }).join('');
 }
 
-window.toggleComp = function(id, checked) {
+window.toggleComp = function(id, checked, waitlist) {
   if (checked) {
     const spcEl = document.getElementById('spc-' + id);
-    selections[id] = spcEl ? (parseInt(spcEl.value)||1) : 1;
+    const spaces = spcEl ? (parseInt(spcEl.value)||1) : 1;
+    selections[id] = waitlist ? { waitlist: true, spaces: 1 } : spaces;
     if (spcEl) spcEl.disabled = false;
   } else {
     delete selections[id];
@@ -698,14 +719,17 @@ window.submitBooking = async function() {
   try {
     // Create one booking record per selected competition
     const promises = selIds.map(compId => {
-      const comp   = allCompetitions.find(x => x.id === compId);
-      const spaces = selections[compId] || 1;
+      const comp    = allCompetitions.find(x => x.id === compId);
+      const sel     = selections[compId];
+      const isWait  = sel && sel.waitlist;
+      const spaces  = isWait ? 0 : (sel || 1);
       return addDoc(bookingsCol, {
         reference: ref,
         compId,
         compName:  comp.name,
         compDate:  comp.date,
         spaces,
+        waitlist:  isWait || false,
         club, region, email, phone,
         bookedAt:  new Date().toISOString()
       });
@@ -718,7 +742,10 @@ window.submitBooking = async function() {
     // Show summary on success screen
     const compList = selIds.map(id => {
       const c = allCompetitions.find(x=>x.id===id);
-      return (c ? c.name : id) + ' (' + selections[id] + ' space' + (selections[id]!==1?'s':'') + ')';
+      const sel = selections[id];
+      const isWait = sel && sel.waitlist;
+      const spaces = isWait ? 0 : (sel||1);
+      return (c ? c.name : id) + (isWait ? ' (Waiting list)' : ' (' + spaces + ' gymnast' + (spaces!==1?'s':'') + ')');
     }).join(', ');
     document.getElementById('success-comps').textContent = compList;
     window.scrollTo({top:0,behavior:'smooth'});
@@ -846,7 +873,7 @@ function renderAdminComps() {
   if (!allCompetitions.length) { el.innerHTML='<p style="font-size:0.79rem;color:#aaa;text-align:center;padding:24px 0">No competitions yet</p>'; return; }
   el.innerHTML = allCompetitions.map(c => {
     const d = new Date(c.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-    const booked = allBookings.filter(b=>b.compId===c.id).length;
+    const booked = allBookings.filter(b=>b.compId===c.id && !b.waitlist).reduce((sum,b)=>sum+(parseInt(b.spaces)||1),0);
     return '<div class="acl-row">' +
       '<span class="acl-date">' + d + '</span>' +
       '<span class="acl-name">' + c.name + '</span>' +
@@ -864,8 +891,9 @@ function updateStats() {
   if (!adminLoggedIn) return;
   const gyms  = allBookings.reduce((s,b)=>s+(b.spaces||b.gymnasts||0),0);
   const clubs = [...new Set(allBookings.map(b=>b.club))].length;
+  const waitCount = allBookings.filter(b=>b.waitlist).length;
   document.getElementById('stat-comps').textContent    = allCompetitions.length;
-  document.getElementById('stat-bookings').textContent = allBookings.length;
+  document.getElementById('stat-bookings').textContent = (allBookings.length - waitCount) + (waitCount ? ' + ' + waitCount + ' wait' : '');
   document.getElementById('stat-clubs').textContent    = clubs;
   document.getElementById('stat-gymnasts').textContent = gyms;
   document.getElementById('bk-count').textContent      = allBookings.length;
@@ -895,7 +923,7 @@ function renderBookingsTable() {
     const bookedOn = new Date(b.bookedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
     return '<tr>' +
       '<td class="td-ref">' + (b.reference||b.id) + '</td>' +
-      '<td class="td-club">' + b.club + '</td>' +
+      '<td class="td-club">' + b.club + (b.waitlist ? ' <span style="background:#fff3e0;border:1px solid #f5d87a;border-radius:2px;padding:1px 6px;font-size:0.65rem;font-weight:700;color:#b06000">WAITLIST</span>' : '') + '</td>' +
       '<td>' + b.region + '</td>' +
       '<td>' + (b.compName||'') + '</td>' +
       '<td>' + compDate + '</td>' +
