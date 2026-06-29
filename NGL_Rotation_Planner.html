@@ -806,7 +806,13 @@ function renderWeekTable(){
   const thead=document.createElement('thead');
   const hr=document.createElement('tr');
   const thg=document.createElement('th'); thg.className='group-col'; thg.textContent='Group'; hr.appendChild(thg);
-  DAYS.forEach(d=>{ const th=document.createElement('th'); th.className='day-col'; th.textContent=d.slice(0,3); hr.appendChild(th); });
+  DAYS.forEach(d=>{
+    const th=document.createElement('th'); th.className='day-col';
+    // count total sessions for this day across all groups
+    const dayTotal=Object.values(DATA.sessions[d]||{}).reduce((t,arr)=>t+(arr||[]).length,0);
+    th.innerHTML=d.slice(0,3)+(dayTotal>0?` <span style="background:var(--gold);color:var(--navy);border-radius:10px;padding:1px 7px;font-size:.65rem;font-weight:700;margin-left:4px;">${dayTotal}</span>`:'');
+    hr.appendChild(th);
+  });
   thead.appendChild(hr); table.appendChild(thead);
   const tbody=document.createElement('tbody');
   renderSection(tbody,'squad','Squads');
@@ -843,9 +849,27 @@ function renderSection(tbody,section,label){
         chip.onclick=()=>openSessionModal(day,group.id,idx);
         chips.appendChild(chip);
       });
-      const ab=document.createElement('button'); ab.className='add-btn'; ab.textContent='+ Add';
+      const ab=document.createElement('button'); ab.className='add-btn'; ab.textContent='+ Add session';
       ab.onclick=()=>openSessionModal(day,group.id,null);
-      chips.appendChild(ab); td.appendChild(chips); tr.appendChild(td);
+      chips.appendChild(ab);
+      // copy from another day button — only show if this group has no sessions today but has some on another day
+      if(sessions.length===0){
+        const daysWithSessions=DAYS.filter(od=>od!==day&&(DATA.sessions[od]&&DATA.sessions[od][group.id]||[]).length>0);
+        if(daysWithSessions.length>0){
+          const cb=document.createElement('button'); cb.className='add-btn'; cb.style.marginTop='2px';
+          cb.textContent='↓ Copy from '+daysWithSessions[0].slice(0,3);
+          cb.onclick=()=>copyGroupDay(group.id, daysWithSessions[0], day);
+          chips.appendChild(cb);
+        }
+      }
+      // clear day button — only show if sessions exist
+      if(sessions.length>0){
+        const clr=document.createElement('button'); clr.className='add-btn'; clr.style.marginTop='2px'; clr.style.color='var(--red)'; clr.style.borderColor='var(--red)';
+        clr.textContent='✕ Clear day';
+        clr.onclick=()=>clearGroupDay(day, group.id);
+        chips.appendChild(clr);
+      }
+      td.appendChild(chips); tr.appendChild(td);
     });
     tbody.appendChild(tr);
   });
@@ -922,6 +946,56 @@ function deleteSession(){
   if(!confirm('Delete this session?')) return;
   DATA.sessions[day][groupId].splice(sessionIdx,1);
   closeModal('sessionModal'); renderWeekTable(); scheduleAutoSave();
+}
+
+function clearGroupDay(day, groupId){
+  const count=(DATA.sessions[day]&&DATA.sessions[day][groupId]||[]).length;
+  if(!confirm(`Clear all ${count} session(s) for this group on ${day}?`)) return;
+  if(DATA.sessions[day]) DATA.sessions[day][groupId]=[];
+  renderWeekTable(); scheduleAutoSave();
+  showToast('Sessions cleared');
+}
+
+function copyGroupDay(groupId, fromDay, toDay){
+  const src=(DATA.sessions[fromDay]&&DATA.sessions[fromDay][groupId])||[];
+  if(!src.length){ showToast('No sessions to copy'); return; }
+  if(!confirm(`Copy ${src.length} session(s) from ${fromDay} to ${toDay}?`)) return;
+  if(!DATA.sessions[toDay]) DATA.sessions[toDay]={};
+  DATA.sessions[toDay][groupId]=src.map(s=>({...s}));
+  renderWeekTable(); scheduleAutoSave();
+  showToast(`Copied from ${fromDay} to ${toDay}`);
+}
+
+function printPlanner(){
+  const printWin=window.open('','_blank');
+  const groups=DATA.groups;
+  const rows=groups.map(g=>{
+    const dayCells=DAYS.map(day=>{
+      const active=(g.days||DAYS).includes(day);
+      if(!active) return '<td style="background:#f5f5f5;"></td>';
+      const sessions=(DATA.sessions[day]&&DATA.sessions[day][g.id])||[];
+      const content=sessions.map(s=>`<div style="font-size:9px;margin-bottom:2px;padding:2px 4px;background:${getLocByName(getSessionLocation(s))?getLocByName(getSessionLocation(s)).colour:'#888'};color:#fff;border-radius:3px;">${fmtTime(s.start_min)} ${getSessionLocation(s)} ${s.duration}m</div>`).join('');
+      return `<td style="vertical-align:top;padding:4px;border:1px solid #ddd;">${content||'<span style="color:#ccc;font-size:9px;">—</span>'}</td>`;
+    }).join('');
+    return `<tr><td style="padding:5px 8px;font-size:10px;font-weight:700;border:1px solid #ddd;white-space:nowrap;background:#f5f5f5;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${g.colour};margin-right:4px;"></span>${g.name}</td>${dayCells}</tr>`;
+  }).join('');
+  const weekLabel=`Week ${currentWeek}`;
+  printWin.document.write(`<!DOCTYPE html><html><head><title>Rotation Planner</title><style>
+    body{font-family:Arial,sans-serif;margin:16px;}
+    h2{color:#1a2a4a;margin-bottom:4px;}
+    p{color:#888;font-size:11px;margin-bottom:12px;}
+    table{width:100%;border-collapse:collapse;}
+    th{background:#1a2a4a;color:#fff;padding:6px 8px;font-size:10px;text-align:center;}
+    th.gcol{text-align:left;}
+    @media print{@page{size:landscape;margin:10mm;}}
+  </style></head><body>
+  <h2>NGL Rotation Planner — ${weekLabel}</h2>
+  <p>Printed: ${new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
+  <table><thead><tr><th class="gcol">Group</th>${DAYS.map(d=>`<th>${d.slice(0,3)}</th>`).join('')}</tr></thead>
+  <tbody>${rows}</tbody></table>
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`);
+  printWin.document.close();
 }
 
 function quickDel(day,groupId,idx){
