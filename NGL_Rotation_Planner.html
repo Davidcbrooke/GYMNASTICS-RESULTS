@@ -312,6 +312,18 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
           <div class="s-panel-body"><div id="locationsList" class="s-list"></div></div>
         </div>
       </div>
+      <!-- Club Profile -->
+      <div class="s-panel" style="max-width:860px;margin-top:20px;">
+        <div class="s-panel-hdr"><h3>Club Profile</h3></div>
+        <div class="s-panel-body" style="padding:20px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="mf"><label>Club name</label><input type="text" id="profile_club" placeholder="Your club name"></div>
+            <div class="mf"><label>Contact name</label><input type="text" id="profile_contact" placeholder="Your name"></div>
+            <div class="mf"><label>Email address</label><input type="email" id="profile_email" placeholder="Your email"></div>
+          </div>
+          <button class="btn-save" style="margin-top:8px;" onclick="saveClubProfile()">Save Profile</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -412,8 +424,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 
 <!-- ADMIN VIEW -->
 <div class="view" id="adminView">
-  <div class="settings-view">
-    <div id="adminContent" style="max-width:1000px;"></div>
+  <div style="flex:1;overflow:auto;padding:16px 24px;">
+    <div id="adminContent"></div>
   </div>
 </div>
 
@@ -426,6 +438,20 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
     <div class="modal-actions" style="justify-content:center;">
       <button class="btn-cancel" onclick="closeModal('adminGateModal')">Cancel</button>
       <button class="btn-save" onclick="checkAdminPw()">Enter</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="modal-overlay" id="editProfileModal">
+  <div class="modal-box">
+    <h3>✏ Edit Club Profile</h3>
+    <div class="mf"><label>Club name</label><input type="text" id="ep_club" placeholder="Club name"></div>
+    <div class="mf"><label>Contact name</label><input type="text" id="ep_contact" placeholder="Contact name"></div>
+    <div class="mf"><label>Email</label><input type="email" id="ep_email" placeholder="Email address"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('editProfileModal')">Cancel</button>
+      <button class="btn-save" onclick="saveProfile()">Save Profile</button>
     </div>
   </div>
 </div>
@@ -956,7 +982,30 @@ function deleteLocation(){
 // ================================================================
 // SETTINGS
 // ================================================================
+async function saveClubProfile(){
+  const clubName=document.getElementById('profile_club').value.trim();
+  const contactName=document.getElementById('profile_contact').value.trim();
+  const email=document.getElementById('profile_email').value.trim();
+  if(!clubName){ alert('Please enter your club name.'); return; }
+  try{
+    const existing=await dbGet(`clubs/${currentClubId}/profile`)||{};
+    const profile={...existing,clubName,contactName,email};
+    await dbPut(`clubs/${currentClubId}/profile`,profile);
+    document.getElementById('clubNameHeader').textContent='— '+clubName;
+    document.title=clubName+' — NGL Rotation Planner';
+    showToast('Profile saved!');
+  }catch(e){ alert('Failed to save profile: '+e.message); }
+}
+
 function renderSettings(){
+  // populate club profile fields
+  dbGet(`clubs/${currentClubId}/profile`).then(p=>{
+    if(p){
+      document.getElementById('profile_club').value=p.clubName||'';
+      document.getElementById('profile_contact').value=p.contactName||'';
+      document.getElementById('profile_email').value=p.email||'';
+    }
+  }).catch(()=>{});
   const gl=document.getElementById('groupsList'); gl.innerHTML='';
   if(!DATA.groups.length){gl.innerHTML='<p class="s-empty">No groups yet.</p>';}
   DATA.groups.forEach(g=>{
@@ -1157,6 +1206,7 @@ async function renderAdmin(){
         <td>
           <button class="btn-xs gold" onclick="openImport('${club.uid}','${(p.clubName||'Club').replace(/'/g,"\\'")}')">⬆ Import</button>
           <button class="btn-xs navy" onclick="viewClub('${club.uid}')">👁 View</button>
+          <button class="btn-xs" style="background:#2ecc71;" onclick="openEditProfile('${club.uid}','${(p.clubName||'').replace(/'/g,"\\'")}','${(p.contactName||'').replace(/'/g,"\\'")}','${(p.email||'').replace(/'/g,"\\'")}')">✏ Profile</button>
         </td>
       </tr>`;
     }).join('');
@@ -1170,6 +1220,28 @@ async function renderAdmin(){
     console.error('Admin load error:', e);
     el.innerHTML=`<p style="color:var(--red);">Failed to load clubs: ${e.message}</p><p style="color:var(--muted);font-size:.75rem;margin-top:8px;">Check browser console for details.</p>`;
   }
+}
+
+let editingProfileUid = null;
+function openEditProfile(uid, clubName, contactName, email){
+  editingProfileUid = uid;
+  document.getElementById('ep_club').value = clubName;
+  document.getElementById('ep_contact').value = contactName;
+  document.getElementById('ep_email').value = email;
+  document.getElementById('editProfileModal').classList.add('open');
+}
+async function saveProfile(){
+  const clubName = document.getElementById('ep_club').value.trim();
+  const contactName = document.getElementById('ep_contact').value.trim();
+  const email = document.getElementById('ep_email').value.trim();
+  if(!clubName){ alert('Please enter a club name.'); return; }
+  try{
+    const existing = await dbGet(`clubs/${editingProfileUid}/profile`) || {};
+    await dbPut(`clubs/${editingProfileUid}/profile`, {...existing, clubName, contactName, email});
+    closeModal('editProfileModal');
+    showToast('Profile updated!');
+    renderAdmin();
+  }catch(e){ alert('Failed to save: '+e.message); }
 }
 
 function openImport(uid, clubName){
