@@ -645,6 +645,7 @@ function startRealtimeListener(){
         const p=JSON.parse(e.data);
         if(p&&p.data&&p.data.groups){
           DATA=p.data;
+          if(!DATA.sessions) DATA.sessions={};
           DAYS.forEach(d=>{ if(!DATA.sessions[d]) DATA.sessions[d]={}; });
           if(currentTab==='planner') renderWeekTable();
           if(currentTab==='settings') renderSettings();
@@ -833,6 +834,7 @@ function saveSession(){
   const duration=parseInt(document.getElementById('sm_dur').value)||30;
   const title=document.getElementById('sm_title').value.trim();
   if(!location){alert('Please select a location.');return;}
+  if(!DATA.sessions) DATA.sessions={};
   if(!DATA.sessions[day]) DATA.sessions[day]={};
   if(!DATA.sessions[day][groupId]) DATA.sessions[day][groupId]=[];
   const session={location,start_min,duration,title};
@@ -1097,7 +1099,11 @@ async function renderAdmin(){
     const clubs = await dbGet('clubs');
     console.log('Admin clubs fetch result:', clubs);
     if(!clubs){ el.innerHTML='<p style="color:var(--muted);font-style:italic;padding:20px 0;">No clubs registered yet.</p>'; return; }
-    allClubs = Object.entries(clubs).map(([uid,data])=>({ uid, profile:data.profile||{}, rota:data.rota||{} }));
+    allClubs = Object.entries(clubs).map(([uid,data])=>({
+      uid,
+      profile: (data&&data.profile)||{},
+      rota: (data&&data.rota)||{groups:[],locations:[],sessions:{}}
+    }));
 
     const now=new Date(); const thisMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     const total=allClubs.length;
