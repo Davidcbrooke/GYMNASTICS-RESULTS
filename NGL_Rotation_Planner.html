@@ -169,7 +169,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .tl-container{ flex:1; overflow:hidden; display:flex; flex-direction:column; position:relative; }
 .tl-scroll{ flex:1; overflow:auto; position:relative; }
 .tl-inner{ display:inline-block; min-width:100%; }
-.tl-fade{ position:absolute; top:0; bottom:0; width:60px; z-index:15; pointer-events:none; background:linear-gradient(90deg, var(--paper) 0%, rgba(249,247,243,0) 100%); }
+.tl-fade-left{ position:absolute; top:0; bottom:0; z-index:15; pointer-events:none; background:linear-gradient(90deg, var(--paper) 0%, rgba(249,247,243,0) 100%); }
+.tl-fade-right{ position:absolute; top:0; bottom:0; right:0; z-index:15; pointer-events:none; background:linear-gradient(270deg, var(--paper) 0%, rgba(249,247,243,0) 100%); }
 .tl-ruler{ display:flex; height:30px; position:sticky; top:0; z-index:20; background:var(--navy); border-bottom:2px solid rgba(255,255,255,.15); }
 .tl-ruler-spc{ flex-shrink:0; background:var(--navy); border-right:2px solid rgba(255,255,255,.2); }
 .tl-ruler-ticks{ position:relative; flex-shrink:0; }
@@ -588,7 +589,7 @@ function calcPxPerMin(){
   const lblW = calcLabelWidth();
   const availW = screenW - lblW - 20;
   // aim to fit ~1 hour visible at once on screen — bigger, more readable blocks
-  const targetMinutesVisible = screenW < 700 ? 45 : screenW < 1100 ? 75 : 90;
+  const targetMinutesVisible = screenW < 700 ? 75 : screenW < 1100 ? 110 : 140;
   return Math.max(6, availW / targetMinutesVisible);
 }
 function calcLabelWidth(){
@@ -1482,11 +1483,22 @@ function renderTimeline(day){
     });
   });
   outer.appendChild(inner); container.appendChild(outer);
-  // fade overlay sits just after the sticky label column, fixed in place (not scrolling)
-  const fade=document.createElement('div'); fade.className='tl-fade'; fade.style.left=lblW+'px';
-  container.appendChild(fade);
+  // fade zones — 30 mins each side, fixed in place over the scrolling content
+  const fadeWidthPx = 30 * PX_PER_MIN;
+  const fadeLeft=document.createElement('div'); fadeLeft.className='tl-fade-left';
+  fadeLeft.style.left=lblW+'px'; fadeLeft.style.width=fadeWidthPx+'px';
+  container.appendChild(fadeLeft);
+  const fadeRight=document.createElement('div'); fadeRight.className='tl-fade-right';
+  fadeRight.style.width=fadeWidthPx+'px';
+  container.appendChild(fadeRight);
   container.dataset.min=min; container.dataset.max=max; container.dataset.lblW=lblW;
-  setTimeout(()=>{ const nowMin=nowMinutes(); outer.scrollLeft=Math.max(0,(nowMin-min)*PX_PER_MIN-5*PX_PER_MIN); updateNowLine(); },100);
+  setTimeout(()=>{
+    const nowMin=nowMinutes();
+    const visW=outer.clientWidth; const trackVisW=visW-lblW; const targetVis=lblW+trackVisW*0.5;
+    const nowPx=lblW+(nowMin-min)*PX_PER_MIN;
+    outer.scrollLeft=Math.max(0,nowPx-targetVis);
+    updateNowLine();
+  },100);
 }
 
 function updateNowLine(){
@@ -1499,11 +1511,11 @@ function updateNowLine(){
     nowLine.style.display='block';
     const nowPx=lblW+(nowMin-min)*PX_PER_MIN; nowLine.style.left=nowPx+'px';
     const visW=outer.clientWidth; const nowVis=nowPx-outer.scrollLeft;
-    // keep "now" close to the left edge (just past the label) — small fixed buffer, not 33% of the screen
-    // keep "now" 5 minutes worth of space past the label edge, with a soft fade zone
-    const bufferMinutes = 5;
-    const bufferPx = bufferMinutes * PX_PER_MIN;
-    if(nowVis<lblW+bufferPx || nowVis>visW-100) outer.scrollLeft=Math.max(0,nowPx-lblW-bufferPx);
+    // centre "now" within the visible track area (between labels and right edge)
+    // this gives roughly equal space on both sides for the 30-min fade zones
+    const trackVisW = visW - lblW;
+    const targetVis = lblW + trackVisW * 0.5;
+    if(Math.abs(nowVis - targetVis) > 20) outer.scrollLeft = Math.max(0, nowPx - targetVis);
   } else { nowLine.style.display='none'; }
   document.querySelectorAll('.tl-block').forEach(b=>{ const s=parseInt(b.dataset.startMin),e=parseInt(b.dataset.endMin); b.classList.toggle('dim',!(nowMin>=s&&nowMin<e)); });
 }
