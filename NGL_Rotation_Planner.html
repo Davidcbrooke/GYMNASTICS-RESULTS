@@ -60,6 +60,31 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .header-actions button.secondary:hover{ background:rgba(255,255,255,.25); }
 .header-actions button.danger{ background:var(--red); color:#fff; }
 .save-status{ font-size:.75rem; color:rgba(255,255,255,.5); white-space:nowrap; }
+.sponsor-band{
+  flex:0 0 60px;
+  height:60px;
+  max-height:60px;
+  min-height:60px;
+  background:#0d1730;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  box-sizing:border-box;
+}
+.sponsor-band img{
+  display:block;
+  max-height:40px;
+  max-width:240px;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  opacity:0;
+  transition:opacity .6s ease;
+}
+.sponsor-band img.visible{ opacity:1; }
+.sponsor-band.empty{ display:none; height:0; flex:0 0 0; min-height:0; max-height:0; border:none; }
 .header-logo img{ height:36px; }
 .week-toggle{ display:flex; background:rgba(255,255,255,.1); border-radius:6px; overflow:hidden; gap:2px; padding:2px; }
 .week-btn{ background:none; border:none; color:rgba(255,255,255,.6); padding:7px 12px; cursor:pointer; font-weight:700; font-size:.8rem; }
@@ -1557,14 +1582,24 @@ async function uploadSponsor(input){
   if(!file) return;
   if(file.size > 1.5*1024*1024){ alert('Please use an image under 1.5MB.'); input.value=''; return; }
   const reader = new FileReader();
-  reader.onload = async (e)=>{
-    try{
-      const id = genId();
-      await dbPut(`sponsors/${id}`, { id, image: e.target.result, name: file.name, addedAt: new Date().toISOString() });
-      showToast('Sponsor uploaded!');
-      await loadSponsors();
-      renderSponsorsAdminList();
-    }catch(err){ alert('Upload failed: '+err.message); }
+  reader.onload = (e)=>{
+    const img = new Image();
+    img.onload = async ()=>{
+      // recommended: max 240x40 logical box, warn if wildly off
+      if(img.height > 200 || img.width > 1200){
+        if(!confirm(`This image is ${img.width}×${img.height}px. For best results sponsor logos should be small and wide (e.g. ~240×40px). It will be automatically scaled down to fit the band, but very large files may look blurry. Continue anyway?`)){
+          input.value=''; return;
+        }
+      }
+      try{
+        const id = genId();
+        await dbPut(`sponsors/${id}`, { id, image: e.target.result, name: file.name, w: img.width, h: img.height, addedAt: new Date().toISOString() });
+        showToast('Sponsor uploaded!');
+        await loadSponsors();
+        renderSponsorsAdminList();
+      }catch(err){ alert('Upload failed: '+err.message); }
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
   input.value = '';
@@ -1623,7 +1658,7 @@ async function renderAdmin(){
       </div>
       <div class="admin-panel" style="margin-bottom:20px;">
         <div class="admin-panel-hdr"><h2>🏷 Sponsors (rotates every 10s on all club screens)</h2>
-          <label class="btn-xs gold" style="cursor:pointer;">+ Upload Sponsor PNG<input type="file" id="sponsorUpload" accept="image/png,image/jpeg" style="display:none;" onchange="uploadSponsor(this)"></label>
+          <label class="btn-xs gold" style="cursor:pointer;">+ Upload Sponsor PNG (recommended ~240×40px)<input type="file" id="sponsorUpload" accept="image/png,image/jpeg" style="display:none;" onchange="uploadSponsor(this)"></label>
         </div>
         <div id="sponsorsListWrap" style="padding:14px;"></div>
       </div>
