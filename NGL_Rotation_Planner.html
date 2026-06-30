@@ -177,11 +177,11 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .tl-sep{ height:24px; display:flex; align-items:center; position:sticky; left:0; background:rgba(255,255,255,.04); }
 .tl-sep span{ font-size:.68rem; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:1px; padding-left:12px; }
 .tl-row{ display:flex; height:40px; border-bottom:1px solid rgba(255,255,255,.07); }
-.tl-lbl{ flex-shrink:0; border-right:2px solid rgba(255,255,255,.12); display:flex; align-items:center; padding:0 10px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.9); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:var(--navy); position:sticky; left:0; z-index:10; }
+.tl-lbl{ flex-shrink:0; border-right:2px solid rgba(255,255,255,.12); display:flex; align-items:center; padding:0 10px; font-size:.85rem; font-weight:700; color:rgba(255,255,255,.9); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:var(--navy); position:sticky; left:0; z-index:10; }
 .tl-track{ position:relative; flex-shrink:0; }
-.tl-block{ position:absolute; top:3px; bottom:3px; border-radius:4px; display:flex; align-items:center; padding:0 6px; overflow:hidden; font-size:.7rem; font-weight:600; white-space:nowrap; }
+.tl-block{ position:absolute; top:3px; bottom:3px; border-radius:5px; display:flex; align-items:center; padding:0 10px; overflow:hidden; font-size:.85rem; font-weight:700; white-space:nowrap; }
 .tl-block .b-loc{ flex:1; overflow:hidden; text-overflow:ellipsis; }
-.tl-block .b-t{ opacity:.7; font-size:.62rem; margin-left:4px; flex-shrink:0; }
+.tl-block .b-t{ opacity:.75; font-size:.72rem; margin-left:6px; flex-shrink:0; }
 .tl-block.dim{ opacity:0.35; }
 .tl-block.conflict{ outline:2px solid #ff4444; box-shadow:0 0 0 3px rgba(255,68,68,.25); z-index:2; }
 .tl-block.flash{ animation:flash 1s ease-in-out infinite; }
@@ -584,15 +584,15 @@ const LOC_COLOURS = {'Floor':'#4a90d9','Bars':'#7b68ee','Beam':'#e8914f','Vault'
 let PX_PER_MIN = 14; // recalculated dynamically based on screen size
 function calcPxPerMin(){
   const screenW = window.innerWidth || 1280;
-  const lblW = screenW < 700 ? 110 : screenW < 1100 ? 150 : 200;
+  const lblW = calcLabelWidth();
   const availW = screenW - lblW - 20;
-  // aim to fit ~2.5 hours visible at once on screen
-  const targetMinutesVisible = screenW < 700 ? 90 : screenW < 1100 ? 150 : 180;
+  // aim to fit ~1 hour visible at once on screen — bigger, more readable blocks
+  const targetMinutesVisible = screenW < 700 ? 45 : screenW < 1100 ? 75 : 90;
   return Math.max(6, availW / targetMinutesVisible);
 }
 function calcLabelWidth(){
   const screenW = window.innerWidth || 1280;
-  return screenW < 700 ? 110 : screenW < 1100 ? 150 : 200;
+  return screenW < 700 ? 90 : screenW < 1100 ? 120 : 140;
 }
 const NO_CONFLICT = ['TBC'];
 
@@ -1471,7 +1471,7 @@ function renderTimeline(day){
         const block=document.createElement('div'); block.className='tl-block';
         if(conflicts.has(`${group.id}:${idx}`)) block.classList.add('conflict');
         block.style.left=((s.start_min-min)*PX_PER_MIN)+'px';
-        block.style.width=Math.max(s.duration*PX_PER_MIN-2,18)+'px';
+        block.style.width=Math.max(s.duration*PX_PER_MIN-2,28)+'px';
         block.style.background=bg; block.style.color=isLight(bg)?'#2b2b2b':'#fff';
         block.dataset.startMin=s.start_min; block.dataset.endMin=s.start_min+s.duration;
         block.innerHTML=`<span class="b-loc">${activeLoc}${s.title?' · '+s.title:''}</span><span class="b-t">${fmtTime(s.start_min)}</span>`;
