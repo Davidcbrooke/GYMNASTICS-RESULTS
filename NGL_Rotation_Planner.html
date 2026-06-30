@@ -169,6 +169,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .tl-container{ flex:1; overflow:hidden; display:flex; flex-direction:column; position:relative; }
 .tl-scroll{ flex:1; overflow:auto; position:relative; }
 .tl-inner{ display:inline-block; min-width:100%; }
+.tl-fade{ position:absolute; top:0; bottom:0; width:60px; z-index:15; pointer-events:none; background:linear-gradient(90deg, var(--paper) 0%, rgba(249,247,243,0) 100%); }
 .tl-ruler{ display:flex; height:30px; position:sticky; top:0; z-index:20; background:var(--navy); border-bottom:2px solid rgba(255,255,255,.15); }
 .tl-ruler-spc{ flex-shrink:0; background:var(--navy); border-right:2px solid rgba(255,255,255,.2); }
 .tl-ruler-ticks{ position:relative; flex-shrink:0; }
@@ -1481,8 +1482,11 @@ function renderTimeline(day){
     });
   });
   outer.appendChild(inner); container.appendChild(outer);
+  // fade overlay sits just after the sticky label column, fixed in place (not scrolling)
+  const fade=document.createElement('div'); fade.className='tl-fade'; fade.style.left=lblW+'px';
+  container.appendChild(fade);
   container.dataset.min=min; container.dataset.max=max; container.dataset.lblW=lblW;
-  setTimeout(()=>{ const nowMin=nowMinutes(); outer.scrollLeft=Math.max(0,(nowMin-min)*PX_PER_MIN-30); updateNowLine(); },100);
+  setTimeout(()=>{ const nowMin=nowMinutes(); outer.scrollLeft=Math.max(0,(nowMin-min)*PX_PER_MIN-5*PX_PER_MIN); updateNowLine(); },100);
 }
 
 function updateNowLine(){
@@ -1496,8 +1500,10 @@ function updateNowLine(){
     const nowPx=lblW+(nowMin-min)*PX_PER_MIN; nowLine.style.left=nowPx+'px';
     const visW=outer.clientWidth; const nowVis=nowPx-outer.scrollLeft;
     // keep "now" close to the left edge (just past the label) — small fixed buffer, not 33% of the screen
-    const buffer = 30; // px gap between label edge and now-line
-    if(nowVis<lblW+buffer || nowVis>visW-100) outer.scrollLeft=Math.max(0,nowPx-lblW-buffer);
+    // keep "now" 5 minutes worth of space past the label edge, with a soft fade zone
+    const bufferMinutes = 5;
+    const bufferPx = bufferMinutes * PX_PER_MIN;
+    if(nowVis<lblW+bufferPx || nowVis>visW-100) outer.scrollLeft=Math.max(0,nowPx-lblW-bufferPx);
   } else { nowLine.style.display='none'; }
   document.querySelectorAll('.tl-block').forEach(b=>{ const s=parseInt(b.dataset.startMin),e=parseInt(b.dataset.endMin); b.classList.toggle('dim',!(nowMin>=s&&nowMin<e)); });
 }
