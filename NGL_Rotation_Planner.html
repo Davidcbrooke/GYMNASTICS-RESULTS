@@ -349,6 +349,13 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
       <span class="dur-chip" onclick="setDur(120)">120</span>
     </div></div>
     <div class="mf"><label>Activity (optional)</label><input type="text" id="sm_title" placeholder="e.g. Strength & Conditioning"></div>
+    <div class="mf" id="sm_autoadjust_field" style="display:none;">
+      <label class="day-check-lbl" style="display:inline-flex;width:auto;">
+        <input type="checkbox" id="sm_autoadjust" checked style="margin:0;">
+        Auto-adjust later sessions in this block
+      </label>
+      <p style="color:var(--muted);font-size:.72rem;margin-top:4px;">If you change this session's time or duration, all later sessions for this group on this day will shift by the same amount.</p>
+    </div>
     <div class="mf"><label>Also add to days</label>
       <div class="day-checks" id="sm_days">
         <label class="day-check-lbl"><input type="checkbox" value="Monday">M</label>
@@ -466,9 +473,19 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 <div class="modal-overlay" id="copyBlockModal">
   <div class="modal-box">
     <h3 id="cbTitle">Copy Rotation Block</h3>
-    <p style="color:var(--muted);font-size:.82rem;margin-bottom:16px;">This will duplicate the entire rotation block for this group, keeping the same gaps between sessions, starting at the new time below.</p>
-    <div class="mf"><label>New start time</label><select id="cb_start"></select></div>
-    <div id="cb_preview" style="background:var(--paper);border-radius:6px;padding:10px 12px;font-size:.78rem;color:var(--muted);margin-top:8px;"></div>
+    <p style="color:var(--muted);font-size:.82rem;margin-bottom:16px;">Duplicate this group's full rotation block to one or more new start times, keeping the same gaps between sessions.</p>
+    <div class="mf">
+      <label>Add a start time</label>
+      <div style="display:flex;gap:8px;">
+        <select id="cb_start" style="flex:1;"></select>
+        <button class="btn-save" style="white-space:nowrap;" onclick="addCopyBlockTime()">+ Add</button>
+      </div>
+    </div>
+    <div class="mf">
+      <label>Times to copy to</label>
+      <div id="cb_times_list" style="min-height:30px;"></div>
+    </div>
+    <div id="cb_preview" style="background:var(--paper);border-radius:6px;padding:10px 12px;font-size:.76rem;color:var(--muted);margin-top:8px;"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('copyBlockModal')">Cancel</button>
       <button class="btn-save" onclick="doCopyBlock()">Copy Block</button>
@@ -910,6 +927,7 @@ function openSessionModal(day,groupId,sessionIdx){
   document.getElementById('smTitle').textContent=(isNew?'Add':'Edit')+' Session — '+group.name+' ('+day+')';
   document.getElementById('sm_del').style.display=isNew?'none':'block';
   document.getElementById('sm_locB_field').style.display=isRec?'block':'none';
+  document.getElementById('sm_autoadjust_field').style.display=isNew?'none':'block';
   // populate locations
   const sl=document.getElementById('sm_loc'), slB=document.getElementById('sm_locB');
   sl.innerHTML=''; slB.innerHTML='<option value="">— Same as Week A —</option>';
@@ -949,14 +967,35 @@ function saveSession(){
   if(!DATA.sessions[day][groupId]) DATA.sessions[day][groupId]=[];
   const session={location,start_min,duration,title};
   if(locationB) session.locationB=locationB;
-  if(sessionIdx===null){ DATA.sessions[day][groupId].push(session); }
-  else { DATA.sessions[day][groupId][sessionIdx]=session; }
+
+  let cascadeCount = 0;
+  if(sessionIdx===null){
+    DATA.sessions[day][groupId].push(session);
+  } else {
+    // detect change in timing to cascade to later sessions
+    const original = DATA.sessions[day][groupId][sessionIdx];
+    const originalEnd = original.start_min + original.duration;
+    const newEnd = start_min + duration;
+    const delta = newEnd - originalEnd;
+    const autoAdjust = document.getElementById('sm_autoadjust').checked;
+    if(autoAdjust && delta !== 0){
+      const sortedList = DATA.sessions[day][groupId].slice().sort((a,b)=>a.start_min-b.start_min);
+      const editedPos = sortedList.findIndex(s=>s===original);
+      sortedList.forEach((s,i)=>{
+        if(i>editedPos){ s.start_min += delta; cascadeCount++; }
+      });
+    }
+    DATA.sessions[day][groupId][sessionIdx]=session;
+  }
   DATA.sessions[day][groupId].sort((a,b)=>a.start_min-b.start_min);
   // repeat days
   const repeatDays=[...document.querySelectorAll('#sm_days input:checked')].map(cb=>cb.value);
   repeatDays.forEach(rd=>{ if(!DATA.sessions[rd]) DATA.sessions[rd]={}; if(!DATA.sessions[rd][groupId]) DATA.sessions[rd][groupId]=[]; DATA.sessions[rd][groupId].push({...session}); DATA.sessions[rd][groupId].sort((a,b)=>a.start_min-b.start_min); });
   closeModal('sessionModal'); renderWeekTable(); scheduleAutoSave();
-  showToast('Session saved'+(repeatDays.length?` + ${repeatDays.length} day(s)`:''));
+  let msg = 'Session saved';
+  if(repeatDays.length) msg += ` + ${repeatDays.length} day(s)`;
+  if(cascadeCount>0) msg += ` · ${cascadeCount} later session(s) shifted`;
+  showToast(msg);
 }
 
 function deleteSession(){
@@ -968,15 +1007,18 @@ function deleteSession(){
 
 let copyBlockState = null;
 
+let copyBlockTimes = [];
+
 function openCopyBlockModal(day, groupId){
   const sessions = (DATA.sessions[day] && DATA.sessions[day][groupId]) || [];
   if(!sessions.length){ showToast('No sessions to copy'); return; }
   const group = getGroupById(groupId);
   copyBlockState = { day, groupId, sessions: sessions.map(s=>({...s})) };
+  copyBlockTimes = [];
 
   document.getElementById('cbTitle').textContent = `Copy Rotation Block — ${group.name} (${day})`;
 
-  // populate start time dropdown
+  // populate start time dropdown (the "add time" picker)
   const sel = document.getElementById('cb_start');
   sel.innerHTML = '';
   for(let t=6*60; t<=22*60; t+=5){
@@ -987,39 +1029,70 @@ function openCopyBlockModal(day, groupId){
   const lastEnd = Math.max(...sessions.map(s=>s.start_min + s.duration));
   sel.value = lastEnd;
 
-  updateCopyBlockPreview();
-  sel.onchange = updateCopyBlockPreview;
-
+  renderCopyBlockTimes();
   document.getElementById('copyBlockModal').classList.add('open');
 }
 
+function addCopyBlockTime(){
+  const t = parseInt(document.getElementById('cb_start').value);
+  if(!copyBlockTimes.includes(t)){
+    copyBlockTimes.push(t);
+    copyBlockTimes.sort((a,b)=>a-b);
+  }
+  renderCopyBlockTimes();
+}
+
+function removeCopyBlockTime(t){
+  copyBlockTimes = copyBlockTimes.filter(x=>x!==t);
+  renderCopyBlockTimes();
+}
+
+function renderCopyBlockTimes(){
+  const wrap = document.getElementById('cb_times_list');
+  wrap.innerHTML = '';
+  if(copyBlockTimes.length===0){
+    wrap.innerHTML = '<span style="color:var(--muted);font-size:.78rem;">No times added yet — pick a time above and click + Add</span>';
+  }
+  copyBlockTimes.forEach(t=>{
+    const chip = document.createElement('span');
+    chip.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff;padding:5px 10px;border-radius:5px;font-size:.78rem;font-weight:600;margin:3px 4px 3px 0;';
+    chip.innerHTML = `${fmtTime(t)} <span style="cursor:pointer;opacity:.7;" onclick="removeCopyBlockTime(${t})">✕</span>`;
+    wrap.appendChild(chip);
+  });
+  updateCopyBlockPreview();
+}
+
 function updateCopyBlockPreview(){
-  const newStart = parseInt(document.getElementById('cb_start').value);
   const { sessions } = copyBlockState;
   const originalStart = Math.min(...sessions.map(s=>s.start_min));
-  const offset = newStart - originalStart;
-  const preview = sessions
-    .slice()
-    .sort((a,b)=>a.start_min-b.start_min)
-    .map(s=>`${fmtTime(s.start_min+offset)} ${s.location}`)
-    .join(' → ');
-  document.getElementById('cb_preview').textContent = preview;
+  const sorted = sessions.slice().sort((a,b)=>a.start_min-b.start_min);
+  if(copyBlockTimes.length===0){
+    document.getElementById('cb_preview').textContent = '';
+    return;
+  }
+  const lines = copyBlockTimes.map(newStart=>{
+    const offset = newStart - originalStart;
+    return sorted.map(s=>`${fmtTime(s.start_min+offset)} ${s.location}`).join(' → ');
+  });
+  document.getElementById('cb_preview').innerHTML = lines.map(l=>`<div style="margin-bottom:4px;">${l}</div>`).join('');
 }
 
 function doCopyBlock(){
-  const newStart = parseInt(document.getElementById('cb_start').value);
+  if(copyBlockTimes.length===0){ alert('Please add at least one time to copy to.'); return; }
   const { day, groupId, sessions } = copyBlockState;
   const originalStart = Math.min(...sessions.map(s=>s.start_min));
-  const offset = newStart - originalStart;
-  const copies = sessions.map(s=>({ ...s, start_min: s.start_min + offset }));
   if(!DATA.sessions[day]) DATA.sessions[day]={};
   if(!DATA.sessions[day][groupId]) DATA.sessions[day][groupId]=[];
-  DATA.sessions[day][groupId].push(...copies);
+  copyBlockTimes.forEach(newStart=>{
+    const offset = newStart - originalStart;
+    const copies = sessions.map(s=>({ ...s, start_min: s.start_min + offset }));
+    DATA.sessions[day][groupId].push(...copies);
+  });
   DATA.sessions[day][groupId].sort((a,b)=>a.start_min-b.start_min);
   closeModal('copyBlockModal');
   renderWeekTable();
   scheduleAutoSave();
-  showToast(`Block copied to ${fmtTime(newStart)}`);
+  showToast(`Block copied to ${copyBlockTimes.length} time(s)`);
 }
 
 function clearGroupDay(day, groupId){
