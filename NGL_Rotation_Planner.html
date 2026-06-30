@@ -70,22 +70,31 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
   background:#0f1d3a;
   display:flex;
   align-items:center;
-  justify-content:center;
   overflow:hidden;
   border-bottom:1px solid rgba(255,255,255,.08);
   box-sizing:border-box;
+  position:relative;
+}
+.sponsor-track{
+  display:flex;
+  align-items:center;
+  white-space:nowrap;
+  animation:sponsor-scroll linear infinite;
+  will-change:transform;
 }
 .sponsor-band img{
-  display:block;
-  max-height:40px;
-  max-width:240px;
+  display:inline-block;
+  height:40px;
   width:auto;
-  height:auto;
+  max-width:220px;
   object-fit:contain;
-  opacity:0;
-  transition:opacity .6s ease;
+  margin:0 36px;
+  flex-shrink:0;
 }
-.sponsor-band img.visible{ opacity:1; }
+@keyframes sponsor-scroll{
+  from{ transform:translateX(0); }
+  to{ transform:translateX(-50%); }
+}
 .sponsor-band.empty{ display:none; height:0; flex:0 0 0; min-height:0; max-height:0; border:none; }
 .header-logo img{ height:36px; }
 .week-toggle{ display:flex; background:rgba(255,255,255,.1); border-radius:6px; overflow:hidden; gap:2px; padding:2px; }
@@ -1294,32 +1303,29 @@ function renderSponsorBand(){
       return;
     }
     el.classList.remove('empty');
-    if(!el.querySelector('img')){
-      const img = document.createElement('img');
-      img.src = sponsorList[0].image;
-      el.appendChild(img);
-      setTimeout(()=>img.classList.add('visible'), 50);
+    // build a repeating marquee track: repeat the full sponsor list multiple times for seamless looping
+    const track = document.createElement('div');
+    track.className = 'sponsor-track';
+    const repeatCount = 6; // repeat enough times to fill wide screens and loop smoothly
+    for(let r=0; r<repeatCount; r++){
+      sponsorList.forEach(s=>{
+        const img = document.createElement('img');
+        img.src = s.image;
+        img.alt = s.name||'sponsor';
+        track.appendChild(img);
+      });
     }
+    el.innerHTML = '';
+    el.appendChild(track);
+    // duration scales with number of sponsors so speed feels consistent regardless of count
+    const duration = Math.max(20, sponsorList.length * 8);
+    track.style.animationDuration = duration + 's';
   });
 }
 
 function startSponsorRotation(){
+  // marquee is pure CSS animation — nothing to do here, kept for compatibility
   clearInterval(sponsorTimer);
-  if(sponsorList.length <= 1) return;
-  sponsorTimer = setInterval(()=>{
-    sponsorIdx = (sponsorIdx + 1) % sponsorList.length;
-    ['sponsorBand','sponsorBandLive'].forEach(id=>{
-      const el = document.getElementById(id);
-      if(!el) return;
-      const img = el.querySelector('img');
-      if(!img) return;
-      img.classList.remove('visible');
-      setTimeout(()=>{
-        img.src = sponsorList[sponsorIdx].image;
-        img.classList.add('visible');
-      }, 600);
-    });
-  }, 10000);
 }
 
 function openProfileModal(){
@@ -1377,6 +1383,7 @@ function enterLive(){
   document.getElementById('tabs').style.display='none';
   document.querySelector('.header-actions').style.display='none';
   document.querySelector('.header-logo').style.display='none';
+  document.getElementById('sponsorBand').style.display='none';
   document.getElementById('liveClock').classList.add('visible');
   const day=getTodayName();
   document.getElementById('liveDayLabel').textContent=day+' — Week '+currentWeek;
@@ -1401,6 +1408,7 @@ function exitLive(){
   document.getElementById('tabs').style.display='';
   document.querySelector('.header-actions').style.display='';
   document.querySelector('.header-logo').style.display='';
+  document.getElementById('sponsorBand').style.display='';
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('plannerView').classList.add('active');
   try{document.exitFullscreen&&document.exitFullscreen();}catch(e){}
