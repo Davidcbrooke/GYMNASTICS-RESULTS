@@ -1482,7 +1482,7 @@ function renderTimeline(day){
   });
   outer.appendChild(inner); container.appendChild(outer);
   container.dataset.min=min; container.dataset.max=max; container.dataset.lblW=lblW;
-  setTimeout(()=>{ const nowMin=nowMinutes(); outer.scrollLeft=Math.max(0,(nowMin-min-30)*PX_PER_MIN); updateNowLine(); },100);
+  setTimeout(()=>{ const nowMin=nowMinutes(); outer.scrollLeft=Math.max(0,(nowMin-min)*PX_PER_MIN-30); updateNowLine(); },100);
 }
 
 function updateNowLine(){
@@ -1495,7 +1495,9 @@ function updateNowLine(){
     nowLine.style.display='block';
     const nowPx=lblW+(nowMin-min)*PX_PER_MIN; nowLine.style.left=nowPx+'px';
     const visW=outer.clientWidth; const nowVis=nowPx-outer.scrollLeft;
-    if(nowVis<lblW+60||nowVis>visW-60) outer.scrollLeft=Math.max(0,nowPx-lblW-(visW-lblW)*0.33);
+    // keep "now" close to the left edge (just past the label) — small fixed buffer, not 33% of the screen
+    const buffer = 30; // px gap between label edge and now-line
+    if(nowVis<lblW+buffer || nowVis>visW-100) outer.scrollLeft=Math.max(0,nowPx-lblW-buffer);
   } else { nowLine.style.display='none'; }
   document.querySelectorAll('.tl-block').forEach(b=>{ const s=parseInt(b.dataset.startMin),e=parseInt(b.dataset.endMin); b.classList.toggle('dim',!(nowMin>=s&&nowMin<e)); });
 }
