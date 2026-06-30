@@ -589,7 +589,7 @@ function calcPxPerMin(){
   const lblW = calcLabelWidth();
   const availW = screenW - lblW - 20;
   // aim to fit ~1 hour visible at once on screen — bigger, more readable blocks
-  const targetMinutesVisible = screenW < 700 ? 75 : screenW < 1100 ? 110 : 140;
+  const targetMinutesVisible = screenW < 700 ? 45 : screenW < 1100 ? 75 : 90;
   return Math.max(6, availW / targetMinutesVisible);
 }
 function calcLabelWidth(){
@@ -1483,8 +1483,8 @@ function renderTimeline(day){
     });
   });
   outer.appendChild(inner); container.appendChild(outer);
-  // fade zones — 30 mins each side, fixed in place over the scrolling content
-  const fadeWidthPx = 30 * PX_PER_MIN;
+  // fade zones — 10 mins each side, fixed in place over the scrolling content
+  const fadeWidthPx = 10 * PX_PER_MIN;
   const fadeLeft=document.createElement('div'); fadeLeft.className='tl-fade-left';
   fadeLeft.style.left=lblW+'px'; fadeLeft.style.width=fadeWidthPx+'px';
   container.appendChild(fadeLeft);
@@ -1494,7 +1494,8 @@ function renderTimeline(day){
   container.dataset.min=min; container.dataset.max=max; container.dataset.lblW=lblW;
   setTimeout(()=>{
     const nowMin=nowMinutes();
-    const visW=outer.clientWidth; const trackVisW=visW-lblW; const targetVis=lblW+trackVisW*0.5;
+    const bufferPx = 10 * PX_PER_MIN;
+    const targetVis = lblW + bufferPx;
     const nowPx=lblW+(nowMin-min)*PX_PER_MIN;
     outer.scrollLeft=Math.max(0,nowPx-targetVis);
     updateNowLine();
@@ -1511,11 +1512,10 @@ function updateNowLine(){
     nowLine.style.display='block';
     const nowPx=lblW+(nowMin-min)*PX_PER_MIN; nowLine.style.left=nowPx+'px';
     const visW=outer.clientWidth; const nowVis=nowPx-outer.scrollLeft;
-    // centre "now" within the visible track area (between labels and right edge)
-    // this gives roughly equal space on both sides for the 30-min fade zones
-    const trackVisW = visW - lblW;
-    const targetVis = lblW + trackVisW * 0.5;
-    if(Math.abs(nowVis - targetVis) > 20) outer.scrollLeft = Math.max(0, nowPx - targetVis);
+    // keep "now" just past the 10-min fade zone after the labels
+    const bufferPx = 10 * PX_PER_MIN;
+    const targetVis = lblW + bufferPx;
+    if(Math.abs(nowVis - targetVis) > 15) outer.scrollLeft = Math.max(0, nowPx - targetVis);
   } else { nowLine.style.display='none'; }
   document.querySelectorAll('.tl-block').forEach(b=>{ const s=parseInt(b.dataset.startMin),e=parseInt(b.dataset.endMin); b.classList.toggle('dim',!(nowMin>=s&&nowMin<e)); });
 }
