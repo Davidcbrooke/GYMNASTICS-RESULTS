@@ -462,6 +462,20 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
   </div>
 </div>
 
+<!-- COPY BLOCK MODAL -->
+<div class="modal-overlay" id="copyBlockModal">
+  <div class="modal-box">
+    <h3 id="cbTitle">Copy Rotation Block</h3>
+    <p style="color:var(--muted);font-size:.82rem;margin-bottom:16px;">This will duplicate the entire rotation block for this group, keeping the same gaps between sessions, starting at the new time below.</p>
+    <div class="mf"><label>New start time</label><select id="cb_start"></select></div>
+    <div id="cb_preview" style="background:var(--paper);border-radius:6px;padding:10px 12px;font-size:.78rem;color:var(--muted);margin-top:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('copyBlockModal')">Cancel</button>
+      <button class="btn-save" onclick="doCopyBlock()">Copy Block</button>
+    </div>
+  </div>
+</div>
+
 <!-- IMPORT DATA MODAL -->
 <div class="modal-overlay" id="importModal">
   <div class="modal-box">
@@ -862,8 +876,12 @@ function renderSection(tbody,section,label){
           chips.appendChild(cb);
         }
       }
-      // clear day button — only show if sessions exist
+      // clear day + copy block buttons — only show if sessions exist
       if(sessions.length>0){
+        const cpb=document.createElement('button'); cpb.className='add-btn'; cpb.style.marginTop='2px'; cpb.style.color='var(--navy)'; cpb.style.borderColor='var(--navy)'; cpb.style.fontWeight='600';
+        cpb.textContent='📋 Copy block to time';
+        cpb.onclick=()=>openCopyBlockModal(day, group.id);
+        chips.appendChild(cpb);
         const clr=document.createElement('button'); clr.className='add-btn'; clr.style.marginTop='2px'; clr.style.color='var(--red)'; clr.style.borderColor='var(--red)';
         clr.textContent='✕ Clear day';
         clr.onclick=()=>clearGroupDay(day, group.id);
@@ -946,6 +964,62 @@ function deleteSession(){
   if(!confirm('Delete this session?')) return;
   DATA.sessions[day][groupId].splice(sessionIdx,1);
   closeModal('sessionModal'); renderWeekTable(); scheduleAutoSave();
+}
+
+let copyBlockState = null;
+
+function openCopyBlockModal(day, groupId){
+  const sessions = (DATA.sessions[day] && DATA.sessions[day][groupId]) || [];
+  if(!sessions.length){ showToast('No sessions to copy'); return; }
+  const group = getGroupById(groupId);
+  copyBlockState = { day, groupId, sessions: sessions.map(s=>({...s})) };
+
+  document.getElementById('cbTitle').textContent = `Copy Rotation Block — ${group.name} (${day})`;
+
+  // populate start time dropdown
+  const sel = document.getElementById('cb_start');
+  sel.innerHTML = '';
+  for(let t=6*60; t<=22*60; t+=5){
+    const o = document.createElement('option'); o.value = t; o.textContent = fmtTime(t);
+    sel.appendChild(o);
+  }
+  // default: suggest right after the block ends
+  const lastEnd = Math.max(...sessions.map(s=>s.start_min + s.duration));
+  sel.value = lastEnd;
+
+  updateCopyBlockPreview();
+  sel.onchange = updateCopyBlockPreview;
+
+  document.getElementById('copyBlockModal').classList.add('open');
+}
+
+function updateCopyBlockPreview(){
+  const newStart = parseInt(document.getElementById('cb_start').value);
+  const { sessions } = copyBlockState;
+  const originalStart = Math.min(...sessions.map(s=>s.start_min));
+  const offset = newStart - originalStart;
+  const preview = sessions
+    .slice()
+    .sort((a,b)=>a.start_min-b.start_min)
+    .map(s=>`${fmtTime(s.start_min+offset)} ${s.location}`)
+    .join(' → ');
+  document.getElementById('cb_preview').textContent = preview;
+}
+
+function doCopyBlock(){
+  const newStart = parseInt(document.getElementById('cb_start').value);
+  const { day, groupId, sessions } = copyBlockState;
+  const originalStart = Math.min(...sessions.map(s=>s.start_min));
+  const offset = newStart - originalStart;
+  const copies = sessions.map(s=>({ ...s, start_min: s.start_min + offset }));
+  if(!DATA.sessions[day]) DATA.sessions[day]={};
+  if(!DATA.sessions[day][groupId]) DATA.sessions[day][groupId]=[];
+  DATA.sessions[day][groupId].push(...copies);
+  DATA.sessions[day][groupId].sort((a,b)=>a.start_min-b.start_min);
+  closeModal('copyBlockModal');
+  renderWeekTable();
+  scheduleAutoSave();
+  showToast(`Block copied to ${fmtTime(newStart)}`);
 }
 
 function clearGroupDay(day, groupId){
