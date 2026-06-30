@@ -1444,7 +1444,13 @@ function renderTimeline(day){
   const nowLine=document.createElement('div'); nowLine.className='tl-nowline'; nowLine.id='tlNowLine'; nowLine.style.left=lblW+'px'; inner.appendChild(nowLine);
   // sections
   ['squad','recreational'].forEach(section=>{
-    const groups=DATA.groups.filter(g=>g.section===section&&(g.days||DAYS).includes(day));
+    const groups=DATA.groups.filter(g=>{
+      if(g.section!==section) return false;
+      if(!(g.days||DAYS).includes(day)) return false;
+      // only show groups that have at least one session scheduled today
+      const sessions=(DATA.sessions[day]&&DATA.sessions[day][g.id])||[];
+      return sessions.length>0;
+    });
     if(!groups.length) return;
     const sep=document.createElement('div'); sep.className='tl-sep'; sep.style.width=totalW+'px';
     sep.innerHTML=`<span>${section==='squad'?'Squads':'Recreational — Week '+currentWeek}</span>`; inner.appendChild(sep);
@@ -1452,6 +1458,9 @@ function renderTimeline(day){
       const sessions=(DATA.sessions[day]&&DATA.sessions[day][group.id])||[];
       const row=document.createElement('div'); row.className='tl-row'; row.style.width=totalW+'px';
       const lbl=document.createElement('div'); lbl.className='tl-lbl'; lbl.style.width=lblW+'px'; lbl.textContent=group.name;
+      lbl.style.background=group.colour||'#1a2a4a';
+      lbl.style.color=isLight(group.colour||'#1a2a4a')?'#1a1a1a':'#fff';
+      lbl.style.borderRight='2px solid rgba(0,0,0,.2)';
       const track=document.createElement('div'); track.className='tl-track'; track.style.width=width+'px';
       track.style.backgroundImage='linear-gradient(90deg,rgba(255,255,255,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px)';
       track.style.backgroundSize=`${PX_PER_MIN*60}px 100%,${PX_PER_MIN*30}px 100%,${PX_PER_MIN*5}px 100%`;
