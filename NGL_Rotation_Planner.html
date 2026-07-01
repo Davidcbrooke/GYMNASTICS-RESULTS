@@ -1875,7 +1875,7 @@ function ringBell(){
 function showRotationAlert(groups){
   const el = document.getElementById('rotationAlert');
   const gl = document.getElementById('rotationAlertGroups');
-  gl.textContent = groups.join('  ·  ');
+  gl.innerHTML = groups.map(line=>`<div style="margin-top:4px;">${line}</div>`).join('');
   el.style.display = 'block';
   el.style.animation = 'none';
   el.offsetHeight; // reflow
@@ -1896,7 +1896,11 @@ function checkFlash(){
       const row = b.closest('.tl-row');
       if(row){
         const lbl = row.querySelector('.tl-lbl');
-        if(lbl && !flashingGroups.includes(lbl.textContent)) flashingGroups.push(lbl.textContent);
+        if(lbl && !flashingGroups.find(g=>g.name===lbl.textContent)){
+          // find the group's section from DATA
+          const group = DATA.groups.find(g=>g.name===lbl.textContent);
+          flashingGroups.push({ name:lbl.textContent, section:group?group.section:'squad' });
+        }
       }
     }
   });
@@ -1905,7 +1909,18 @@ function checkFlash(){
     const alertKey = Math.round(nowMin * 2) / 2;
     if(alertKey !== lastAlertMin){
       lastAlertMin = alertKey;
-      showRotationAlert(flashingGroups);
+      // sort: squads first, then recreational, alphabetically within each
+      flashingGroups.sort((a,b)=>{
+        if(a.section !== b.section) return a.section==='squad'?-1:1;
+        return a.name.localeCompare(b.name);
+      });
+      // build display string with section labels
+      const squads = flashingGroups.filter(g=>g.section==='squad').map(g=>g.name);
+      const rec = flashingGroups.filter(g=>g.section==='recreational').map(g=>g.name);
+      const parts = [];
+      if(squads.length) parts.push('SQUADS: '+squads.join(' · '));
+      if(rec.length) parts.push('REC: '+rec.join(' · '));
+      showRotationAlert(parts);
       if(bellEnabled) ringBell();
     }
   }
