@@ -223,6 +223,37 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 #toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(16px); background:var(--navy); color:#fff; padding:9px 18px; border-radius:6px; font-size:.82rem; font-weight:600; opacity:0; transition:all .25s; pointer-events:none; z-index:9999; }
 #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
+/* Feedback widget */
+.feedback-btn{
+  position:fixed; bottom:24px; right:24px; z-index:800;
+  background:var(--gold); color:var(--navy);
+  border:none; border-radius:30px; padding:12px 20px;
+  font-weight:800; font-size:.88rem; cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+  transition:transform .15s, box-shadow .15s;
+  display:flex; align-items:center; gap:8px;
+}
+.feedback-btn:hover{ transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.3); }
+.feedback-modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:900; display:none; align-items:flex-end; justify-content:flex-end; padding:24px; }
+.feedback-modal.open{ display:flex; }
+.feedback-box{ background:#fff; border-radius:14px; padding:24px; width:380px; max-width:95vw; box-shadow:0 8px 40px rgba(0,0,0,.3); }
+.feedback-box h3{ color:var(--navy); font-size:1.1rem; font-weight:800; margin-bottom:4px; }
+.feedback-box h3 span{ color:var(--gold); }
+.feedback-box .fb-sub{ color:var(--muted); font-size:.8rem; margin-bottom:16px; line-height:1.5; }
+.feedback-box .fb-response{ background:#f0f7ff; border-radius:6px; padding:8px 12px; font-size:.75rem; color:#2b5cbf; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+.feedback-box textarea{ width:100%; padding:10px; border:2px solid var(--line); border-radius:8px; font-size:.85rem; font-family:inherit; resize:none; outline:none; height:110px; transition:border-color .15s; }
+.feedback-box textarea:focus{ border-color:var(--gold); }
+.feedback-box .fb-name{ width:100%; padding:9px 10px; border:2px solid var(--line); border-radius:8px; font-size:.85rem; margin-bottom:10px; outline:none; font-family:inherit; }
+.feedback-box .fb-name:focus{ border-color:var(--gold); }
+.fb-actions{ display:flex; gap:8px; margin-top:12px; }
+.fb-send{ background:var(--gold); color:var(--navy); border:none; padding:10px 20px; border-radius:6px; font-weight:800; font-size:.85rem; cursor:pointer; flex:1; }
+.fb-send:hover{ background:var(--gold2); }
+.fb-cancel{ background:#eee; color:#555; border:none; padding:10px 16px; border-radius:6px; font-weight:700; font-size:.85rem; cursor:pointer; }
+.fb-success{ text-align:center; padding:16px 0; }
+.fb-success .fb-tick{ font-size:2.5rem; margin-bottom:8px; }
+.fb-success p{ color:var(--navy); font-weight:700; font-size:.95rem; }
+.fb-success .fb-sub2{ color:var(--muted); font-size:.78rem; margin-top:4px; }
+
 /* admin panel */
 .admin-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
 .admin-stat{ background:#fff; border-radius:8px; padding:18px; border:1px solid var(--line); text-align:center; }
@@ -577,6 +608,35 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 
 <div id="toast"></div>
 
+<!-- FEEDBACK WIDGET -->
+<button class="feedback-btn" id="feedbackBtn" onclick="openFeedback()" style="display:none;">
+  💡 Got an idea?
+</button>
+
+<div class="feedback-modal" id="feedbackModal">
+  <div class="feedback-box">
+    <div id="feedbackForm">
+      <h3>Got an <span>idea?</span></h3>
+      <p class="fb-sub">We're always improving the NGL Rotation Planner. Share your thoughts and we'll get back to you!</p>
+      <div class="fb-response">⏱ We aim to respond within 24 hours</div>
+      <input class="fb-name" type="text" id="fb_name" placeholder="Your name (optional)">
+      <textarea id="fb_message" placeholder="Tell us your idea or suggestion..."></textarea>
+      <div class="fb-actions">
+        <button class="fb-cancel" onclick="closeFeedback()">Cancel</button>
+        <button class="fb-send" onclick="sendFeedback()">Send idea →</button>
+      </div>
+    </div>
+    <div id="feedbackSuccess" class="fb-success" style="display:none;">
+      <div class="fb-tick">🎉</div>
+      <p>Thanks for your idea!</p>
+      <p class="fb-sub2">We'll review it and get back to you within 24 hours.</p>
+      <div class="fb-actions" style="justify-content:center;margin-top:16px;">
+        <button class="fb-cancel" onclick="closeFeedback()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ROTATION ALERT OVERLAY -->
 <div id="rotationAlert" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--red);color:#fff;border-radius:16px;padding:32px 48px;text-align:center;z-index:9999;box-shadow:0 8px 40px rgba(0,0,0,.5);animation:alertPop .3s ease-out;">
   <div style="font-size:2.5rem;margin-bottom:8px;">🔔</div>
@@ -711,7 +771,7 @@ auth.onAuthStateChanged(async user=>{
     document.getElementById('app').classList.add('visible');
     startRealtimeListener();
     loadSponsors();
-    renderTabs();
+    document.getElementById('feedbackBtn').style.display='flex';
     renderWeekTable();
     showToast('📡 Live sync active');
     // clock
@@ -725,6 +785,7 @@ auth.onAuthStateChanged(async user=>{
   } else {
     currentUser=null; currentClubId=null;
     document.getElementById('app').classList.remove('visible');
+    document.getElementById('feedbackBtn').style.display='none';
     showScreen('login');
   }
 });
@@ -1578,6 +1639,39 @@ function sortTotals(col){
   renderWeeklyTotals();
 }
 
+// ================================================================
+// FEEDBACK WIDGET
+// ================================================================
+function openFeedback(){
+  document.getElementById('feedbackForm').style.display='block';
+  document.getElementById('feedbackSuccess').style.display='none';
+  document.getElementById('fb_message').value='';
+  document.getElementById('feedbackModal').classList.add('open');
+  setTimeout(()=>document.getElementById('fb_message').focus(),100);
+}
+function closeFeedback(){
+  document.getElementById('feedbackModal').classList.remove('open');
+}
+async function sendFeedback(){
+  const message=document.getElementById('fb_message').value.trim();
+  const name=document.getElementById('fb_name').value.trim();
+  if(!message){ alert('Please enter your idea or suggestion.'); return; }
+  const profile=await dbGet(`clubs/${currentClubId}/profile`).catch(()=>({}));
+  const entry={
+    message, name: name||(profile&&profile.contactName)||'Anonymous',
+    clubName:(profile&&profile.clubName)||'Unknown club',
+    email:(profile&&profile.email)||'',
+    uid:currentClubId,
+    submittedAt:new Date().toISOString(),
+    status:'new'
+  };
+  try{
+    await dbPut(`feedback/${genId()}`, entry);
+    document.getElementById('feedbackForm').style.display='none';
+    document.getElementById('feedbackSuccess').style.display='block';
+  }catch(e){ alert('Failed to send — please try again.'); }
+}
+
 function renderSettings(){
 
   const gl=document.getElementById('groupsList'); gl.innerHTML='';
@@ -1840,6 +1934,38 @@ function checkAdminPw(){
   }
 }
 
+async function loadFeedbackInbox(){
+  const wrap=document.getElementById('feedbackInbox');
+  if(!wrap) return;
+  try{
+    const data=await dbGet('feedback');
+    if(!data){ wrap.innerHTML='<p style="color:var(--muted);font-style:italic;font-size:.82rem;">No feedback yet.</p>'; return; }
+    const items=Object.entries(data).map(([id,f])=>({id,...f})).sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt));
+    wrap.innerHTML=items.map(f=>`
+      <div style="border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:10px;background:${f.status==='new'?'#fffbee':'#fff'};">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          ${f.status==='new'?'<span style="background:var(--gold);color:var(--navy);font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:10px;">NEW</span>':''}
+          <strong style="font-size:.85rem;color:var(--navy);">${f.clubName||'Unknown'}</strong>
+          <span style="font-size:.75rem;color:var(--muted);">${f.name||''}</span>
+          <span style="font-size:.72rem;color:var(--muted);margin-left:auto;">${f.submittedAt?new Date(f.submittedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):''}</span>
+        </div>
+        <p style="font-size:.83rem;color:#333;line-height:1.5;margin-bottom:8px;">${f.message}</p>
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${f.email?`<a href="mailto:${f.email}?subject=Re: Your NGL Rotation Planner idea" style="font-size:.72rem;color:var(--navy);font-weight:600;">↩ Reply to ${f.email}</a>`:''}
+          ${f.status==='new'?`<button class="btn-xs navy" onclick="markFeedbackRead('${f.id}')" style="margin-left:auto;">Mark as read</button>`:'<span style="margin-left:auto;font-size:.7rem;color:var(--muted);">✓ Read</span>'}
+        </div>
+      </div>`).join('');
+  }catch(e){ wrap.innerHTML=`<p style="color:var(--red);font-size:.82rem;">Failed to load: ${e.message}</p>`; }
+}
+
+async function markFeedbackRead(id){
+  try{
+    const token=await getAuthToken();
+    await fetch(`${DB_URL}/feedback/${id}/status.json`+(token?`?auth=${token}`:''),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify('read')});
+    loadFeedbackInbox();
+  }catch(e){ alert('Failed: '+e.message); }
+}
+
 async function uploadSponsor(input){
   const file = input.files[0];
   if(!file) return;
@@ -1924,12 +2050,17 @@ async function renderAdmin(){
         </div>
         <div id="sponsorsListWrap" style="padding:14px;"></div>
       </div>
+      <div class="admin-panel" style="margin-bottom:20px;">
+        <div class="admin-panel-hdr"><h2>💡 Ideas & Feedback</h2><button onclick="loadFeedbackInbox()">↻ Refresh</button></div>
+        <div id="feedbackInbox" style="padding:14px;"><p style="color:var(--muted);font-style:italic;font-size:.82rem;">Loading...</p></div>
+      </div>
       <div class="admin-panel">
         <div class="admin-panel-hdr"><h2>All Clubs</h2><button onclick="renderAdmin()">↻ Refresh</button></div>
         <div id="adminTableWrap"></div>
       </div>`;
 
     renderSponsorsAdminList();
+    loadFeedbackInbox();
 
     const tbody=allClubs.map(club=>{
       try{
