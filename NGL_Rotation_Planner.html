@@ -772,6 +772,7 @@ auth.onAuthStateChanged(async user=>{
     startRealtimeListener();
     loadSponsors();
     document.getElementById('feedbackBtn').style.display='flex';
+    renderTabs();
     renderWeekTable();
     showToast('📡 Live sync active');
     // clock
