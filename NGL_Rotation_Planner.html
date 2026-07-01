@@ -242,6 +242,28 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .btn-xs.gold{ background:var(--gold); color:var(--navy); }
 .btn-xs.navy{ background:var(--navy); color:#fff; }
 .admin-empty{ padding:24px; text-align:center; color:var(--muted); font-style:italic; }
+/* Weekly Totals */
+.totals-wrap{ max-width:1100px; }
+.totals-title{ color:var(--navy); font-size:1.1rem; font-weight:700; margin-bottom:6px; }
+.totals-sub{ color:var(--muted); font-size:.82rem; margin-bottom:20px; }
+.totals-week-toggle{ display:flex; gap:8px; margin-bottom:20px; }
+.totals-week-btn{ background:var(--paper); border:1px solid var(--line); border-radius:5px; padding:6px 14px; font-size:.78rem; font-weight:700; cursor:pointer; color:var(--muted); }
+.totals-week-btn.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+.totals-table{ width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; border:1px solid var(--line); }
+.totals-table th{ background:var(--navy); color:#fff; padding:10px 14px; font-size:.75rem; font-weight:700; text-align:center; white-space:nowrap; }
+.totals-table th.group-col{ text-align:left; min-width:150px; position:sticky; left:0; z-index:5; }
+.totals-table td{ padding:8px 14px; text-align:center; border-bottom:1px solid var(--line); border-right:1px solid var(--line); font-size:.82rem; }
+.totals-table td.group-name{ font-weight:700; color:var(--navy); text-align:left; position:sticky; left:0; background:#fff; border-right:2px solid var(--line); }
+.totals-table td.group-name .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; }
+.totals-table tr:last-child td{ border-bottom:none; }
+.totals-table tr:hover td{ background:#f8f8ff; }
+.totals-table tr:hover td.group-name{ background:#f0f4ff; }
+.mins-cell{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+.mins-bar-wrap{ width:60px; height:6px; background:var(--line); border-radius:3px; overflow:hidden; }
+.mins-bar{ height:100%; border-radius:3px; }
+.mins-val{ font-size:.75rem; font-weight:700; }
+.mins-val.zero{ color:var(--line); }
+.totals-total td{ background:var(--paper); font-weight:700; font-size:.82rem; }
 </style>
 </head>
 <body>
@@ -336,6 +358,13 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
       <div class="planner-scroll">
         <table class="week-table" id="weekTable"></table>
       </div>
+    </div>
+  </div>
+
+  <!-- WEEKLY TOTALS VIEW -->
+  <div class="view" id="totalsView">
+    <div class="planner-view">
+      <div id="totalsContent" style="padding:24px;"></div>
     </div>
   </div>
 
@@ -833,13 +862,14 @@ function renderTabs(){
   const el=document.getElementById('tabs'); el.innerHTML='';
   const tabList=[
     {id:'planner',label:'📋 Weekly Planner'},
-    {id:'settings',label:'⚙ Groups & Locations'}
+    {id:'settings',label:'⚙ Groups & Locations'},
+    {id:'totals',label:'📊 Weekly Totals'}
   ];
   if(adminUnlocked) tabList.push({id:'admin',label:'🔒 NGL Admin'});
   tabList.forEach(t=>{
     const b=document.createElement('button'); b.textContent=t.label;
     if(currentTab===t.id) b.className='active';
-    b.onclick=()=>{ currentTab=t.id; renderTabs(); document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(t.id+'View').classList.add('active'); if(t.id==='planner') renderWeekTable(); else if(t.id==='settings') renderSettings(); else if(t.id==='admin') renderAdmin(); };
+    b.onclick=()=>{ currentTab=t.id; renderTabs(); document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(t.id+'View').classList.add('active'); if(t.id==='planner') renderWeekTable(); else if(t.id==='settings') renderSettings(); else if(t.id==='admin') renderAdmin(); else if(t.id==='totals') renderWeeklyTotals(); };
     el.appendChild(b);
   });
   // small admin unlock link if not yet unlocked
@@ -1354,6 +1384,141 @@ async function saveClubProfile(){
   }catch(e){ alert('Failed to save profile: '+e.message); }
 }
 
+function renderWeeklyTotals(){
+  const el=document.getElementById('totalsContent');
+
+  // get all squad groups
+  const squadGroups=DATA.groups.filter(g=>g.section==='squad');
+  if(squadGroups.length===0){
+    el.innerHTML='<p style="color:var(--muted);font-style:italic;">No squad groups set up yet.</p>';
+    return;
+  }
+
+  // get all categories from locations
+  const catOrder=['Floor','Bars','Beam','Vault','Tumble / Track','Pommel / Rings','Rooms','Other'];
+  const usedCats=new Set();
+  DATA.locations.forEach(l=>{ if(l.category) usedCats.add(l.category); });
+  // also catch any location categories not in the preset list
+  const categories=[...catOrder.filter(c=>usedCats.has(c)), ...[...usedCats].filter(c=>!catOrder.includes(c))];
+
+  // category colours
+  const catColours={
+    'Floor':'#4a90d9','Bars':'#7b68ee','Beam':'#e8914f','Vault':'#5cb85c',
+    'Tumble / Track':'#d9534f','Pommel / Rings':'#9b59b6','Rooms':'#f39c12','Other':'#95a5a6'
+  };
+
+  // calculate minutes per group per category across all days
+  // returns {groupId: {category: totalMins}}
+  function calcTotals(week){
+    const prevWeek=currentWeek;
+    if(week!==currentWeek){ currentWeek=week; }
+    const totals={};
+    squadGroups.forEach(g=>{
+      totals[g.id]={};
+      categories.forEach(cat=>{ totals[g.id][cat]=0; });
+      DAYS.forEach(day=>{
+        const sessions=(DATA.sessions[day]&&DATA.sessions[day][g.id])||[];
+        sessions.forEach(s=>{
+          const locName=getSessionLocation(s);
+          const loc=getLocByName(locName);
+          const cat=loc?loc.category:null;
+          if(cat && totals[g.id].hasOwnProperty(cat)){
+            totals[g.id][cat]+=s.duration;
+          }
+        });
+      });
+    });
+    currentWeek=prevWeek;
+    return totals;
+  }
+
+  // calculate max mins across all cells for scaling bars
+  function getMax(totals){
+    let max=0;
+    Object.values(totals).forEach(cats=>Object.values(cats).forEach(m=>{ if(m>max) max=m; }));
+    return max||1;
+  }
+
+  function buildTable(totals, label){
+    const max=getMax(totals);
+    let html=`<div style="margin-bottom:28px;">
+      <div class="totals-title">📊 ${label} — Apparatus Time</div>
+      <div class="totals-sub">Total minutes per squad group per apparatus category across all days this week.</div>
+      <div style="overflow-x:auto;">
+      <table class="totals-table">
+        <thead><tr>
+          <th class="group-col">Group</th>
+          ${categories.map(c=>`<th style="border-left:1px solid rgba(255,255,255,.15);">${c}</th>`).join('')}
+          <th style="border-left:2px solid rgba(255,255,255,.3);">Total</th>
+        </tr></thead>
+        <tbody>`;
+
+    // column totals
+    const colTotals={};
+    categories.forEach(c=>{ colTotals[c]=0; });
+
+    squadGroups.forEach(g=>{
+      const groupTotal=Object.values(totals[g.id]).reduce((a,b)=>a+b,0);
+      categories.forEach(c=>{ colTotals[c]+=totals[g.id][c]; });
+      const lightLabel=isLight(g.colour||'#1a2a4a');
+      html+=`<tr>
+        <td class="group-name">
+          <span class="dot" style="background:${g.colour||'#888'};"></span>${g.name}
+        </td>
+        ${categories.map(cat=>{
+          const mins=totals[g.id][cat]||0;
+          const pct=Math.round((mins/max)*100);
+          const col=catColours[cat]||'#888';
+          return `<td>
+            ${mins>0?`<div class="mins-cell">
+              <div class="mins-val">${mins}m</div>
+              <div class="mins-bar-wrap"><div class="mins-bar" style="width:${pct}%;background:${col};"></div></div>
+            </div>`:`<span class="mins-val zero">—</span>`}
+          </td>`;
+        }).join('')}
+        <td style="font-weight:700;color:var(--navy);border-left:2px solid var(--line);">${groupTotal}m</td>
+      </tr>`;
+    });
+
+    // totals row
+    const grandTotal=Object.values(colTotals).reduce((a,b)=>a+b,0);
+    html+=`<tr class="totals-total">
+      <td class="group-name" style="background:var(--paper);">Total</td>
+      ${categories.map(c=>`<td style="font-weight:700;color:var(--navy);">${colTotals[c]||0}m</td>`).join('')}
+      <td style="font-weight:700;color:var(--navy);border-left:2px solid var(--line);">${grandTotal}m</td>
+    </tr>`;
+
+    html+=`</tbody></table></div></div>`;
+    return html;
+  }
+
+  // build for Week A and B if locations differ
+  const hasWeekB = DATA.groups.some(g=>
+    DAYS.some(day=>(DATA.sessions[day]&&DATA.sessions[day][g.id]||[]).some(s=>s.locationB))
+  );
+
+  let html=`<div class="totals-wrap">`;
+  if(hasWeekB){
+    html+=`<div class="totals-week-toggle">
+      <button class="totals-week-btn active" id="totals_weekA" onclick="switchTotalsWeek('A')">Week A</button>
+      <button class="totals-week-btn" id="totals_weekB" onclick="switchTotalsWeek('B')">Week B</button>
+    </div>
+    <div id="totals_tableA">${buildTable(calcTotals('A'),'Week A')}</div>
+    <div id="totals_tableB" style="display:none">${buildTable(calcTotals('B'),'Week B')}</div>`;
+  } else {
+    html+=buildTable(calcTotals(currentWeek), 'Weekly');
+  }
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+
+function switchTotalsWeek(w){
+  document.getElementById('totals_weekA').classList.toggle('active',w==='A');
+  document.getElementById('totals_weekB').classList.toggle('active',w==='B');
+  document.getElementById('totals_tableA').style.display=w==='A'?'':'none';
+  document.getElementById('totals_tableB').style.display=w==='B'?'':'none';
+}
+
 function renderSettings(){
 
   const gl=document.getElementById('groupsList'); gl.innerHTML='';
@@ -1689,8 +1854,7 @@ async function renderAdmin(){
     const newThisMonth=allClubs.filter(c=>c.profile&&c.profile.createdAt&&c.profile.createdAt.startsWith(thisMonth)).length;
     const active=allClubs.filter(c=>c.rota&&c.rota.groups&&c.rota.groups.length>0).length;
 
-    el.innerHTML=`
-      <div class="admin-stats">
+    el.innerHTML=`<div class="admin-stats">
         <div class="admin-stat"><div class="num">${total}</div><div class="lbl">Registered Clubs</div></div>
         <div class="admin-stat"><div class="num">${newThisMonth}</div><div class="lbl">New This Month</div></div>
         <div class="admin-stat"><div class="num">${active}</div><div class="lbl">Active Clubs</div></div>
