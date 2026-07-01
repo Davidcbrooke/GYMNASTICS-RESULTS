@@ -1386,127 +1386,179 @@ async function saveClubProfile(){
 
 function renderWeeklyTotals(){
   const el=document.getElementById('totalsContent');
-
-  // get all squad groups
   const squadGroups=DATA.groups.filter(g=>g.section==='squad');
-  if(squadGroups.length===0){
-    el.innerHTML='<p style="color:var(--muted);font-style:italic;">No squad groups set up yet.</p>';
-    return;
-  }
+  if(!squadGroups.length){ el.innerHTML='<p style="color:var(--muted);font-style:italic;">No squad groups set up yet.</p>'; return; }
 
-  // get all categories from locations
   const catOrder=['Floor','Bars','Beam','Vault','Tumble / Track','Pommel / Rings','Rooms','Other'];
   const usedCats=new Set();
   DATA.locations.forEach(l=>{ if(l.category) usedCats.add(l.category); });
-  // also catch any location categories not in the preset list
-  const categories=[...catOrder.filter(c=>usedCats.has(c)), ...[...usedCats].filter(c=>!catOrder.includes(c))];
+  const categories=[...catOrder.filter(c=>usedCats.has(c)),...[...usedCats].filter(c=>!catOrder.includes(c))];
+  const catColours={'Floor':'#4a90d9','Bars':'#7b68ee','Beam':'#e8914f','Vault':'#5cb85c','Tumble / Track':'#d9534f','Pommel / Rings':'#9b59b6','Rooms':'#f39c12','Other':'#95a5a6'};
 
-  // category colours
-  const catColours={
-    'Floor':'#4a90d9','Bars':'#7b68ee','Beam':'#e8914f','Vault':'#5cb85c',
-    'Tumble / Track':'#d9534f','Pommel / Rings':'#9b59b6','Rooms':'#f39c12','Other':'#95a5a6'
-  };
-
-  // calculate minutes per group per category across all days
-  // returns {groupId: {category: totalMins}}
   function calcTotals(week){
-    const prevWeek=currentWeek;
-    if(week!==currentWeek){ currentWeek=week; }
+    const prev=currentWeek; currentWeek=week;
     const totals={};
     squadGroups.forEach(g=>{
       totals[g.id]={};
       categories.forEach(cat=>{ totals[g.id][cat]=0; });
       DAYS.forEach(day=>{
-        const sessions=(DATA.sessions[day]&&DATA.sessions[day][g.id])||[];
-        sessions.forEach(s=>{
-          const locName=getSessionLocation(s);
-          const loc=getLocByName(locName);
+        (DATA.sessions[day]&&DATA.sessions[day][g.id]||[]).forEach(s=>{
+          const loc=getLocByName(getSessionLocation(s));
           const cat=loc?loc.category:null;
-          if(cat && totals[g.id].hasOwnProperty(cat)){
-            totals[g.id][cat]+=s.duration;
-          }
+          if(cat&&totals[g.id].hasOwnProperty(cat)) totals[g.id][cat]+=s.duration;
         });
       });
     });
-    currentWeek=prevWeek;
-    return totals;
+    currentWeek=prev; return totals;
   }
 
-  // calculate max mins across all cells for scaling bars
-  function getMax(totals){
-    let max=0;
-    Object.values(totals).forEach(cats=>Object.values(cats).forEach(m=>{ if(m>max) max=m; }));
-    return max||1;
-  }
-
-  function buildTable(totals, label){
-    const max=getMax(totals);
-    let html=`<div style="margin-bottom:28px;">
-      <div class="totals-title">📊 ${label} — Apparatus Time</div>
-      <div class="totals-sub">Total minutes per squad group per apparatus category across all days this week.</div>
-      <div style="overflow-x:auto;">
-      <table class="totals-table">
-        <thead><tr>
-          <th class="group-col">Group</th>
-          ${categories.map(c=>`<th style="border-left:1px solid rgba(255,255,255,.15);">${c}</th>`).join('')}
-          <th style="border-left:2px solid rgba(255,255,255,.3);">Total</th>
-        </tr></thead>
-        <tbody>`;
-
-    // column totals
-    const colTotals={};
-    categories.forEach(c=>{ colTotals[c]=0; });
-
-    squadGroups.forEach(g=>{
-      const groupTotal=Object.values(totals[g.id]).reduce((a,b)=>a+b,0);
-      categories.forEach(c=>{ colTotals[c]+=totals[g.id][c]; });
-      const lightLabel=isLight(g.colour||'#1a2a4a');
-      html+=`<tr>
-        <td class="group-name">
-          <span class="dot" style="background:${g.colour||'#888'};"></span>${g.name}
-        </td>
-        ${categories.map(cat=>{
-          const mins=totals[g.id][cat]||0;
-          const pct=Math.round((mins/max)*100);
-          const col=catColours[cat]||'#888';
-          return `<td>
-            ${mins>0?`<div class="mins-cell">
-              <div class="mins-val">${mins}m</div>
-              <div class="mins-bar-wrap"><div class="mins-bar" style="width:${pct}%;background:${col};"></div></div>
-            </div>`:`<span class="mins-val zero">—</span>`}
-          </td>`;
-        }).join('')}
-        <td style="font-weight:700;color:var(--navy);border-left:2px solid var(--line);">${groupTotal}m</td>
-      </tr>`;
+  // SVG donut chart for a single group
+  function donutChart(group, tots){
+    const total=Object.values(tots).reduce((a,b)=>a+b,0);
+    if(!total) return `<svg viewBox="0 0 80 80" width="80" height="80"><circle cx="40" cy="40" r="30" fill="none" stroke="#eee" stroke-width="12"/><text x="40" y="45" text-anchor="middle" font-size="9" fill="#bbb">No data</text></svg>`;
+    const r=28, cx=40, cy=40, circ=2*Math.PI*r;
+    let offset=0;
+    let segments='';
+    categories.forEach(cat=>{
+      const mins=tots[cat]||0;
+      if(!mins) return;
+      const pct=mins/total;
+      const dash=pct*circ;
+      const gap=circ-dash;
+      const col=catColours[cat]||'#888';
+      segments+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="12" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${(-offset*circ).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${cat}: ${mins}m</title></circle>`;
+      offset+=pct;
     });
-
-    // totals row
-    const grandTotal=Object.values(colTotals).reduce((a,b)=>a+b,0);
-    html+=`<tr class="totals-total">
-      <td class="group-name" style="background:var(--paper);">Total</td>
-      ${categories.map(c=>`<td style="font-weight:700;color:var(--navy);">${colTotals[c]||0}m</td>`).join('')}
-      <td style="font-weight:700;color:var(--navy);border-left:2px solid var(--line);">${grandTotal}m</td>
-    </tr>`;
-
-    html+=`</tbody></table></div></div>`;
-    return html;
+    const hrs=(total/60).toFixed(1);
+    return `<svg viewBox="0 0 80 80" width="80" height="80">${segments}<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="11" font-weight="700" fill="#1a2a4a">${hrs}h</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="7" fill="#7a8090">total</text></svg>`;
   }
 
-  // build for Week A and B if locations differ
-  const hasWeekB = DATA.groups.some(g=>
-    DAYS.some(day=>(DATA.sessions[day]&&DATA.sessions[day][g.id]||[]).some(s=>s.locationB))
-  );
+  // SVG horizontal stacked bar for a single group
+  function stackedBar(tots, maxTotal, w=200){
+    const total=Object.values(tots).reduce((a,b)=>a+b,0);
+    if(!total) return `<div style="height:18px;background:#f0f0f0;border-radius:4px;"></div>`;
+    let x=0;
+    const bars=categories.map(cat=>{
+      const mins=tots[cat]||0;
+      if(!mins) return '';
+      const barW=Math.round((mins/maxTotal)*w);
+      const col=catColours[cat]||'#888';
+      const bar=`<rect x="${x}" y="0" width="${barW}" height="18" fill="${col}" rx="2"><title>${cat}: ${mins}m</title></rect>`;
+      x+=barW;
+      return bar;
+    }).join('');
+    return `<svg width="${w}" height="18" style="border-radius:4px;overflow:hidden;">${bars}</svg>`;
+  }
 
+  // Summary stacked bar chart across all groups
+  function summaryBarChart(totals, sortedGroups, maxTotal){
+    const barH=22, gap=6, lblW=130, chartW=400, svgH=(barH+gap)*sortedGroups.length+10;
+    let rows='';
+    sortedGroups.forEach((g,i)=>{
+      const tots=totals[g.id];
+      const total=Object.values(tots).reduce((a,b)=>a+b,0);
+      const y=i*(barH+gap)+5;
+      let x=0;
+      const bars=categories.map(cat=>{
+        const mins=tots[cat]||0;
+        if(!mins) return '';
+        const bw=Math.round((mins/maxTotal)*chartW);
+        const col=catColours[cat]||'#888';
+        const bar=`<rect x="${x}" y="${y}" width="${bw}" height="${barH}" fill="${col}" rx="2"><title>${cat}: ${mins}m</title></rect>`;
+        x+=bw;
+        return bar;
+      }).join('');
+      const dot=`<circle cx="8" cy="${y+barH/2}" r="6" fill="${g.colour||'#888'}"/>`;
+      const lbl=`<text x="18" y="${y+barH/2+4}" font-size="11" font-weight="600" fill="#1a2a4a">${g.name}</text>`;
+      const totalLbl=`<text x="${lblW+chartW+6}" y="${y+barH/2+4}" font-size="10" fill="#7a8090">${total}m</text>`;
+      rows+=`<g>${dot}${lbl}</g><g transform="translate(${lblW},0)">${bars}${totalLbl}</g>`;
+    });
+    return `<svg width="${lblW+chartW+60}" height="${svgH}" style="font-family:-apple-system,sans-serif;">${rows}</svg>`;
+  }
+
+  // legend
+  function legend(){
+    return `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+      ${categories.map(c=>`<span style="display:inline-flex;align-items:center;gap:5px;font-size:.75rem;color:#555;">
+        <span style="width:12px;height:12px;border-radius:2px;background:${catColours[c]||'#888'};flex-shrink:0;display:inline-block;"></span>${c}
+      </span>`).join('')}
+    </div>`;
+  }
+
+  let totalsSortCol=window._totalsSortCol||null;
+  let totalsSortDir=window._totalsSortDir||'desc';
+
+  function buildView(totals, label){
+    // sort
+    let sorted=[...squadGroups];
+    if(totalsSortCol==='total') sorted.sort((a,b)=>{ const ta=Object.values(totals[a.id]).reduce((x,y)=>x+y,0),tb=Object.values(totals[b.id]).reduce((x,y)=>x+y,0); return totalsSortDir==='desc'?tb-ta:ta-tb; });
+    else if(totalsSortCol) sorted.sort((a,b)=>{ const ta=totals[a.id][totalsSortCol]||0,tb=totals[b.id][totalsSortCol]||0; return totalsSortDir==='desc'?tb-ta:ta-tb; });
+
+    const maxTotal=Math.max(...sorted.map(g=>Object.values(totals[g.id]).reduce((a,b)=>a+b,0)),1);
+    const arrow=totalsSortDir==='desc'?' ▼':' ▲';
+
+    // sort chips
+    const sortChips=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+      <span style="font-size:.75rem;color:var(--muted);font-weight:600;">Sort by:</span>
+      <button class="totals-week-btn${!totalsSortCol?' active':''}" onclick="sortTotals(null)">Default</button>
+      <button class="totals-week-btn${totalsSortCol==='total'?' active':''}" onclick="sortTotals('total')">Total${totalsSortCol==='total'?arrow:''}</button>
+      ${categories.map(c=>`<button class="totals-week-btn${totalsSortCol===c?' active':''}" onclick="sortTotals('${c}')">${c}${totalsSortCol===c?arrow:''}</button>`).join('')}
+    </div>`;
+
+    // group cards
+    const cards=sorted.map(g=>{
+      const tots=totals[g.id];
+      const total=Object.values(tots).reduce((a,b)=>a+b,0);
+      const catRows=categories.filter(c=>tots[c]>0).sort((a,b)=>tots[b]-tots[a]).map(c=>{
+        const pct=Math.round((tots[c]/total)*100);
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+          <span style="width:10px;height:10px;border-radius:2px;background:${catColours[c]||'#888'};flex-shrink:0;"></span>
+          <span style="flex:1;font-size:.75rem;color:#555;">${c}</span>
+          <span style="font-size:.75rem;font-weight:700;color:var(--navy);min-width:30px;text-align:right;">${tots[c]}m</span>
+          <div style="width:60px;height:6px;background:#eee;border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${catColours[c]||'#888'};border-radius:3px;"></div></div>
+          <span style="font-size:.68rem;color:var(--muted);min-width:28px;">${pct}%</span>
+        </div>`;
+      }).join('');
+      return `<div style="background:#fff;border-radius:10px;border:1px solid var(--line);padding:16px;display:flex;gap:16px;align-items:flex-start;">
+        <div style="flex-shrink:0;">
+          ${donutChart(g,tots)}
+          <div style="text-align:center;font-size:.68rem;color:var(--muted);margin-top:4px;">${(total/60).toFixed(1)}h / week</div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="width:12px;height:12px;border-radius:50%;background:${g.colour||'#888'};flex-shrink:0;display:inline-block;"></span>
+            <span style="font-weight:700;color:var(--navy);font-size:.9rem;">${g.name}</span>
+          </div>
+          ${catRows||'<span style="font-size:.78rem;color:var(--muted);">No sessions this week</span>'}
+        </div>
+      </div>`;
+    }).join('');
+
+    return `
+      <h2 style="color:var(--navy);font-size:1.05rem;font-weight:700;margin-bottom:4px;">📊 ${label} — Apparatus Time</h2>
+      <p style="color:var(--muted);font-size:.8rem;margin-bottom:16px;">Minutes per squad group per apparatus category across the full week.</p>
+      ${legend()}
+      ${sortChips}
+      <div style="background:#fff;border-radius:10px;border:1px solid var(--line);padding:20px;margin-bottom:20px;">
+        <div style="font-size:.8rem;font-weight:700;color:var(--navy);margin-bottom:12px;">All Groups — Comparative View</div>
+        ${summaryBarChart(totals, sorted, maxTotal)}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;">
+        ${cards}
+      </div>`;
+  }
+
+  const hasWeekB=DATA.groups.some(g=>DAYS.some(day=>(DATA.sessions[day]&&DATA.sessions[day][g.id]||[]).some(s=>s.locationB)));
   let html=`<div class="totals-wrap">`;
   if(hasWeekB){
-    html+=`<div class="totals-week-toggle">
+    html+=`<div class="totals-week-toggle" style="margin-bottom:16px;">
       <button class="totals-week-btn active" id="totals_weekA" onclick="switchTotalsWeek('A')">Week A</button>
       <button class="totals-week-btn" id="totals_weekB" onclick="switchTotalsWeek('B')">Week B</button>
     </div>
-    <div id="totals_tableA">${buildTable(calcTotals('A'),'Week A')}</div>
-    <div id="totals_tableB" style="display:none">${buildTable(calcTotals('B'),'Week B')}</div>`;
+    <div id="totals_tableA">${buildView(calcTotals('A'),'Week A')}</div>
+    <div id="totals_tableB" style="display:none">${buildView(calcTotals('B'),'Week B')}</div>`;
   } else {
-    html+=buildTable(calcTotals(currentWeek), 'Weekly');
+    html+=buildView(calcTotals(currentWeek),'Weekly');
   }
   html+=`</div>`;
   el.innerHTML=html;
@@ -1517,6 +1569,13 @@ function switchTotalsWeek(w){
   document.getElementById('totals_weekB').classList.toggle('active',w==='B');
   document.getElementById('totals_tableA').style.display=w==='A'?'':'none';
   document.getElementById('totals_tableB').style.display=w==='B'?'':'none';
+}
+
+function sortTotals(col){
+  const prev=window._totalsSortCol;
+  window._totalsSortDir=(prev===col&&window._totalsSortDir==='desc')?'asc':'desc';
+  window._totalsSortCol=col;
+  renderWeeklyTotals();
 }
 
 function renderSettings(){
