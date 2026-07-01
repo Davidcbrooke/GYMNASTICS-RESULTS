@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NGL Judge Passport</title>
+<style>
+  :root {
+    --navy:       #0d1b3e;
+    --navy-light: #1e2d56;
+    --red:        #c0392b;
+    --red-hover:  #a93226;
+    --gold:       #d4a017;
+    --gold-light: #f5d87a;
+    --white:      #ffffff;
+    --off-white:  #f4f6f9;
+    --border:     #dde1ea;
+    --grey-light: #edf0f5;
+    --grey-mid:   #8892a4;
+    --text:       #1a1f2e;
+    --font:       'Segoe UI', Arial, sans-serif;
+    --mono:       'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--off-white); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+  /* NAV */
+  .top-nav { background: var(--navy); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 52px; border-bottom: 3px solid var(--red); gap: 8px; overflow-x: auto; }
+  .brand { color: var(--white); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
+  .brand span { display: none; }
+  .nav-tabs { display: flex; flex-shrink: 0; }
+  .nav-tab { background: none; border: none; color: rgba(255,255,255,0.55); padding: 0 12px; height: 52px; font-size: 0.72rem; font-family: var(--font); cursor: pointer; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; border-bottom: 3px solid transparent; margin-bottom: -3px; transition: all 0.15s; white-space: nowrap; }
+  .nav-tab:hover { color: var(--white); }
+  .nav-tab.active { color: var(--white); border-bottom-color: var(--red); }
+  @media (min-width: 600px) {
+    .top-nav { padding: 0 24px; height: 56px; }
+    .brand { font-size: 0.95rem; letter-spacing: 0.08em; }
+    .brand span { display: inline; }
+    .nav-tab { padding: 0 20px; height: 56px; font-size: 0.78rem; letter-spacing: 0.08em; }
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* HERO */
+  .hero { background: var(--navy); padding: 36px 20px 32px; text-align: center; }
+  .hero-kicker { display: inline-block; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; padding: 4px 16px; border-radius: 2px; margin-bottom: 18px; }
+  .hero h1 { color: var(--white); font-size: clamp(1.5rem,5vw,2.6rem); font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .hero h1 em { color: var(--red); font-style: normal; }
+  .hero p { color: rgba(255,255,255,0.6); font-size: 0.88rem; max-width: 540px; margin: 0 auto 22px; line-height: 1.6; }
+  .hero-badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .hero-badge { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 3px; font-size: 0.74rem; font-weight: 500; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 20px 48px; }
+  .eyebrow { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--grey-mid); margin-bottom: 3px; }
+  .sec-title { font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .sec-sub { font-size: 0.79rem; color: var(--grey-mid); margin-bottom: 18px; }
+
+  .loading-bar { display: flex; align-items: center; gap: 10px; padding: 20px; color: var(--grey-mid); font-size: 0.82rem; background: var(--white); border: 1px solid var(--border); }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .card { background: var(--white); border: 1px solid var(--border); }
+  .card-head { background: var(--navy); padding: 15px 20px; border-bottom: 3px solid var(--red); }
+  .card-head h2 { color: var(--white); font-size: 0.92rem; font-weight: 700; }
+  .card-head p { color: rgba(255,255,255,0.45); font-size: 0.73rem; margin-top: 3px; }
+  .card-body { padding: 20px; }
+
+  .fg { margin-bottom: 13px; }
+  .fg label { display: block; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--grey-mid); margin-bottom: 5px; }
+  .fg label .req { color: var(--red); }
+  .fg input, .fg select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 2px; font-size: 0.84rem; font-family: var(--font); color: var(--text); background: var(--white); appearance: none; transition: border-color 0.12s; }
+  .fg input:focus, .fg select:focus { outline: none; border-color: var(--navy); }
+  .fg .hint { font-size: 0.68rem; color: var(--grey-mid); margin-top: 4px; }
+  .form-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 560px) { .form-row2 { grid-template-columns: 1fr; } }
+
+  .btn { border: none; padding: 11px 18px; font-size: 0.82rem; font-weight: 700; font-family: var(--font); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: background 0.12s; }
+  .btn-primary { background: var(--red); color: var(--white); width: 100%; }
+  .btn-primary:hover { background: var(--red-hover); }
+  .btn-primary:disabled { background: var(--grey-mid); cursor: not-allowed; }
+  .btn-navy { background: var(--navy); color: var(--white); }
+  .btn-navy:hover { background: var(--navy-light); }
+  .btn-ghost { background: none; border: 1px solid var(--border); color: var(--grey-mid); }
+  .btn-ghost:hover { border-color: var(--navy); color: var(--navy); }
+  .btn-small { padding: 6px 12px; font-size: 0.7rem; }
+  .btn-full { width: 100%; }
+
+  .err-box { background: #fde8e6; border: 1px solid rgba(192,57,43,0.3); border-left: 3px solid var(--red); border-radius: 2px; padding: 9px 12px; margin-top: 10px; font-size: 0.77rem; color: var(--red); display: none; }
+  .ok-box { background: #e6f4ee; border: 1px solid rgba(39,174,96,0.3); border-left: 3px solid #1a6b3a; border-radius: 2px; padding: 9px 12px; margin-top: 10px; font-size: 0.77rem; color: #1a6b3a; display: none; }
+
+  .auth-toggle { display: flex; margin-bottom: 18px; border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+  .auth-toggle button { flex: 1; background: var(--white); border: none; padding: 10px; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--grey-mid); cursor: pointer; font-family: var(--font); }
+  .auth-toggle button.active { background: var(--navy); color: var(--white); }
+
+  /* PASSPORT CARD */
+  .passport-wrap { max-width: 620px; margin: 0 auto 28px; }
+  .passport-card { background: linear-gradient(135deg, var(--navy) 0%, #16264f 60%, var(--navy-light) 100%); border-radius: 8px; padding: 3px; position: relative; overflow: hidden; box-shadow: 0 8px 28px rgba(13,27,62,0.28); }
+  .passport-card::before { content:''; position:absolute; top:-40%; right:-20%; width:220px; height:220px; background: radial-gradient(circle, rgba(212,160,23,0.18) 0%, transparent 70%); pointer-events:none; }
+  .passport-inner { background: rgba(255,255,255,0.02); border: 1px solid rgba(212,160,23,0.35); border-radius: 6px; padding: 22px 24px; position: relative; }
+  .passport-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+  .passport-kicker { color: var(--gold-light); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; }
+  .passport-name { color: var(--white); font-size: 1.35rem; font-weight: 700; line-height: 1.15; }
+  .passport-club { color: rgba(255,255,255,0.5); font-size: 0.78rem; margin-top: 3px; }
+  .rank-badge { text-align: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(212,160,23,0.4); border-radius: 6px; padding: 10px 14px; min-width: 108px; flex-shrink: 0; }
+  .rank-badge .ri { font-size: 1.9rem; line-height: 1; margin-bottom: 4px; }
+  .rank-badge .rn { color: var(--gold-light); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .passport-qual { display: inline-block; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75); font-size: 0.68rem; font-weight: 600; padding: 3px 10px; border-radius: 10px; margin-top: 8px; }
+  .passport-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 18px; }
+  .pstat { background: rgba(255,255,255,0.05); border-radius: 4px; padding: 9px; text-align: center; }
+  .pstat .pv { color: var(--white); font-size: 1.25rem; font-weight: 700; }
+  .pstat .pl { color: rgba(255,255,255,0.45); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+  .apparatus-title { color: rgba(255,255,255,0.55); font-size: 0.63rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+  .apparatus-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 8px; }
+  .app-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 9px 10px; }
+  .app-badge .an { color: var(--white); font-size: 0.73rem; font-weight: 700; display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
+  .app-bar-track { background: rgba(255,255,255,0.1); border-radius: 3px; height: 5px; overflow: hidden; margin-bottom: 5px; }
+  .app-bar-fill { background: linear-gradient(90deg, var(--red), var(--gold)); height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .app-tier { color: rgba(255,255,255,0.5); font-size: 0.62rem; font-weight: 600; }
+
+  .quiz-strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 13px 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .quiz-strip .qtxt { font-size: 0.82rem; color: var(--navy); }
+  .quiz-strip .qtxt strong { display: block; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grey-mid); margin-bottom: 2px; font-weight: 700; }
+  .quiz-score-pill { background: var(--navy); color: var(--white); font-family: var(--mono); font-size: 0.95rem; font-weight: 700; padding: 6px 16px; border-radius: 3px; white-space: nowrap; }
+
+  /* COMPETITIONS / SIGN-UP */
+  .comp-card { background: var(--white); border: 1px solid var(--border); border-left: 4px solid transparent; margin-bottom: 10px; }
+  .comp-card.signed { border-left-color: var(--red); }
+  .comp-card-header { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; padding: 13px 15px; }
+  .date-badge { background: var(--navy); color: var(--white); text-align: center; padding: 7px 4px; border-radius: 3px; }
+  .date-badge .dbday { font-size: 1.45rem; font-weight: 700; line-height: 1; }
+  .date-badge .dbmon { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .ci-name { font-size: 0.88rem; font-weight: 700; color: var(--navy); }
+  .ci-meta { font-size: 0.73rem; color: var(--grey-mid); margin-top: 4px; }
+  .ci-meta span { margin-right: 12px; }
+  .comp-assign-row { border-top: 1px solid var(--border); padding: 13px 15px; background: #fdf6f5; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .comp-assign-row .fg { margin-bottom: 0; flex: 1; min-width: 140px; }
+  .my-assign-pill { display: inline-flex; align-items: center; gap: 6px; background: #fdf6f5; border: 1px solid rgba(192,57,43,0.25); color: var(--navy); font-size: 0.73rem; font-weight: 700; padding: 4px 10px; border-radius: 12px; margin: 3px 6px 0 0; }
+  .my-assign-pill button { background:none;border:none;color:var(--red);cursor:pointer;font-size:0.75rem;padding:0;font-weight:700; }
+  .no-comps { text-align: center; padding: 56px 20px; color: var(--grey-mid); font-size: 0.86rem; background: var(--white); border: 1px solid var(--border); }
+  .login-gate { text-align: center; padding: 40px 20px; background: var(--white); border: 1px solid var(--border); color: var(--grey-mid); font-size: 0.86rem; }
+  .login-gate strong { color: var(--navy); display:block; font-size: 1rem; margin-bottom: 6px; }
+
+  /* CALENDAR */
+  .cal-comp { background: var(--white); border: 1px solid var(--border); margin-bottom: 10px; cursor: pointer; }
+  .cal-comp-header { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; padding: 13px 15px; }
+  .cal-count { background: var(--grey-light); color: var(--navy); font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: 10px; }
+  .cal-reveal { max-height: 0; overflow: hidden; transition: max-height 0.25s ease; border-top: 1px solid transparent; }
+  .cal-comp.open .cal-reveal { max-height: 800px; border-top: 1px solid var(--border); }
+  .cal-reveal-inner { padding: 14px 18px; }
+  .cal-piece-group { margin-bottom: 12px; }
+  .cal-piece-group:last-child { margin-bottom: 0; }
+  .cal-piece-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--grey-mid); margin-bottom: 6px; }
+  .cal-judge-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.82rem; color: var(--navy); border-bottom: 1px solid var(--grey-light); }
+  .cal-judge-row:last-child { border-bottom: none; }
+  .cal-empty-note { color: var(--grey-mid); font-size: 0.78rem; font-style: italic; }
+
+  .footer { background: var(--navy); border-top: 3px solid var(--red); padding: 20px 24px; text-align: center; margin-top: 40px; }
+  .footer p { color: rgba(255,255,255,0.38); font-size: 0.71rem; line-height: 1.8; }
+  .footer strong { color: rgba(255,255,255,0.65); }
+
+  @media (max-width: 500px) {
+    .hero { padding: 28px 16px 26px; }
+    .hero h1 { font-size: 1.5rem; }
+    .wrap { padding: 20px 14px 36px; }
+    .passport-top { flex-direction: column; }
+    .passport-stats { grid-template-columns: repeat(3,1fr); gap: 6px; }
+    .comp-card-header { grid-template-columns: 48px 1fr auto; gap: 10px; padding: 11px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="brand">NGL <span>Judge Passport</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="window.showPanel('passport',this)">My Passport</button>
+    <button class="nav-tab" onclick="window.showPanel('signup',this)">Judge a Competition</button>
+    <button class="nav-tab" onclick="window.showPanel('calendar',this)">Judging Calendar</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-kicker">National Gymnastics League &middot; Judging Pathway</div>
+  <h1>Every Judge Has a <em>Journey.</em></h1>
+  <p>Register, pick your competitions, and watch your Judge Passport level up every time you step up to the panel.</p>
+  <div class="hero-badges">
+    <div class="hero-badge">&#x1F331; Start as a Novice</div>
+    <div class="hero-badge">&#x1F4C8; Level up piece by piece</div>
+    <div class="hero-badge">&#x1F3C6; Reach Expert status</div>
+  </div>
+</div>
+
+<!-- ══ MY PASSPORT ══ -->
+<div id="panel-passport" class="panel active">
+  <div class="wrap" style="max-width:760px">
+
+    <!-- Logged out: auth forms -->
+    <div id="auth-area">
+      <div class="card" style="max-width:440px;margin:0 auto">
+        <div class="card-head"><h2>Get Your Judge Passport</h2><p>Register once, judge forever</p></div>
+        <div class="card-body">
+          <div class="auth-toggle">
+            <button id="tab-login" class="active" onclick="window.setAuthMode('login')">Sign In</button>
+            <button id="tab-register" onclick="window.setAuthMode('register')">Register</button>
+          </div>
+
+          <!-- LOGIN FORM -->
+          <div id="login-form">
+            <div class="fg"><label>Email <span class="req">*</span></label><input type="email" id="li-email" placeholder="you@example.com"></div>
+            <div class="fg"><label>Password <span class="req">*</span></label><input type="password" id="li-password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"></div>
+            <button class="btn btn-primary" id="btn-login" onclick="window.doLogin()">Sign In &#8594;</button>
+            <div class="err-box" id="login-err"></div>
+          </div>
+
+          <!-- REGISTER FORM -->
+          <div id="register-form" style="display:none">
+            <div class="fg"><label>Full Name <span class="req">*</span></label><input type="text" id="rg-name" placeholder="e.g. Sam Taylor"></div>
+            <div class="fg"><label>Club</label><input type="text" id="rg-club" placeholder="e.g. Northgate Gymnastics Club"></div>
+            <div class="form-row2">
+              <div class="fg"><label>Email <span class="req">*</span></label><input type="email" id="rg-email" placeholder="you@example.com"></div>
+              <div class="fg"><label>Phone <span class="req">*</span></label><input type="tel" id="rg-phone" placeholder="07xxx xxxxxx"></div>
+            </div>
+            <div class="fg"><label>Password <span class="req">*</span></label><input type="password" id="rg-password" placeholder="At least 6 characters"></div>
+            <div class="fg">
+              <label>British Gymnastics Qualification <span class="req">*</span></label>
+              <select id="rg-qual">
+                <option value="None">None yet</option>
+                <option value="Club Judge">Club Judge</option>
+                <option value="Regional Judge">Regional Judge</option>
+                <option value="National Judge">National Judge</option>
+                <option value="Brevet">Brevet</option>
+              </select>
+              <div class="hint">This sets your starting rank on your Judge Passport &mdash; you'll climb from there.</div>
+            </div>
+            <div class="fg">
+              <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:0.8rem;color:var(--navy);font-weight:600">
+                <input type="checkbox" id="rg-training" style="width:auto">
+                I've already completed the NGL online judging training course
+              </label>
+              <div class="hint">Not done it yet? No problem &mdash; you'll register as a Trainee and can mark it complete once you have.</div>
+            </div>
+            <button class="btn btn-primary" id="btn-register" onclick="window.doRegister()">Create My Passport &#8594;</button>
+            <div class="err-box" id="register-err"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logged in: passport -->
+    <div id="passport-area" style="display:none">
+      <div class="quiz-strip" id="trainee-banner" style="display:none;border-left-color:var(--gold)">
+        <div class="qtxt"><strong>&#x1F393; Trainee Status</strong><span>Complete the NGL online judging training course to unlock Level 1 and start signing up to judge.</span></div>
+        <button class="btn btn-navy btn-small" onclick="window.markTrainingComplete()">I've Completed It</button>
+      </div>
+
+      <div class="passport-wrap">
+        <div class="passport-card">
+          <div class="passport-inner">
+            <div class="passport-top">
+              <div>
+                <div class="passport-kicker">NGL Judge Passport</div>
+                <div class="passport-name" id="pp-name">&mdash;</div>
+                <div class="passport-club" id="pp-club"></div>
+                <div class="passport-qual" id="pp-qual"></div>
+              </div>
+              <div class="rank-badge">
+                <div class="ri" id="pp-rank-icon">&#x1F331;</div>
+                <div class="rn" id="pp-rank-name">Novice</div>
+              </div>
+            </div>
+            <div class="passport-stats">
+              <div class="pstat"><div class="pv" id="pp-stat-comps">0</div><div class="pl">Competitions</div></div>
+              <div class="pstat"><div class="pv" id="pp-stat-pieces">0</div><div class="pl">Pieces Judged</div></div>
+              <div class="pstat"><div class="pv" id="pp-stat-quiz">&mdash;</div><div class="pl">Quiz Score</div></div>
+            </div>
+            <div class="apparatus-title">Apparatus Specialisms</div>
+            <div class="apparatus-grid" id="pp-apparatus"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-strip" id="quiz-strip">
+        <div class="qtxt"><strong>NGL Judging Certification</strong><span id="quiz-text">Checking your quiz record&hellip;</span></div>
+        <div class="quiz-score-pill" id="quiz-pill" style="display:none"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-head"><h2>My Upcoming Assignments</h2><p>Where you're on the panel</p></div>
+        <div class="card-body" id="my-assignments">
+          <div class="loading-bar"><div class="spinner"></div> Loading&hellip;</div>
+        </div>
+      </div>
+
+      <button class="btn btn-ghost btn-full" onclick="window.doLogout()">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SIGN UP TO JUDGE ══ -->
+<div id="panel-signup" class="panel">
+  <div class="wrap">
+    <div class="eyebrow">2027 Season</div>
+    <div class="sec-title">Judge a Competition</div>
+    <div class="sec-sub">Pick a competition, choose the piece you'll judge, and it's added straight to the judging calendar.</div>
+
+    <div id="signup-gate" style="display:none">
+      <div class="login-gate"><strong>Sign in to sign up</strong>You need a Judge Passport before you can pick a competition. Head to the "My Passport" tab to register or sign in.</div>
+    </div>
+
+    <div id="training-gate" style="display:none">
+      <div class="login-gate"><strong>&#x1F393; Complete your training first</strong>You're registered as a Trainee. Finish the NGL online judging training course, then mark it complete on your Passport tab to unlock competition sign-up.</div>
+    </div>
+
+    <div id="signup-list">
+      <div class="loading-bar"><div class="spinner"></div> Loading competitions&hellip;</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ JUDGING CALENDAR ══ -->
+<div id="panel-calendar" class="panel">
+  <div class="wrap">
+    <div class="eyebrow">Live &middot; Updates in Real Time</div>
+    <div class="sec-title">Judging Calendar</div>
+    <div class="sec-sub">Tap a competition to see who's judging what.</div>
+    <div id="calendar-list">
+      <div class="loading-bar"><div class="spinner"></div> Loading calendar&hellip;</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <p><strong>National Gymnastics League</strong> &middot; Judge Passport<br>
+  Register &middot; Judge &middot; Level Up</p>
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {
+  getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc,
+  deleteDoc, onSnapshot, query, orderBy, where
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  onAuthStateChanged, signOut
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+// ══ FIREBASE CONFIG (shared NGL project) ══
+const firebaseConfig = {
+  apiKey:            "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
+  authDomain:        "saadi-rotation.firebaseapp.com",
+  databaseURL:       "https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "saadi-rotation",
+  storageBucket:     "saadi-rotation.firebasestorage.app",
+  messagingSenderId: "1066734803675",
+  appId:             "1:1066734803675:web:0188fd601adea7db08cafe"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+const compsCol   = collection(db, 'ngl_competitions');
+const judgesCol  = collection(db, 'ngl_judges');
+const assignCol  = collection(db, 'ngl_judging_assignments');
+const quizCol    = collection(db, 'ngl_judging_results');
+
+// ══ APPARATUS DEFINITIONS ══
+const WAG_PIECES = ['Vault', 'Uneven Bars', 'Beam', 'Floor'];
+const MAG_PIECES = ['Floor', 'Pommel Horse', 'Rings', 'Vault', 'Parallel Bars', 'High Bar'];
+
+// ══ RANK DEFINITIONS ══
+const RANKS = {
+  trainee: { icon: '\u{1F393}', name: 'Trainee' },
+  novice:  { icon: '\u{1F331}', name: 'Novice' },
+  second:  { icon: '\u{1F949}', name: 'Second Judge' },
+  judge:   { icon: '\u{1F948}', name: 'Judge' },
+  senior:  { icon: '\u{1F396}\uFE0F', name: 'Senior Judge' },
+  panel:   { icon: '\u{1F3C5}', name: 'Panel Judge' },
+  expert:  { icon: '\u{1F3C6}', name: 'Expert Judge' }
+};
+
+function calcRank(qualification, compsJudged, trainingCompleted) {
+  if (!trainingCompleted) return RANKS.trainee;
+  if (qualification === 'Brevet') return RANKS.expert;
+  if (compsJudged >= 5) return RANKS.expert;
+  if (qualification === 'National Judge') return RANKS.panel;
+  if (qualification === 'Regional Judge') return compsJudged >= 3 ? RANKS.senior : RANKS.judge;
+  if (qualification === 'Club Judge') return RANKS.second;
+  return RANKS.novice;
+}
+
+function calcSpecialism(count) {
+  if (count >= 5) return { tier: 'Expert', icon: '\u{1F3C6}', pct: 100 };
+  if (count >= 3) return { tier: 'Skilled', icon: '\u{1F948}', pct: Math.min(100, (count/5)*100) };
+  if (count >= 1) return { tier: 'Developing', icon: '\u{1F949}', pct: Math.min(100, (count/5)*100) };
+  return { tier: 'Novice', icon: '\u{1F331}', pct: 0 };
+}
+
+// ══ STATE ══
+let allComps       = [];
+let allAssignments  = [];
+let currentUser     = null;
+let currentProfile  = null;
+let authMode        = 'login';
+
+// ══ NAV ══
+window.showPanel = function(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'signup') renderSignupList();
+};
+
+window.setAuthMode = function(mode) {
+  authMode = mode;
+  document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+  document.getElementById('tab-register').classList.toggle('active', mode === 'register');
+  document.getElementById('login-form').style.display = mode === 'login' ? 'block' : 'none';
+  document.getElementById('register-form').style.display = mode === 'register' ? 'block' : 'none';
+};
+
+// ══ AUTH ══
+window.doRegister = async function() {
+  const name   = document.getElementById('rg-name').value.trim();
+  const club   = document.getElementById('rg-club').value.trim();
+  const email  = document.getElementById('rg-email').value.trim();
+  const phone  = document.getElementById('rg-phone').value.trim();
+  const pw     = document.getElementById('rg-password').value;
+  const qual   = document.getElementById('rg-qual').value;
+  const trainingCompleted = document.getElementById('rg-training').checked;
+  const errBox = document.getElementById('register-err');
+  errBox.style.display = 'none';
+
+  if (!name)                return showAuthErr('register-err', 'Please enter your name.');
+  if (!email || !email.includes('@')) return showAuthErr('register-err', 'Please enter a valid email.');
+  if (!phone)                return showAuthErr('register-err', 'Please enter a contact phone number.');
+  if (!pw || pw.length < 6)  return showAuthErr('register-err', 'Password must be at least 6 characters.');
+
+  const btn = document.getElementById('btn-register');
+  btn.disabled = true; btn.textContent = 'Creating your passport\u2026';
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pw);
+    await setDoc(doc(db, 'ngl_judges', cred.user.uid), {
+      name, club, email, phone, qualification: qual, trainingCompleted, createdAt: new Date().toISOString()
+    });
+    // onAuthStateChanged will pick up the rest
+  } catch (e) {
+    showAuthErr('register-err', friendlyAuthError(e));
+  }
+  btn.disabled = false; btn.textContent = 'Create My Passport \u2192';
+};
+
+window.doLogin = async function() {
+  const email = document.getElementById('li-email').value.trim();
+  const pw    = document.getElementById('li-password').value;
+  if (!email || !pw) return showAuthErr('login-err', 'Please enter your email and password.');
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'Signing in\u2026';
+  try {
+    await signInWithEmailAndPassword(auth, email, pw);
+  } catch (e) {
+    showAuthErr('login-err', friendlyAuthError(e));
+  }
+  btn.disabled = false; btn.textContent = 'Sign In \u2192';
+};
+
+window.doLogout = async function() { await signOut(auth); };
+
+window.markTrainingComplete = async function() {
+  if (!currentUser) return;
+  try {
+    await updateDoc(doc(db, 'ngl_judges', currentUser.uid), { trainingCompleted: true });
+    currentProfile.trainingCompleted = true;
+    renderPassport();
+    renderSignupList();
+  } catch (e) {
+    alert('Could not update your training status: ' + e.message);
+  }
+};
+
+function showAuthErr(id, msg) {
+  const e = document.getElementById(id);
+  e.textContent = msg; e.style.display = 'block';
+}
+function friendlyAuthError(e) {
+  const c = e.code || '';
+  if (c.includes('email-already-in-use')) return 'That email already has a Judge Passport. Try signing in instead.';
+  if (c.includes('invalid-credential') || c.includes('wrong-password') || c.includes('user-not-found')) return 'Email or password not recognised.';
+  if (c.includes('weak-password')) return 'Password must be at least 6 characters.';
+  return 'Something went wrong: ' + e.message;
+}
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  if (user) {
+    const snap = await getDoc(doc(db, 'ngl_judges', user.uid));
+    currentProfile = snap.exists() ? snap.data() : null;
+    document.getElementById('auth-area').style.display = 'none';
+    document.getElementById('passport-area').style.display = 'block';
+    document.getElementById('signup-gate').style.display = 'none';
+    renderPassport();
+    loadQuizLink();
+  } else {
+    currentProfile = null;
+    document.getElementById('auth-area').style.display = 'block';
+    document.getElementById('passport-area').style.display = 'none';
+    document.getElementById('signup-gate').style.display = 'block';
+  }
+  renderSignupList();
+});
+
+// ══ LIVE DATA ══
+onSnapshot(query(compsCol, orderBy('date')), snap => {
+  allComps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderCalendar();
+  renderSignupList();
+});
+
+onSnapshot(assignCol, snap => {
+  allAssignments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderCalendar();
+  renderSignupList();
+  if (currentUser) { renderPassport(); renderMyAssignments(); }
+});
+
+// ══ PASSPORT RENDER ══
+function renderPassport() {
+  if (!currentProfile) return;
+  document.getElementById('pp-name').textContent = currentProfile.name || '\u2014';
+  document.getElementById('pp-club').textContent = currentProfile.club || '';
+  document.getElementById('pp-qual').textContent = 'BG: ' + (currentProfile.qualification || 'None');
+
+  const mine = allAssignments.filter(a => a.judgeUid === currentUser.uid);
+  const compsJudged = new Set(mine.map(a => a.compId)).size;
+  const trainingCompleted = currentProfile.trainingCompleted === true;
+  const rank = calcRank(currentProfile.qualification, compsJudged, trainingCompleted);
+
+  document.getElementById('trainee-banner').style.display = trainingCompleted ? 'none' : 'flex';
+
+  document.getElementById('pp-rank-icon').textContent = rank.icon;
+  document.getElementById('pp-rank-name').textContent = rank.name;
+  document.getElementById('pp-stat-comps').textContent = compsJudged;
+  document.getElementById('pp-stat-pieces').textContent = mine.length;
+
+  // apparatus badges
+  const allPieces = [...new Set([...WAG_PIECES, ...MAG_PIECES])];
+  const el = document.getElementById('pp-apparatus');
+  el.innerHTML = allPieces.map(piece => {
+    const count = mine.filter(a => a.piece === piece).length;
+    const s = calcSpecialism(count);
+    return '<div class="app-badge">' +
+      '<div class="an">' + s.icon + ' ' + piece + '</div>' +
+      '<div class="app-bar-track"><div class="app-bar-fill" style="width:' + s.pct + '%"></div></div>' +
+      '<div class="app-tier">' + s.tier + (count ? ' &middot; ' + count + 'x' : '') + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function renderMyAssignments() {
+  const el = document.getElementById('my-assignments');
+  const mine = allAssignments.filter(a => a.judgeUid === currentUser.uid)
+    .sort((a,b) => (a.compDate||'').localeCompare(b.compDate||''));
+  if (!mine.length) {
+    el.innerHTML = '<div class="cal-empty-note">No assignments yet &mdash; head to "Judge a Competition" to get on the panel.</div>';
+    return;
+  }
+  el.innerHTML = mine.map(a => {
+    const d = a.compDate ? new Date(a.compDate + 'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    return '<div class="comp-card signed" style="margin-bottom:8px">' +
+      '<div class="comp-card-header">' +
+      '<div class="date-badge"><div class="dbday">' + (a.compDate ? new Date(a.compDate+'T00:00:00').getDate() : '-') + '</div><div class="dbmon">' + (a.compDate ? new Date(a.compDate+'T00:00:00').toLocaleString('en-GB',{month:'short'}).toUpperCase() : '') + '</div></div>' +
+      '<div><div class="ci-name">' + a.compName + '</div><div class="ci-meta"><span>' + a.piece + '</span><span>' + (a.compVenue||'') + '</span></div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +
+      '<button class="btn btn-navy btn-small" onclick="window.downloadICS(\'' + a.id + '\')">+ My Calendar</button>' +
+      '<button class="btn btn-ghost btn-small" onclick="window.cancelAssignment(\'' + a.id + '\')">Cancel</button>' +
+      '</div></div></div>';
+  }).join('');
+}
+
+// ══ QUIZ LINK ══
+async function loadQuizLink() {
+  const textEl = document.getElementById('quiz-text');
+  const pillEl = document.getElementById('quiz-pill');
+  const statEl = document.getElementById('pp-stat-quiz');
+  pillEl.style.display = 'none';
+  textEl.textContent = 'Checking your quiz record\u2026';
+  try {
+    const snap = await getDocs(quizCol);
+    const email = (currentProfile.email || '').toLowerCase().trim();
+    const name  = (currentProfile.name || '').toLowerCase().trim();
+    const match = snap.docs.map(d => d.data()).find(r =>
+      (r.email && r.email.toLowerCase().trim() === email) ||
+      (r.name && r.name.toLowerCase().trim() === name)
+    );
+    if (!match) {
+      textEl.textContent = "No quiz result linked yet \u2014 take the NGL Judging Certification quiz to add your score here.";
+      statEl.textContent = '\u2014';
+      return;
+    }
+    let scoreText = '';
+    if (typeof match.score === 'number' && typeof match.totalQuestions === 'number') {
+      scoreText = match.score + '/' + match.totalQuestions;
+      statEl.textContent = Math.round((match.score/match.totalQuestions)*100) + '%';
+    } else if (typeof match.percentage === 'number') {
+      scoreText = match.percentage + '%';
+      statEl.textContent = match.percentage + '%';
+    } else if (typeof match.score === 'number') {
+      scoreText = String(match.score);
+      statEl.textContent = String(match.score);
+    } else {
+      scoreText = 'Linked';
+      statEl.textContent = '\u2713';
+    }
+    textEl.textContent = 'Certification quiz linked to your passport.';
+    pillEl.textContent = scoreText;
+    pillEl.style.display = 'inline-block';
+  } catch (e) {
+    textEl.textContent = "Couldn't check your quiz record right now.";
+  }
+}
+
+// ══ SIGN-UP TO JUDGE ══
+function piecesFor(comp, discipline) {
+  if (discipline === 'MAG') return MAG_PIECES;
+  return WAG_PIECES;
+}
+
+function renderSignupList() {
+  const el = document.getElementById('signup-list');
+  const gateEl = document.getElementById('signup-gate');
+  const trainingGateEl = document.getElementById('training-gate');
+
+  if (!currentUser) {
+    gateEl.style.display = 'block';
+    trainingGateEl.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+  gateEl.style.display = 'none';
+
+  if (currentProfile && currentProfile.trainingCompleted !== true) {
+    trainingGateEl.style.display = 'block';
+    el.innerHTML = '';
+    return;
+  }
+  trainingGateEl.style.display = 'none';
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcoming = allComps.filter(c => new Date(c.date+'T00:00:00') >= today);
+
+  if (!upcoming.length) {
+    el.innerHTML = '<div class="no-comps">No upcoming competitions on the calendar yet. Check back soon.</div>';
+    return;
+  }
+
+  el.innerHTML = upcoming.map(c => {
+    const d = new Date(c.date+'T00:00:00');
+    const mine = currentUser ? allAssignments.filter(a => a.judgeUid === currentUser.uid && a.compId === c.id) : [];
+    const pillsHtml = mine.map(a =>
+      '<span class="my-assign-pill">\u2705 ' + a.piece + ' (' + a.discipline + ') <button onclick="window.cancelAssignment(\'' + a.id + '\')">\u2715</button></span>'
+    ).join('');
+
+    let disciplineControl = '';
+    if (c.gender === 'both') {
+      disciplineControl =
+        '<div class="fg"><label>Discipline</label><select id="disc-' + c.id + '" onchange="window.updatePieceOptions(\'' + c.id + '\')">' +
+        '<option value="WAG">Girls (WAG)</option><option value="MAG">Boys (MAG)</option></select></div>';
+    }
+    const fixedDiscipline = c.gender === 'boys' ? 'MAG' : 'WAG';
+    const pieceOptions = piecesFor(c, c.gender === 'both' ? 'WAG' : fixedDiscipline)
+      .map(p => '<option value="' + p + '">' + p + '</option>').join('');
+
+    const assignRow = currentUser ? (
+      '<div class="comp-assign-row">' +
+      disciplineControl +
+      '<div class="fg"><label>Piece</label><select id="piece-' + c.id + '">' + pieceOptions + '</select></div>' +
+      '<button class="btn btn-primary" style="width:auto" onclick="window.signUpToJudge(\'' + c.id + '\')">Add to Judging Calendar</button>' +
+      '</div>'
+    ) : '';
+
+    return '<div class="comp-card' + (mine.length ? ' signed' : '') + '">' +
+      '<div class="comp-card-header">' +
+      '<div class="date-badge"><div class="dbday">' + d.getDate() + '</div><div class="dbmon">' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase() + '</div></div>' +
+      '<div><div class="ci-name">' + c.name + '</div>' +
+      '<div class="ci-meta"><span>\u{1F4CD} ' + (c.venue||'TBC') + '</span><span>' + (c.level||'') + '</span></div>' +
+      (pillsHtml ? '<div style="margin-top:6px">' + pillsHtml + '</div>' : '') +
+      '</div><div></div></div>' +
+      assignRow +
+      '</div>';
+  }).join('');
+}
+
+window.updatePieceOptions = function(compId) {
+  const discSel = document.getElementById('disc-' + compId);
+  const pieceSel = document.getElementById('piece-' + compId);
+  const pieces = piecesFor(null, discSel.value);
+  pieceSel.innerHTML = pieces.map(p => '<option value="' + p + '">' + p + '</option>').join('');
+};
+
+window.signUpToJudge = async function(compId) {
+  if (!currentUser || !currentProfile) return;
+  const comp = allComps.find(c => c.id === compId);
+  if (!comp) return;
+  const discSel = document.getElementById('disc-' + compId);
+  const discipline = discSel ? discSel.value : (comp.gender === 'boys' ? 'MAG' : 'WAG');
+  const pieceSel = document.getElementById('piece-' + compId);
+  const piece = pieceSel.value;
+
+  const already = allAssignments.find(a => a.judgeUid === currentUser.uid && a.compId === compId && a.piece === piece && a.discipline === discipline);
+  if (already) { alert("You're already down to judge " + piece + " at this competition."); return; }
+
+  try {
+    await addDoc(assignCol, {
+      judgeUid: currentUser.uid,
+      judgeName: currentProfile.name,
+      compId, compName: comp.name, compDate: comp.date, compVenue: comp.venue || '',
+      discipline, piece,
+      assignedAt: new Date().toISOString()
+    });
+  } catch (e) {
+    alert('Could not save your assignment: ' + e.message);
+  }
+};
+
+window.cancelAssignment = async function(id) {
+  if (!confirm('Remove this from the judging calendar?')) return;
+  try { await deleteDoc(doc(db, 'ngl_judging_assignments', id)); }
+  catch (e) { alert('Error removing: ' + e.message); }
+};
+
+// ══ ICS DOWNLOAD ══
+window.downloadICS = function(assignmentId) {
+  const a = allAssignments.find(x => x.id === assignmentId);
+  if (!a) return;
+  const dateStr = (a.compDate || '').replace(/-/g,'');
+  const dtstart = dateStr + 'T090000';
+  const dtend   = dateStr + 'T170000';
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//NGL Judge Passport//EN','BEGIN:VEVENT',
+    'UID:' + a.id + '@ngl-judge-passport',
+    'DTSTART:' + dtstart, 'DTEND:' + dtend,
+    'SUMMARY:Judging \u2013 ' + a.piece + ' (' + a.discipline + ') at ' + a.compName,
+    'LOCATION:' + (a.compVenue || ''),
+    'DESCRIPTION:NGL judging duty. Check the NGL Judge Passport for full details.',
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'NGL-Judging-' + (a.compName||'event').replace(/\s+/g,'-') + '.ics';
+  link.click();
+};
+
+// ══ JUDGING CALENDAR ══
+function renderCalendar() {
+  const el = document.getElementById('calendar-list');
+  if (!allComps.length) {
+    el.innerHTML = '<div class="no-comps">No competitions on the calendar yet.</div>';
+    return;
+  }
+  const sorted = [...allComps].sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  el.innerHTML = sorted.map(c => {
+    const d = new Date(c.date+'T00:00:00');
+    const assigns = allAssignments.filter(a => a.compId === c.id);
+    const pieces = [...new Set(assigns.map(a => a.piece))];
+    const groupsHtml = pieces.length ? pieces.map(p => {
+      const judges = assigns.filter(a => a.piece === p);
+      return '<div class="cal-piece-group"><div class="cal-piece-title">' + p + '</div>' +
+        judges.map(j => '<div class="cal-judge-row">\u{1F9D1}\u200D\u2696\uFE0F ' + j.judgeName + ' <span style="color:var(--grey-mid);font-size:0.72rem">(' + j.discipline + ')</span></div>').join('') +
+        '</div>';
+    }).join('') : '<div class="cal-empty-note">No judges signed up yet for this competition.</div>';
+
+    return '<div class="cal-comp" id="calc-' + c.id + '">' +
+      '<div class="cal-comp-header" onclick="window.toggleCal(\'' + c.id + '\')">' +
+      '<div class="date-badge"><div class="dbday">' + d.getDate() + '</div><div class="dbmon">' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase() + '</div></div>' +
+      '<div><div class="ci-name">' + c.name + '</div><div class="ci-meta"><span>\u{1F4CD} ' + (c.venue||'TBC') + '</span></div></div>' +
+      '<div class="cal-count">' + assigns.length + ' judge' + (assigns.length!==1?'s':'') + '</div>' +
+      '</div>' +
+      '<div class="cal-reveal"><div class="cal-reveal-inner">' + groupsHtml + '</div></div>' +
+      '</div>';
+  }).join('');
+}
+
+window.toggleCal = function(id) {
+  document.getElementById('calc-' + id).classList.toggle('open');
+};
+
+</script>
+</body>
+</html>
