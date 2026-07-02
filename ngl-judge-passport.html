@@ -25,10 +25,11 @@
   body { font-family: var(--font); background: var(--off-white); color: var(--text); min-height: 100vh; font-size: 14px; }
 
   /* NAV */
-  .top-nav { background: var(--navy); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 52px; border-bottom: 3px solid var(--red); gap: 8px; overflow-x: auto; }
+  .top-nav { background: var(--navy); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 52px; border-bottom: 3px solid var(--red); gap: 8px; }
   .brand { color: var(--white); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
   .brand span { display: none; }
-  .nav-tabs { display: flex; flex-shrink: 0; }
+  .nav-tabs { display: flex; flex-shrink: 1; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+  .nav-tabs::-webkit-scrollbar { display: none; }
   .nav-tab { background: none; border: none; color: rgba(255,255,255,0.55); padding: 0 12px; height: 52px; font-size: 0.72rem; font-family: var(--font); cursor: pointer; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; border-bottom: 3px solid transparent; margin-bottom: -3px; transition: all 0.15s; white-space: nowrap; }
   .nav-tab:hover { color: var(--white); }
   .nav-tab.active { color: var(--white); border-bottom-color: var(--red); }
@@ -1676,6 +1677,22 @@ window.deleteResource = async function(id) {
   try { await deleteDoc(doc(db, 'ngl_resources', id)); }
   catch (e) { alert('Error removing: ' + e.message); }
 };
+
+// ══ IFRAME AUTO-RESIZE ══
+// Tells the parent Squarespace page how tall this content actually is,
+// so the embedding <iframe> can match it instead of using a fixed height.
+function sendHeightToParent() {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ nglJudgePassportHeight: document.body.scrollHeight }, '*');
+  }
+}
+window.addEventListener('load', sendHeightToParent);
+window.addEventListener('resize', sendHeightToParent);
+if (window.ResizeObserver) {
+  new ResizeObserver(sendHeightToParent).observe(document.body);
+} else {
+  setInterval(sendHeightToParent, 800);
+}
 
 </script>
 </body>
