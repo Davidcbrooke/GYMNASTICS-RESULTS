@@ -295,6 +295,86 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .mins-val{ font-size:.75rem; font-weight:700; }
 .mins-val.zero{ color:var(--line); }
 .totals-total td{ background:var(--paper); font-weight:700; font-size:.82rem; }
+
+/* =====================================================
+   MOBILE STYLES (max-width: 768px)
+   Desktop styles are completely unaffected
+   ===================================================== */
+@media (max-width: 768px){
+
+  /* Header */
+  header{ padding:8px 12px; gap:8px; flex-wrap:wrap; }
+  header h1{ font-size:.9rem; }
+  header h1 .club-name{ font-size:.78rem; }
+  .header-actions{ flex-wrap:wrap; gap:6px; justify-content:flex-start; flex:none; width:100%; }
+  .header-actions button{ padding:6px 10px; font-size:.72rem; }
+  .header-logo img{ height:28px; }
+  .save-status{ font-size:.65rem; }
+  .week-toggle{ }
+  .week-btn{ padding:5px 8px; font-size:.72rem; }
+
+  /* Sponsor band */
+  .sponsor-band{ height:44px; min-height:44px; max-height:44px; flex:0 0 44px; }
+  .sponsor-band img{ height:28px; margin:0 20px; }
+
+  /* Tabs */
+  .tabs{ padding:0 8px; gap:0; }
+  .tabs button{ padding:8px 10px; font-size:.72rem; }
+
+  /* Hide weekly planner table on mobile, show mobile day view instead */
+  #plannerView .planner-view{ display:none !important; }
+  #mobileDayView{ display:flex !important; }
+
+  /* Settings view */
+  .settings-view{ padding:12px; }
+  .settings-grid{ grid-template-columns:1fr; gap:12px; }
+  .s-panel{ margin-bottom:0; }
+
+  /* Weekly totals cards */
+  .totals-wrap{ padding:0; }
+  #totalsContent{ padding:12px; }
+
+  /* Admin */
+  #adminContent{ font-size:.8rem; }
+  .admin-stats{ grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .admin-stat .num{ font-size:1.5rem; }
+
+  /* Hide go live button, show stream link instead */
+  #liveBtn{ display:none !important; }
+  #mobileLiveLink{ display:flex !important; }
+
+  /* Modals */
+  .modal-box{ margin:16px; max-height:85vh; overflow-y:auto; }
+
+  /* Feedback button */
+  .feedback-btn{ bottom:12px; right:12px; padding:10px 14px; font-size:.8rem; }
+}
+/* Mobile day view — hidden on desktop */
+#mobileDayView{ display:none; flex-direction:column; flex:1; overflow:hidden; background:var(--paper); }
+.mob-day-nav{ background:var(--navy); display:flex; align-items:center; padding:8px 12px; gap:8px; flex:0 0 auto; }
+.mob-day-nav button{ background:rgba(255,255,255,.15); color:#fff; border:none; padding:6px 14px; border-radius:5px; font-weight:700; font-size:.9rem; cursor:pointer; }
+.mob-day-name{ flex:1; text-align:center; color:#fff; font-weight:700; font-size:.95rem; }
+.mob-day-name span{ color:var(--gold); font-size:.72rem; display:block; font-weight:400; }
+.mob-week-toggle{ background:rgba(255,255,255,.1); border-radius:5px; padding:2px 4px; display:flex; gap:2px; }
+.mob-week-btn{ background:none; border:none; color:rgba(255,255,255,.6); padding:4px 8px; border-radius:4px; font-size:.72rem; font-weight:700; cursor:pointer; }
+.mob-week-btn.active{ background:var(--gold); color:var(--navy); }
+.mob-groups{ flex:1; overflow-y:auto; padding:10px 12px; }
+.mob-section-label{ font-size:.65rem; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:1px; padding:8px 2px 4px; }
+.mob-group-card{ background:#fff; border-radius:8px; margin-bottom:8px; overflow:hidden; border:1px solid var(--line); }
+.mob-group-hdr{ display:flex; align-items:center; gap:8px; padding:8px 12px; }
+.mob-group-colour{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.mob-group-name{ font-size:.82rem; font-weight:700; color:var(--navy); flex:1; }
+.mob-sessions{ padding:0 12px 8px; }
+.mob-session{ display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:5px; margin-bottom:3px; }
+.mob-session.current{ border:2px solid var(--navy); }
+.mob-session-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.mob-session-loc{ font-size:.78rem; font-weight:600; color:#333; flex:1; }
+.mob-session-time{ font-size:.68rem; color:var(--muted); white-space:nowrap; }
+.mob-session-dur{ font-size:.65rem; color:var(--muted); }
+.mob-now{ background:var(--red); color:#fff; font-size:.58rem; font-weight:800; padding:2px 6px; border-radius:8px; }
+.mob-empty{ text-align:center; padding:40px 20px; color:var(--muted); font-size:.85rem; }
+#mobileLiveLink{ display:none; align-items:center; justify-content:center; padding:8px 12px; background:var(--navy); flex:0 0 auto; }
+#mobileLiveLink a{ color:var(--gold); font-size:.78rem; font-weight:700; text-decoration:none; }
 </style>
 </head>
 <body>
@@ -389,6 +469,20 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
       <div class="planner-scroll">
         <table class="week-table" id="weekTable"></table>
       </div>
+    </div>
+    <!-- MOBILE DAY VIEW (hidden on desktop, shown on mobile) -->
+    <div id="mobileDayView">
+      <div class="mob-day-nav">
+        <button onclick="mobPrevDay()">&#8592;</button>
+        <div class="mob-day-name" id="mobDayName">Monday<span id="mobWeekLabel">Week A</span></div>
+        <div class="mob-week-toggle">
+          <button class="mob-week-btn active" id="mobWeekABtn" onclick="mobSetWeek('A')">A</button>
+          <button class="mob-week-btn" id="mobWeekBBtn" onclick="mobSetWeek('B')">B</button>
+        </div>
+        <button onclick="mobNextDay()">&#8594;</button>
+      </div>
+      <div id="mobileLiveLink"><a href="#" id="mobLiveLink" target="_blank">&#128247; View Live Rotation &#8594;</a></div>
+      <div class="mob-groups" id="mobGroups"></div>
     </div>
   </div>
 
@@ -797,6 +891,9 @@ auth.onAuthStateChanged(async user=>{
     document.getElementById('feedbackBtn').style.display='flex';
     renderTabs();
     renderWeekTable();
+    mobDayIdx = DAYS.indexOf(getTodayName());
+    if(mobDayIdx < 0) mobDayIdx = 1;
+    window.addEventListener('resize', ()=>{ renderWeekTable(); });
     showToast('📡 Live sync active');
     // clock
     setInterval(()=>{
@@ -1001,6 +1098,7 @@ function setWeek(w){
 // WEEK TABLE
 // ================================================================
 function renderWeekTable(){
+  if(mobIsMobile()){ renderMobDay(); return; }
   const table=document.getElementById('weekTable'); table.innerHTML='';
   const thead=document.createElement('thead');
   const hr=document.createElement('tr');
@@ -1727,6 +1825,108 @@ async function sendFeedback(){
     document.getElementById('feedbackForm').style.display='none';
     document.getElementById('feedbackSuccess').style.display='block';
   }catch(e){ alert('Failed to send — please try again.'); }
+}
+
+// ================================================================
+// MOBILE DAY VIEW
+// ================================================================
+let mobDayIdx = DAYS.indexOf(getTodayName());
+if(mobDayIdx < 0) mobDayIdx = 1; // default Monday
+
+function mobIsMobile(){ return window.innerWidth <= 768; }
+
+function mobPrevDay(){
+  mobDayIdx = (mobDayIdx - 1 + DAYS.length) % DAYS.length;
+  renderMobDay();
+}
+function mobNextDay(){
+  mobDayIdx = (mobDayIdx + 1) % DAYS.length;
+  renderMobDay();
+}
+function mobSetWeek(w){
+  currentWeek = w;
+  document.getElementById('mobWeekABtn').classList.toggle('active', w==='A');
+  document.getElementById('mobWeekBBtn').classList.toggle('active', w==='B');
+  renderMobDay();
+}
+
+function renderMobDay(){
+  if(!mobIsMobile()) return;
+  const day = DAYS[mobDayIdx];
+  const isToday = day === getTodayName();
+  const nowMin = nowMinutes ? nowMinutes() : 0;
+
+  // update header
+  document.getElementById('mobDayName').childNodes[0].textContent = day;
+  document.getElementById('mobWeekLabel').textContent = 'Week ' + currentWeek;
+  document.getElementById('mobWeekABtn').classList.toggle('active', currentWeek==='A');
+  document.getElementById('mobWeekBBtn').classList.toggle('active', currentWeek==='B');
+
+  // set live link
+  const baseUrl = window.location.href.replace(/\/[^\/]*$/, '/');
+  const liveUrl = baseUrl + 'NGL_Live.html?c=' + currentClubId;
+  document.getElementById('mobLiveLink').href = liveUrl;
+
+  const wrap = document.getElementById('mobGroups');
+  wrap.innerHTML = '';
+
+  let hasAny = false;
+  ['squad','recreational'].forEach(section => {
+    const groups = DATA.groups.filter(g => {
+      if(g.section !== section) return false;
+      if(!(g.days||DAYS).includes(day)) return false;
+      return true;
+    });
+    if(!groups.length) return;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'mob-section-label';
+    lbl.textContent = section === 'squad' ? 'Squads' : 'Recreational';
+    wrap.appendChild(lbl);
+
+    groups.forEach(group => {
+      const sessions = (DATA.sessions[day] && DATA.sessions[day][group.id]) || [];
+      const card = document.createElement('div');
+      card.className = 'mob-group-card';
+      const hdr = document.createElement('div');
+      hdr.className = 'mob-group-hdr';
+      hdr.innerHTML = `<span class="mob-group-colour" style="background:${group.colour||'#888'}"></span>
+        <span class="mob-group-name">${group.name}</span>
+        <span style="font-size:.68rem;color:var(--muted);">${sessions.length} session${sessions.length!==1?'s':''}</span>`;
+      card.appendChild(hdr);
+
+      if(sessions.length){
+        const sessWrap = document.createElement('div');
+        sessWrap.className = 'mob-sessions';
+        sessions.forEach(s => {
+          const loc = (currentWeek==='B' && s.locationB) ? s.locationB : s.location;
+          const locData = getLocByName(loc);
+          const bg = locData ? locData.colour : '#888';
+          const isCurrent = isToday && nowMin >= s.start_min && nowMin < s.start_min + s.duration;
+          const isPast = isToday && nowMin >= s.start_min + s.duration;
+          const row = document.createElement('div');
+          row.className = 'mob-session' + (isCurrent ? ' current' : '');
+          row.style.background = isCurrent ? bg + '22' : 'transparent';
+          row.style.opacity = isPast ? '0.45' : '1';
+          row.innerHTML = `<span class="mob-session-dot" style="background:${bg}"></span>
+            <span class="mob-session-loc">${loc}${s.title?' · '+s.title:''}</span>
+            <span class="mob-session-time">${fmtTime(s.start_min)}</span>
+            <span class="mob-session-dur">${s.duration}m</span>
+            ${isCurrent?'<span class="mob-now">NOW</span>':''}`;
+          sessWrap.appendChild(row);
+        });
+        card.appendChild(sessWrap);
+        hasAny = true;
+      }
+      wrap.appendChild(card);
+    });
+  });
+
+  if(!hasAny && DATA.groups.length){
+    wrap.innerHTML = '<div class="mob-empty">No sessions scheduled for ' + day + '</div>';
+  } else if(!DATA.groups.length){
+    wrap.innerHTML = '<div class="mob-empty">No groups set up yet.<br>Go to Groups &amp; Locations to get started.</div>';
+  }
 }
 
 function renderSettings(){
