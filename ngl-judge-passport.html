@@ -105,10 +105,10 @@
   .rank-badge .ri { font-size: 1.9rem; line-height: 1; margin-bottom: 4px; }
   .rank-badge .rn { color: var(--gold-light); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
   .passport-qual { display: inline-block; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75); font-size: 0.68rem; font-weight: 600; padding: 3px 10px; border-radius: 10px; margin-top: 8px; }
-  .passport-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 18px; }
-  .pstat { background: rgba(255,255,255,0.05); border-radius: 4px; padding: 9px; text-align: center; }
-  .pstat .pv { color: var(--white); font-size: 1.25rem; font-weight: 700; }
-  .pstat .pl { color: rgba(255,255,255,0.45); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+  .passport-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 18px; }
+  .pstat { background: rgba(255,255,255,0.05); border-radius: 4px; padding: 9px 6px; text-align: center; }
+  .pstat .pv { color: var(--white); font-size: 1.15rem; font-weight: 700; }
+  .pstat .pl { color: rgba(255,255,255,0.45); font-size: 0.56rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2px; }
   .apparatus-title { color: rgba(255,255,255,0.55); font-size: 0.63rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
   .apparatus-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 8px; }
   .app-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 9px 10px; }
@@ -116,6 +116,47 @@
   .app-bar-track { background: rgba(255,255,255,0.1); border-radius: 3px; height: 5px; overflow: hidden; margin-bottom: 5px; }
   .app-bar-fill { background: linear-gradient(90deg, var(--red), var(--gold)); height: 100%; border-radius: 3px; transition: width 0.4s ease; }
   .app-tier { color: rgba(255,255,255,0.5); font-size: 0.62rem; font-weight: 600; }
+
+  /* AVATAR */
+  .avatar-wrap { position: relative; width: 68px; height: 68px; flex-shrink: 0; }
+  .avatar-img { width: 68px; height: 68px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(212,160,23,0.5); background: rgba(255,255,255,0.08); display: block; }
+  .avatar-placeholder { width: 68px; height: 68px; border-radius: 50%; border: 2px solid rgba(212,160,23,0.5); background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+  .avatar-edit-btn { position: absolute; bottom: -2px; right: -2px; width: 22px; height: 22px; border-radius: 50%; background: var(--red); border: 2px solid var(--navy); color: var(--white); font-size: 0.62rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .passport-id-row { display: flex; gap: 14px; align-items: flex-start; }
+
+  /* PATHWAY */
+  .pathway-wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px 30px; }
+  .pathway-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  @media (max-width: 800px) { .pathway-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .pathway-grid { grid-template-columns: 1fr; } }
+  .pw-card { background: var(--navy); border: 1px solid rgba(212,160,23,0.25); border-radius: 6px; padding: 14px 15px; color: var(--white); }
+  .pw-card .pwi { font-size: 1.6rem; margin-bottom: 4px; }
+  .pw-card .pwn { font-weight: 700; font-size: 0.86rem; color: var(--gold-light); margin-bottom: 2px; }
+  .pw-card .pwu { font-size: 0.68rem; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+  .pw-card ul { list-style: none; padding: 0; margin: 0; }
+  .pw-card li { font-size: 0.71rem; color: rgba(255,255,255,0.75); padding-left: 14px; position: relative; margin-bottom: 4px; line-height: 1.4; }
+  .pw-card li::before { content: '\2713'; position: absolute; left: 0; color: var(--gold-light); }
+  .pw-card .pw-or { font-size: 0.66rem; color: rgba(255,255,255,0.45); font-style: italic; margin-top: 6px; }
+
+  /* PROGRESS CHECKLIST */
+  .progress-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 0.8rem; color: var(--navy); border-bottom: 1px solid var(--grey-light); }
+  .progress-item:last-child { border-bottom: none; }
+  .progress-item .pi-check { font-size: 0.9rem; width: 18px; text-align: center; flex-shrink: 0; }
+  .progress-item.done { color: var(--grey-mid); text-decoration: line-through; }
+
+  /* ROLE PILLS */
+  .role-pill { display: inline-block; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 10px; background: var(--grey-light); color: var(--navy); }
+
+  /* RESOURCES */
+  .res-section-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grey-mid); margin: 22px 0 10px; }
+  .res-section-title:first-child { margin-top: 0; }
+  .res-card { display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--border); border-left: 4px solid var(--gold); padding: 13px 15px; margin-bottom: 8px; }
+  .res-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .res-title { font-size: 0.86rem; font-weight: 700; color: var(--navy); }
+  .res-desc { font-size: 0.75rem; color: var(--grey-mid); margin-top: 2px; }
+  .res-type-toggle { display: flex; gap: 8px; margin-bottom: 10px; }
+  .res-type-toggle button { flex: 1; background: var(--white); border: 1px solid var(--border); padding: 8px; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; border-radius: 2px; color: var(--grey-mid); font-family: var(--font); }
+  .res-type-toggle button.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
 
   .quiz-strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 13px 16px; margin-bottom: 20px; flex-wrap: wrap; }
   .quiz-strip .qtxt { font-size: 0.82rem; color: var(--navy); }
@@ -158,6 +199,52 @@
   .footer p { color: rgba(255,255,255,0.38); font-size: 0.71rem; line-height: 1.8; }
   .footer strong { color: rgba(255,255,255,0.65); }
 
+  /* STATUS PILLS */
+  .status-pill { display: inline-block; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 9px; border-radius: 10px; }
+  .status-pill.pending   { background: #fff3e0; color: #b06000; }
+  .status-pill.confirmed { background: #e6f4ee; color: #1a6b3a; }
+  .status-pill.declined  { background: #fde8e6; color: var(--red); }
+
+  /* NOTIFICATIONS */
+  .notif-item { display: flex; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--grey-light); font-size: 0.8rem; color: var(--navy); }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-item .ni-icon { font-size: 1.1rem; flex-shrink: 0; }
+  .notif-item .ni-time { color: var(--grey-mid); font-size: 0.68rem; margin-top: 3px; }
+
+  /* ADMIN */
+  .admin-login-wrap { max-width: 380px; margin: 60px auto; background: var(--white); border: 1px solid var(--border); }
+  .al-head { background: var(--navy); border-bottom: 3px solid var(--red); padding: 16px 22px; color: var(--white); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; }
+  .al-head p { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 3px; font-weight: 400; letter-spacing: 0; }
+  .al-body { padding: 22px; }
+  .al-err { color: var(--red); font-size: 0.77rem; margin-top: 8px; display: none; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 22px; }
+  @media (max-width: 580px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+  .stat-tile { background: var(--white); border: 1px solid var(--border); border-top: 3px solid var(--navy); padding: 13px 15px; }
+  .sv { font-size: 1.85rem; font-weight: 700; color: var(--navy); line-height: 1; }
+  .sv.red { color: var(--red); }
+  .sl { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--grey-mid); margin-top: 5px; }
+
+  .table-toolbar { padding: 11px 17px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--grey-light); }
+  .table-toolbar input, .table-toolbar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 2px; font-size: 0.79rem; font-family: var(--font); background: var(--white); appearance: none; }
+  .table-toolbar input { width: 200px; }
+  .app-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto auto; gap: 10px; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--grey-light); font-size: 0.79rem; }
+  .app-row:last-child { border-bottom: none; }
+  @media (max-width: 900px) { .app-row { grid-template-columns: 1fr; gap: 4px; } }
+  .app-row .aj-name { font-weight: 700; color: var(--navy); }
+  .app-row .aj-meta { color: var(--grey-mid); font-size: 0.72rem; }
+  .no-rows { text-align: center; padding: 40px; color: var(--grey-mid); font-size: 0.84rem; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(13,27,62,0.6); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border: 1px solid var(--border); width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; margin: 20px; }
+  .modal-head { background: var(--navy); border-bottom: 3px solid var(--red); padding: 14px 18px; color: var(--white); font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+  .modal-close { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 1.2rem; cursor: pointer; padding: 0 4px; line-height: 1; }
+  .modal-close:hover { color: var(--white); }
+  .modal-body { padding: 18px; }
+  .modal-footer { padding: 14px 18px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; background: var(--grey-light); }
+
   @media (max-width: 500px) {
     .hero { padding: 28px 16px 26px; }
     .hero h1 { font-size: 1.5rem; }
@@ -175,7 +262,10 @@
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="window.showPanel('passport',this)">My Passport</button>
     <button class="nav-tab" onclick="window.showPanel('signup',this)">Judge a Competition</button>
+    <button class="nav-tab" onclick="window.showPanel('quiz',this)">Judging Test</button>
     <button class="nav-tab" onclick="window.showPanel('calendar',this)">Judging Calendar</button>
+    <button class="nav-tab" onclick="window.showPanel('resources',this)">Resources</button>
+    <button class="nav-tab" onclick="window.showPanel('admin',this)">Admin &#x1F512;</button>
   </div>
 </nav>
 
@@ -184,9 +274,44 @@
   <h1>Every Judge Has a <em>Journey.</em></h1>
   <p>Register, pick your competitions, and watch your Judge Passport level up every time you step up to the panel.</p>
   <div class="hero-badges">
-    <div class="hero-badge">&#x1F331; Start as a Novice</div>
-    <div class="hero-badge">&#x1F4C8; Level up piece by piece</div>
-    <div class="hero-badge">&#x1F3C6; Reach Expert status</div>
+    <div class="hero-badge">&#x1F393; Start at Trainee Judge</div>
+    <div class="hero-badge">&#x1F4C8; Level up with every duty</div>
+    <div class="hero-badge">&#x1F3C6; Reach Expert Judge status</div>
+  </div>
+</div>
+
+<div class="pathway-wrap">
+  <div class="eyebrow" style="margin-top:26px">The Journey</div>
+  <div class="sec-title">The NGL Judging Pathway</div>
+  <div class="sec-sub">Four levels. Every one earned by doing the job &mdash; or fast-tracked with a British Gymnastics qualification.</div>
+  <div class="pathway-grid">
+    <div class="pw-card">
+      <div class="pwi">&#x1F393;</div>
+      <div class="pwn">1. Trainee Judge</div>
+      <div class="pwu">Unlocks: Shadowing</div>
+      <ul><li>Everyone starts here</li><li>No qualifications needed</li></ul>
+    </div>
+    <div class="pw-card">
+      <div class="pwi">&#x1F331;</div>
+      <div class="pwn">2. Novice Judge</div>
+      <div class="pwu">Unlocks: Second Judge</div>
+      <ul><li>NGL training course</li><li>Quiz score 70%+</li><li>Shadowed 2+ competitions</li></ul>
+      <div class="pw-or">or: BG Club Judge + training + 80%+ quiz</div>
+    </div>
+    <div class="pw-card">
+      <div class="pwi">&#x1F948;</div>
+      <div class="pwn">3. Accredited Judge</div>
+      <div class="pwu">Unlocks: Full Judge</div>
+      <ul><li>Quiz score 90%+</li><li>Second-judged 5+ competitions</li><li>NGL training course</li></ul>
+      <div class="pw-or">or: BG Regional Judge + training</div>
+    </div>
+    <div class="pw-card">
+      <div class="pwi">&#x1F3C6;</div>
+      <div class="pwn">4. Expert Judge</div>
+      <div class="pwu">The top of the pathway</div>
+      <ul><li>All Accredited criteria</li><li>Judged 5+ comps on one piece</li></ul>
+      <div class="pw-or">or: BG National/Brevet + training</div>
+    </div>
   </div>
 </div>
 
@@ -222,22 +347,34 @@
             </div>
             <div class="fg"><label>Password <span class="req">*</span></label><input type="password" id="rg-password" placeholder="At least 6 characters"></div>
             <div class="fg">
-              <label>British Gymnastics Qualification <span class="req">*</span></label>
-              <select id="rg-qual">
+              <label>British Gymnastics Qualification</label>
+              <select id="rg-qual" onchange="window.togglePriorExperience()">
                 <option value="None">None yet</option>
                 <option value="Club Judge">Club Judge</option>
                 <option value="Regional Judge">Regional Judge</option>
                 <option value="National Judge">National Judge</option>
                 <option value="Brevet">Brevet</option>
               </select>
-              <div class="hint">This sets your starting rank on your Judge Passport &mdash; you'll climb from there.</div>
+              <div class="hint">A BG qualification can fast-track your NGL level &mdash; but you'll still need the NGL training course either way.</div>
+            </div>
+            <div id="rg-prior-wrap" style="display:none">
+              <div class="form-row2">
+                <div class="fg"><label>Second-Judged Before?</label><input type="number" id="rg-prior-second" min="0" value="0"></div>
+                <div class="fg"><label>Primary-Judged Before?</label><input type="number" id="rg-prior-judge" min="0" value="0"></div>
+              </div>
+              <div class="hint" style="margin-top:-8px;margin-bottom:13px">How many competitions have you already second-judged or primary-judged (outside NGL)? This counts toward your NGL level.</div>
             </div>
             <div class="fg">
               <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:0.8rem;color:var(--navy);font-weight:600">
                 <input type="checkbox" id="rg-training" style="width:auto">
                 I've already completed the NGL online judging training course
               </label>
-              <div class="hint">Not done it yet? No problem &mdash; you'll register as a Trainee and can mark it complete once you have.</div>
+              <div class="hint">Not done it yet? No problem &mdash; you'll register as a Trainee Judge and can mark it complete once you have.</div>
+            </div>
+            <div class="fg">
+              <label>Passport Photo</label>
+              <input type="file" id="rg-photo" accept="image/*">
+              <div class="hint">Optional &mdash; you can add this later from your Passport too.</div>
             </div>
             <button class="btn btn-primary" id="btn-register" onclick="window.doRegister()">Create My Passport &#8594;</button>
             <div class="err-box" id="register-err"></div>
@@ -248,29 +385,33 @@
 
     <!-- Logged in: passport -->
     <div id="passport-area" style="display:none">
-      <div class="quiz-strip" id="trainee-banner" style="display:none;border-left-color:var(--gold)">
-        <div class="qtxt"><strong>&#x1F393; Trainee Status</strong><span>Complete the NGL online judging training course to unlock Level 1 and start signing up to judge.</span></div>
-        <button class="btn btn-navy btn-small" onclick="window.markTrainingComplete()">I've Completed It</button>
-      </div>
+      <input type="file" id="rg-photo-edit" accept="image/*" style="display:none" onchange="window.uploadPhoto(this)">
 
       <div class="passport-wrap">
         <div class="passport-card">
           <div class="passport-inner">
             <div class="passport-top">
-              <div>
-                <div class="passport-kicker">NGL Judge Passport</div>
-                <div class="passport-name" id="pp-name">&mdash;</div>
-                <div class="passport-club" id="pp-club"></div>
-                <div class="passport-qual" id="pp-qual"></div>
+              <div class="passport-id-row">
+                <div class="avatar-wrap">
+                  <div id="pp-avatar-holder"><div class="avatar-placeholder">&#x1F93D;</div></div>
+                  <div class="avatar-edit-btn" onclick="document.getElementById('rg-photo-edit').click()">&#x270F;&#xFE0F;</div>
+                </div>
+                <div>
+                  <div class="passport-kicker">NGL Judge Passport</div>
+                  <div class="passport-name" id="pp-name">&mdash;</div>
+                  <div class="passport-club" id="pp-club"></div>
+                  <div class="passport-qual" id="pp-qual"></div>
+                </div>
               </div>
               <div class="rank-badge">
-                <div class="ri" id="pp-rank-icon">&#x1F331;</div>
-                <div class="rn" id="pp-rank-name">Novice</div>
+                <div class="ri" id="pp-rank-icon">&#x1F393;</div>
+                <div class="rn" id="pp-rank-name">Trainee Judge</div>
               </div>
             </div>
             <div class="passport-stats">
-              <div class="pstat"><div class="pv" id="pp-stat-comps">0</div><div class="pl">Competitions</div></div>
-              <div class="pstat"><div class="pv" id="pp-stat-pieces">0</div><div class="pl">Pieces Judged</div></div>
+              <div class="pstat"><div class="pv" id="pp-stat-shadow">0</div><div class="pl">Shadowed</div></div>
+              <div class="pstat"><div class="pv" id="pp-stat-second">0</div><div class="pl">2nd Judged</div></div>
+              <div class="pstat"><div class="pv" id="pp-stat-judged">0</div><div class="pl">Judged</div></div>
               <div class="pstat"><div class="pv" id="pp-stat-quiz">&mdash;</div><div class="pl">Quiz Score</div></div>
             </div>
             <div class="apparatus-title">Apparatus Specialisms</div>
@@ -279,9 +420,21 @@
         </div>
       </div>
 
+      <div class="card" style="margin-bottom:16px" id="progress-card">
+        <div class="card-head"><h2 id="progress-title">Next Level</h2><p id="progress-sub">What's left to progress</p></div>
+        <div class="card-body" id="progress-list" style="padding:0"></div>
+      </div>
+
       <div class="quiz-strip" id="quiz-strip">
         <div class="qtxt"><strong>NGL Judging Certification</strong><span id="quiz-text">Checking your quiz record&hellip;</span></div>
         <div class="quiz-score-pill" id="quiz-pill" style="display:none"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px" id="notif-card">
+        <div class="card-head"><h2>Notifications</h2><p>Booking confirmations from NGL</p></div>
+        <div class="card-body" id="notif-list" style="padding:0">
+          <div class="no-rows">No notifications yet.</div>
+        </div>
       </div>
 
       <div class="card" style="margin-bottom:16px">
@@ -307,12 +460,62 @@
       <div class="login-gate"><strong>Sign in to sign up</strong>You need a Judge Passport before you can pick a competition. Head to the "My Passport" tab to register or sign in.</div>
     </div>
 
-    <div id="training-gate" style="display:none">
-      <div class="login-gate"><strong>&#x1F393; Complete your training first</strong>You're registered as a Trainee. Finish the NGL online judging training course, then mark it complete on your Passport tab to unlock competition sign-up.</div>
-    </div>
-
     <div id="signup-list">
       <div class="loading-bar"><div class="spinner"></div> Loading competitions&hellip;</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ JUDGING TEST ══ -->
+<div id="panel-quiz" class="panel">
+  <div class="wrap" style="max-width:640px">
+    <div class="eyebrow">NGL Certification</div>
+    <div class="sec-title">The NGL Judging Test</div>
+    <div class="sec-sub">Six sections covering judging technique and using Elevien. Answers aren't revealed if you get something wrong &mdash; just whether you were right.</div>
+
+    <div id="quiz-gate" style="display:none">
+      <div class="login-gate"><strong>Sign in to take the test</strong>You need a Judge Passport to take the NGL Judging Test. Head to "My Passport" to register or sign in.</div>
+    </div>
+
+    <div id="quiz-start" style="display:none">
+      <div class="card">
+        <div class="card-head"><h2>Ready when you are</h2><p id="quiz-start-sub">24 questions across 6 sections</p></div>
+        <div class="card-body">
+          <div class="pathway-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px" id="quiz-section-preview"></div>
+          <button class="btn btn-primary" onclick="window.startQuiz()">Start Test &#8594;</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="quiz-active" style="display:none">
+      <div class="card">
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span class="role-pill" id="quiz-section-tag">Execution</span>
+            <span style="font-size:0.75rem;color:var(--grey-mid)" id="quiz-progress-text">Question 1 of 24</span>
+          </div>
+          <div class="app-bar-track" style="background:var(--grey-light);margin-bottom:18px"><div class="app-bar-fill" id="quiz-progress-bar" style="width:0%"></div></div>
+          <div style="font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:16px" id="quiz-question-text"></div>
+          <div id="quiz-options"></div>
+          <div id="quiz-feedback" style="display:none;margin-top:12px;padding:10px 14px;border-radius:2px;font-size:0.85rem;font-weight:700"></div>
+          <button class="btn btn-navy btn-full" id="quiz-next-btn" style="display:none;margin-top:14px" onclick="window.nextQuizQuestion()">Next Question &#8594;</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="quiz-result" style="display:none">
+      <div class="passport-wrap" style="max-width:100%">
+        <div class="passport-card">
+          <div class="passport-inner" style="text-align:center">
+            <div style="font-size:2.4rem;margin-bottom:8px" id="quiz-result-icon">&#x1F3C6;</div>
+            <div style="color:var(--gold-light);font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px" id="quiz-result-grade">Pass</div>
+            <div style="color:var(--white);font-size:2rem;font-weight:700;margin-bottom:4px" id="quiz-result-pct">0%</div>
+            <div style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:18px" id="quiz-result-fraction">0 / 0 correct</div>
+            <div class="apparatus-grid" id="quiz-result-categories"></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="window.startQuiz()">Retake Test</button>
     </div>
   </div>
 </div>
@@ -329,6 +532,104 @@
   </div>
 </div>
 
+<!-- ══ RESOURCES ══ -->
+<div id="panel-resources" class="panel">
+  <div class="wrap" style="max-width:760px">
+    <div class="eyebrow">Reference Library</div>
+    <div class="sec-title">Judge Resources</div>
+    <div class="sec-sub">Rulebooks, guides, and links to British Gymnastics courses.</div>
+    <div id="resources-list">
+      <div class="loading-bar"><div class="spinner"></div> Loading resources&hellip;</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN ══ -->
+<div id="panel-admin" class="panel">
+
+  <div class="admin-login-wrap" id="admin-login">
+    <div class="al-head">&#x1F510; Admin Login<p>NGL Judge Passport &mdash; Administrator Access</p></div>
+    <div class="al-body">
+      <div class="fg"><label>Password</label><input type="password" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')window.adminLogin()"></div>
+      <button class="btn btn-navy btn-full" onclick="window.adminLogin()">Sign In</button>
+      <div class="al-err" id="al-err">Incorrect password. Please try again.</div>
+    </div>
+  </div>
+
+  <div class="wrap" id="admin-dash" style="display:none">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
+      <div><div class="sec-title" style="margin-bottom:2px">Judging Applications</div><div class="sec-sub" style="margin-bottom:0">Review, accept, and confirm judges for each competition</div></div>
+      <button class="btn btn-ghost btn-small" onclick="window.adminLogout()">Sign Out</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-tile"><div class="sv" id="stat-pending">&#x2014;</div><div class="sl">Pending</div></div>
+      <div class="stat-tile"><div class="sv" id="stat-confirmed">&#x2014;</div><div class="sl">Confirmed</div></div>
+      <div class="stat-tile"><div class="sv" id="stat-judges">&#x2014;</div><div class="sl">Registered Judges</div></div>
+      <div class="stat-tile"><div class="sv red" id="stat-total">&#x2014;</div><div class="sl">Total Applications</div></div>
+    </div>
+
+    <div class="card">
+      <div class="table-toolbar">
+        <input type="text" id="app-search" placeholder="Search judge or competition&hellip;" oninput="window.renderAdminApplications()">
+        <select id="app-filter" onchange="window.renderAdminApplications()">
+          <option value="pending">Pending only</option>
+          <option value="confirmed">Confirmed only</option>
+          <option value="declined">Declined only</option>
+          <option value="">All applications</option>
+        </select>
+      </div>
+      <div id="admin-app-list"><div class="loading-bar"><div class="spinner"></div> Loading&hellip;</div></div>
+    </div>
+
+    <div class="card" style="margin-top:22px">
+      <div class="card-head"><h2>Manage Resources</h2><p>Upload documents or add links for judges to access</p></div>
+      <div class="card-body">
+        <div class="res-type-toggle">
+          <button id="res-type-file" class="active" onclick="window.setResourceType('file')">Upload Document</button>
+          <button id="res-type-link" onclick="window.setResourceType('link')">Add Link</button>
+        </div>
+        <div class="fg"><label>Title</label><input type="text" id="res-title" placeholder="e.g. NGL 2027 WAG Rules"></div>
+        <div class="fg"><label>Description</label><input type="text" id="res-desc" placeholder="Short description shown to judges"></div>
+        <div class="fg">
+          <label>Category</label>
+          <select id="res-category">
+            <option value="Rules & Handbooks">Rules &amp; Handbooks</option>
+            <option value="BG Courses & Links">BG Courses &amp; Links</option>
+            <option value="Templates & Forms">Templates &amp; Forms</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="fg" id="res-file-field"><label>File</label><input type="file" id="res-file"></div>
+        <div class="fg" id="res-link-field" style="display:none"><label>URL</label><input type="text" id="res-link" placeholder="https://..."></div>
+        <button class="btn btn-navy" id="btn-add-resource" onclick="window.addResource()">+ Add Resource</button>
+        <div id="admin-resource-list" style="margin-top:16px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACCEPT APPLICATION MODAL -->
+<div class="modal-overlay" id="accept-modal">
+  <div class="modal">
+    <div class="modal-head">
+      &#x2705; Confirm Judge Booking
+      <button class="modal-close" onclick="window.closeAcceptModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="accept-id">
+      <p style="font-size:0.82rem;color:var(--navy);margin-bottom:14px" id="accept-summary"></p>
+      <div class="fg"><label>Confirmed Time <span class="req">*</span></label><input type="text" id="accept-time" placeholder="e.g. 09:00 &ndash; 10:30"></div>
+      <div class="fg"><label>Payment (&pound;)</label><input type="number" id="accept-payment" value="50" min="0"></div>
+      <div class="hint" style="margin-top:-6px;margin-bottom:10px">The judge will see this time and payment in a notification on their Judge Passport.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-small" onclick="window.closeAcceptModal()">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="window.confirmAcceptApplication()">Confirm &amp; Notify Judge</button>
+    </div>
+  </div>
+</div>
+
 <div class="footer">
   <p><strong>National Gymnastics League</strong> &middot; Judge Passport<br>
   Register &middot; Judge &middot; Level Up</p>
@@ -339,12 +640,15 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
   getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc,
-  deleteDoc, onSnapshot, query, orderBy, where
+  deleteDoc, onSnapshot, query, orderBy, where, limit, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
   onAuthStateChanged, signOut
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import {
+  getStorage, ref, uploadBytes, getDownloadURL
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 // ══ FIREBASE CONFIG (shared NGL project) ══
 const firebaseConfig = {
@@ -357,38 +661,65 @@ const firebaseConfig = {
   appId:             "1:1066734803675:web:0188fd601adea7db08cafe"
 };
 
-const app  = initializeApp(firebaseConfig);
-const db   = getFirestore(app);
-const auth = getAuth(app);
+const app     = initializeApp(firebaseConfig);
+const db      = getFirestore(app);
+const auth    = getAuth(app);
+const storage = getStorage(app);
 
 const compsCol   = collection(db, 'ngl_competitions');
 const judgesCol  = collection(db, 'ngl_judges');
 const assignCol  = collection(db, 'ngl_judging_assignments');
 const quizCol    = collection(db, 'ngl_judging_results');
+const notifCol   = collection(db, 'ngl_judge_notifications');
+const resourcesCol = collection(db, 'ngl_resources');
+
+const ADMIN_PASSWORD = 'ngl2026';
 
 // ══ APPARATUS DEFINITIONS ══
 const WAG_PIECES = ['Vault', 'Uneven Bars', 'Beam', 'Floor'];
 const MAG_PIECES = ['Floor', 'Pommel Horse', 'Rings', 'Vault', 'Parallel Bars', 'High Bar'];
 
-// ══ RANK DEFINITIONS ══
-const RANKS = {
-  trainee: { icon: '\u{1F393}', name: 'Trainee' },
-  novice:  { icon: '\u{1F331}', name: 'Novice' },
-  second:  { icon: '\u{1F949}', name: 'Second Judge' },
-  judge:   { icon: '\u{1F948}', name: 'Judge' },
-  senior:  { icon: '\u{1F396}\uFE0F', name: 'Senior Judge' },
-  panel:   { icon: '\u{1F3C5}', name: 'Panel Judge' },
-  expert:  { icon: '\u{1F3C6}', name: 'Expert Judge' }
+// ══ ROLE DEFINITIONS ══
+const ROLES = {
+  shadow:       { label: 'Shadow', icon: '\u{1F440}' },
+  second_judge: { label: 'Second Judge', icon: '\u{1F91D}' },
+  judge:        { label: 'Judge', icon: '\u{1F93D}' }
+};
+// which roles each level may apply for
+const ROLES_BY_LEVEL = { 1: ['shadow'], 2: ['shadow','second_judge'], 3: ['shadow','second_judge','judge'], 4: ['shadow','second_judge','judge'] };
+
+// ══ LEVEL DEFINITIONS ══
+const LEVELS = {
+  1: { icon: '\u{1F393}', name: 'Trainee Judge' },
+  2: { icon: '\u{1F331}', name: 'Novice Judge' },
+  3: { icon: '\u{1F948}', name: 'Accredited Judge' },
+  4: { icon: '\u{1F3C6}', name: 'Expert Judge' }
 };
 
-function calcRank(qualification, compsJudged, trainingCompleted) {
-  if (!trainingCompleted) return RANKS.trainee;
-  if (qualification === 'Brevet') return RANKS.expert;
-  if (compsJudged >= 5) return RANKS.expert;
-  if (qualification === 'National Judge') return RANKS.panel;
-  if (qualification === 'Regional Judge') return compsJudged >= 3 ? RANKS.senior : RANKS.judge;
-  if (qualification === 'Club Judge') return RANKS.second;
-  return RANKS.novice;
+// BG shortcut level, 0 = no shortcut applies
+function bgShortcutLevel(qualification, trainingCompleted) {
+  if (!trainingCompleted) return 0;
+  if (qualification === 'Brevet' || qualification === 'National Judge') return 4;
+  if (qualification === 'Regional Judge') return 3;
+  return 0; // Club Judge shortcut needs the 80% quiz check, handled in calcLevel with quiz score
+}
+
+function calcLevel(profile, quizPct, shadowCount, secondJudgeCount, maxPieceJudgeCount) {
+  const trainingCompleted = profile.trainingCompleted === true;
+  const qualification = profile.qualification;
+
+  // earned pathway
+  let earned = 1;
+  if (trainingCompleted && quizPct >= 70 && shadowCount >= 2) earned = 2;
+  if (earned >= 2 && trainingCompleted && quizPct >= 90 && secondJudgeCount >= 5) earned = 3;
+  if (earned >= 3 && maxPieceJudgeCount >= 5) earned = 4;
+
+  // BG shortcut pathway
+  let shortcut = bgShortcutLevel(qualification, trainingCompleted);
+  if (shortcut === 0 && qualification === 'Club Judge' && trainingCompleted && quizPct >= 80) shortcut = 2;
+
+  const num = Math.max(earned, shortcut);
+  return { num, ...LEVELS[num] };
 }
 
 function calcSpecialism(count) {
@@ -398,12 +729,98 @@ function calcSpecialism(count) {
   return { tier: 'Novice', icon: '\u{1F331}', pct: 0 };
 }
 
+// ══ NGL JUDGING TEST ══
+// Real NGL 2027 Girls Artistic question bank (Vault/Bars/Beam/Floor/General Rules)
+// plus an added Elevien section. Add more by pushing new objects into
+// QUIZ_QUESTIONS: { category, q, options: [4 strings], correct: index }
+// 'exp' (explanation) is kept for reference but deliberately NOT shown during
+// or after the test, so a wrong answer never reveals the correct one.
+const CATEGORY_LABELS = {
+  vault:   { label: 'Vault', icon: '\u{1F93D}' },
+  bars:    { label: 'Bars', icon: '\u{1F938}' },
+  beam:    { label: 'Beam', icon: '\u{1F930}' },
+  floor:   { label: 'Floor', icon: '\u{1F390}' },
+  general: { label: 'General Rules', icon: '\u{1F4CF}' },
+  elevien: { label: 'Using Elevien', icon: '\u{1F4BB}' }
+};
+
+const QUIZ_QUESTIONS = [
+  { category:'vault', q:'What is the minimum vault table height allowed across all NGL 2027 competition levels?', options:['80cm','90cm','100cm','110cm'], correct:2, exp:'All NGL 2027 levels require a minimum 100cm vault table.' },
+  { category:'vault', q:'In Level A, what difficulty value (DV) is awarded for a Handspring vault?', options:['0.5','1.0','1.2','1.6'], correct:3, exp:'A Handspring vault carries a DV of 1.6 at Level A.' },
+  { category:'vault', q:'Which vault is NOT available at Level A?', options:['Squat On, Jump Off','Round Off','Handspring','Half On'], correct:3, exp:'Half On is a Level B vault. Level A vaults include Squat On/Jump Off, Squat Through, Straddle Over, Round Off and Handspring.' },
+  { category:'vault', q:'What DV is awarded for a Round Off vault at Level A?', options:['0.5','1.0','1.2','1.6'], correct:2, exp:'A Round Off vault at Level A has a difficulty value of 1.2.' },
+  { category:'vault', q:'At Level B, what DV is awarded for a Half On vault?', options:['1.6','2.0','2.4','2.6'], correct:2, exp:'A Half On vault at Level B carries a DV of 2.4.' },
+  { category:'vault', q:'At Level C, what DV is assigned to a Handspring \u00bd Twist?', options:['1.6','2.0','2.4','2.6'], correct:1, exp:'A Handspring with \u00bd Twist carries a DV of 2.0 at Level C.' },
+  { category:'vault', q:'A gymnast lands from her vault with very large steps. What deduction applies?', options:['-0.1','-0.3','-0.5','-1.0'], correct:1, exp:'A very large step or jump on landing carries a deduction of -0.3.' },
+  { category:'vault', q:'What deduction is applied for insufficient distance on vault?', options:['-0.1 to -0.3','-0.1 to -0.5','-0.3 to -0.5','-0.5'], correct:0, exp:'Insufficient distance on vault is penalised -0.1 to -0.3 depending on severity.' },
+
+  { category:'bars', q:'What is the DV for Level A Bars Option 1?', options:['0.5','1.0','1.5','2.0'], correct:0, exp:'Level A Bars Option 1 has a DV of 0.5.' },
+  { category:'bars', q:'What is the DV for Level A Bars Option 2?', options:['0.5','1.0','1.5','2.0'], correct:1, exp:'Level A Bars Option 2 carries a DV of 1.0.' },
+  { category:'bars', q:'Which element is included in Level A Bars Option 2 but NOT Option 1?', options:['Circle Up','Cast to Horizontal','Backward Hip Circle','Push Away to Stand'], correct:2, exp:'The Backward Hip Circle (from previous cast) is part of Option 2 only.' },
+  { category:'bars', q:'What is the DV for Level B Bars Option 2?', options:['0.5','1.0','1.5','2.0'], correct:2, exp:'Level B Bars Option 2 has a DV of 1.5.' },
+  { category:'bars', q:'Which of these is an Uncoded Bar Element for Level B only?', options:['Cast to Horizontal','Circle Up','Float Swing','Backward Hip Circle'], correct:2, exp:'Float Swing is an Uncoded Bar Element specific to Level B.' },
+  { category:'bars', q:'At Level C Bars Option 1, what is the maximum number of elements to count?', options:['5','6','7','8'], correct:3, exp:'Level C Bars Option 1 allows a maximum of 8 elements to count.' },
+  { category:'bars', q:'At Level C Bars Option 1, what is the minimum number of elements required?', options:['4','5','6','8'], correct:1, exp:'Level C Bars Option 1 requires a minimum of 5 elements.' },
+  { category:'bars', q:'At Level C Bars Option 2, what is the minimum number of elements required?', options:['4','5','6','8'], correct:2, exp:'Level C Bars Option 2 requires a minimum of 6 elements.' },
+  { category:'bars', q:'At Level C, is there a deduction for bent legs in a forward or backward sole circle?', options:['Yes, -0.1','Yes, -0.3','No deduction','Only if both legs are bent'], correct:2, exp:'At Level C, no deduction is applied for bent legs in a forward or backward sole circle.' },
+  { category:'bars', q:'Can a coach stand between the bars during a routine?', options:['No, never','Yes, at any level, as long as they do not obstruct the judge and stand in when required','Only at Level A','Only if the gymnast is under 10'], correct:1, exp:'Coaches may stand between the bars at any level as long as they do not obstruct the judge\u2019s view and stand in when required.' },
+
+  { category:'beam', q:'How many elements must count in a Level A Beam routine?', options:['4','5','6','8'], correct:1, exp:'Level A Beam routines require 5 elements to count.' },
+  { category:'beam', q:'What is the coded requirement value for a Mount on Beam at Level A?', options:['0.3','0.5','1.0','1.5'], correct:1, exp:'A Mount on Beam carries a coded requirement value of 0.5 at Level A.' },
+  { category:'beam', q:'At Level B, how many Jumps or Leaps are required on Beam, and must they be connected?', options:['1 Jump, no connection required','2 Jumps or Leaps, no connection required','2 Jumps or Leaps, connected','3 Jumps or Leaps, connected'], correct:2, exp:'Level B Beam requires 2 Jumps or Leaps that are connected, worth 1.0.' },
+  { category:'beam', q:'At Level B, the Half Spin coded requirement must finish in relev\u00e9 and connect into what?', options:['A jump','A half turn','A cartwheel','A forward roll'], correct:1, exp:'The Half Spin at Level B must finish in relev\u00e9 and be connected into a half turn.' },
+  { category:'beam', q:'At Level C, what is the maximum number of Beam elements that can count?', options:['6','7','8','10'], correct:2, exp:'Level C Beam allows a maximum of 8 elements to count.' },
+  { category:'beam', q:'At Level C, what bonus is available for performing flighted acro on Beam?', options:['+0.2','+0.3','+0.5','+1.0'], correct:2, exp:'A bonus of +0.5 is awarded for Flighted Acro on Beam at Level C.' },
+  { category:'beam', q:'At Level C Beam, what bonus is awarded for 2 linked acro elements?', options:['+0.2','+0.5','+1.0','+1.5'], correct:1, exp:'2 Linked Acro Elements on Beam at Level C earns a bonus of +0.5.' },
+  { category:'beam', q:'At Level C Beam, what bonus is available for a Mixed Series?', options:['+0.1','+0.2','+0.3','+0.5'], correct:1, exp:'A Mixed Series on Beam at Level C earns a bonus of +0.2.' },
+  { category:'beam', q:'At Level C Beam, the 2 Jumps or Leaps coded requirement states they must be connected with at least one having a minimum:', options:['90\u00b0 split','120\u00b0 split','180\u00b0 split','Full split'], correct:2, exp:'At Level C Beam, 2 Jumps or Leaps must be connected with at least 1 having a minimum 180\u00b0 split, worth 1.0.' },
+  { category:'beam', q:'Which Beam dismount is available for Level A only?', options:['Round Off Dismount','Handspring Dismount','Tuck Jump Dismount','Dive Cartwheel'], correct:2, exp:'Tuck Jump Dismount, Straddle Jump Dismount and Pike Jump Dismount are all Level A only.' },
+  { category:'beam', q:'A gymnast hesitates during an element on Beam. What execution deduction applies?', options:['-0.1','-0.3','-0.5','-1.0'], correct:0, exp:'Hesitation during performance of an element carries a deduction of -0.1.' },
+
+  { category:'floor', q:'What is the maximum music length for NGL Floor routines at all levels?', options:['1 minute','1 min 15 sec','1 min 30 sec','2 minutes'], correct:2, exp:'The maximum music length for NGL Floor routines is 1 minute 30 seconds at all levels.' },
+  { category:'floor', q:'At Level A Floor, how many elements are required to count?', options:['4','5','6','8'], correct:2, exp:'Level A Floor requires 6 elements to count.' },
+  { category:'floor', q:'At Level A Floor, the 2 Acrobatic Elements coded requirement states at least one must have what?', options:['A salto','Flight','A twist','180\u00b0 split'], correct:1, exp:'Level A Floor requires 2 Acrobatic Elements connected, with a minimum of 1 having flight, worth 1.0.' },
+  { category:'floor', q:'At Level B Floor, what element categories are permitted for dance?', options:['Uncoded only','A and B Acro only','A, B or C Dance','Uncoded and A elements only'], correct:2, exp:'Level B Floor allows A, B or C Dance elements, though Acro is restricted to A and B only.' },
+  { category:'floor', q:'At Level B Floor, what are the element count limits?', options:['Exactly 6','6 minimum, 8 maximum','8 maximum only','Minimum 8'], correct:1, exp:'Level B Floor requires a minimum of 6 and a maximum of 8 elements.' },
+  { category:'floor', q:'At Level B Floor, the additional acro coded requirement is worth 1.0 for:', options:['1 acro element','2 additional acro elements OR 1 acro element with flight','3 additional acro elements','2 acro elements both with flight'], correct:1, exp:'2 Additional Acro Elements OR 1 Acro Element with Flight carries a value of 1.0 at Level B Floor.' },
+  { category:'floor', q:'At Level C Floor, what is required for the 2 Leaps coded requirement?', options:['Connected, no split requirement','Connected with 90\u00b0 split','Connected with 180\u00b0 split','Not connected, 180\u00b0 split'], correct:2, exp:'Level C Floor requires 2 Leaps connected with a 180\u00b0 split, worth 1.0.' },
+  { category:'floor', q:'At Level C Floor, what Acro Lines are required as coded requirements?', options:['1 Backward Acro Line only','1 Forward Acro Line only','Both a Backward Acro Line and a Forward Acro Line','Any 2 Acro Lines regardless of direction'], correct:2, exp:'Level C Floor requires both a Backward Acro Line (1.0) and a Forward Acro Line (1.0) as coded requirements.' },
+  { category:'floor', q:'Which floor element is listed as available at Level A only?', options:['Cartwheel','Backward Walkover','Star Jump','Handstand Forward Roll'], correct:2, exp:'Star Jump, Half Turn Jump, Half Spin, Forward Roll to Stand and Handstand (held 3 sec) are all Level A only floor elements.' },
+  { category:'floor', q:'Which floor element is available for BOTH Level A and Level B?', options:['Star Jump','Half Spin','Tuck Jump','Forward Roll to Stand'], correct:2, exp:'Tuck Jump is listed as available for Level A and B only.' },
+
+  { category:'general', q:'What deduction applies if a gymnast fails to present to the judge before or after exercise?', options:['-0.1','-0.2','-0.3','-0.5'], correct:2, exp:'Failure to present to the judge before or after exercise carries a -0.3 deduction.' },
+  { category:'general', q:'What is the maximum deduction for a coach signalling or speaking to a gymnast during exercise?', options:['-1.0 once only','-1.0 up to 2 times','-2.0 once only','-2.0 up to 2 times'], correct:1, exp:'Coach signalling or speaking during exercise is -1.0, applied a maximum of 2 times.' },
+  { category:'general', q:'What deduction applies for unauthorised assistance from a coach to complete a skill?', options:['-0.5 each','-1.0 each','-2.0 each','-3.0 each'], correct:2, exp:'Unauthorised assistance carries a deduction of -2.0 for each instance.' },
+  { category:'general', q:'What deduction applies if a gymnast\u2019s exercise is overtime by more than 5 seconds?', options:['-0.1','-0.3','-0.5','-1.0'], correct:2, exp:'Exercise overtime by more than 5 seconds results in a -0.5 deduction.' },
+  { category:'general', q:'A gymnast pauses for more than 2 seconds in her routine. What applies?', options:['-0.3 each, unlimited','-0.5 each, maximum 2 times','-0.5 once only','-1.0 each, maximum 2 times'], correct:1, exp:'A pause over 2 seconds is penalised -0.5 each time, with a maximum of 2 deductions.' },
+  { category:'general', q:'Is there a deduction for non-matching leotards in a Team Competition?', options:['-0.3 per gymnast','-0.1 per gymnast','No deduction','Only if more than 2 differ'], correct:2, exp:'There is no deduction for non-matching leotards in NGL Team Competitions.' },
+  { category:'general', q:'What deduction applies for a fall on the apparatus?', options:['-0.3','-0.5','-1.0','-2.0'], correct:2, exp:'A fall on the apparatus carries a -1.0 deduction.' },
+  { category:'general', q:'What deduction applies for a deep squat on landing?', options:['-0.1','-0.3','-0.5','-1.0'], correct:2, exp:'A deep squat on landing carries a deduction of -0.5.' },
+  { category:'general', q:'What is the deduction for no connection of elements when required?', options:['-0.1 each','-0.3 each','-0.5 each','-1.0 each'], correct:2, exp:'No connection of elements when required is penalised -0.5 for each instance.' },
+  { category:'general', q:'If a gymnast non-attempts a coded requirement, what deduction applies?', options:['-0.5','-1.0','-1.5 plus the value of the CR','-2.0'], correct:2, exp:'Non-attempt of a coded requirement carries -1.5 plus the difficulty value of that coded requirement.' },
+  { category:'general', q:'What is the deduction for 3 elements less than required in a routine?', options:['-2.0','-3.0','-4.0','-5.0'], correct:2, exp:'3 elements less than required in the routine results in a -4.0 deduction.' },
+
+  { category:'elevien', q:'What is Elevien primarily used for at NGL competitions?', options:['Booking venues', 'Entering and calculating competition results', 'Selling tickets', 'Judge registration'], correct:1, exp:'Elevien is the software used to enter scores and calculate/publish competition results.' },
+  { category:'elevien', q:'If a score is entered incorrectly in Elevien, what should a judge or scorer typically do?', options:['Ignore it', 'Correct the entry before results are finalised', 'Restart the whole competition', 'Delete all scores'], correct:1, exp:'Incorrect entries should be corrected before results are finalised.' },
+  { category:'elevien', q:'Elevien results are typically used to generate:', options:['Judge payment invoices only', 'League tables and competition results', 'Training schedules', 'Membership cards'], correct:1, exp:'Elevien output feeds league tables and competition results.' },
+  { category:'elevien', q:'Who is usually responsible for entering scores into Elevien at a competition?', options:['Any spectator', 'A designated scorer/judge with access', 'The gymnasts themselves', 'No one, it is automatic'], correct:1, exp:'A designated scorer or judge with access enters the scores.' }
+];
+
 // ══ STATE ══
-let allComps       = [];
-let allAssignments  = [];
-let currentUser     = null;
-let currentProfile  = null;
-let authMode        = 'login';
+let allComps        = [];
+let allAssignments   = [];
+let allJudges        = [];
+let currentUser      = null;
+let currentProfile   = null;
+let currentQuizPct   = 0;
+let authMode         = 'login';
+let adminLoggedIn    = false;
+let notifUnsub       = null;
+let quizOrder        = [];
+let quizIndex        = 0;
+let quizAnswers      = [];
+let allResources     = [];
+let resourceType     = 'file';
 
 // ══ NAV ══
 window.showPanel = function(id, btn) {
@@ -412,6 +829,9 @@ window.showPanel = function(id, btn) {
   document.getElementById('panel-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'signup') renderSignupList();
+  if (id === 'admin' && adminLoggedIn) window.renderAdminApplications();
+  if (id === 'quiz') renderQuizEntry();
+  if (id === 'resources') renderResourcesList();
 };
 
 window.setAuthMode = function(mode) {
@@ -420,6 +840,12 @@ window.setAuthMode = function(mode) {
   document.getElementById('tab-register').classList.toggle('active', mode === 'register');
   document.getElementById('login-form').style.display = mode === 'login' ? 'block' : 'none';
   document.getElementById('register-form').style.display = mode === 'register' ? 'block' : 'none';
+  if (mode === 'register') window.togglePriorExperience();
+};
+
+window.togglePriorExperience = function() {
+  const qual = document.getElementById('rg-qual').value;
+  document.getElementById('rg-prior-wrap').style.display = (qual === 'None' || qual === 'Club Judge') ? 'block' : 'none';
 };
 
 // ══ AUTH ══
@@ -431,6 +857,10 @@ window.doRegister = async function() {
   const pw     = document.getElementById('rg-password').value;
   const qual   = document.getElementById('rg-qual').value;
   const trainingCompleted = document.getElementById('rg-training').checked;
+  const photoFile = document.getElementById('rg-photo').files[0];
+  const showPrior = (qual === 'None' || qual === 'Club Judge');
+  const priorSecondJudged = showPrior ? (parseInt(document.getElementById('rg-prior-second').value) || 0) : 0;
+  const priorJudged = showPrior ? (parseInt(document.getElementById('rg-prior-judge').value) || 0) : 0;
   const errBox = document.getElementById('register-err');
   errBox.style.display = 'none';
 
@@ -443,8 +873,17 @@ window.doRegister = async function() {
   btn.disabled = true; btn.textContent = 'Creating your passport\u2026';
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pw);
+    let photoUrl = '';
+    if (photoFile) {
+      try {
+        const photoRef = ref(storage, 'judge-photos/' + cred.user.uid);
+        await uploadBytes(photoRef, photoFile);
+        photoUrl = await getDownloadURL(photoRef);
+      } catch (e) { /* photo upload failing shouldn't block registration */ }
+    }
     await setDoc(doc(db, 'ngl_judges', cred.user.uid), {
-      name, club, email, phone, qualification: qual, trainingCompleted, createdAt: new Date().toISOString()
+      name, club, email, phone, qualification: qual, trainingCompleted, photoUrl,
+      priorSecondJudged, priorJudged, createdAt: new Date().toISOString()
     });
     // onAuthStateChanged will pick up the rest
   } catch (e) {
@@ -481,6 +920,50 @@ window.markTrainingComplete = async function() {
   }
 };
 
+window.uploadPhoto = async function(input) {
+  const file = input.files[0];
+  if (!file || !currentUser) return;
+  try {
+    const photoRef = ref(storage, 'judge-photos/' + currentUser.uid);
+    await uploadBytes(photoRef, file);
+    const photoUrl = await getDownloadURL(photoRef);
+    await updateDoc(doc(db, 'ngl_judges', currentUser.uid), { photoUrl });
+    currentProfile.photoUrl = photoUrl;
+    renderPassport();
+  } catch (e) {
+    alert('Could not upload photo: ' + e.message);
+  }
+};
+
+
+
+// ══ ADMIN AUTH ══
+window.adminLogin = function() {
+  if (document.getElementById('admin-pw').value === ADMIN_PASSWORD) {
+    adminLoggedIn = true;
+    document.getElementById('admin-login').style.display = 'none';
+    document.getElementById('admin-dash').style.display = 'block';
+    loadAllJudges().then(() => window.renderAdminApplications());
+    renderAdminResourceList();
+  } else {
+    document.getElementById('al-err').style.display = 'block';
+    document.getElementById('admin-pw').value = '';
+  }
+};
+
+window.adminLogout = function() {
+  adminLoggedIn = false;
+  document.getElementById('admin-login').style.display = 'block';
+  document.getElementById('admin-dash').style.display = 'none';
+  document.getElementById('admin-pw').value = '';
+  document.getElementById('al-err').style.display = 'none';
+};
+
+async function loadAllJudges() {
+  const snap = await getDocs(judgesCol);
+  allJudges = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+}
+
 function showAuthErr(id, msg) {
   const e = document.getElementById(id);
   e.textContent = msg; e.style.display = 'block';
@@ -495,6 +978,7 @@ function friendlyAuthError(e) {
 
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
+  if (notifUnsub) { notifUnsub(); notifUnsub = null; }
   if (user) {
     const snap = await getDoc(doc(db, 'ngl_judges', user.uid));
     currentProfile = snap.exists() ? snap.data() : null;
@@ -503,6 +987,11 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('signup-gate').style.display = 'none';
     renderPassport();
     loadQuizLink();
+    notifUnsub = onSnapshot(query(notifCol, where('judgeUid', '==', user.uid)), nsnap => {
+      const notifs = nsnap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
+      renderNotifications(notifs);
+    });
   } else {
     currentProfile = null;
     document.getElementById('auth-area').style.display = 'block';
@@ -524,6 +1013,13 @@ onSnapshot(assignCol, snap => {
   renderCalendar();
   renderSignupList();
   if (currentUser) { renderPassport(); renderMyAssignments(); }
+  if (adminLoggedIn) window.renderAdminApplications();
+});
+
+onSnapshot(resourcesCol, snap => {
+  allResources = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  if (document.getElementById('panel-resources').classList.contains('active')) renderResourcesList();
+  if (adminLoggedIn) renderAdminResourceList();
 });
 
 // ══ PASSPORT RENDER ══
@@ -533,23 +1029,40 @@ function renderPassport() {
   document.getElementById('pp-club').textContent = currentProfile.club || '';
   document.getElementById('pp-qual').textContent = 'BG: ' + (currentProfile.qualification || 'None');
 
-  const mine = allAssignments.filter(a => a.judgeUid === currentUser.uid);
-  const compsJudged = new Set(mine.map(a => a.compId)).size;
-  const trainingCompleted = currentProfile.trainingCompleted === true;
-  const rank = calcRank(currentProfile.qualification, compsJudged, trainingCompleted);
+  const avatarEl = document.getElementById('pp-avatar-holder');
+  avatarEl.innerHTML = currentProfile.photoUrl
+    ? '<img class="avatar-img" src="' + currentProfile.photoUrl + '">'
+    : '<div class="avatar-placeholder">\u{1F93D}</div>';
 
-  document.getElementById('trainee-banner').style.display = trainingCompleted ? 'none' : 'flex';
+  const mine = allAssignments.filter(a => a.judgeUid === currentUser.uid && a.status === 'confirmed');
+  const priorSecond = currentProfile.priorSecondJudged || 0;
+  const priorJudge = currentProfile.priorJudged || 0;
+  const shadowCount = new Set(mine.filter(a => a.role === 'shadow').map(a => a.compId)).size;
+  const secondCount = new Set(mine.filter(a => a.role === 'second_judge').map(a => a.compId)).size + priorSecond;
+  const judgeAssignments = mine.filter(a => (a.role || 'judge') === 'judge');
+  const judgeCount = new Set(judgeAssignments.map(a => a.compId)).size + priorJudge;
 
-  document.getElementById('pp-rank-icon').textContent = rank.icon;
-  document.getElementById('pp-rank-name').textContent = rank.name;
-  document.getElementById('pp-stat-comps').textContent = compsJudged;
-  document.getElementById('pp-stat-pieces').textContent = mine.length;
-
-  // apparatus badges
   const allPieces = [...new Set([...WAG_PIECES, ...MAG_PIECES])];
+  let maxPieceJudgeCount = 0;
+  const pieceCounts = {};
+  allPieces.forEach(p => {
+    const c = judgeAssignments.filter(a => a.piece === p).length;
+    pieceCounts[p] = c;
+    if (c > maxPieceJudgeCount) maxPieceJudgeCount = c;
+  });
+
+  const level = calcLevel(currentProfile, currentQuizPct, shadowCount, secondCount, maxPieceJudgeCount);
+
+  document.getElementById('pp-rank-icon').textContent = level.icon;
+  document.getElementById('pp-rank-name').textContent = level.name;
+  document.getElementById('pp-stat-shadow').textContent = shadowCount;
+  document.getElementById('pp-stat-second').textContent = secondCount;
+  document.getElementById('pp-stat-judged').textContent = judgeCount;
+
+  // apparatus badges (judge-role only, real independent judging experience)
   const el = document.getElementById('pp-apparatus');
   el.innerHTML = allPieces.map(piece => {
-    const count = mine.filter(a => a.piece === piece).length;
+    const count = pieceCounts[piece];
     const s = calcSpecialism(count);
     return '<div class="app-badge">' +
       '<div class="an">' + s.icon + ' ' + piece + '</div>' +
@@ -557,6 +1070,48 @@ function renderPassport() {
       '<div class="app-tier">' + s.tier + (count ? ' &middot; ' + count + 'x' : '') + '</div>' +
       '</div>';
   }).join('');
+
+  renderProgress(level.num, currentProfile, shadowCount, secondCount, maxPieceJudgeCount);
+}
+
+function renderProgress(levelNum, profile, shadowCount, secondCount, maxPieceJudgeCount) {
+  const titleEl = document.getElementById('progress-title');
+  const subEl = document.getElementById('progress-sub');
+  const listEl = document.getElementById('progress-list');
+  const trainingCompleted = profile.trainingCompleted === true;
+
+  if (levelNum >= 4) {
+    titleEl.textContent = '\u{1F3C6} Top of the Pathway';
+    subEl.textContent = "You've reached Expert Judge \u2014 the highest NGL level.";
+    listEl.innerHTML = '<div class="no-rows">Nothing left to unlock. Keep judging!</div>';
+    return;
+  }
+
+  const targets = {
+    1: { name: 'Novice Judge', items: [
+      { done: trainingCompleted, label: 'Complete the NGL online training course', action: !trainingCompleted },
+      { done: currentQuizPct >= 70, label: 'Score 70%+ on the NGL Judging Quiz (currently ' + currentQuizPct + '%)' },
+      { done: shadowCount >= 2, label: 'Shadow 2+ competitions (' + shadowCount + '/2)' }
+    ]},
+    2: { name: 'Accredited Judge', items: [
+      { done: trainingCompleted, label: 'Complete the NGL online training course', action: !trainingCompleted },
+      { done: currentQuizPct >= 90, label: 'Score 90%+ on the NGL Judging Quiz (currently ' + currentQuizPct + '%)' },
+      { done: secondCount >= 5, label: 'Second-judge 5+ competitions (' + secondCount + '/5)' }
+    ]},
+    3: { name: 'Expert Judge', items: [
+      { done: maxPieceJudgeCount >= 5, label: 'Judge 5+ competitions on one apparatus piece (best: ' + maxPieceJudgeCount + '/5)' }
+    ]}
+  };
+  const t = targets[levelNum];
+  titleEl.textContent = 'Next Level: ' + t.name;
+  subEl.textContent = 'A British Gymnastics qualification can also fast-track this.';
+  listEl.innerHTML = t.items.map(i =>
+    '<div class="progress-item' + (i.done ? ' done' : '') + '">' +
+    '<span class="pi-check">' + (i.done ? '\u2705' : '\u2b1c') + '</span>' +
+    '<span style="flex:1">' + i.label + '</span>' +
+    (i.action ? '<button class="btn btn-navy btn-small" onclick="window.markTrainingComplete()">Mark Done</button>' : '') +
+    '</div>'
+  ).join('');
 }
 
 function renderMyAssignments() {
@@ -568,15 +1123,34 @@ function renderMyAssignments() {
     return;
   }
   el.innerHTML = mine.map(a => {
-    const d = a.compDate ? new Date(a.compDate + 'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    const status = a.status || 'pending';
+    const roleLabel = ROLES[a.role] ? ROLES[a.role].icon + ' ' + ROLES[a.role].label : a.piece;
+    const pillHtml = '<span class="status-pill ' + status + '">' + status + '</span>';
+    const extraInfo = status === 'confirmed'
+      ? '<span>' + (a.confirmedTime || '') + '</span><span>&pound;' + (a.payment != null ? a.payment : 50) + '</span>'
+      : '<span>Awaiting admin confirmation</span>';
     return '<div class="comp-card signed" style="margin-bottom:8px">' +
       '<div class="comp-card-header">' +
       '<div class="date-badge"><div class="dbday">' + (a.compDate ? new Date(a.compDate+'T00:00:00').getDate() : '-') + '</div><div class="dbmon">' + (a.compDate ? new Date(a.compDate+'T00:00:00').toLocaleString('en-GB',{month:'short'}).toUpperCase() : '') + '</div></div>' +
-      '<div><div class="ci-name">' + a.compName + '</div><div class="ci-meta"><span>' + a.piece + '</span><span>' + (a.compVenue||'') + '</span></div></div>' +
+      '<div><div class="ci-name">' + a.compName + ' ' + pillHtml + '</div><div class="ci-meta"><span>' + roleLabel + ' &middot; ' + a.piece + '</span>' + extraInfo + '</div></div>' +
       '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +
-      '<button class="btn btn-navy btn-small" onclick="window.downloadICS(\'' + a.id + '\')">+ My Calendar</button>' +
-      '<button class="btn btn-ghost btn-small" onclick="window.cancelAssignment(\'' + a.id + '\')">Cancel</button>' +
+      (status === 'confirmed' ? '<button class="btn btn-navy btn-small" onclick="window.downloadICS(\'' + a.id + '\')">+ My Calendar</button>' : '') +
+      '<button class="btn btn-ghost btn-small" onclick="window.cancelAssignment(\'' + a.id + '\')">' + (status === 'confirmed' ? 'Cancel' : 'Withdraw') + '</button>' +
       '</div></div></div>';
+  }).join('');
+}
+
+// ══ NOTIFICATIONS ══
+function renderNotifications(notifs) {
+  const el = document.getElementById('notif-list');
+  if (!notifs.length) {
+    el.innerHTML = '<div class="no-rows">No notifications yet.</div>';
+    return;
+  }
+  el.innerHTML = notifs.map(n => {
+    const icon = n.type === 'confirmed' ? '\u2705' : (n.type === 'declined' ? '\u2757' : '\u{1F514}');
+    const time = n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    return '<div class="notif-item"><div class="ni-icon">' + icon + '</div><div><div>' + n.message + '</div><div class="ni-time">' + time + '</div></div></div>';
   }).join('');
 }
 
@@ -587,38 +1161,35 @@ async function loadQuizLink() {
   const statEl = document.getElementById('pp-stat-quiz');
   pillEl.style.display = 'none';
   textEl.textContent = 'Checking your quiz record\u2026';
+  currentQuizPct = 0;
   try {
-    const snap = await getDocs(quizCol);
-    const email = (currentProfile.email || '').toLowerCase().trim();
-    const name  = (currentProfile.name || '').toLowerCase().trim();
-    const match = snap.docs.map(d => d.data()).find(r =>
-      (r.email && r.email.toLowerCase().trim() === email) ||
-      (r.name && r.name.toLowerCase().trim() === name)
-    );
+    let match = null;
+    // preferred: linked by judgeUid (results taken inside this tool)
+    const bySelf = await getDocs(query(quizCol, where('judgeUid', '==', currentUser.uid), orderBy('submittedAt', 'desc'), limit(1)));
+    if (!bySelf.empty) match = bySelf.docs[0].data();
+
+    // fallback: legacy results from the old standalone quiz, matched by name
     if (!match) {
-      textEl.textContent = "No quiz result linked yet \u2014 take the NGL Judging Certification quiz to add your score here.";
+      const snap = await getDocs(quizCol);
+      const name = (currentProfile.name || '').toLowerCase().trim();
+      match = snap.docs.map(d => d.data()).find(r => r.name && r.name.toLowerCase().trim() === name && !r.judgeUid) || null;
+    }
+
+    if (!match) {
+      textEl.textContent = "No quiz result linked yet \u2014 take the NGL Judging Test to add your score here.";
       statEl.textContent = '\u2014';
+      renderPassport();
       return;
     }
-    let scoreText = '';
-    if (typeof match.score === 'number' && typeof match.totalQuestions === 'number') {
-      scoreText = match.score + '/' + match.totalQuestions;
-      statEl.textContent = Math.round((match.score/match.totalQuestions)*100) + '%';
-    } else if (typeof match.percentage === 'number') {
-      scoreText = match.percentage + '%';
-      statEl.textContent = match.percentage + '%';
-    } else if (typeof match.score === 'number') {
-      scoreText = String(match.score);
-      statEl.textContent = String(match.score);
-    } else {
-      scoreText = 'Linked';
-      statEl.textContent = '\u2713';
-    }
-    textEl.textContent = 'Certification quiz linked to your passport.';
-    pillEl.textContent = scoreText;
+    currentQuizPct = typeof match.score_pct === 'number' ? match.score_pct : 0;
+    textEl.textContent = 'Latest attempt: ' + (match.grade || '') + '.';
+    pillEl.textContent = currentQuizPct + '%';
     pillEl.style.display = 'inline-block';
+    statEl.textContent = currentQuizPct + '%';
+    renderPassport();
   } catch (e) {
     textEl.textContent = "Couldn't check your quiz record right now.";
+    renderPassport();
   }
 }
 
@@ -631,22 +1202,13 @@ function piecesFor(comp, discipline) {
 function renderSignupList() {
   const el = document.getElementById('signup-list');
   const gateEl = document.getElementById('signup-gate');
-  const trainingGateEl = document.getElementById('training-gate');
 
   if (!currentUser) {
     gateEl.style.display = 'block';
-    trainingGateEl.style.display = 'none';
     el.innerHTML = '';
     return;
   }
   gateEl.style.display = 'none';
-
-  if (currentProfile && currentProfile.trainingCompleted !== true) {
-    trainingGateEl.style.display = 'block';
-    el.innerHTML = '';
-    return;
-  }
-  trainingGateEl.style.display = 'none';
 
   const today = new Date(); today.setHours(0,0,0,0);
   const upcoming = allComps.filter(c => new Date(c.date+'T00:00:00') >= today);
@@ -656,12 +1218,23 @@ function renderSignupList() {
     return;
   }
 
+  // work out my current level to know which roles I can apply for
+  const myConfirmed = allAssignments.filter(a => a.judgeUid === currentUser.uid && a.status === 'confirmed');
+  const shadowCount = new Set(myConfirmed.filter(a => a.role === 'shadow').map(a => a.compId)).size;
+  const secondCount = new Set(myConfirmed.filter(a => a.role === 'second_judge').map(a => a.compId)).size + (currentProfile ? (currentProfile.priorSecondJudged || 0) : 0);
+  const judgeAssigns = myConfirmed.filter(a => (a.role || 'judge') === 'judge');
+  const allPieces = [...new Set([...WAG_PIECES, ...MAG_PIECES])];
+  const maxPieceJudgeCount = allPieces.length ? Math.max(...allPieces.map(p => judgeAssigns.filter(a => a.piece === p).length)) : 0;
+  const myLevel = currentProfile ? calcLevel(currentProfile, currentQuizPct, shadowCount, secondCount, maxPieceJudgeCount).num : 1;
+  const allowedRoles = ROLES_BY_LEVEL[myLevel] || ['shadow'];
+
   el.innerHTML = upcoming.map(c => {
     const d = new Date(c.date+'T00:00:00');
     const mine = currentUser ? allAssignments.filter(a => a.judgeUid === currentUser.uid && a.compId === c.id) : [];
-    const pillsHtml = mine.map(a =>
-      '<span class="my-assign-pill">\u2705 ' + a.piece + ' (' + a.discipline + ') <button onclick="window.cancelAssignment(\'' + a.id + '\')">\u2715</button></span>'
-    ).join('');
+    const pillsHtml = mine.map(a => {
+      const rl = ROLES[a.role] ? ROLES[a.role].label : a.piece;
+      return '<span class="my-assign-pill">' + (a.status === 'confirmed' ? '\u2705' : '\u23F3') + ' ' + rl + ' &middot; ' + a.piece + ' <span class="status-pill ' + (a.status||'pending') + '" style="margin-left:4px">' + (a.status||'pending') + '</span> <button onclick="window.cancelAssignment(\'' + a.id + '\')">\u2715</button></span>';
+    }).join('');
 
     let disciplineControl = '';
     if (c.gender === 'both') {
@@ -672,12 +1245,14 @@ function renderSignupList() {
     const fixedDiscipline = c.gender === 'boys' ? 'MAG' : 'WAG';
     const pieceOptions = piecesFor(c, c.gender === 'both' ? 'WAG' : fixedDiscipline)
       .map(p => '<option value="' + p + '">' + p + '</option>').join('');
+    const roleOptions = allowedRoles.map(r => '<option value="' + r + '">' + ROLES[r].icon + ' ' + ROLES[r].label + '</option>').join('');
 
     const assignRow = currentUser ? (
       '<div class="comp-assign-row">' +
+      '<div class="fg"><label>Role</label><select id="role-' + c.id + '">' + roleOptions + '</select></div>' +
       disciplineControl +
       '<div class="fg"><label>Piece</label><select id="piece-' + c.id + '">' + pieceOptions + '</select></div>' +
-      '<button class="btn btn-primary" style="width:auto" onclick="window.signUpToJudge(\'' + c.id + '\')">Add to Judging Calendar</button>' +
+      '<button class="btn btn-primary" style="width:auto" onclick="window.signUpToJudge(\'' + c.id + '\')">Apply</button>' +
       '</div>'
     ) : '';
 
@@ -708,20 +1283,23 @@ window.signUpToJudge = async function(compId) {
   const discipline = discSel ? discSel.value : (comp.gender === 'boys' ? 'MAG' : 'WAG');
   const pieceSel = document.getElementById('piece-' + compId);
   const piece = pieceSel.value;
+  const roleSel = document.getElementById('role-' + compId);
+  const role = roleSel ? roleSel.value : 'shadow';
 
-  const already = allAssignments.find(a => a.judgeUid === currentUser.uid && a.compId === compId && a.piece === piece && a.discipline === discipline);
-  if (already) { alert("You're already down to judge " + piece + " at this competition."); return; }
+  const already = allAssignments.find(a => a.judgeUid === currentUser.uid && a.compId === compId && a.piece === piece && a.discipline === discipline && a.role === role && a.status !== 'declined');
+  if (already) { alert("You've already applied for that role/piece at this competition."); return; }
 
   try {
     await addDoc(assignCol, {
       judgeUid: currentUser.uid,
       judgeName: currentProfile.name,
       compId, compName: comp.name, compDate: comp.date, compVenue: comp.venue || '',
-      discipline, piece,
+      discipline, piece, role,
+      status: 'pending',
       assignedAt: new Date().toISOString()
     });
   } catch (e) {
-    alert('Could not save your assignment: ' + e.message);
+    alert('Could not save your application: ' + e.message);
   }
 };
 
@@ -742,7 +1320,7 @@ window.downloadICS = function(assignmentId) {
     'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//NGL Judge Passport//EN','BEGIN:VEVENT',
     'UID:' + a.id + '@ngl-judge-passport',
     'DTSTART:' + dtstart, 'DTEND:' + dtend,
-    'SUMMARY:Judging \u2013 ' + a.piece + ' (' + a.discipline + ') at ' + a.compName,
+    'SUMMARY:' + (ROLES[a.role] ? ROLES[a.role].label : 'Judging') + ' \u2013 ' + a.piece + ' (' + a.discipline + ') at ' + a.compName,
     'LOCATION:' + (a.compVenue || ''),
     'DESCRIPTION:NGL judging duty. Check the NGL Judge Passport for full details.',
     'END:VEVENT','END:VCALENDAR'
@@ -754,6 +1332,140 @@ window.downloadICS = function(assignmentId) {
   link.click();
 };
 
+// ══ JUDGING TEST ══
+function renderQuizEntry() {
+  const gateEl = document.getElementById('quiz-gate');
+  const startEl = document.getElementById('quiz-start');
+  document.getElementById('quiz-active').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+
+  if (!currentUser) {
+    gateEl.style.display = 'block';
+    startEl.style.display = 'none';
+    return;
+  }
+  gateEl.style.display = 'none';
+  startEl.style.display = 'block';
+
+  document.getElementById('quiz-start-sub').textContent = QUIZ_QUESTIONS.length + ' questions across ' + Object.keys(CATEGORY_LABELS).length + ' sections';
+  const el = document.getElementById('quiz-section-preview');
+  el.innerHTML = Object.entries(CATEGORY_LABELS).map(([key, c]) => {
+    const count = QUIZ_QUESTIONS.filter(q => q.category === key).length;
+    return '<div class="pw-card" style="text-align:center"><div class="pwi">' + c.icon + '</div><div class="pwn" style="font-size:0.78rem">' + c.label + '</div><div class="pwu">' + count + ' questions</div></div>';
+  }).join('');
+}
+
+window.startQuiz = function() {
+  quizOrder = QUIZ_QUESTIONS.slice();
+  quizIndex = 0;
+  quizAnswers = [];
+  document.getElementById('quiz-start').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-active').style.display = 'block';
+  renderQuizQuestion();
+};
+
+function renderQuizQuestion() {
+  const q = quizOrder[quizIndex];
+  const cat = CATEGORY_LABELS[q.category];
+  document.getElementById('quiz-section-tag').textContent = cat.icon + ' ' + cat.label;
+  document.getElementById('quiz-progress-text').textContent = 'Question ' + (quizIndex + 1) + ' of ' + quizOrder.length;
+  document.getElementById('quiz-progress-bar').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+  document.getElementById('quiz-question-text').textContent = q.q;
+  document.getElementById('quiz-feedback').style.display = 'none';
+  document.getElementById('quiz-next-btn').style.display = 'none';
+
+  const optsEl = document.getElementById('quiz-options');
+  optsEl.innerHTML = q.options.map((opt, i) =>
+    '<button class="btn btn-ghost btn-full" style="text-align:left;margin-bottom:8px;font-weight:500;text-transform:none;letter-spacing:0" id="quiz-opt-' + i + '" onclick="window.selectQuizOption(' + i + ')">' + opt + '</button>'
+  ).join('');
+}
+
+window.selectQuizOption = function(idx) {
+  if (quizAnswers[quizIndex] !== undefined) return; // already answered
+  const q = quizOrder[quizIndex];
+  const isCorrect = idx === q.correct;
+  quizAnswers[quizIndex] = isCorrect;
+
+  // disable all options; only reveal right/wrong on the one they picked, never the correct answer
+  for (let i = 0; i < q.options.length; i++) {
+    const btn = document.getElementById('quiz-opt-' + i);
+    btn.onclick = null;
+    btn.style.cursor = 'default';
+    if (i === idx) {
+      btn.style.borderColor = isCorrect ? '#1a6b3a' : 'var(--red)';
+      btn.style.color = isCorrect ? '#1a6b3a' : 'var(--red)';
+      btn.style.fontWeight = '700';
+    } else {
+      btn.style.opacity = '0.5';
+    }
+  }
+
+  const fbEl = document.getElementById('quiz-feedback');
+  fbEl.style.display = 'block';
+  if (isCorrect) {
+    fbEl.style.background = '#e6f4ee'; fbEl.style.color = '#1a6b3a';
+    fbEl.textContent = '\u2705 Correct!';
+  } else {
+    fbEl.style.background = '#fde8e6'; fbEl.style.color = 'var(--red)';
+    fbEl.textContent = '\u274C Not quite \u2014 on to the next one.';
+  }
+
+  const nextBtn = document.getElementById('quiz-next-btn');
+  nextBtn.textContent = (quizIndex === quizOrder.length - 1) ? 'See My Results \u2192' : 'Next Question \u2192';
+  nextBtn.style.display = 'block';
+};
+
+window.nextQuizQuestion = function() {
+  quizIndex++;
+  if (quizIndex >= quizOrder.length) { submitQuiz(); return; }
+  renderQuizQuestion();
+};
+
+async function submitQuiz() {
+  const categories = {};
+  quizOrder.forEach((q, i) => {
+    if (!categories[q.category]) categories[q.category] = { correct: 0, total: 0 };
+    categories[q.category].total++;
+    if (quizAnswers[i]) categories[q.category].correct++;
+  });
+  Object.keys(categories).forEach(k => {
+    categories[k].pct = Math.round((categories[k].correct / categories[k].total) * 100);
+  });
+
+  const correct = quizAnswers.filter(Boolean).length;
+  const total = quizOrder.length;
+  const score_pct = Math.round((correct / total) * 100);
+  const grade = score_pct >= 85 ? 'Distinction' : score_pct >= 70 ? 'Pass' : 'Not yet passed';
+
+  try {
+    await addDoc(quizCol, {
+      judgeUid: currentUser.uid,
+      name: currentProfile.name,
+      club: currentProfile.club || '',
+      score_pct, grade, correct, total, categories,
+      submittedAt: serverTimestamp()
+    });
+  } catch (e) {
+    alert('Could not save your result: ' + e.message);
+  }
+
+  currentQuizPct = score_pct;
+  document.getElementById('quiz-active').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'block';
+  document.getElementById('quiz-result-icon').textContent = grade === 'Distinction' ? '\u{1F3C6}' : grade === 'Pass' ? '\u2705' : '\u{1F4DA}';
+  document.getElementById('quiz-result-grade').textContent = grade;
+  document.getElementById('quiz-result-pct').textContent = score_pct + '%';
+  document.getElementById('quiz-result-fraction').textContent = correct + ' / ' + total + ' correct';
+  document.getElementById('quiz-result-categories').innerHTML = Object.entries(categories).map(([key, data]) => {
+    const cat = CATEGORY_LABELS[key];
+    return '<div class="app-badge"><div class="an">' + cat.icon + ' ' + cat.label + '</div><div class="app-tier">' + data.correct + '/' + data.total + ' (' + data.pct + '%)</div></div>';
+  }).join('');
+
+  renderPassport();
+  loadQuizLink();
+}
+
 // ══ JUDGING CALENDAR ══
 function renderCalendar() {
   const el = document.getElementById('calendar-list');
@@ -764,20 +1476,20 @@ function renderCalendar() {
   const sorted = [...allComps].sort((a,b) => (a.date||'').localeCompare(b.date||''));
   el.innerHTML = sorted.map(c => {
     const d = new Date(c.date+'T00:00:00');
-    const assigns = allAssignments.filter(a => a.compId === c.id);
+    const assigns = allAssignments.filter(a => a.compId === c.id && a.status === 'confirmed');
     const pieces = [...new Set(assigns.map(a => a.piece))];
     const groupsHtml = pieces.length ? pieces.map(p => {
       const judges = assigns.filter(a => a.piece === p);
       return '<div class="cal-piece-group"><div class="cal-piece-title">' + p + '</div>' +
-        judges.map(j => '<div class="cal-judge-row">\u{1F9D1}\u200D\u2696\uFE0F ' + j.judgeName + ' <span style="color:var(--grey-mid);font-size:0.72rem">(' + j.discipline + ')</span></div>').join('') +
+        judges.map(j => '<div class="cal-judge-row">\u{1F9D1}\u200D\u2696\uFE0F ' + j.judgeName + ' <span class="role-pill">' + (ROLES[j.role] ? ROLES[j.role].label : 'Judge') + '</span> <span style="color:var(--grey-mid);font-size:0.72rem">(' + j.discipline + ')</span></div>').join('') +
         '</div>';
-    }).join('') : '<div class="cal-empty-note">No judges signed up yet for this competition.</div>';
+    }).join('') : '<div class="cal-empty-note">No confirmed judges yet for this competition.</div>';
 
     return '<div class="cal-comp" id="calc-' + c.id + '">' +
       '<div class="cal-comp-header" onclick="window.toggleCal(\'' + c.id + '\')">' +
       '<div class="date-badge"><div class="dbday">' + d.getDate() + '</div><div class="dbmon">' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase() + '</div></div>' +
       '<div><div class="ci-name">' + c.name + '</div><div class="ci-meta"><span>\u{1F4CD} ' + (c.venue||'TBC') + '</span></div></div>' +
-      '<div class="cal-count">' + assigns.length + ' judge' + (assigns.length!==1?'s':'') + '</div>' +
+      '<div class="cal-count">' + assigns.length + ' confirmed judge' + (assigns.length!==1?'s':'') + '</div>' +
       '</div>' +
       '<div class="cal-reveal"><div class="cal-reveal-inner">' + groupsHtml + '</div></div>' +
       '</div>';
@@ -786,6 +1498,183 @@ function renderCalendar() {
 
 window.toggleCal = function(id) {
   document.getElementById('calc-' + id).classList.toggle('open');
+};
+
+// ══ ADMIN: APPLICATIONS ══
+window.renderAdminApplications = function() {
+  const el = document.getElementById('admin-app-list');
+  const search = (document.getElementById('app-search').value || '').toLowerCase();
+  const filter = document.getElementById('app-filter').value;
+
+  let rows = [...allAssignments].sort((a,b) => (b.assignedAt||'').localeCompare(a.assignedAt||''));
+  if (filter) rows = rows.filter(a => (a.status||'pending') === filter);
+  if (search) rows = rows.filter(a =>
+    (a.judgeName||'').toLowerCase().includes(search) || (a.compName||'').toLowerCase().includes(search)
+  );
+
+  document.getElementById('stat-pending').textContent = allAssignments.filter(a => (a.status||'pending')==='pending').length;
+  document.getElementById('stat-confirmed').textContent = allAssignments.filter(a => a.status==='confirmed').length;
+  document.getElementById('stat-judges').textContent = allJudges.length;
+  document.getElementById('stat-total').textContent = allAssignments.length;
+
+  if (!rows.length) { el.innerHTML = '<div class="no-rows">No applications match this filter.</div>'; return; }
+
+  el.innerHTML = rows.map(a => {
+    const status = a.status || 'pending';
+    const judge = allJudges.find(j => j.uid === a.judgeUid);
+    const d = a.compDate ? new Date(a.compDate+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    const actions = status === 'pending'
+      ? '<button class="btn btn-navy btn-small" onclick="window.openAcceptModal(\'' + a.id + '\')">Accept</button>' +
+        '<button class="btn btn-ghost btn-small" onclick="window.declineApplication(\'' + a.id + '\')">Decline</button>'
+      : status === 'confirmed'
+        ? '<span style="color:var(--grey-mid);font-size:0.72rem">&pound;' + (a.payment!=null?a.payment:50) + ' &middot; ' + (a.confirmedTime||'') + '</span>'
+        : '<span style="color:var(--grey-mid);font-size:0.72rem">Declined</span>';
+    return '<div class="app-row">' +
+      '<div><div class="aj-name">' + a.judgeName + '</div><div class="aj-meta">' + (judge ? judge.email : '') + '</div></div>' +
+      '<div>' + a.compName + '<div class="aj-meta">' + d + '</div></div>' +
+      '<div>' + (ROLES[a.role] ? ROLES[a.role].icon + ' ' + ROLES[a.role].label : '') + ' &middot; ' + a.piece + ' <span class="aj-meta">(' + a.discipline + ')</span></div>' +
+      '<div><span class="status-pill ' + status + '">' + status + '</span></div>' +
+      '<div style="display:flex;gap:6px">' + actions + '</div>' +
+      '</div>';
+  }).join('');
+};
+
+window.openAcceptModal = function(id) {
+  const a = allAssignments.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('accept-id').value = id;
+  document.getElementById('accept-summary').textContent = a.judgeName + ' \u2014 ' + (ROLES[a.role] ? ROLES[a.role].label : '') + ': ' + a.piece + ' (' + a.discipline + ') at ' + a.compName;
+  document.getElementById('accept-time').value = '';
+  document.getElementById('accept-payment').value = 50;
+  document.getElementById('accept-modal').classList.add('open');
+};
+
+window.closeAcceptModal = function() {
+  document.getElementById('accept-modal').classList.remove('open');
+};
+
+window.confirmAcceptApplication = async function() {
+  const id = document.getElementById('accept-id').value;
+  const confirmedTime = document.getElementById('accept-time').value.trim();
+  const payment = parseFloat(document.getElementById('accept-payment').value) || 0;
+  if (!confirmedTime) { alert('Please enter a confirmed time.'); return; }
+  const a = allAssignments.find(x => x.id === id);
+  if (!a) return;
+  try {
+    await updateDoc(doc(db, 'ngl_judging_assignments', id), {
+      status: 'confirmed', confirmedTime, payment, confirmedAt: new Date().toISOString()
+    });
+    await addDoc(notifCol, {
+      judgeUid: a.judgeUid,
+      type: 'confirmed',
+      message: "You're booked! You've been confirmed as " + (ROLES[a.role] ? ROLES[a.role].label : 'Judge') + " for " + a.piece + ' (' + a.discipline + ') at ' + a.compName +
+        '. Time: ' + confirmedTime + '. Payment: \u00A3' + payment + '.',
+      createdAt: new Date().toISOString()
+    });
+    window.closeAcceptModal();
+  } catch (e) {
+    alert('Could not confirm this application: ' + e.message);
+  }
+};
+
+window.declineApplication = async function(id) {
+  const a = allAssignments.find(x => x.id === id);
+  if (!a) return;
+  if (!confirm('Decline ' + a.judgeName + "'s application to judge " + a.piece + ' at ' + a.compName + '?')) return;
+  try {
+    await updateDoc(doc(db, 'ngl_judging_assignments', id), { status: 'declined', declinedAt: new Date().toISOString() });
+    await addDoc(notifCol, {
+      judgeUid: a.judgeUid,
+      type: 'declined',
+      message: "Your application to judge " + a.piece + ' at ' + a.compName + " wasn't accepted this time. Check the calendar for other competitions to apply for.",
+      createdAt: new Date().toISOString()
+    });
+  } catch (e) {
+    alert('Could not decline this application: ' + e.message);
+  }
+};
+
+document.getElementById('accept-modal').addEventListener('click', function(e) {
+  if (e.target === this) window.closeAcceptModal();
+});
+
+// ══ RESOURCES ══
+function renderResourcesList() {
+  const el = document.getElementById('resources-list');
+  if (!allResources.length) {
+    el.innerHTML = '<div class="no-comps">No resources added yet. Check back soon.</div>';
+    return;
+  }
+  const categories = [...new Set(allResources.map(r => r.category || 'Other'))];
+  el.innerHTML = categories.map(cat => {
+    const items = allResources.filter(r => (r.category || 'Other') === cat);
+    return '<div class="res-section-title">' + cat + '</div>' +
+      items.map(r => {
+        const icon = r.type === 'link' ? '\u{1F517}' : '\u{1F4C4}';
+        return '<a class="res-card" href="' + r.url + '" target="_blank" style="text-decoration:none">' +
+          '<div class="res-icon">' + icon + '</div>' +
+          '<div style="flex:1"><div class="res-title">' + r.title + '</div>' +
+          (r.description ? '<div class="res-desc">' + r.description + '</div>' : '') + '</div>' +
+          '<span style="color:var(--grey-mid);font-size:0.75rem">' + (r.type === 'link' ? 'Open \u2192' : 'Download \u2193') + '</span>' +
+          '</a>';
+      }).join('');
+  }).join('');
+}
+
+window.setResourceType = function(type) {
+  resourceType = type;
+  document.getElementById('res-type-file').classList.toggle('active', type === 'file');
+  document.getElementById('res-type-link').classList.toggle('active', type === 'link');
+  document.getElementById('res-file-field').style.display = type === 'file' ? 'block' : 'none';
+  document.getElementById('res-link-field').style.display = type === 'link' ? 'block' : 'none';
+};
+
+window.addResource = async function() {
+  const title = document.getElementById('res-title').value.trim();
+  const description = document.getElementById('res-desc').value.trim();
+  const category = document.getElementById('res-category').value;
+  if (!title) { alert('Please enter a title.'); return; }
+
+  const btn = document.getElementById('btn-add-resource');
+  btn.disabled = true; btn.textContent = 'Adding\u2026';
+
+  try {
+    let url = '';
+    if (resourceType === 'link') {
+      url = document.getElementById('res-link').value.trim();
+      if (!url) { alert('Please enter a URL.'); btn.disabled = false; btn.textContent = '+ Add Resource'; return; }
+    } else {
+      const file = document.getElementById('res-file').files[0];
+      if (!file) { alert('Please choose a file.'); btn.disabled = false; btn.textContent = '+ Add Resource'; return; }
+      const fileRef = ref(storage, 'resources/' + Date.now() + '-' + file.name);
+      await uploadBytes(fileRef, file);
+      url = await getDownloadURL(fileRef);
+    }
+    await addDoc(resourcesCol, { title, description, category, type: resourceType, url, createdAt: new Date().toISOString() });
+    document.getElementById('res-title').value = '';
+    document.getElementById('res-desc').value = '';
+    document.getElementById('res-file').value = '';
+    document.getElementById('res-link').value = '';
+  } catch (e) {
+    alert('Could not add resource: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '+ Add Resource';
+};
+
+function renderAdminResourceList() {
+  const el = document.getElementById('admin-resource-list');
+  if (!allResources.length) { el.innerHTML = '<div class="no-rows">No resources yet.</div>'; return; }
+  el.innerHTML = allResources.map(r =>
+    '<div class="res-card"><div class="res-icon">' + (r.type === 'link' ? '\u{1F517}' : '\u{1F4C4}') + '</div>' +
+    '<div style="flex:1"><div class="res-title">' + r.title + '</div><div class="res-desc">' + (r.category || '') + '</div></div>' +
+    '<button class="btn btn-ghost btn-small" onclick="window.deleteResource(\'' + r.id + '\')">Delete</button></div>'
+  ).join('');
+}
+
+window.deleteResource = async function(id) {
+  if (!confirm('Remove this resource?')) return;
+  try { await deleteDoc(doc(db, 'ngl_resources', id)); }
+  catch (e) { alert('Error removing: ' + e.message); }
 };
 
 </script>
