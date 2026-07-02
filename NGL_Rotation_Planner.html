@@ -178,7 +178,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .tl-ruler-ticks .tick.hour{ border-left:2px solid rgba(255,255,255,.5); font-weight:700; color:#fff; font-size:.7rem; }
 .tl-sep{ height:24px; display:flex; align-items:center; position:sticky; left:0; background:rgba(255,255,255,.04); }
 .tl-sep span{ font-size:.68rem; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:1px; padding-left:12px; }
-.tl-row{ display:flex; height:40px; border-bottom:1px solid rgba(255,255,255,.07); }
+.tl-row{ display:flex; min-height:32px; border-bottom:1px solid rgba(255,255,255,.07); }
 .tl-lbl{ flex-shrink:0; border-right:2px solid rgba(255,255,255,.12); display:flex; align-items:center; padding:0 10px; font-size:.85rem; font-weight:700; color:rgba(255,255,255,.9); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:var(--navy); position:sticky; left:0; z-index:10; }
 .tl-track{ position:relative; flex-shrink:0; }
 .tl-block{ position:absolute; top:3px; bottom:3px; border-radius:5px; display:flex; align-items:center; padding:0 10px; overflow:hidden; font-size:.85rem; font-weight:700; white-space:nowrap; }
@@ -1774,7 +1774,8 @@ function enterLive(){
   renderTimeline(day);
   startLiveClock();
   try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}catch(e){}
-  // re-render timeline if the screen size changes (rotation, window resize, different TV)
+  // re-render after a short delay so sponsor band and header are fully laid out before measuring heights
+  setTimeout(()=>{ renderTimeline(getTodayName()); }, 150);
   window.addEventListener('resize', liveResizeHandler);
 }
 
