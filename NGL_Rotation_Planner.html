@@ -2126,18 +2126,13 @@ async function renderAdmin(){
   const el=document.getElementById('adminContent');
   el.innerHTML='<p style="color:var(--muted);font-size:.85rem;">Loading clubs...</p>';
   try{
-    // fetch club index first (list of all UIDs), then fetch each club's profile and rota individually
-    const index = await dbGet('club_index');
-    if(!index){ el.innerHTML='<p style="color:var(--muted);font-style:italic;padding:20px 0;">No clubs registered yet.</p>'; return; }
-    const uids = Object.keys(index);
-    const clubData = await Promise.all(uids.map(async uid=>{
-      const [profile, rota] = await Promise.all([
-        dbGet(`clubs/${uid}/profile`).catch(()=>({})),
-        dbGet(`clubs/${uid}/rota`).catch(()=>({groups:[],locations:[],sessions:{}}))
-      ]);
-      return { uid, profile: profile||{}, rota: rota||{groups:[],locations:[],sessions:{}} };
+    const clubs = await dbGet('clubs');
+    if(!clubs){ el.innerHTML='<p style="color:var(--muted);font-style:italic;padding:20px 0;">No clubs registered yet.</p>'; return; }
+    allClubs = Object.entries(clubs).map(([uid,data])=>({
+      uid,
+      profile: (data&&data.profile)||{},
+      rota: (data&&data.rota)||{groups:[],locations:[],sessions:{}}
     }));
-    allClubs = clubData;
     console.log('Admin clubs loaded:', allClubs.length);
 
     const now=new Date(); const thisMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
