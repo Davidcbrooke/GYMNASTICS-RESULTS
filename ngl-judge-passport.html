@@ -1162,12 +1162,21 @@ async function loadQuizLink() {
   const statEl = document.getElementById('pp-stat-quiz');
   pillEl.style.display = 'none';
   textEl.textContent = 'Checking your quiz record\u2026';
-  currentQuizPct = 0;
   try {
     let match = null;
-    // preferred: linked by judgeUid (results taken inside this tool)
-    const bySelf = await getDocs(query(quizCol, where('judgeUid', '==', currentUser.uid), orderBy('submittedAt', 'desc'), limit(1)));
-    if (!bySelf.empty) match = bySelf.docs[0].data();
+    // preferred: linked by judgeUid. No orderBy here on purpose \u2014 combining where()
+    // with orderBy() on a different field needs a composite Firestore index that
+    // doesn't exist for this collection, which was silently failing. Sort client-side instead.
+    const bySelf = await getDocs(query(quizCol, where('judgeUid', '==', currentUser.uid)));
+    if (!bySelf.empty) {
+      const docsData = bySelf.docs.map(d => d.data());
+      docsData.sort((a, b) => {
+        const at = (a.submittedAt && a.submittedAt.toMillis) ? a.submittedAt.toMillis() : 0;
+        const bt = (b.submittedAt && b.submittedAt.toMillis) ? b.submittedAt.toMillis() : 0;
+        return bt - at;
+      });
+      match = docsData[0];
+    }
 
     // fallback: legacy results from the old standalone quiz, matched by name
     if (!match) {
@@ -1177,6 +1186,7 @@ async function loadQuizLink() {
     }
 
     if (!match) {
+      currentQuizPct = 0;
       textEl.textContent = "No quiz result linked yet \u2014 take the NGL Judging Test to add your score here.";
       statEl.textContent = '\u2014';
       renderPassport();
@@ -1189,7 +1199,9 @@ async function loadQuizLink() {
     statEl.textContent = currentQuizPct + '%';
     renderPassport();
   } catch (e) {
-    textEl.textContent = "Couldn't check your quiz record right now.";
+    // keep whatever score we already know locally rather than wiping it to '\u2014'
+    statEl.textContent = currentQuizPct ? currentQuizPct + '%' : '\u2014';
+    textEl.textContent = "Couldn't refresh your quiz record right now.";
     renderPassport();
   }
 }
@@ -1456,6 +1468,8 @@ async function submitQuiz() {
   }
 
   currentQuizPct = score_pct;
+  const ppQuizStat = document.getElementById('pp-stat-quiz');
+  if (ppQuizStat) ppQuizStat.textContent = score_pct + '%';
   document.getElementById('quiz-active').style.display = 'none';
   document.getElementById('quiz-result').style.display = 'block';
   document.getElementById('quiz-result-icon').textContent = grade === 'Distinction' ? '\u{1F3C6}' : grade === 'Pass' ? '\u2705' : '\u{1F4DA}';
