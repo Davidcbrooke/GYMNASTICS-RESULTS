@@ -637,8 +637,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 </div>
 
 <!-- ADMIN VIEW -->
-<div class="view" id="adminView" style="align-items:flex-start;overflow:auto;">
-  <div style="padding:16px 24px;width:100%;">
+<div class="view" id="adminView" style="display:none;overflow:auto;">
+  <div style="padding:16px 24px;">
     <div id="adminContent"></div>
   </div>
 </div>
@@ -1067,7 +1067,7 @@ function renderTabs(){
   tabList.forEach(t=>{
     const b=document.createElement('button'); b.textContent=t.label;
     if(currentTab===t.id) b.className='active';
-    b.onclick=()=>{ currentTab=t.id; renderTabs(); document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(t.id+'View').classList.add('active'); if(t.id==='planner') renderWeekTable(); else if(t.id==='settings') renderSettings(); else if(t.id==='admin') renderAdmin(); else if(t.id==='totals') renderWeeklyTotals(); };
+    b.onclick=()=>{ currentTab=t.id; renderTabs(); document.querySelectorAll('.view').forEach(v=>{ v.classList.remove('active'); v.style.display=''; }); const vEl=document.getElementById(t.id+'View'); vEl.classList.add('active'); if(t.id==='admin') vEl.style.display='block'; if(t.id==='planner') renderWeekTable(); else if(t.id==='settings') renderSettings(); else if(t.id==='admin') renderAdmin(); else if(t.id==='totals') renderWeeklyTotals(); };
     el.appendChild(b);
   });
   // small admin unlock link if not yet unlocked
@@ -2243,6 +2243,7 @@ function checkAdminPw(){
     renderTabs();
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById('adminView').classList.add('active');
+    document.getElementById('adminView').style.display='block';
     renderAdmin();
   } else {
     document.getElementById('adminPwInput').value='';
