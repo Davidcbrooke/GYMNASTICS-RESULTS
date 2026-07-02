@@ -1756,10 +1756,6 @@ function renderWeeklyTotals(){
       <p style="color:var(--muted);font-size:.8rem;margin-bottom:16px;">Minutes per squad group per apparatus category across the full week.</p>
       ${legend()}
       ${sortChips}
-      <div style="background:#fff;border-radius:10px;border:1px solid var(--line);padding:20px;margin-bottom:20px;">
-        <div style="font-size:.8rem;font-weight:700;color:var(--navy);margin-bottom:12px;">All Groups — Comparative View</div>
-        ${summaryBarChart(totals, sorted, maxTotal)}
-      </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;">
         ${cards}
       </div>`;
