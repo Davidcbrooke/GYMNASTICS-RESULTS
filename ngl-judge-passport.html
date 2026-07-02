@@ -1340,9 +1340,12 @@ function renderQuizEntry() {
   document.getElementById('quiz-active').style.display = 'none';
   document.getElementById('quiz-result').style.display = 'none';
 
-  if (!currentUser) {
+  if (!currentUser || !currentProfile) {
     gateEl.style.display = 'block';
     startEl.style.display = 'none';
+    if (currentUser && !currentProfile) {
+      gateEl.innerHTML = '<div class="login-gate"><strong>Profile not found</strong>Your login exists but no passport profile is linked to it. Please sign out and register again, or contact an NGL admin.</div>';
+    }
     return;
   }
   gateEl.style.display = 'none';
@@ -1440,6 +1443,7 @@ async function submitQuiz() {
   const grade = score_pct >= 85 ? 'Distinction' : score_pct >= 70 ? 'Pass' : 'Not yet passed';
 
   try {
+    if (!currentUser || !currentProfile) throw new Error('Your profile could not be found. Please sign out, sign back in (or re-register), then retake the test so your result can be saved.');
     await addDoc(quizCol, {
       judgeUid: currentUser.uid,
       name: currentProfile.name,
