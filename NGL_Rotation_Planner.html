@@ -45,7 +45,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
 .powered-by img{ height:24px; vertical-align:middle; margin-left:6px; opacity:.6; }
 
 /* ---- MAIN APP ---- */
-.app{ display:none; flex-direction:column; height:100vh; background:var(--paper); }
+.app{ display:none; flex-direction:column; height:100vh; background:var(--paper); position:relative; }
 .app.visible{ display:flex; }
 
 /* header */
@@ -110,8 +110,9 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .tabs button.active{ color:#fff; border-bottom-color:var(--gold); }
 
 /* views */
-.view{ display:none; flex:1; overflow:hidden; }
-.view.active{ display:flex; flex-direction:column; }
+.view{ display:none; overflow:hidden; }
+.view.active{ display:flex; flex-direction:column; flex:1; }
+#adminView.active{ display:block; overflow-y:auto; flex:none; height:100%; }
 
 /* planner */
 .planner-view{ flex:1; overflow:auto; }
@@ -479,6 +480,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
   </header>
   <div class="tabs" id="tabs"></div>
 
+  <div id="viewsContainer" style="flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column;">
+
   <!-- PLANNER VIEW -->
   <div class="view active" id="plannerView">
     <div class="planner-view">
@@ -637,11 +640,13 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 </div>
 
 <!-- ADMIN VIEW -->
-<div class="view" id="adminView" style="display:none;overflow:auto;">
+<div class="view" id="adminView" style="display:none;overflow-y:auto;">
   <div style="padding:16px 24px;">
     <div id="adminContent"></div>
   </div>
 </div>
+
+  </div><!-- /viewsContainer -->
 
 <!-- PROFILE MODAL -->
 <div class="modal-overlay" id="profileModal">
