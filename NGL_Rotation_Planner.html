@@ -301,45 +301,61 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
    Desktop styles are completely unaffected
    ===================================================== */
 @media (max-width: 768px){
-
-  /* Header */
-  header{ padding:8px 12px; gap:8px; flex-wrap:wrap; }
-  header h1{ font-size:.9rem; }
+  html, body{
+    overflow:hidden;
+    position:fixed;
+    width:100%;
+    height:100%;
+  }
+  .app{
+    height:100%;
+    height:100dvh;
+    overflow:hidden;
+  }
+  /* Header — single compact line, no wrapping */
+  header{ padding:8px 12px; gap:8px; flex-wrap:nowrap; overflow:hidden; }
+  header h1{ font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   header h1 .club-name{ font-size:.78rem; }
-  .header-actions{ flex-wrap:wrap; gap:6px; justify-content:flex-start; flex:none; width:100%; }
-  .header-actions button{ padding:6px 10px; font-size:.72rem; }
-  .header-logo img{ height:28px; }
-  .save-status{ font-size:.65rem; }
+  .header-actions{ flex-wrap:nowrap; gap:4px; justify-content:flex-end; flex:1; overflow:hidden; }
+  .header-actions button{ padding:5px 8px; font-size:.68rem; white-space:nowrap; }
+  .header-logo img{ height:24px; }
+  .save-status{ display:none; }
   .week-toggle{ }
-  .week-btn{ padding:5px 8px; font-size:.72rem; }
+  .week-btn{ padding:5px 8px; font-size:.68rem; }
 
   /* Sponsor band */
-  .sponsor-band{ height:44px; min-height:44px; max-height:44px; flex:0 0 44px; }
-  .sponsor-band img{ height:28px; margin:0 20px; }
+  .sponsor-band{ height:36px; min-height:36px; max-height:36px; flex:0 0 36px; }
+  .sponsor-band img{ height:22px; margin:0 16px; }
 
-  /* Tabs */
-  .tabs{ padding:0 8px; gap:0; }
-  .tabs button{ padding:8px 10px; font-size:.72rem; }
+  /* Tabs — single line, scrollable */
+  .tabs{ padding:0 4px; gap:0; overflow-x:auto; overflow-y:hidden; flex-shrink:0; -webkit-overflow-scrolling:touch; }
+  .tabs button{ padding:8px 10px; font-size:.7rem; flex-shrink:0; }
+
+  /* Views fill remaining space */
+  .view.active{ flex:1; overflow:hidden; min-height:0; }
 
   /* Hide weekly planner table on mobile, show mobile day view instead */
   #plannerView .planner-view{ display:none !important; }
   #mobileDayView{ display:flex !important; }
 
-  /* Settings view */
-  .settings-view{ padding:12px; }
-  .settings-grid{ grid-template-columns:1fr; gap:12px; }
-  .s-panel{ margin-bottom:0; }
+  /* Mobile day view fills space and scrolls internally */
+  #mobileDayView{ flex:1; overflow:hidden; }
+  .mob-groups{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
 
-  /* Weekly totals cards */
+  /* Settings view */
+  .settings-view{ padding:12px; overflow-y:auto; flex:1; }
+  .settings-grid{ grid-template-columns:1fr; gap:12px; }
+
+  /* Weekly totals */
+  #totalsContent{ padding:12px; overflow-y:auto; }
   .totals-wrap{ padding:0; }
-  #totalsContent{ padding:12px; }
 
   /* Admin */
   #adminContent{ font-size:.8rem; }
   .admin-stats{ grid-template-columns:1fr 1fr 1fr; gap:8px; }
   .admin-stat .num{ font-size:1.5rem; }
 
-  /* Hide go live button, show stream link instead */
+  /* Hide go live on mobile */
   #liveBtn{ display:none !important; }
   #mobileLiveLink{ display:flex !important; }
 
