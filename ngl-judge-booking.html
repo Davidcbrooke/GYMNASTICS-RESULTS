@@ -302,9 +302,87 @@
     .price-box{flex-direction:column; align-items:flex-start;}
     .price-box .total{text-align:left;}
   }
+
+  /* ══ NAV ══ */
+  .top-nav{
+    background:var(--navy);
+    display:flex; align-items:center; justify-content:center;
+    height:52px; border-bottom:3px solid var(--red);
+  }
+  .nav-tab{
+    background:none; border:none; color:rgba(255,255,255,0.55);
+    padding:0 20px; height:52px; font-size:13px; font-family:inherit;
+    cursor:pointer; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;
+    border-bottom:3px solid transparent; margin-bottom:-3px; transition:all .15s;
+  }
+  .nav-tab:hover{color:#fff;}
+  .nav-tab.active{color:#fff; border-bottom-color:var(--gold);}
+  .page-panel{display:none;}
+  .page-panel.active{display:block;}
+
+  /* ══ ADMIN ══ */
+  .admin-login-wrap{ max-width:380px; margin:60px auto; background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(26,42,74,0.12); }
+  .al-head{ background:var(--navy); border-bottom:3px solid var(--red); padding:18px 22px; color:#fff; font-size:16px; font-weight:700; }
+  .al-head p{ font-size:12px; color:rgba(255,255,255,0.5); margin-top:4px; font-weight:400; }
+  .al-body{ padding:22px; }
+  .al-body input{ width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; margin-bottom:14px; }
+  .al-err{ color:var(--red); font-size:13px; margin-top:8px; display:none; }
+  .btn-navy{ background:var(--navy); color:#fff; border:none; width:100%; padding:11px 16px; font-size:13px; font-weight:700; cursor:pointer; border-radius:8px; font-family:inherit; }
+  .btn-navy:hover{ background:var(--navy-light); }
+  .btn-ghost-admin{ background:none; border:1px solid var(--border); color:var(--muted); padding:11px 16px; font-size:13px; font-weight:700; cursor:pointer; border-radius:8px; font-family:inherit; }
+  .btn-ghost-admin:hover{ border-color:var(--navy); color:var(--navy); }
+  .btn-small-admin{ padding:7px 12px; font-size:12px; }
+
+  .admin-header{
+    background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color:#fff; padding:22px 24px; border-bottom:4px solid var(--gold);
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+  }
+  .admin-header h1{ margin:0; font-size:20px; }
+  .admin-header p{ margin:2px 0 0; font-size:13px; color:#c9d2e6; }
+
+  .admin-wrap{ max-width:1000px; margin:0 auto; padding:24px 20px 60px; }
+
+  .stats-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px; }
+  @media(max-width:600px){ .stats-row{ grid-template-columns:1fr 1fr; } }
+  .stat-tile{ background:var(--card); border:1px solid var(--border); border-top:3px solid var(--gold); border-radius:8px; padding:14px 16px; }
+  .stat-tile .sv{ font-size:24px; font-weight:800; color:var(--navy); }
+  .stat-tile .sl{ font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+  .admin-toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+  .admin-toolbar input, .admin-toolbar select{ padding:9px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; font-family:inherit; background:#fff; }
+  .admin-toolbar input{ flex:1; min-width:200px; }
+
+  .booking-card{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:14px; box-shadow:0 4px 14px rgba(26,42,74,0.06); }
+  .bc-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
+  .bc-title{ font-size:16px; font-weight:700; color:var(--navy); }
+  .bc-sub{ font-size:13px; color:var(--muted); margin-top:2px; }
+  .bc-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px 16px; margin-bottom:10px; }
+  .bc-field{ font-size:13px; color:var(--text); }
+  .bc-field a{ color:var(--red); text-decoration:none; }
+  .bc-field a:hover{ text-decoration:underline; }
+  .bc-label{ display:block; font-size:10.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:2px; }
+  .bc-notes{ background:#f8f9fc; border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:12px; }
+  .bc-actions{ display:flex; gap:8px; flex-wrap:wrap; border-top:1px solid var(--border); padding-top:12px; }
+
+  .status-pill{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:4px 11px; border-radius:12px; white-space:nowrap; display:inline-block; }
+  .status-pill.pending{ background:#fff3e0; color:#b06000; }
+  .status-pill.confirmed{ background:#e6f4ee; color:#1a6b3a; }
+  .status-pill.declined{ background:#fde8e6; color:var(--red); }
+  .status-pill.invoiced{ background:#e8eefc; color:#2451b8; }
+  .status-pill.paid{ background:#e6f4ee; color:#1a6b3a; }
+
+  .no-rows{ text-align:center; padding:50px; color:var(--muted); font-size:14px; background:var(--card); border:1px solid var(--border); border-radius:12px; }
 </style>
 </head>
 <body>
+
+<nav class="top-nav">
+  <button class="nav-tab active" id="tab-book" onclick="window.showPage('book', this)">Book a Judge</button>
+  <button class="nav-tab" id="tab-admin" onclick="window.showPage('admin', this)">Admin &#x1F512;</button>
+</nav>
+
+<div id="page-book" class="page-panel active">
 
 <header>
   <div class="tag">NGL &middot; Remote Judge Service</div>
@@ -446,6 +524,54 @@
 
 </div>
 
+</div><!-- /page-book -->
+
+<div id="page-admin" class="page-panel">
+
+  <div class="admin-login-wrap" id="admin-login">
+    <div class="al-head">&#x1F510; Admin Login<p>NGL Remote Judge Bookings</p></div>
+    <div class="al-body">
+      <input type="password" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')window.adminLogin()">
+      <button class="btn-navy" onclick="window.adminLogin()">Sign In</button>
+      <div class="al-err" id="al-err">Incorrect password. Please try again.</div>
+    </div>
+  </div>
+
+  <div id="admin-dash" style="display:none">
+    <div class="admin-header">
+      <div>
+        <h1>Remote Judge Bookings</h1>
+        <p>Review, confirm and manage incoming club bookings</p>
+      </div>
+      <button class="btn-ghost-admin btn-small-admin" onclick="window.adminLogout()">Sign Out</button>
+    </div>
+
+    <div class="admin-wrap">
+      <div class="stats-row">
+        <div class="stat-tile"><div class="sv" id="stat-pending">&mdash;</div><div class="sl">Pending Review</div></div>
+        <div class="stat-tile"><div class="sv" id="stat-confirmed">&mdash;</div><div class="sl">Confirmed</div></div>
+        <div class="stat-tile"><div class="sv" id="stat-invoiced">&mdash;</div><div class="sl">Invoiced / Paid</div></div>
+        <div class="stat-tile"><div class="sv" id="stat-value">&mdash;</div><div class="sl">Total Booked Value</div></div>
+      </div>
+
+      <div class="admin-toolbar">
+        <input type="text" id="search" placeholder="Search club, competition or contact&hellip;" oninput="window.renderBookingList()">
+        <select id="filter" onchange="window.renderBookingList()">
+          <option value="pending_review">Pending Review</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="invoiced">Invoiced</option>
+          <option value="paid">Paid</option>
+          <option value="declined">Declined</option>
+          <option value="">All Bookings</option>
+        </select>
+      </div>
+
+      <div id="booking-list"><div class="no-rows">Loading&hellip;</div></div>
+    </div>
+  </div>
+
+</div><!-- /page-admin -->
+
 <script>
   // ---- Firebase config: reuse the saadi-rotation project config used across NGL tools ----
   const firebaseConfig = {
@@ -566,6 +692,148 @@
       submitBtn.textContent = 'Submit Booking Request';
     }
   });
+
+  // ══ PAGE NAV ══
+  window.showPage = function(id, btn){
+    document.querySelectorAll('.page-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    if(btn) btn.classList.add('active');
+  };
+
+  // ══ ADMIN ══
+  const ADMIN_PASSWORD = 'ngl2026';
+  const bookingsCol = db.collection('ngl_judge_bookings');
+  let allBookings = [];
+  let adminLoggedIn = false;
+
+  window.adminLogin = function(){
+    if(document.getElementById('admin-pw').value === ADMIN_PASSWORD){
+      adminLoggedIn = true;
+      document.getElementById('admin-login').style.display = 'none';
+      document.getElementById('admin-dash').style.display = 'block';
+    } else {
+      document.getElementById('al-err').style.display = 'block';
+      document.getElementById('admin-pw').value = '';
+    }
+  };
+
+  window.adminLogout = function(){
+    adminLoggedIn = false;
+    document.getElementById('admin-login').style.display = 'block';
+    document.getElementById('admin-dash').style.display = 'none';
+    document.getElementById('admin-pw').value = '';
+    document.getElementById('al-err').style.display = 'none';
+  };
+
+  bookingsCol.orderBy('createdAt', 'desc').onSnapshot(snap => {
+    allBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderStats();
+    window.renderBookingList();
+  });
+
+  function renderStats(){
+    const pending = allBookings.filter(b => (b.status||'pending_review') === 'pending_review').length;
+    const confirmed = allBookings.filter(b => b.status === 'confirmed').length;
+    const invoiced = allBookings.filter(b => b.status === 'invoiced' || b.status === 'paid').length;
+    const totalValue = allBookings.reduce((sum, b) => sum + (b.estimatedTotal || 0), 0);
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-confirmed').textContent = confirmed;
+    document.getElementById('stat-invoiced').textContent = invoiced;
+    document.getElementById('stat-value').textContent = '£' + totalValue.toLocaleString();
+  }
+
+  function fmtDate(d){
+    if(!d) return 'TBC';
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function statusLabel(status){
+    const map = {
+      pending_review: { text: 'Pending Review', cls: 'pending' },
+      confirmed:       { text: 'Confirmed', cls: 'confirmed' },
+      declined:        { text: 'Declined', cls: 'declined' },
+      invoiced:        { text: 'Invoiced', cls: 'invoiced' },
+      paid:            { text: 'Paid', cls: 'paid' }
+    };
+    return map[status] || map.pending_review;
+  }
+
+  window.renderBookingList = function(){
+    const el = document.getElementById('booking-list');
+    const search = (document.getElementById('search').value || '').toLowerCase();
+    const filter = document.getElementById('filter').value;
+
+    let rows = [...allBookings];
+    if(filter) rows = rows.filter(b => (b.status || 'pending_review') === filter);
+    if(search) rows = rows.filter(b =>
+      (b.clubName||'').toLowerCase().includes(search) ||
+      (b.compName||'').toLowerCase().includes(search) ||
+      (b.contactName||'').toLowerCase().includes(search)
+    );
+
+    if(!rows.length){
+      el.innerHTML = '<div class="no-rows">No bookings match this filter.</div>';
+      return;
+    }
+
+    el.innerHTML = rows.map(b => {
+      const status = b.status || 'pending_review';
+      const sl = statusLabel(status);
+      const actions = [];
+      if(status === 'pending_review'){
+        actions.push('<button class="btn-navy btn-small-admin" style="width:auto" onclick="window.setBookingStatus(\'' + b.id + '\',\'confirmed\')">Confirm</button>');
+        actions.push('<button class="btn-ghost-admin btn-small-admin" onclick="window.setBookingStatus(\'' + b.id + '\',\'declined\')">Decline</button>');
+      }
+      if(status === 'confirmed'){
+        actions.push('<button class="btn-navy btn-small-admin" style="width:auto" onclick="window.setBookingStatus(\'' + b.id + '\',\'invoiced\')">Mark Invoiced</button>');
+      }
+      if(status === 'invoiced'){
+        actions.push('<button class="btn-navy btn-small-admin" style="width:auto" onclick="window.setBookingStatus(\'' + b.id + '\',\'paid\')">Mark Paid</button>');
+      }
+      actions.push('<button class="btn-ghost-admin btn-small-admin" onclick="window.deleteBooking(\'' + b.id + '\')">Delete</button>');
+
+      return '<div class="booking-card">' +
+        '<div class="bc-header">' +
+          '<div><div class="bc-title">' + (b.compName||'Untitled Competition') + '</div>' +
+          '<div class="bc-sub">' + (b.clubName||'') + '</div></div>' +
+          '<span class="status-pill ' + sl.cls + '">' + sl.text + '</span>' +
+        '</div>' +
+        '<div class="bc-grid">' +
+          '<div class="bc-field"><span class="bc-label">Date</span>' + fmtDate(b.compDate) + (b.compTime ? ' at ' + b.compTime : '') + '</div>' +
+          '<div class="bc-field"><span class="bc-label">Duration</span>' + (b.durationHours||'-') + ' hrs</div>' +
+          '<div class="bc-field"><span class="bc-label">Venue</span>' + (b.compLocation||'-') + '</div>' +
+          '<div class="bc-field"><span class="bc-label">Estimated Total</span><strong>£' + (b.estimatedTotal||0).toLocaleString() + '</strong></div>' +
+          '<div class="bc-field"><span class="bc-label">Contact</span>' + (b.contactName||'-') + '</div>' +
+          '<div class="bc-field"><span class="bc-label">Email</span><a href="mailto:' + (b.contactEmail||'') + '">' + (b.contactEmail||'-') + '</a></div>' +
+          '<div class="bc-field"><span class="bc-label">Phone</span>' + (b.contactPhone||'-') + '</div>' +
+          '<div class="bc-field"><span class="bc-label">Rules Document</span>' +
+            (b.rulesFileUrl ? '<a href="' + b.rulesFileUrl + '" target="_blank">' + (b.rulesFileName||'View file') + ' →</a>' : 'Not uploaded') +
+          '</div>' +
+        '</div>' +
+        (b.notes ? '<div class="bc-notes"><span class="bc-label">Notes</span>' + b.notes + '</div>' : '') +
+        '<div class="bc-actions">' + actions.join('') + '</div>' +
+        '</div>';
+    }).join('');
+  };
+
+  window.setBookingStatus = async function(id, status){
+    try{
+      await db.collection('ngl_judge_bookings').doc(id).update({ status, [status + 'At']: new Date().toISOString() });
+    }catch(e){
+      alert('Could not update booking: ' + e.message);
+    }
+  };
+
+  window.deleteBooking = async function(id){
+    if(!confirm('Delete this booking permanently? This cannot be undone.')) return;
+    try{
+      await db.collection('ngl_judge_bookings').doc(id).delete();
+    }catch(e){
+      alert('Could not delete booking: ' + e.message);
+    }
+  };
 </script>
 
 </body>
