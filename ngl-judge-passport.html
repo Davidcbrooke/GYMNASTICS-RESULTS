@@ -22,7 +22,7 @@
     --mono:       'Courier New', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font); background: var(--off-white); color: var(--text); min-height: 100vh; font-size: 14px; }
+  body { font-family: var(--font); background: var(--off-white); color: var(--text); font-size: 14px; }
 
   /* NAV */
   .top-nav { background: var(--navy); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 52px; border-bottom: 3px solid var(--red); gap: 8px; }
@@ -833,6 +833,7 @@ window.showPanel = function(id, btn) {
   if (id === 'admin' && adminLoggedIn) window.renderAdminApplications();
   if (id === 'quiz') renderQuizEntry();
   if (id === 'resources') renderResourcesList();
+  setTimeout(sendHeightToParent, 50);
 };
 
 window.setAuthMode = function(mode) {
@@ -1000,6 +1001,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('signup-gate').style.display = 'block';
   }
   renderSignupList();
+  setTimeout(sendHeightToParent, 100);
 });
 
 // ══ LIVE DATA ══
