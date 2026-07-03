@@ -554,7 +554,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
   <div class="modal-box">
     <h3 id="smTitle">Add Session</h3>
     <div class="mf"><label>Week A Location</label><select id="sm_loc"></select></div>
-    <div class="mf" id="sm_locB_field"><label>Week B Location <span style="font-weight:400;color:var(--muted);font-size:.7rem">(optional — 2-week rotation)</span></label><select id="sm_locB"><option value="">— Same as Week A —</option></select></div>
+    <div class="mf" id="sm_locB_field"><label>Week B Location <span style="font-weight:400;color:var(--muted);font-size:.7rem">(optional — leave blank if same every week)</span></label><select id="sm_locB"><option value="">— Same as Week A —</option></select></div>
     <div class="mf-row">
       <div class="mf"><label>Start time</label><select id="sm_start"></select></div>
       <div class="mf"><label>Duration (mins)</label><input type="number" id="sm_dur" value="30" min="5" max="240" step="5"></div>
@@ -1213,7 +1213,7 @@ function openSessionModal(day,groupId,sessionIdx){
   const isRec=group.section==='recreational';
   document.getElementById('smTitle').textContent=(isNew?'Add':'Edit')+' Session — '+group.name+' ('+day+')';
   document.getElementById('sm_del').style.display=isNew?'none':'block';
-  document.getElementById('sm_locB_field').style.display=isRec?'block':'none';
+  document.getElementById('sm_locB_field').style.display='block';
   document.getElementById('sm_autoadjust_field').style.display=isNew?'none':'block';
   // populate locations — grouped by category, alphabetically within each
   const sl=document.getElementById('sm_loc'), slB=document.getElementById('sm_locB');
@@ -2057,8 +2057,9 @@ function renderTimeline(day){
   const topSponsorH = document.getElementById('sponsorBand') ? document.getElementById('sponsorBand').getBoundingClientRect().height : 0;
   const rulerH = 32;
   const sepH = 28;
-  const safetyMargin = 16; // small buffer to prevent any overflow
-  const availH = window.innerHeight - liveHdrH - sponsorH - topSponsorH - rulerH - (sectionCount * sepH) - safetyMargin;
+  const scrollbarH = 12; // horizontal scrollbar at bottom of timeline
+  const safetyMargin = 8;
+  const availH = window.innerHeight - liveHdrH - sponsorH - topSponsorH - rulerH - (sectionCount * sepH) - scrollbarH - safetyMargin;
 
   // calculate row height — min 28px, max 80px
   const rowH = Math.min(80, Math.max(28, Math.floor(availH / Math.max(totalGroups, 1))));
@@ -2077,7 +2078,8 @@ function renderTimeline(day){
     const groups=activeGroups[section];
     if(!groups.length) return;
     const sep=document.createElement('div'); sep.className='tl-sep'; sep.style.width=totalW+'px';
-    sep.innerHTML=`<span>${section==='squad'?'Squads':'Recreational — Week '+currentWeek}</span>`; inner.appendChild(sep);
+    const hasWeekBInSection = groups.some(g=>DAYS.some(day=>(DATA.sessions[day]&&DATA.sessions[day][g.id]||[]).some(s=>s.locationB)));
+    sep.innerHTML=`<span>${section==='squad'?(hasWeekBInSection?'Squads — Week '+currentWeek:'Squads'):'Recreational — Week '+currentWeek}</span>`; inner.appendChild(sep);
     groups.forEach(group=>{
       const sessions=(DATA.sessions[day]&&DATA.sessions[day][group.id])||[];
       const row=document.createElement('div'); row.className='tl-row'; row.style.width=totalW+'px'; row.style.height=rowH+'px';
