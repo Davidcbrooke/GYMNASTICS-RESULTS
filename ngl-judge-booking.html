@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NGL Remote Judge Booking</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<style>
+  :root{
+    --navy:#1a2a4a;
+    --navy-light:#233a63;
+    --red:#c0392b;
+    --gold:#c9a227;
+    --gold-light:#e8c766;
+    --bg:#f4f6fa;
+    --card:#ffffff;
+    --border:#e1e5ee;
+    --text:#1c2536;
+    --muted:#6b7488;
+    --success:#1e8a4c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  header{
+    background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color:#fff;
+    padding:36px 20px 30px;
+    text-align:center;
+    border-bottom:4px solid var(--gold);
+  }
+  header .tag{
+    display:inline-block;
+    background:var(--red);
+    color:#fff;
+    font-size:12px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    padding:5px 14px;
+    border-radius:20px;
+    margin-bottom:14px;
+    font-weight:600;
+  }
+  header h1{
+    margin:0 0 8px;
+    font-size:30px;
+    letter-spacing:.5px;
+  }
+  header p{
+    margin:0;
+    color:#c9d2e6;
+    font-size:15px;
+    max-width:640px;
+    margin:0 auto;
+  }
+
+  .wrap{
+    max-width:1100px;
+    margin:-18px auto 60px;
+    padding:0 20px;
+  }
+
+  .package-card{
+    background:var(--card);
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(26,42,74,0.12);
+    padding:30px 32px;
+    margin-bottom:26px;
+    border-top:5px solid var(--gold);
+  }
+  .package-card h2{
+    margin:0 0 6px;
+    color:var(--navy);
+    font-size:20px;
+  }
+  .package-card .price-lead{
+    color:var(--red);
+    font-weight:700;
+    font-size:15px;
+    margin-bottom:18px;
+  }
+  .features{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:14px;
+  }
+  .feature{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding:12px;
+    background:#f8f9fc;
+    border-radius:10px;
+    border:1px solid var(--border);
+  }
+  .feature .icon{
+    flex:0 0 26px;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:var(--navy);
+    color:var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:13px;
+    font-weight:700;
+  }
+  .feature .label{
+    font-size:13.5px;
+    line-height:1.4;
+    color:var(--text);
+  }
+  .feature .label b{
+    display:block;
+    color:var(--navy);
+    font-size:13.5px;
+    margin-bottom:2px;
+  }
+
+  .pricing-note{
+    margin-top:18px;
+    background:#fff8e8;
+    border:1px solid var(--gold-light);
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:13.5px;
+    color:#7a5c0a;
+  }
+
+  form.card{
+    background:var(--card);
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(26,42,74,0.12);
+    padding:32px;
+  }
+  .section-title{
+    color:var(--navy);
+    font-size:17px;
+    font-weight:700;
+    margin:0 0 4px;
+    padding-bottom:10px;
+    border-bottom:2px solid var(--border);
+  }
+  .section-title span{color:var(--red);}
+  .grid2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-top:18px;
+  }
+  .field{margin-bottom:18px;}
+  .field label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--navy);
+    margin-bottom:6px;
+  }
+  .field .hint{
+    font-size:11.5px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+  input[type=text], input[type=email], input[type=tel], input[type=date],
+  input[type=time], input[type=number], textarea, select{
+    width:100%;
+    padding:11px 12px;
+    border:1.5px solid var(--border);
+    border-radius:8px;
+    font-size:14px;
+    font-family:inherit;
+    color:var(--text);
+    background:#fff;
+    transition:border .15s;
+  }
+  input:focus, textarea:focus, select:focus{
+    outline:none;
+    border-color:var(--gold);
+  }
+  textarea{resize:vertical; min-height:70px;}
+
+  .file-drop{
+    border:2px dashed var(--border);
+    border-radius:10px;
+    padding:18px;
+    text-align:center;
+    background:#fafbfd;
+    cursor:pointer;
+    transition:border .15s, background .15s;
+  }
+  .file-drop:hover{border-color:var(--gold); background:#fff9ec;}
+  .file-drop.has-file{border-color:var(--success); background:#f0fbf4;}
+  .file-drop .fname{font-size:13px; font-weight:600; color:var(--navy); margin-top:6px;}
+
+  .checkbox-row{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    background:#f8f9fc;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px 14px;
+    margin-top:6px;
+  }
+  .checkbox-row input{width:auto; margin-top:3px;}
+  .checkbox-row label{font-size:13px; color:var(--text); font-weight:500;}
+
+  .price-box{
+    background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    border-radius:12px;
+    padding:24px 26px;
+    color:#fff;
+    margin:24px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+  .price-box .breakdown{font-size:13px; color:#c9d2e6; line-height:1.6;}
+  .price-box .breakdown .line{display:flex; justify-content:space-between; gap:24px; min-width:220px;}
+  .price-box .total{
+    text-align:right;
+  }
+  .price-box .total .amount{
+    font-size:34px;
+    font-weight:800;
+    color:var(--gold);
+    line-height:1;
+  }
+  .price-box .total .label{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:#c9d2e6;
+    margin-top:4px;
+  }
+
+  button.submit-btn{
+    width:100%;
+    padding:15px;
+    background:var(--red);
+    color:#fff;
+    border:none;
+    border-radius:9px;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    letter-spacing:.3px;
+    transition:background .15s, transform .1s;
+  }
+  button.submit-btn:hover{background:#a5301f;}
+  button.submit-btn:disabled{background:#b9b9b9; cursor:not-allowed;}
+
+  .status-msg{
+    margin-top:14px;
+    padding:12px 14px;
+    border-radius:8px;
+    font-size:13.5px;
+    display:none;
+  }
+  .status-msg.error{display:block; background:#fdeceb; color:var(--red); border:1px solid #f3c6c1;}
+  .status-msg.success{display:block; background:#eafaf0; color:var(--success); border:1px solid #b9ecc9;}
+
+  .confirm-screen{
+    display:none;
+    text-align:center;
+    padding:50px 30px;
+  }
+  .confirm-screen .tick{
+    width:64px; height:64px; border-radius:50%;
+    background:var(--success); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px; margin:0 auto 18px;
+  }
+  .confirm-screen h2{color:var(--navy); margin-bottom:8px;}
+  .confirm-screen p{color:var(--muted); font-size:14px; max-width:440px; margin:0 auto 6px;}
+  .ref{
+    display:inline-block;
+    margin-top:16px;
+    background:#f4f6fa;
+    border:1px solid var(--border);
+    padding:8px 18px;
+    border-radius:8px;
+    font-weight:700;
+    color:var(--navy);
+    letter-spacing:.5px;
+  }
+
+  @media(max-width:640px){
+    .grid2{grid-template-columns:1fr;}
+    .price-box{flex-direction:column; align-items:flex-start;}
+    .price-box .total{text-align:left;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tag">NGL &middot; Remote Judge Service</div>
+  <h1>Book a Remote Judge for Your Competition</h1>
+  <p>Full Elevien-powered scoring, a qualified remote judge, live TV casting, spectator streaming and instant results &mdash; all in one booking.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="package-card">
+    <h2>What's Included</h2>
+    <div class="price-lead">£300 per competition (up to 4 hours) &middot; £50 for every additional hour</div>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">1</div>
+        <div class="label"><b>Elevien Scoring Technology</b>Full dynamic programme capability for live, accurate scoring.</div>
+      </div>
+      <div class="feature">
+        <div class="icon">2</div>
+        <div class="label"><b>TV Casting</b>Live scores and running order cast to a hall TV display.</div>
+      </div>
+      <div class="feature">
+        <div class="icon">3</div>
+        <div class="label"><b>Spectator App</b>Parents and spectators follow live scores from their phones.</div>
+      </div>
+      <div class="feature">
+        <div class="icon">4</div>
+        <div class="label"><b>NGL Qualified Judge</b>Regional level or above / British Gymnastics qualified.</div>
+      </div>
+      <div class="feature">
+        <div class="icon">5</div>
+        <div class="label"><b>Instant Results Page</b>Ready the moment competition ends &mdash; perfect for presenting medals.</div>
+      </div>
+      <div class="feature">
+        <div class="icon">6</div>
+        <div class="label"><b>Piece Video Recording</b>Every routine recorded on video for review and judge reference.</div>
+      </div>
+      <div class="feature">
+        <div class="icon">7</div>
+        <div class="label"><b>Video App Training</b>Your team gets instruction on how to use the recording app on the day.</div>
+      </div>
+    </div>
+    <div class="pricing-note">
+      Rules must be <b>FIG based</b>. Please upload a copy of your competition rules so the remote judge can prepare in advance. Bookings are confirmed once the NGL team reviews your submission &mdash; payment is arranged after confirmation.
+    </div>
+  </div>
+
+  <form class="card" id="bookingForm">
+
+    <div id="formScreen">
+      <p class="section-title">Club Details <span>*</span></p>
+      <div class="grid2">
+        <div class="field">
+          <label>Club Name *</label>
+          <input type="text" id="clubName" required>
+        </div>
+        <div class="field">
+          <label>Contact Name *</label>
+          <input type="text" id="contactName" required>
+        </div>
+        <div class="field">
+          <label>Contact Email *</label>
+          <input type="email" id="contactEmail" required>
+        </div>
+        <div class="field">
+          <label>Contact Phone *</label>
+          <input type="tel" id="contactPhone" required>
+        </div>
+      </div>
+
+      <p class="section-title" style="margin-top:8px;">Competition Details <span>*</span></p>
+      <div class="grid2">
+        <div class="field">
+          <label>Competition Name *</label>
+          <input type="text" id="compName" required>
+        </div>
+        <div class="field">
+          <label>Venue / Location *</label>
+          <input type="text" id="compLocation" placeholder="Venue name, address" required>
+        </div>
+        <div class="field">
+          <label>Date *</label>
+          <input type="date" id="compDate" required>
+        </div>
+        <div class="field">
+          <label>Start Time *</label>
+          <input type="time" id="compTime" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Expected Duration (hours) *</label>
+        <input type="number" id="compDuration" min="0.5" step="0.5" placeholder="e.g. 4" required>
+        <div class="hint">Base package covers up to 4 hours. £50 is added for every hour beyond that.</div>
+      </div>
+
+      <div class="field">
+        <label>Upload Competition Rules (FIG based) *</label>
+        <div class="file-drop" id="fileDrop" onclick="document.getElementById('rulesFile').click()">
+          <div>📄 Click to upload rules document (PDF or Word)</div>
+          <div class="fname" id="fileName"></div>
+        </div>
+        <input type="file" id="rulesFile" accept=".pdf,.doc,.docx" style="display:none">
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="figConfirm" required>
+        <label for="figConfirm">I confirm the uploaded rules are FIG based, and I understand this booking is confirmed by the NGL team before payment is arranged. *</label>
+      </div>
+
+      <div class="field" style="margin-top:8px;">
+        <label>Anything else the judge should know? (optional)</label>
+        <textarea id="notes" placeholder="Number of gymnasts, apparatus, levels, internet connection notes etc."></textarea>
+      </div>
+
+      <div class="price-box">
+        <div class="breakdown">
+          <div class="line"><span>Base package (up to 4 hrs)</span><span>£300</span></div>
+          <div class="line"><span id="extraLine">Additional hours</span><span id="extraAmount">£0</span></div>
+        </div>
+        <div class="total">
+          <div class="amount" id="totalAmount">£300</div>
+          <div class="label">Estimated Total</div>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Submit Booking Request</button>
+      <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <div class="confirm-screen" id="confirmScreen">
+      <div class="tick">✓</div>
+      <h2>Booking Request Received</h2>
+      <p>Thanks &mdash; your remote judge booking request has been sent to the NGL team. We'll review your rules document and confirm availability by email.</p>
+      <div class="ref" id="refNumber"></div>
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+  // ---- Firebase config: reuse the saadi-rotation project config used across NGL tools ----
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "saadi-rotation.firebaseapp.com",
+    projectId: "saadi-rotation",
+    storageBucket: "saadi-rotation.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+
+  const BASE_PRICE = 300;
+  const BASE_HOURS = 4;
+  const EXTRA_RATE = 50;
+
+  const durationInput = document.getElementById('compDuration');
+  const extraLine = document.getElementById('extraLine');
+  const extraAmount = document.getElementById('extraAmount');
+  const totalAmount = document.getElementById('totalAmount');
+
+  function calcPrice(){
+    const hours = parseFloat(durationInput.value) || 0;
+    const extraHours = Math.max(0, hours - BASE_HOURS);
+    const extraCost = extraHours * EXTRA_RATE;
+    const total = BASE_PRICE + extraCost;
+
+    if(extraHours > 0){
+      extraLine.textContent = `Additional ${extraHours % 1 === 0 ? extraHours : extraHours.toFixed(1)} hr${extraHours > 1 ? 's' : ''} @ £50/hr`;
+    } else {
+      extraLine.textContent = 'Additional hours';
+    }
+    extraAmount.textContent = `£${extraCost.toFixed(extraCost % 1 === 0 ? 0 : 2)}`;
+    totalAmount.textContent = `£${total.toFixed(total % 1 === 0 ? 0 : 2)}`;
+    return total;
+  }
+  durationInput.addEventListener('input', calcPrice);
+  calcPrice();
+
+  // File upload UI
+  const fileDrop = document.getElementById('fileDrop');
+  const fileInput = document.getElementById('rulesFile');
+  const fileNameEl = document.getElementById('fileName');
+  let selectedFile = null;
+
+  fileInput.addEventListener('change', () => {
+    if(fileInput.files.length){
+      selectedFile = fileInput.files[0];
+      fileNameEl.textContent = selectedFile.name;
+      fileDrop.classList.add('has-file');
+    }
+  });
+
+  // Form submit
+  const form = document.getElementById('bookingForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const statusMsg = document.getElementById('statusMsg');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusMsg.className = 'status-msg';
+    statusMsg.textContent = '';
+
+    if(!selectedFile){
+      statusMsg.className = 'status-msg error';
+      statusMsg.textContent = 'Please upload a copy of your competition rules before submitting.';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    try{
+      const total = calcPrice();
+      const hours = parseFloat(durationInput.value) || 0;
+
+      const bookingData = {
+        clubName: document.getElementById('clubName').value.trim(),
+        contactName: document.getElementById('contactName').value.trim(),
+        contactEmail: document.getElementById('contactEmail').value.trim(),
+        contactPhone: document.getElementById('contactPhone').value.trim(),
+        compName: document.getElementById('compName').value.trim(),
+        compLocation: document.getElementById('compLocation').value.trim(),
+        compDate: document.getElementById('compDate').value,
+        compTime: document.getElementById('compTime').value,
+        durationHours: hours,
+        estimatedTotal: total,
+        notes: document.getElementById('notes').value.trim(),
+        figConfirmed: true,
+        status: 'pending_review',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      // Create booking doc first to get an ID
+      const docRef = await db.collection('ngl_judge_bookings').add(bookingData);
+
+      // Upload rules file to Storage under this booking's ID
+      const storageRef = storage.ref(`judge_bookings/${docRef.id}/${selectedFile.name}`);
+      await storageRef.put(selectedFile);
+      const fileUrl = await storageRef.getDownloadURL();
+
+      // Attach file URL back to the booking doc
+      await docRef.update({ rulesFileUrl: fileUrl, rulesFileName: selectedFile.name });
+
+      // Show confirmation
+      document.getElementById('formScreen').style.display = 'none';
+      document.getElementById('confirmScreen').style.display = 'block';
+      document.getElementById('refNumber').textContent = `Booking Ref: ${docRef.id.slice(0,8).toUpperCase()}`;
+
+    }catch(err){
+      console.error(err);
+      statusMsg.className = 'status-msg error';
+      statusMsg.textContent = 'Something went wrong submitting your booking. Please try again or contact NGL directly.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Booking Request';
+    }
+  });
+</script>
+
+</body>
+</html>
