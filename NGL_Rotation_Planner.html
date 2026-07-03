@@ -1992,8 +1992,9 @@ function enterLive(){
   renderTimeline(day);
   startLiveClock();
   try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}catch(e){}
-  // re-render after a short delay so sponsor band and header are fully laid out before measuring heights
-  setTimeout(()=>{ renderTimeline(getTodayName()); }, 150);
+  // re-render after fullscreen settles — 500ms gives TV displays time to switch resolution
+  setTimeout(()=>{ renderTimeline(getTodayName()); }, 500);
+  setTimeout(()=>{ renderTimeline(getTodayName()); }, 1200);
   window.addEventListener('resize', liveResizeHandler);
 }
 
@@ -2050,14 +2051,17 @@ function renderTimeline(day){
   const sectionCount=(activeGroups.squad.length>0?1:0)+(activeGroups.recreational.length>0?1:0);
 
   // available height = screen height minus live header, sponsor band, ruler
-  const liveHdrH = document.querySelector('.live-hdr') ? document.querySelector('.live-hdr').offsetHeight : 80;
-  const sponsorH = document.getElementById('sponsorBandLive') ? document.getElementById('sponsorBandLive').offsetHeight : 0;
-  const rulerH = 30;
-  const sepH = 26;
-  const availH = window.innerHeight - liveHdrH - sponsorH - rulerH - (sectionCount * sepH) - 10;
+  // measure actual heights of all elements above the timeline
+  const liveHdrH = document.querySelector('.live-hdr') ? document.querySelector('.live-hdr').getBoundingClientRect().height : 80;
+  const sponsorH = document.getElementById('sponsorBandLive') ? document.getElementById('sponsorBandLive').getBoundingClientRect().height : 0;
+  const topSponsorH = document.getElementById('sponsorBand') ? document.getElementById('sponsorBand').getBoundingClientRect().height : 0;
+  const rulerH = 32;
+  const sepH = 28;
+  const safetyMargin = 16; // small buffer to prevent any overflow
+  const availH = window.innerHeight - liveHdrH - sponsorH - topSponsorH - rulerH - (sectionCount * sepH) - safetyMargin;
 
-  // calculate row height — min 32px, max 80px
-  const rowH = Math.min(80, Math.max(32, Math.floor(availH / Math.max(totalGroups, 1))));
+  // calculate row height — min 28px, max 80px
+  const rowH = Math.min(80, Math.max(28, Math.floor(availH / Math.max(totalGroups, 1))));
   const outer=document.createElement('div'); outer.className='tl-scroll'; outer.id='tlScroll';
   const inner=document.createElement('div'); inner.className='tl-inner'; inner.style.width=totalW+'px';
   // ruler
