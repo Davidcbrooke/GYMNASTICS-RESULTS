@@ -2020,6 +2020,7 @@ function exitLive(){
 }
 
 function startLiveClock(){
+  let lastGroupCount = 0;
   function tick(){
     const n=new Date();
     const ts=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
@@ -2027,6 +2028,10 @@ function startLiveClock(){
     document.getElementById('liveClock').textContent=ts;
     updateNowLine();
     checkFlash();
+    // re-render timeline every minute to show/hide groups as sessions start and end
+    if(n.getSeconds()===0){
+      renderTimeline(getTodayName());
+    }
   }
   tick(); liveTimer=setInterval(tick,1000);
 }
@@ -2038,16 +2043,40 @@ function renderTimeline(day){
   const lblW=calcLabelWidth(); const width=(max-min)*PX_PER_MIN; const totalW=lblW+width;
   const conflicts=getConflicts(day);
 
-  // count active groups to calculate row height
+  // only show groups that are currently active or starting within 15 minutes
+  const nowMin = nowMinutes();
+  const LOOKAHEAD = 15; // minutes before session starts to show the group
   const activeGroups={squad:[],recreational:[]};
   ['squad','recreational'].forEach(section=>{
     activeGroups[section]=DATA.groups.filter(g=>{
       if(g.section!==section) return false;
       if(!(g.days||DAYS).includes(day)) return false;
-      return ((DATA.sessions[day]&&DATA.sessions[day][g.id])||[]).length>0;
+      const sessions=(DATA.sessions[day]&&DATA.sessions[day][g.id])||[];
+      if(!sessions.length) return false;
+      // show if any session is currently running OR starting within LOOKAHEAD minutes
+      return sessions.some(s=>{
+        const start = s.start_min;
+        const end = s.start_min + s.duration;
+        const isActive = nowMin >= start && nowMin < end;
+        const isUpcoming = start > nowMin && start <= nowMin + LOOKAHEAD;
+        return isActive || isUpcoming;
+      });
     });
   });
   const totalGroups=activeGroups.squad.length+activeGroups.recreational.length;
+
+  // fallback: if nothing active yet, show all groups that train today
+  // so screen isn't blank before the day starts
+  if(totalGroups===0){
+    ['squad','recreational'].forEach(section=>{
+      activeGroups[section]=DATA.groups.filter(g=>{
+        if(g.section!==section) return false;
+        if(!(g.days||DAYS).includes(day)) return false;
+        return ((DATA.sessions[day]&&DATA.sessions[day][g.id])||[]).length>0;
+      });
+    });
+  }
+  const totalGroups2=activeGroups.squad.length+activeGroups.recreational.length;
   const sectionCount=(activeGroups.squad.length>0?1:0)+(activeGroups.recreational.length>0?1:0);
 
   // available height = screen height minus live header, sponsor band, ruler
@@ -2059,11 +2088,11 @@ function renderTimeline(day){
   const scrollbarH = 12;
   const safetyMargin = 4;
   // separator height scales with available space — fewer pixels per group means smaller separators
-  const sepH = totalGroups > 15 ? 18 : totalGroups > 10 ? 22 : 28;
+  const sepH = totalGroups2 > 15 ? 18 : totalGroups2 > 10 ? 22 : 28;
   const availH = window.innerHeight - liveHdrH - sponsorH - topSponsorH - rulerH - (sectionCount * sepH) - scrollbarH - safetyMargin;
 
   // calculate row height — no hard minimum so it always fits everything on screen
-  const rowH = Math.min(80, Math.max(18, Math.floor(availH / Math.max(totalGroups, 1))));
+  const rowH = Math.min(80, Math.max(18, Math.floor(availH / Math.max(totalGroups2, 1))));
   const outer=document.createElement('div'); outer.className='tl-scroll'; outer.id='tlScroll';
   const inner=document.createElement('div'); inner.className='tl-inner'; inner.style.width=totalW+'px';
   // ruler
