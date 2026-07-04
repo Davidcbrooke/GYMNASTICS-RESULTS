@@ -2056,13 +2056,14 @@ function renderTimeline(day){
   const sponsorH = document.getElementById('sponsorBandLive') ? document.getElementById('sponsorBandLive').getBoundingClientRect().height : 0;
   const topSponsorH = document.getElementById('sponsorBand') ? document.getElementById('sponsorBand').getBoundingClientRect().height : 0;
   const rulerH = 32;
-  const sepH = 28;
-  const scrollbarH = 12; // horizontal scrollbar at bottom of timeline
-  const safetyMargin = 8;
+  const scrollbarH = 12;
+  const safetyMargin = 4;
+  // separator height scales with available space — fewer pixels per group means smaller separators
+  const sepH = totalGroups > 15 ? 18 : totalGroups > 10 ? 22 : 28;
   const availH = window.innerHeight - liveHdrH - sponsorH - topSponsorH - rulerH - (sectionCount * sepH) - scrollbarH - safetyMargin;
 
-  // calculate row height — min 28px, max 80px
-  const rowH = Math.min(80, Math.max(28, Math.floor(availH / Math.max(totalGroups, 1))));
+  // calculate row height — no hard minimum so it always fits everything on screen
+  const rowH = Math.min(80, Math.max(18, Math.floor(availH / Math.max(totalGroups, 1))));
   const outer=document.createElement('div'); outer.className='tl-scroll'; outer.id='tlScroll';
   const inner=document.createElement('div'); inner.className='tl-inner'; inner.style.width=totalW+'px';
   // ruler
@@ -2077,7 +2078,7 @@ function renderTimeline(day){
   ['squad','recreational'].forEach(section=>{
     const groups=activeGroups[section];
     if(!groups.length) return;
-    const sep=document.createElement('div'); sep.className='tl-sep'; sep.style.width=totalW+'px';
+    const sep=document.createElement('div'); sep.className='tl-sep'; sep.style.width=totalW+'px'; sep.style.height=sepH+'px'; sep.style.fontSize=sepH<22?'.6rem':'.68rem';
     const hasWeekBInSection = groups.some(g=>DAYS.some(day=>(DATA.sessions[day]&&DATA.sessions[day][g.id]||[]).some(s=>s.locationB)));
     sep.innerHTML=`<span>${section==='squad'?(hasWeekBInSection?'Squads — Week '+currentWeek:'Squads'):'Recreational — Week '+currentWeek}</span>`; inner.appendChild(sep);
     groups.forEach(group=>{
