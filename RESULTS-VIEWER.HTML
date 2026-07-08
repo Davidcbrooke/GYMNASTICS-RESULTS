@@ -260,7 +260,7 @@ function loadCorrections() {
     .then(function(r){if(!r.ok)return null;return r.json();})
     .then(function(d){
       if(!d)return;
-      corrections=JSON.parse(atob(d.content.replace(/\n/g,"")));
+      try{ corrections=JSON.parse(atob(d.content.replace(/\n/g,""))); }catch(e){}
     })
     .catch(function(){corrections={};});
 }
@@ -792,7 +792,7 @@ function showWelcome(){document.getElementById("main").innerHTML='<div class="em
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
 loadNames();
-loadCorrections().then(function(){ loadCompetitions(); });
+loadCorrections().catch(function(){}).then(function(){ loadCompetitions(); });
 </script>
 </body>
 </html>
