@@ -211,7 +211,7 @@ function doLogin() {
     document.getElementById("app").className = "app visible";
     fetchNames();
     fetchUnavail();
-    loadData();
+    loadCorrectionsPublic().then(function(){ loadData(); });
   } else {
     document.getElementById("login-error").style.display = "block";
     document.getElementById("password-input").value = "";
