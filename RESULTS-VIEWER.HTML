@@ -253,7 +253,29 @@ function freshLeagueFilters(){ return {gender:"ALL",apparatus:"ALL",ageCategory:
 var compFilters = freshCompFilters();
 var leagueFilters = freshLeagueFilters();
 
-function getName(id){ return namesLookup[id]||""; }
+var corrections = {}; // memberId -> {field: newValue}
+
+function loadCorrections() {
+  return fetch(API_BASE+"corrections.json?ref="+BRANCH,{headers:{"Accept":"application/vnd.github.v3+json"}})
+    .then(function(r){if(!r.ok)return null;return r.json();})
+    .then(function(d){
+      if(!d)return;
+      corrections=JSON.parse(atob(d.content.replace(/\n/g,"")));
+    })
+    .catch(function(){corrections={};});
+}
+
+function applyCorrections(entry){
+  var c=corrections[entry.memberId];
+  if(!c)return entry;
+  var out=Object.assign({},entry);
+  if(c.gender)out.gender=c.gender;
+  if(c.ageCategory)out.ageCategory=c.ageCategory;
+  if(c.level)out.level=c.level;
+  if(c.trainingHrs)out.trainingHrs=c.trainingHrs;
+  if(c.region)out.region=c.region;
+  return out;
+}
 
 function setStatus(state,msg){
   document.getElementById("status-dot").className="status-dot "+state;
@@ -330,7 +352,7 @@ function loadXlsxFile(filename){
         var rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:""});
         if(!rows.length)return;
         var entries=rows.map(function(r){
-          return{
+          var entry={
             memberId:String(r["Member ID"]||r["BG Number"]||"").trim(),
             club:String(r["Club"]||"").trim(),
             ageCategory:String(r["Age Category"]||r["AgeCategory"]||"").trim(),
@@ -341,6 +363,7 @@ function loadXlsxFile(filename){
             trainingHrs:normaliseTrainingHrs(String(r["Training Hrs"]||r["TrainingHrs"]||r["Training Hours"]||"").trim()),
             gender:String(r["Gender"]||"").trim(),
           };
+          return applyCorrections(entry);
         }).filter(function(e){return e.memberId||e.club;});
         if(entries.length){comp.sheets.push({apparatus:sn,entries:entries});comp.totalEntries+=entries.length;}
       });
@@ -769,7 +792,7 @@ function showWelcome(){document.getElementById("main").innerHTML='<div class="em
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
 loadNames();
-loadCompetitions();
+loadCorrections().then(function(){ loadCompetitions(); });
 </script>
 </body>
 </html>
