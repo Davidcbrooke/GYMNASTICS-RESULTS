@@ -255,6 +255,8 @@ var leagueFilters = freshLeagueFilters();
 
 var corrections = {}; // memberId -> {field: newValue}
 
+function getName(id){ return namesLookup[id]||""; }
+
 function loadCorrections() {
   return fetch(API_BASE+"corrections.json?ref="+BRANCH,{headers:{"Accept":"application/vnd.github.v3+json"}})
     .then(function(r){if(!r.ok)return null;return r.json();})
