@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NGL Admin — Corrections</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #1a2340; --accent: #c8102e; --accent-light: rgba(200,16,46,0.08);
+    --gold: #b8972a; --off-white: #f7f8fa; --border: #e2e6ed;
+    --text: #1a2340; --text-mid: #4a5568; --text-light: #8a96a8;
+    --shadow: 0 2px 12px rgba(26,35,64,0.08);
+    --green: #16a34a; --green-light: rgba(22,163,74,0.08);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; }
+
+  /* Login */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: var(--navy); }
+  .login-card { background: #fff; border-radius: 16px; padding: 40px; width: 100%; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+  .login-title { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: var(--text-light); margin-bottom: 24px; }
+  .login-input { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; margin-bottom: 12px; font-family: inherit; }
+  .login-input:focus { border-color: var(--navy); }
+  .login-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .login-btn:hover { background: #a50d26; }
+  .login-error { font-size: 12px; color: var(--accent); margin-top: 8px; display: none; }
+
+  /* App */
+  .app { display: none; }
+  .app.visible { display: block; }
+  .page-header { background: var(--navy); padding: 24px 32px; }
+  .page-header-inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-size: 20px; font-weight: 700; color: #fff; }
+  .page-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+  .status-bar { background: rgba(255,255,255,0.08); border-radius: 8px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 8px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.loading { background: #FFB800; animation: pulse 1s infinite; }
+  .status-dot.ok { background: #22c55e; }
+  .status-dot.error { background: var(--accent); }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+  .page-body { max-width: 1000px; margin: 0 auto; padding: 28px 32px; }
+
+  /* Search */
+  .search-box { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 24px; }
+  .search-box-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+  .search-row { display: flex; gap: 10px; align-items: flex-end; }
+  .search-input { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; }
+  .search-input:focus { border-color: var(--navy); }
+  .search-btn { padding: 10px 20px; background: var(--navy); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .search-btn:hover { background: #243058; }
+
+  /* Results */
+  .gymnast-card { background: #fff; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
+  .gymnast-card-header { background: var(--navy); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .gymnast-card-id { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; }
+  .gymnast-card-name { font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px; }
+
+  .results-list { padding: 0; }
+  .result-row { display: grid; grid-template-columns: 120px 100px 80px 80px 100px 120px 1fr; gap: 0; border-bottom: 1px solid var(--border); align-items: center; }
+  .result-row:last-child { border-bottom: none; }
+  .result-row.header { background: var(--off-white); }
+  .result-cell { padding: 10px 14px; font-size: 12px; }
+  .result-cell.header-cell { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.07em; }
+  .result-cell select, .result-cell input[type="text"] {
+    width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 12px; font-family: inherit; outline: none; background: var(--off-white);
+  }
+  .result-cell select:focus, .result-cell input[type="text"]:focus { border-color: var(--accent); }
+  .result-cell.modified select, .result-cell.modified input { border-color: var(--gold); background: rgba(184,151,42,0.06); }
+  .save-row-btn { padding: 5px 12px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .save-row-btn:hover { background: #a50d26; }
+  .save-row-btn.saved { background: var(--green); }
+
+  /* Corrections list */
+  .corrections-section { margin-top: 32px; }
+  .corrections-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--navy); display: flex; align-items: center; gap: 10px; }
+  .corrections-count { font-size: 12px; font-weight: 600; color: var(--text-light); background: var(--off-white); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; }
+  .corrections-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  .corrections-table thead tr { background: var(--navy); }
+  .corrections-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+  .corrections-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .corrections-table tr:last-child td { border-bottom: none; }
+  .corrections-table tr:hover td { background: var(--off-white); }
+  .delete-btn { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(200,16,46,0.3); background: var(--accent-light); color: var(--accent); }
+  .delete-btn:hover { background: var(--accent); color: #fff; }
+  .changed-field { color: var(--accent); font-weight: 600; }
+  .arrow { color: var(--text-light); margin: 0 4px; }
+
+  .empty-search { text-align: center; padding: 40px; color: var(--text-light); font-size: 14px; }
+  .no-results-msg { background: #fff; border-radius: 12px; padding: 32px; text-align: center; color: var(--text-light); box-shadow: var(--shadow); }
+
+  @media (max-width: 768px) {
+    .page-body { padding: 16px; }
+    .page-header { padding: 16px; }
+    .result-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-title">🏅 NGL Admin</div>
+    <div class="login-sub">Result Corrections</div>
+    <input class="login-input" type="password" id="password-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <input class="login-input" type="password" id="token-input" placeholder="Enter GitHub token" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">Access Corrections</button>
+    <div class="login-error" id="login-error">Incorrect password or missing token.</div>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <div class="page-header">
+    <div class="page-header-inner">
+      <div>
+        <div class="page-title">Result Corrections</div>
+        <div class="page-sub">Search for a gymnast and edit their category details</div>
+      </div>
+      <div class="status-bar">
+        <div class="status-dot loading" id="status-dot"></div>
+        <span id="status-text">Loading...</span>
+      </div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="search-box">
+      <div class="search-box-title">Search by Member ID</div>
+      <div class="search-row">
+        <input class="search-input" id="search-input" type="text" placeholder="Enter Member ID e.g. 4936998" onkeydown="if(event.key==='Enter')doSearch()"/>
+        <button class="search-btn" onclick="doSearch()">Search</button>
+      </div>
+    </div>
+    <div id="search-results"></div>
+    <div class="corrections-section">
+      <div class="corrections-title">Active Corrections <span class="corrections-count" id="corrections-count">0</span></div>
+      <div id="corrections-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var GITHUB_USER = "Davidcbrooke";
+var GITHUB_REPO = "GYMNASTICS-RESULTS";
+var BRANCH = "main";
+var PASSWORD = "saadi2026";
+var CORRECTIONS_FILE = "corrections.json";
+var NAMES_FILE = "gymnast-names.xlsx";
+
+var RAW = "https://raw.githubusercontent.com/"+GITHUB_USER+"/"+GITHUB_REPO+"/"+BRANCH+"/";
+var API = "https://api.github.com/repos/"+GITHUB_USER+"/"+GITHUB_REPO+"/contents/";
+
+var TOKEN = "";
+var allData = []; // flat list of all entries
+var corrections = {}; // memberId -> {field: newValue}
+var correctionsSha = null;
+var namesLookup = {};
+
+var AGE_OPTIONS = ["6-8","9-11","12-14","15+"];
+var LEVEL_OPTIONS = ["A","B","C"];
+var TRAINING_OPTIONS = ["2-5hrs","6-10hrs"];
+var GENDER_OPTIONS = ["Girls","Boys"];
+var REGION_OPTIONS = ["N. Ireland","West Midlands","East","South West","East Midlands"];
+
+function doLogin() {
+  var pw = document.getElementById("password-input").value;
+  var tk = document.getElementById("token-input").value.trim();
+  if (pw === PASSWORD && tk.length > 0) {
+    TOKEN = tk;
+    document.getElementById("login-wrap").style.display = "none";
+    document.getElementById("app").className = "app visible";
+    loadAll();
+  } else {
+    document.getElementById("login-error").style.display = "block";
+    document.getElementById("password-input").value = "";
+    document.getElementById("token-input").value = "";
+  }
+}
+
+function setStatus(s,m) {
+  document.getElementById("status-dot").className = "status-dot "+s;
+  document.getElementById("status-text").textContent = m;
+}
+
+function loadAll() {
+  setStatus("loading","Loading data...");
+  // Load names and competition data in parallel
+  Promise.all([loadNames(), loadCompetitions(), loadCorrections()])
+    .then(function() {
+      setStatus("ok","Ready · "+allData.length+" entries loaded");
+      renderCorrectionsList();
+    })
+    .catch(function(e) { console.error(e); setStatus("error","Failed to load"); });
+}
+
+function loadNames() {
+  return fetch(API+NAMES_FILE+"?ref="+BRANCH,{headers:{"Accept":"application/vnd.github.v3+json"}})
+    .then(function(r){if(!r.ok)throw new Error();return r.json();})
+    .then(function(d){
+      var buf=Uint8Array.from(atob(d.content.replace(/\n/g,"")),function(c){return c.charCodeAt(0);});
+      var wb=XLSX.read(buf,{type:"array"});
+      XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""}).forEach(function(r){
+        var id=String(r["Mid"]||r["BG Number"]||r["Member ID"]||"").trim();
+        var fn=String(r["FirstName"]||r["First Name"]||"").trim();
+        var ln=String(r["LastName"]||r["Last Name"]||"").trim();
+        if(id)namesLookup[id]=(fn+" "+ln).trim();
+      });
+    })
+    .catch(function(){});
+}
+
+function loadCompetitions() {
+  return fetch(API+"?ref="+BRANCH,{headers:{"Accept":"application/vnd.github.v3+json"}})
+    .then(function(r){return r.json();})
+    .then(function(files){
+      var xl=files.filter(function(f){return f.type==="file"&&f.name.toLowerCase().endsWith(".xlsx")&&f.name.toLowerCase()!==NAMES_FILE&&f.name.toLowerCase()!==CORRECTIONS_FILE;});
+      return Promise.all(xl.map(function(f){return loadFile(f.name);}));
+    })
+    .then(function(results){
+      allData=[];
+      results.forEach(function(entries){if(entries)allData=allData.concat(entries);});
+    });
+}
+
+function loadFile(filename) {
+  return fetch(RAW+filename)
+    .then(function(r){return r.arrayBuffer();})
+    .then(function(buf){
+      var wb=XLSX.read(new Uint8Array(buf),{type:"array"});
+      var out=[];
+      wb.SheetNames.forEach(function(sn){
+        XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:""}).forEach(function(r){
+          var id=String(r["Member ID"]||r["BG Number"]||"").trim();
+          if(!id)return;
+          out.push({
+            memberId:id,
+            club:String(r["Club"]||"").trim(),
+            ageCategory:String(r["Age Category"]||r["AgeCategory"]||"").trim(),
+            level:String(r["Level"]||"").trim().toUpperCase(),
+            score:r["Final Score"]!==undefined?r["Final Score"]:(r["FinalScore"]!==undefined?r["FinalScore"]:(r["Score"]||"")),
+            region:String(r["Region"]||"").trim(),
+            trainingHrs:String(r["Training Hrs"]||r["TrainingHrs"]||r["Training Hours"]||"").trim(),
+            gender:String(r["Gender"]||"").trim(),
+            apparatus:sn,
+            competition:filename.replace(/\.[^.]+$/,"").replace(/_/g," ")
+          });
+        });
+      });
+      return out;
+    })
+    .catch(function(){return[];});
+}
+
+function loadCorrections() {
+  return fetch(API+CORRECTIONS_FILE+"?ref="+BRANCH,{headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json"}})
+    .then(function(r){if(r.status===404)return null;return r.json();})
+    .then(function(d){
+      if(!d)return;
+      correctionsSha=d.sha;
+      corrections=JSON.parse(atob(d.content.replace(/\n/g,"")));
+    })
+    .catch(function(){corrections={};});
+}
+
+function saveCorrections() {
+  var body={message:"Update corrections",content:btoa(JSON.stringify(corrections,null,2)),branch:BRANCH};
+  if(correctionsSha)body.sha=correctionsSha;
+  setStatus("loading","Saving...");
+  return fetch(API+CORRECTIONS_FILE,{
+    method:"PUT",
+    headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json","Content-Type":"application/json"},
+    body:JSON.stringify(body)
+  })
+  .then(function(r){if(!r.ok)return r.json().then(function(e){throw new Error(e.message);});return r.json();})
+  .then(function(d){correctionsSha=d.content.sha;setStatus("ok","Saved successfully");setTimeout(function(){setStatus("ok","Ready");},2000);})
+  .catch(function(e){setStatus("error","Save failed: "+e.message);alert("Could not save: "+e.message);});
+}
+
+function doSearch() {
+  var id=document.getElementById("search-input").value.trim();
+  if(!id){alert("Please enter a Member ID");return;}
+  var entries=allData.filter(function(e){return e.memberId===id;});
+  var resultsEl=document.getElementById("search-results");
+  if(!entries.length){
+    resultsEl.innerHTML='<div class="no-results-msg">No results found for Member ID <strong>'+esc(id)+'</strong></div>';
+    return;
+  }
+  var name=namesLookup[id]||"";
+  var corr=corrections[id]||{};
+
+  var html='<div class="gymnast-card">';
+  html+='<div class="gymnast-card-header"><div><div class="gymnast-card-id">Member ID: '+esc(id)+'</div><div class="gymnast-card-name">'+(name?esc(name)+' · ':'')+esc(entries[0].club||"Unknown Club")+'</div></div></div>';
+
+  // Header row
+  html+='<div class="results-list">';
+  html+='<div class="result-row header">';
+  html+='<div class="result-cell header-cell">Competition</div>';
+  html+='<div class="result-cell header-cell">Apparatus</div>';
+  html+='<div class="result-cell header-cell">Score</div>';
+  html+='<div class="result-cell header-cell">Gender</div>';
+  html+='<div class="result-cell header-cell">Age Cat.</div>';
+  html+='<div class="result-cell header-cell">Level</div>';
+  html+='<div class="result-cell header-cell">Training Hrs</div>';
+  html+='</div>';
+
+  entries.forEach(function(e,i){
+    var rowId="row-"+i;
+    html+='<div class="result-row" id="'+rowId+'">';
+    html+='<div class="result-cell" style="font-size:11px;color:var(--text-mid);">'+esc(e.competition)+'</div>';
+    html+='<div class="result-cell" style="font-weight:600;">'+esc(e.apparatus)+'</div>';
+    html+='<div class="result-cell" style="font-weight:700;color:var(--navy);">'+(parseFloat(e.score)||e.score||"—")+'</div>';
+    html+=editCell(rowId,"gender",e.gender,corr.gender,GENDER_OPTIONS);
+    html+=editCell(rowId,"ageCategory",e.ageCategory,corr.ageCategory,AGE_OPTIONS);
+    html+=editCell(rowId,"level",e.level,corr.level,LEVEL_OPTIONS);
+    html+=editCell(rowId,"trainingHrs",e.trainingHrs,corr.trainingHrs,TRAINING_OPTIONS);
+    html+='</div>';
+  });
+
+  // Save all button
+  html+='<div style="padding:12px 20px;background:var(--off-white);border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;">';
+  html+='<div style="font-size:12px;color:var(--text-light);">Changes apply to <strong>all results</strong> for this gymnast across all competitions.</div>';
+  html+='<button class="save-row-btn" style="margin-left:auto;" onclick="saveGymnastCorrections(\''+esc(id)+'\')">Save Corrections</button>';
+  html+='</div>';
+  html+='</div></div>';
+
+  resultsEl.innerHTML=html;
+}
+
+function editCell(rowId,field,original,corrected,options){
+  var current=corrected||original;
+  var isModified=corrected&&corrected!==original;
+  var cls="result-cell"+(isModified?" modified":"");
+  var s='<div class="'+cls+'" id="'+rowId+'-'+field+'">';
+  s+='<select onchange="markModified(\''+rowId+'\',\''+field+'\',this.value,\''+esc(original)+'\')">';
+  options.forEach(function(o){s+='<option value="'+esc(o)+'"'+(current===o?' selected':'')+'>'+esc(o)+'</option>';});
+  s+='</select></div>';
+  return s;
+}
+
+function markModified(rowId,field,newVal,original){
+  var cell=document.getElementById(rowId+"-"+field);
+  if(cell){
+    if(newVal!==original)cell.className="result-cell modified";
+    else cell.className="result-cell";
+  }
+}
+
+function saveGymnastCorrections(memberId){
+  // Read current values from all dropdowns for first row
+  var firstRow=document.getElementById("row-0");
+  if(!firstRow)return;
+  var fields=["gender","ageCategory","level","trainingHrs"];
+  var corr={};
+  fields.forEach(function(f){
+    var cell=document.getElementById("row-0-"+f);
+    if(cell){var sel=cell.querySelector("select");if(sel)corr[f]=sel.value;}
+  });
+  corrections[memberId]=corr;
+  saveCorrections().then(function(){
+    renderCorrectionsList();
+    // Refresh search results
+    doSearch();
+  });
+}
+
+function deleteCorrection(memberId){
+  if(!confirm("Remove all corrections for Member ID "+memberId+"?"))return;
+  delete corrections[memberId];
+  saveCorrections().then(function(){
+    renderCorrectionsList();
+    document.getElementById("search-results").innerHTML="";
+    document.getElementById("search-input").value="";
+  });
+}
+
+function renderCorrectionsList(){
+  var ids=Object.keys(corrections);
+  document.getElementById("corrections-count").textContent=ids.length;
+  if(!ids.length){
+    document.getElementById("corrections-list").innerHTML='<div class="no-results-msg" style="padding:20px;">No corrections saved yet.</div>';
+    return;
+  }
+  var html='<table class="corrections-table"><thead><tr><th>Member ID</th><th>Name</th><th>Gender</th><th>Age Cat.</th><th>Level</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
+  ids.forEach(function(id){
+    var c=corrections[id];
+    var name=namesLookup[id]||"—";
+    // Get original values
+    var orig=allData.find(function(e){return e.memberId===id;})||{};
+    html+='<tr>';
+    html+='<td style="font-family:monospace;font-size:12px;">'+esc(id)+'</td>';
+    html+='<td style="font-weight:600;">'+esc(name)+'</td>';
+    html+=corrCell(orig.gender,c.gender);
+    html+=corrCell(orig.ageCategory,c.ageCategory);
+    html+=corrCell(orig.level,c.level);
+    html+=corrCell(orig.trainingHrs,c.trainingHrs);
+    html+='<td><button class="delete-btn" onclick="deleteCorrection(\''+esc(id)+'\')">Remove</button></td>';
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById("corrections-list").innerHTML=html;
+}
+
+function corrCell(original,corrected){
+  if(corrected&&corrected!==original){
+    return'<td><span style="color:var(--text-light);text-decoration:line-through;font-size:11px;">'+esc(original||"—")+'</span><span class="arrow">→</span><span class="changed-field">'+esc(corrected)+'</span></td>';
+  }
+  return'<td>'+esc(corrected||original||"—")+'</td>';
+}
+
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+</script>
+</body>
+</html>
