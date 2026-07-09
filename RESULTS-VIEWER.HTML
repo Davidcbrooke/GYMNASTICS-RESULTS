@@ -191,6 +191,7 @@ var TRAINING_OPTIONS = ["2-5hrs","6-10hrs"];
 var GENDER_OPTIONS = ["Girls","Boys"];
 var REGION_OPTIONS = ["N. Ireland","West Midlands","East","South West","East Midlands"];
 var CHECK_FIELDS = ["ageCategory","level","trainingHrs","gender"];
+var dqFieldFilter = "ageCategory"; // default to show age conflicts only
 
 function doLogin() {
   var pw = document.getElementById("password-input").value;
@@ -461,7 +462,20 @@ function renderQualityTab() {
 
   html+='<div class="section-title">Conflicts Found <span class="section-count">'+conflicts.length+'</span></div>';
 
+  // Field filter
+  var fieldLabels={ageCategory:"Age Category",level:"Level",trainingHrs:"Training Hrs",gender:"Gender"};
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;background:#fff;padding:12px 16px;border-radius:10px;border:1px solid var(--border);box-shadow:var(--shadow);">';
+  html+='<span style="font-size:12px;font-weight:700;color:var(--text-light);">SHOW CONFLICTS IN:</span>';
+  html+='<select class="dq-select" onchange="dqFieldFilter=this.value;renderQualityTab()" style="min-width:160px;">';
+  html+='<option value="all">All Fields</option>';
+  Object.keys(fieldLabels).forEach(function(f){html+='<option value="'+f+'"'+(dqFieldFilter===f?' selected':'')+'>'+fieldLabels[f]+'</option>';});
+  html+='</select></div>';
+
   conflicts.forEach(function(g){
+    // Filter to only show conflicts in the selected field
+    var fieldsToShow = dqFieldFilter==="all" ? CHECK_FIELDS : [dqFieldFilter];
+    var hasConflictInFilter = fieldsToShow.some(function(f){return g.values[f]&&g.values[f].length>1;});
+    if(!hasConflictInFilter)return;
     var name=namesLookup[g.memberId]||"";
     var corrAlready=corrections[g.memberId]||{};
     html+='<div class="dq-flag">';
@@ -470,6 +484,7 @@ function renderQualityTab() {
     html+='<div class="dq-flag-body">';
 
     CHECK_FIELDS.forEach(function(f){
+      if(dqFieldFilter!=="all"&&f!==dqFieldFilter)return;
       if(!g.values[f]||g.values[f].length<=1)return;
       var fieldLabels={ageCategory:"Age Category",level:"Level",trainingHrs:"Training Hrs",gender:"Gender"};
       html+='<div class="dq-field"><div class="dq-field-label">'+fieldLabels[f]+' — '+g.values[f].length+' different values found</div>';
