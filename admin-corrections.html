@@ -36,17 +36,12 @@
   .status-dot.ok { background: #22c55e; }
   .status-dot.error { background: var(--accent); }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-
-  /* Tab bar */
   .tab-bar { background: #fff; border-bottom: 1px solid var(--border); }
   .tab-bar-inner { max-width: 1000px; margin: 0 auto; display: flex; }
   .tab-btn { padding: 14px 24px; font-size: 13px; font-weight: 600; color: var(--text-light); background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.15s; }
   .tab-btn:hover { color: var(--navy); }
   .tab-btn.active { color: var(--navy); border-bottom-color: var(--accent); }
-
   .page-body { max-width: 1000px; margin: 0 auto; padding: 28px 32px; }
-
-  /* Search */
   .search-box { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 24px; }
   .search-box-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
   .search-row { display: flex; gap: 10px; align-items: flex-end; }
@@ -54,14 +49,11 @@
   .search-input:focus { border-color: var(--navy); }
   .search-btn { padding: 10px 20px; background: var(--navy); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .search-btn:hover { background: #243058; }
-
-  /* Gymnast card */
   .gymnast-card { background: #fff; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
-  .gymnast-card-header { background: var(--navy); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .gymnast-card-header { background: var(--navy); padding: 14px 20px; }
   .gymnast-card-id { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; }
   .gymnast-card-name { font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px; }
-  .results-list { padding: 0; }
-  .result-row { display: grid; grid-template-columns: 160px 120px 80px 80px 100px 120px 1fr; gap: 0; border-bottom: 1px solid var(--border); align-items: center; }
+  .result-row { display: grid; grid-template-columns: 160px 120px 80px 80px 100px 120px 1fr; border-bottom: 1px solid var(--border); align-items: center; }
   .result-row:last-child { border-bottom: none; }
   .result-row.header { background: var(--off-white); }
   .result-cell { padding: 10px 14px; font-size: 12px; }
@@ -71,23 +63,18 @@
   .result-cell.modified select { border-color: var(--gold); background: rgba(184,151,42,0.06); }
   .save-row-btn { padding: 5px 12px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .save-row-btn:hover { background: #a50d26; }
-
-  /* Corrections list */
   .section-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--navy); display: flex; align-items: center; gap: 10px; }
   .section-count { font-size: 12px; font-weight: 600; color: var(--text-light); background: var(--off-white); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; }
-  .corrections-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 32px; }
-  .corrections-table thead tr { background: var(--navy); }
-  .corrections-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
-  .corrections-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); }
-  .corrections-table tr:last-child td { border-bottom: none; }
-  .corrections-table tr:hover td { background: var(--off-white); }
+  .data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 32px; }
+  .data-table thead tr { background: var(--navy); }
+  .data-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+  .data-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--off-white); }
   .delete-btn { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(200,16,46,0.3); background: var(--accent-light); color: var(--accent); }
   .delete-btn:hover { background: var(--accent); color: #fff; }
-  .fix-btn { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(184,151,42,0.3); background: rgba(184,151,42,0.08); color: var(--gold); white-space: nowrap; }
-  .fix-btn:hover { background: rgba(184,151,42,0.2); }
   .changed-field { color: var(--accent); font-weight: 600; }
   .arrow { color: var(--text-light); margin: 0 4px; }
-
   /* Data quality */
   .dq-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 24px; }
   .dq-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; box-shadow: var(--shadow); }
@@ -103,28 +90,28 @@
   .dq-field { margin-bottom: 10px; }
   .dq-field:last-child { margin-bottom: 0; }
   .dq-field-label { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-  .dq-values { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dq-values { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   .dq-value { display: inline-flex; align-items: center; gap: 6px; background: var(--off-white); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 12px; }
   .dq-value.conflict { background: var(--accent-light); border-color: rgba(200,16,46,0.2); color: var(--accent); font-weight: 600; }
   .dq-value-comp { font-size: 10px; color: var(--text-light); }
-  .dq-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); align-items: center; }
+  .dq-actions { display: flex; gap: 8px; align-items: center; }
   .dq-fix-label { font-size: 12px; color: var(--text-mid); }
   .dq-select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: inherit; outline: none; background: var(--off-white); }
-  .dq-select:focus { border-color: var(--accent); }
   .dq-apply-btn { padding: 6px 14px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; }
-  .dq-apply-btn:hover { background: #a50d26; }
-
+  .fix-btn { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(184,151,42,0.3); background: rgba(184,151,42,0.08); color: var(--gold); white-space: nowrap; }
   .empty-msg { text-align: center; padding: 40px; color: var(--text-light); font-size: 14px; background: #fff; border-radius: 12px; box-shadow: var(--shadow); }
   .no-results-msg { background: #fff; border-radius: 12px; padding: 32px; text-align: center; color: var(--text-light); box-shadow: var(--shadow); }
-  .all-ok { background: var(--green-light); border: 1px solid rgba(22,163,74,0.2); border-radius: 12px; padding: 32px; text-align: center; color: var(--green); box-shadow: var(--shadow); }
+  .all-ok { background: var(--green-light); border: 1px solid rgba(22,163,74,0.2); border-radius: 12px; padding: 32px; text-align: center; color: var(--green); }
   .all-ok-icon { font-size: 36px; margin-bottom: 10px; }
   .all-ok-title { font-size: 16px; font-weight: 700; }
-
+  .reassign-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: flex-end; }
+  .field-label { font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px; font-weight: 700; }
   @media (max-width: 768px) {
     .page-body { padding: 16px; }
     .page-header { padding: 16px; }
     .result-row { grid-template-columns: 1fr; }
     .dq-summary { grid-template-columns: 1fr 1fr; }
+    .reassign-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -154,14 +141,12 @@
       </div>
     </div>
   </div>
-
   <div class="tab-bar">
     <div class="tab-bar-inner">
       <button class="tab-btn active" id="tab-corrections" onclick="switchTab('corrections')">Corrections</button>
       <button class="tab-btn" id="tab-quality" onclick="switchTab('quality')">Data Quality</button>
     </div>
   </div>
-
   <div class="page-body" id="page-body">
     <div class="empty-msg">Loading...</div>
   </div>
@@ -173,6 +158,7 @@ var GITHUB_REPO = "GYMNASTICS-RESULTS";
 var BRANCH = "main";
 var PASSWORD = "ngl2026";
 var CORRECTIONS_FILE = "corrections.json";
+var REASSIGNMENTS_FILE = "reassignments.json";
 var NAMES_FILE = "gymnast-names.xlsx";
 
 var RAW = "https://raw.githubusercontent.com/"+GITHUB_USER+"/"+GITHUB_REPO+"/"+BRANCH+"/";
@@ -182,17 +168,17 @@ var TOKEN = "";
 var allData = [];
 var corrections = {};
 var correctionsSha = null;
+var reassignments = {};
+var reassignmentsSha = null;
 var namesLookup = {};
 var activeTab = "corrections";
+var dqFieldFilter = "ageCategory";
 
-var REASSIGNMENTS_FILE = "reassignments.json";
-var reassignments = {}; // wrongId -> correctId
-var reassignmentsSha = null;
+var AGE_OPTIONS = ["6-8","9-11","12-14","15+"];
 var LEVEL_OPTIONS = ["A","B","C"];
+var TRAINING_OPTIONS = ["2-5hrs","6-10hrs"];
 var GENDER_OPTIONS = ["Girls","Boys"];
-var REGION_OPTIONS = ["N. Ireland","West Midlands","East","South West","East Midlands"];
 var CHECK_FIELDS = ["ageCategory","level","trainingHrs","gender"];
-var dqFieldFilter = "ageCategory"; // default to show age conflicts only
 
 function doLogin() {
   var pw = document.getElementById("password-input").value;
@@ -291,30 +277,7 @@ function loadFile(filename) {
     .catch(function(){return[];});
 }
 
-function loadReassignments() {
-  return fetch(API+REASSIGNMENTS_FILE+"?ref="+BRANCH,{headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json"}})
-    .then(function(r){if(r.status===404)return null;return r.json();})
-    .then(function(d){
-      if(!d)return;
-      reassignmentsSha=d.sha;
-      try{reassignments=JSON.parse(atob(d.content.replace(/\n/g,"")));}catch(e){}
-    })
-    .catch(function(){reassignments={};});
-}
-
-function saveReassignments() {
-  var body={message:"Update reassignments",content:btoa(JSON.stringify(reassignments,null,2)),branch:BRANCH};
-  if(reassignmentsSha)body.sha=reassignmentsSha;
-  setStatus("loading","Saving...");
-  return fetch(API+REASSIGNMENTS_FILE,{
-    method:"PUT",
-    headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json","Content-Type":"application/json"},
-    body:JSON.stringify(body)
-  })
-  .then(function(r){if(!r.ok)return r.json().then(function(e){throw new Error(e.message);});return r.json();})
-  .then(function(d){reassignmentsSha=d.content.sha;setStatus("ok","Saved");setTimeout(function(){setStatus("ok","Ready");},2000);})
-  .catch(function(e){setStatus("error","Save failed: "+e.message);alert("Could not save: "+e.message);});
-}
+function loadCorrections() {
   return fetch(API+CORRECTIONS_FILE+"?ref="+BRANCH,{headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json"}})
     .then(function(r){if(r.status===404)return null;return r.json();})
     .then(function(d){
@@ -339,29 +302,51 @@ function saveCorrections() {
   .catch(function(e){setStatus("error","Save failed: "+e.message);alert("Could not save: "+e.message);});
 }
 
+function loadReassignments() {
+  return fetch(API+REASSIGNMENTS_FILE+"?ref="+BRANCH,{headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json"}})
+    .then(function(r){if(r.status===404)return null;return r.json();})
+    .then(function(d){
+      if(!d)return;
+      reassignmentsSha=d.sha;
+      try{reassignments=JSON.parse(atob(d.content.replace(/\n/g,"")));}catch(e){}
+    })
+    .catch(function(){reassignments={};});
+}
+
+function saveReassignments() {
+  var body={message:"Update reassignments",content:btoa(JSON.stringify(reassignments,null,2)),branch:BRANCH};
+  if(reassignmentsSha)body.sha=reassignmentsSha;
+  setStatus("loading","Saving...");
+  return fetch(API+REASSIGNMENTS_FILE,{
+    method:"PUT",
+    headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json","Content-Type":"application/json"},
+    body:JSON.stringify(body)
+  })
+  .then(function(r){if(!r.ok)return r.json().then(function(e){throw new Error(e.message);});return r.json();})
+  .then(function(d){reassignmentsSha=d.content.sha;setStatus("ok","Saved");setTimeout(function(){setStatus("ok","Ready");},2000);})
+  .catch(function(e){setStatus("error","Save failed: "+e.message);alert("Could not save: "+e.message);});
+}
+
 /* ── Corrections Tab ── */
 function renderCorrectionsTab() {
   var html = '';
-  html += '<div class="search-box"><div class="search-box-title">Search by Member ID</div>';
-  html += '<div class="search-row"><input class="search-input" id="search-input" type="text" placeholder="Enter Member ID e.g. 4936998" onkeydown="if(event.key===\'Enter\')doSearch()"/>';
-  html += '<button class="search-btn" onclick="doSearch()">Search</button></div></div>';
-  html += '<div id="search-results"></div>';
-  html += '<div style="margin-top:32px"><div class="section-title">BG Number Reassignments <span class="section-count" id="reassign-count">'+Object.keys(reassignments).length+'</span></div>';
-  html += '<div class="search-box" style="margin-bottom:12px;">';
+
+  // BG Number Reassignment
+  html += '<div class="section-title">BG Number Reassignments <span class="section-count">'+Object.keys(reassignments).length+'</span></div>';
+  html += '<div class="search-box" style="margin-bottom:24px;">';
   html += '<div class="search-box-title">Reassign a BG Number</div>';
-  html += '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Use this to correct a BG number that was entered incorrectly. All results for the wrong number will automatically show under the correct number.</p>';
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:flex-end;">';
-  html += '<div><label class="search-box-title" style="font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;">Wrong BG Number</label><input class="search-input" id="reassign-from" type="text" placeholder="e.g. 1234567"/></div>';
-  html += '<div><label class="search-box-title" style="font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;">Correct BG Number</label><input class="search-input" id="reassign-to" type="text" placeholder="e.g. 7654321"/></div>';
+  html += '<p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">Use this to correct a BG number that was entered incorrectly. All results for the wrong number will automatically show under the correct number.</p>';
+  html += '<div class="reassign-grid">';
+  html += '<div><label class="field-label">Wrong BG Number</label><input class="search-input" id="reassign-from" type="text" placeholder="e.g. 1234567"/></div>';
+  html += '<div><label class="field-label">Correct BG Number</label><input class="search-input" id="reassign-to" type="text" placeholder="e.g. 7654321"/></div>';
   html += '<button class="search-btn" onclick="saveReassignment()">Save</button>';
   html += '</div></div>';
 
-  // List existing reassignments
   var rids = Object.keys(reassignments);
-  if(rids.length) {
-    html += '<table class="corrections-table"><thead><tr><th>Wrong BG Number</th><th>Correct BG Number</th><th>Name (Correct)</th><th></th></tr></thead><tbody>';
+  if (rids.length) {
+    html += '<table class="data-table" style="margin-bottom:32px;"><thead><tr><th>Wrong BG Number</th><th>Correct BG Number</th><th>Name (Correct)</th><th></th></tr></thead><tbody>';
     rids.forEach(function(from){
-      var to = reassignments[from];
+      var to=reassignments[from];
       html += '<tr><td style="font-family:monospace;font-size:12px;text-decoration:line-through;color:var(--text-light);">'+esc(from)+'</td>';
       html += '<td style="font-family:monospace;font-size:12px;font-weight:700;color:var(--navy);">'+esc(to)+'</td>';
       html += '<td style="font-weight:600;">'+esc(namesLookup[to]||"—")+'</td>';
@@ -369,10 +354,20 @@ function renderCorrectionsTab() {
     });
     html += '</tbody></table>';
   } else {
-    html += '<div class="no-results-msg">No BG number reassignments saved yet.</div>';
+    html += '<div class="no-results-msg" style="margin-bottom:32px;">No BG number reassignments saved yet.</div>';
   }
-  html += '</div>';
+
+  // Search
+  html += '<div class="section-title">Search &amp; Correct <span class="section-count" id="corrections-count">'+Object.keys(corrections).length+' corrections</span></div>';
+  html += '<div class="search-box"><div class="search-box-title">Search by Member ID</div>';
+  html += '<div class="search-row"><input class="search-input" id="search-input" type="text" placeholder="Enter Member ID e.g. 4936998" onkeydown="if(event.key===\'Enter\')doSearch()"/>';
+  html += '<button class="search-btn" onclick="doSearch()">Search</button></div></div>';
+  html += '<div id="search-results"></div>';
+
+  // Active corrections
+  html += '<div style="margin-top:24px"><div class="section-title">Active Corrections</div>';
   html += '<div id="corrections-list"></div></div>';
+
   document.getElementById("page-body").innerHTML = html;
   renderCorrectionsList();
 }
@@ -382,7 +377,7 @@ function saveReassignment() {
   var to = document.getElementById("reassign-to").value.trim();
   if(!from||!to){alert("Please enter both BG numbers.");return;}
   if(from===to){alert("The two BG numbers are the same.");return;}
-  if(!confirm("Reassign all results from BG number "+from+" to "+to+"? This will affect all competitions."))return;
+  if(!confirm("Reassign all results from BG number "+from+" to "+to+"?\nThis will affect all competitions and tables."))return;
   reassignments[from]=to;
   saveReassignments().then(function(){renderCorrectionsTab();});
 }
@@ -402,8 +397,8 @@ function doSearch() {
   var name=namesLookup[id]||"";
   var corr=corrections[id]||{};
   var html='<div class="gymnast-card">';
-  html+='<div class="gymnast-card-header"><div><div class="gymnast-card-id">Member ID: '+esc(id)+'</div><div class="gymnast-card-name">'+(name?esc(name)+' · ':'')+esc(entries[0].club||"Unknown Club")+'</div></div></div>';
-  html+='<div class="results-list">';
+  html+='<div class="gymnast-card-header"><div class="gymnast-card-id">Member ID: '+esc(id)+'</div><div class="gymnast-card-name">'+(name?esc(name)+' · ':'')+esc(entries[0].club||"Unknown Club")+'</div></div>';
+  html+='<div>';
   html+='<div class="result-row header"><div class="result-cell header-cell">Competition</div><div class="result-cell header-cell">Apparatus</div><div class="result-cell header-cell">Score</div><div class="result-cell header-cell">Gender</div><div class="result-cell header-cell">Age Cat.</div><div class="result-cell header-cell">Level</div><div class="result-cell header-cell">Training Hrs</div></div>';
   entries.forEach(function(e,i){
     var rowId="row-"+i;
@@ -418,7 +413,7 @@ function doSearch() {
     html+='</div>';
   });
   html+='<div style="padding:12px 20px;background:var(--off-white);border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;">';
-  html+='<div style="font-size:12px;color:var(--text-light);">Changes apply to <strong>all results</strong> for this gymnast across all competitions.</div>';
+  html+='<div style="font-size:12px;color:var(--text-light);">Changes apply to <strong>all results</strong> for this gymnast.</div>';
   html+='<button class="save-row-btn" style="margin-left:auto;" onclick="saveGymnastCorrections(\''+esc(id)+'\')">Save Corrections</button>';
   html+='</div></div></div>';
   resultsEl.innerHTML=html;
@@ -453,21 +448,17 @@ function saveGymnastCorrections(memberId){
 function deleteCorrection(memberId){
   if(!confirm("Remove all corrections for Member ID "+memberId+"?"))return;
   delete corrections[memberId];
-  saveCorrections().then(function(){
-    renderCorrectionsList();
-    document.getElementById("search-results").innerHTML="";
-    document.getElementById("search-input").value="";
-  });
+  saveCorrections().then(function(){renderCorrectionsList();document.getElementById("search-results").innerHTML="";document.getElementById("search-input").value="";});
 }
 
 function renderCorrectionsList(){
   var ids=Object.keys(corrections);
   var countEl=document.getElementById("corrections-count");
-  if(countEl)countEl.textContent=ids.length;
+  if(countEl)countEl.textContent=ids.length+" corrections";
   var el=document.getElementById("corrections-list");
   if(!el)return;
   if(!ids.length){el.innerHTML='<div class="no-results-msg">No corrections saved yet.</div>';return;}
-  var html='<table class="corrections-table"><thead><tr><th>Member ID</th><th>Name</th><th>Gender</th><th>Age Cat.</th><th>Level</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
+  var html='<table class="data-table"><thead><tr><th>Member ID</th><th>Name</th><th>Gender</th><th>Age Cat.</th><th>Level</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
   ids.forEach(function(id){
     var c=corrections[id];
     var orig=allData.find(function(e){return e.memberId===id;})||{};
@@ -488,8 +479,7 @@ function corrCell(original,corrected){
 
 /* ── Data Quality Tab ── */
 function renderQualityTab() {
-  // Build per-gymnast data map
-  var gymnasts = {};
+  var gymnasts={};
   allData.forEach(function(e){
     if(!e.memberId)return;
     if(!gymnasts[e.memberId])gymnasts[e.memberId]={memberId:e.memberId,values:{}};
@@ -501,97 +491,61 @@ function renderQualityTab() {
       }
     });
   });
-
-  // Find conflicts
   var conflicts=[];
   Object.values(gymnasts).forEach(function(g){
     var hasConflict=CHECK_FIELDS.some(function(f){return g.values[f]&&g.values[f].length>1;});
     if(hasConflict)conflicts.push(g);
   });
-
   var totalGymnasts=Object.keys(gymnasts).length;
-  var html='';
-
-  // Summary
-  html+='<div class="dq-summary">';
+  var html='<div class="dq-summary">';
   html+='<div class="dq-card"><div class="dq-card-num '+(conflicts.length===0?"ok":"warn")+'">'+conflicts.length+'</div><div class="dq-card-lbl">Gymnasts with conflicts</div></div>';
   html+='<div class="dq-card"><div class="dq-card-num" style="color:var(--navy);">'+totalGymnasts+'</div><div class="dq-card-lbl">Total gymnasts</div></div>';
   html+='<div class="dq-card"><div class="dq-card-num ok">'+(totalGymnasts-conflicts.length)+'</div><div class="dq-card-lbl">Clean records</div></div>';
   html+='</div>';
-
-  if(!conflicts.length){
-    html+='<div class="all-ok"><div class="all-ok-icon">✅</div><div class="all-ok-title">All gymnast records are consistent!</div></div>';
-    document.getElementById("page-body").innerHTML=html;
-    return;
-  }
-
-  html+='<div class="section-title">Conflicts Found <span class="section-count">'+conflicts.length+'</span></div>';
-
-  // Field filter
+  if(!conflicts.length){html+='<div class="all-ok"><div class="all-ok-icon">✅</div><div class="all-ok-title">All gymnast records are consistent!</div></div>';document.getElementById("page-body").innerHTML=html;return;}
   var fieldLabels={ageCategory:"Age Category",level:"Level",trainingHrs:"Training Hrs",gender:"Gender"};
+  html+='<div class="section-title">Conflicts Found <span class="section-count">'+conflicts.length+'</span></div>';
   html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;background:#fff;padding:12px 16px;border-radius:10px;border:1px solid var(--border);box-shadow:var(--shadow);">';
   html+='<span style="font-size:12px;font-weight:700;color:var(--text-light);">SHOW CONFLICTS IN:</span>';
   html+='<select class="dq-select" onchange="dqFieldFilter=this.value;renderQualityTab()" style="min-width:160px;">';
   html+='<option value="all">All Fields</option>';
   Object.keys(fieldLabels).forEach(function(f){html+='<option value="'+f+'"'+(dqFieldFilter===f?' selected':'')+'>'+fieldLabels[f]+'</option>';});
   html+='</select></div>';
-
   conflicts.forEach(function(g){
-    // Filter to only show conflicts in the selected field
-    var fieldsToShow = dqFieldFilter==="all" ? CHECK_FIELDS : [dqFieldFilter];
-    var hasConflictInFilter = fieldsToShow.some(function(f){return g.values[f]&&g.values[f].length>1;});
+    var fieldsToShow=dqFieldFilter==="all"?CHECK_FIELDS:[dqFieldFilter];
+    var hasConflictInFilter=fieldsToShow.some(function(f){return g.values[f]&&g.values[f].length>1;});
     if(!hasConflictInFilter)return;
     var name=namesLookup[g.memberId]||"";
     var corrAlready=corrections[g.memberId]||{};
-    html+='<div class="dq-flag">';
-    html+='<div class="dq-flag-header"><div><span class="dq-flag-id">'+esc(g.memberId)+'</span>'+(name?'<span class="dq-flag-name">· '+esc(name)+'</span>':'')+'</div>';
-    html+='<button class="fix-btn" onclick="loadIntoSearch(\''+esc(g.memberId)+'\')">Fix in Corrections →</button></div>';
+    html+='<div class="dq-flag"><div class="dq-flag-header"><div><span class="dq-flag-id">'+esc(g.memberId)+'</span>'+(name?'<span class="dq-flag-name">· '+esc(name)+'</span>':'')+'</div><button class="fix-btn" onclick="loadIntoSearch(\''+esc(g.memberId)+'\')">Fix in Corrections →</button></div>';
     html+='<div class="dq-flag-body">';
-
     CHECK_FIELDS.forEach(function(f){
       if(dqFieldFilter!=="all"&&f!==dqFieldFilter)return;
       if(!g.values[f]||g.values[f].length<=1)return;
-      var fieldLabels={ageCategory:"Age Category",level:"Level",trainingHrs:"Training Hrs",gender:"Gender"};
-      html+='<div class="dq-field"><div class="dq-field-label">'+fieldLabels[f]+' — '+g.values[f].length+' different values found</div>';
-      html+='<div class="dq-values">';
-      g.values[f].forEach(function(v){
-        var isCorrected=corrAlready[f]&&corrAlready[f]===v.value;
-        html+='<div class="dq-value'+(isCorrected?"":" conflict")+'"><span>'+esc(v.value)+'</span><span class="dq-value-comp">'+esc(v.competition)+'</span></div>';
-      });
-      html+='</div>';
-
-      // Quick fix dropdown
       var options=f==="ageCategory"?AGE_OPTIONS:f==="level"?LEVEL_OPTIONS:f==="trainingHrs"?TRAINING_OPTIONS:GENDER_OPTIONS;
-      html+='<div class="dq-actions">';
-      html+='<span class="dq-fix-label">Set correct value:</span>';
-      html+='<select class="dq-select" id="dq-'+esc(g.memberId)+'-'+f+'">';
+      html+='<div class="dq-field"><div class="dq-field-label">'+fieldLabels[f]+' — '+g.values[f].length+' different values</div>';
+      html+='<div class="dq-values">';
+      g.values[f].forEach(function(v){var isCorrected=corrAlready[f]&&corrAlready[f]===v.value;html+='<div class="dq-value'+(isCorrected?"":" conflict")+'"><span>'+esc(v.value)+'</span><span class="dq-value-comp">'+esc(v.competition)+'</span></div>';});
+      html+='</div><div class="dq-actions"><span class="dq-fix-label">Set correct value:</span><select class="dq-select" id="dq-'+esc(g.memberId)+'-'+f+'">';
       options.forEach(function(o){html+='<option value="'+esc(o)+'"'+(corrAlready[f]===o?' selected':'')+'>'+esc(o)+'</option>';});
-      html+='</select>';
-      html+='<button class="dq-apply-btn" onclick="applyDqFix(\''+esc(g.memberId)+'\',\''+f+'\')">Apply Fix</button>';
-      html+='</div>';
-      html+='</div>';
+      html+='</select><button class="dq-apply-btn" onclick="applyDqFix(\''+esc(g.memberId)+'\',\''+f+'\')">Apply Fix</button></div></div>';
     });
-
     html+='</div></div>';
   });
-
   document.getElementById("page-body").innerHTML=html;
 }
 
-function applyDqFix(memberId, field) {
-  var sel = document.getElementById("dq-"+memberId+"-"+field);
+function applyDqFix(memberId,field){
+  var sel=document.getElementById("dq-"+memberId+"-"+field);
   if(!sel)return;
   if(!corrections[memberId])corrections[memberId]={};
   corrections[memberId][field]=sel.value;
-  saveCorrections().then(function(){ renderQualityTab(); });
+  saveCorrections().then(function(){renderQualityTab();});
 }
 
-function loadIntoSearch(memberId) {
+function loadIntoSearch(memberId){
   switchTab("corrections");
-  setTimeout(function(){
-    var inp=document.getElementById("search-input");
-    if(inp){inp.value=memberId;doSearch();}
-  },100);
+  setTimeout(function(){var inp=document.getElementById("search-input");if(inp){inp.value=memberId;doSearch();}},100);
 }
 
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
