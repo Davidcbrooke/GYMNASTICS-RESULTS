@@ -263,6 +263,17 @@ var leagueSortCol = "total";
 var leagueSortDir = -1;
 var namesLookup = {};
 var corrections = {};
+var reassignments = {};
+
+function loadReassignments(){
+  return fetch(API_BASE+"reassignments.json?ref="+BRANCH,{headers:{"Accept":"application/vnd.github.v3+json"}})
+    .then(function(r){if(!r.ok)return null;return r.json();})
+    .then(function(d){
+      if(!d)return;
+      try{reassignments=JSON.parse(atob(d.content.replace(/\n/g,"")));}catch(e){}
+    })
+    .catch(function(){reassignments={};});
+}
 
 var ADMIN_PASSWORD = "ngl2026";
 
@@ -325,6 +336,8 @@ function loadCorrections(){
 }
 
 function applyCorrections(entry){
+  // Apply BG number reassignment first
+  if(reassignments[entry.memberId]) entry.memberId = reassignments[entry.memberId];
   var c=corrections[entry.memberId];
   if(!c)return entry;
   var out=Object.assign({},entry);
@@ -775,7 +788,7 @@ function showWelcome(){document.getElementById("main").innerHTML='<div class="em
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
 loadNames();
-loadCorrections().catch(function(){}).then(function(){loadCompetitions();});
+Promise.all([loadCorrections(),loadReassignments()]).catch(function(){}).then(function(){loadCompetitions();});
 </script>
 </body>
 </html>
