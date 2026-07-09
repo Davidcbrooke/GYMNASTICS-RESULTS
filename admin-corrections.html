@@ -185,9 +185,10 @@ var correctionsSha = null;
 var namesLookup = {};
 var activeTab = "corrections";
 
-var AGE_OPTIONS = ["6-8","9-11","12-14","15+"];
+var REASSIGNMENTS_FILE = "reassignments.json";
+var reassignments = {}; // wrongId -> correctId
+var reassignmentsSha = null;
 var LEVEL_OPTIONS = ["A","B","C"];
-var TRAINING_OPTIONS = ["2-5hrs","6-10hrs"];
 var GENDER_OPTIONS = ["Girls","Boys"];
 var REGION_OPTIONS = ["N. Ireland","West Midlands","East","South West","East Midlands"];
 var CHECK_FIELDS = ["ageCategory","level","trainingHrs","gender"];
@@ -224,7 +225,7 @@ function switchTab(tab) {
 
 function loadAll() {
   setStatus("loading","Loading data...");
-  Promise.all([loadNames(), loadCompetitions(), loadCorrections()])
+  Promise.all([loadNames(), loadCompetitions(), loadCorrections(), loadReassignments()])
     .then(function() {
       setStatus("ok","Ready · "+allData.length+" entries loaded");
       renderCorrectionsTab();
@@ -290,7 +291,30 @@ function loadFile(filename) {
     .catch(function(){return[];});
 }
 
-function loadCorrections() {
+function loadReassignments() {
+  return fetch(API+REASSIGNMENTS_FILE+"?ref="+BRANCH,{headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json"}})
+    .then(function(r){if(r.status===404)return null;return r.json();})
+    .then(function(d){
+      if(!d)return;
+      reassignmentsSha=d.sha;
+      try{reassignments=JSON.parse(atob(d.content.replace(/\n/g,"")));}catch(e){}
+    })
+    .catch(function(){reassignments={};});
+}
+
+function saveReassignments() {
+  var body={message:"Update reassignments",content:btoa(JSON.stringify(reassignments,null,2)),branch:BRANCH};
+  if(reassignmentsSha)body.sha=reassignmentsSha;
+  setStatus("loading","Saving...");
+  return fetch(API+REASSIGNMENTS_FILE,{
+    method:"PUT",
+    headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json","Content-Type":"application/json"},
+    body:JSON.stringify(body)
+  })
+  .then(function(r){if(!r.ok)return r.json().then(function(e){throw new Error(e.message);});return r.json();})
+  .then(function(d){reassignmentsSha=d.content.sha;setStatus("ok","Saved");setTimeout(function(){setStatus("ok","Ready");},2000);})
+  .catch(function(e){setStatus("error","Save failed: "+e.message);alert("Could not save: "+e.message);});
+}
   return fetch(API+CORRECTIONS_FILE+"?ref="+BRANCH,{headers:{"Authorization":"token "+TOKEN,"Accept":"application/vnd.github.v3+json"}})
     .then(function(r){if(r.status===404)return null;return r.json();})
     .then(function(d){
@@ -322,10 +346,51 @@ function renderCorrectionsTab() {
   html += '<div class="search-row"><input class="search-input" id="search-input" type="text" placeholder="Enter Member ID e.g. 4936998" onkeydown="if(event.key===\'Enter\')doSearch()"/>';
   html += '<button class="search-btn" onclick="doSearch()">Search</button></div></div>';
   html += '<div id="search-results"></div>';
-  html += '<div style="margin-top:32px"><div class="section-title">Active Corrections <span class="section-count" id="corrections-count">'+Object.keys(corrections).length+'</span></div>';
+  html += '<div style="margin-top:32px"><div class="section-title">BG Number Reassignments <span class="section-count" id="reassign-count">'+Object.keys(reassignments).length+'</span></div>';
+  html += '<div class="search-box" style="margin-bottom:12px;">';
+  html += '<div class="search-box-title">Reassign a BG Number</div>';
+  html += '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Use this to correct a BG number that was entered incorrectly. All results for the wrong number will automatically show under the correct number.</p>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:flex-end;">';
+  html += '<div><label class="search-box-title" style="font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;">Wrong BG Number</label><input class="search-input" id="reassign-from" type="text" placeholder="e.g. 1234567"/></div>';
+  html += '<div><label class="search-box-title" style="font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;">Correct BG Number</label><input class="search-input" id="reassign-to" type="text" placeholder="e.g. 7654321"/></div>';
+  html += '<button class="search-btn" onclick="saveReassignment()">Save</button>';
+  html += '</div></div>';
+
+  // List existing reassignments
+  var rids = Object.keys(reassignments);
+  if(rids.length) {
+    html += '<table class="corrections-table"><thead><tr><th>Wrong BG Number</th><th>Correct BG Number</th><th>Name (Correct)</th><th></th></tr></thead><tbody>';
+    rids.forEach(function(from){
+      var to = reassignments[from];
+      html += '<tr><td style="font-family:monospace;font-size:12px;text-decoration:line-through;color:var(--text-light);">'+esc(from)+'</td>';
+      html += '<td style="font-family:monospace;font-size:12px;font-weight:700;color:var(--navy);">'+esc(to)+'</td>';
+      html += '<td style="font-weight:600;">'+esc(namesLookup[to]||"—")+'</td>';
+      html += '<td><button class="delete-btn" onclick="deleteReassignment(\''+esc(from)+'\')">Remove</button></td></tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<div class="no-results-msg">No BG number reassignments saved yet.</div>';
+  }
+  html += '</div>';
   html += '<div id="corrections-list"></div></div>';
   document.getElementById("page-body").innerHTML = html;
   renderCorrectionsList();
+}
+
+function saveReassignment() {
+  var from = document.getElementById("reassign-from").value.trim();
+  var to = document.getElementById("reassign-to").value.trim();
+  if(!from||!to){alert("Please enter both BG numbers.");return;}
+  if(from===to){alert("The two BG numbers are the same.");return;}
+  if(!confirm("Reassign all results from BG number "+from+" to "+to+"? This will affect all competitions."))return;
+  reassignments[from]=to;
+  saveReassignments().then(function(){renderCorrectionsTab();});
+}
+
+function deleteReassignment(from) {
+  if(!confirm("Remove reassignment for "+from+"? Results will revert to the original BG number."))return;
+  delete reassignments[from];
+  saveReassignments().then(function(){renderCorrectionsTab();});
 }
 
 function doSearch() {
