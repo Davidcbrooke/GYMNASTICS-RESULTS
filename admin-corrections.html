@@ -179,7 +179,6 @@ var LEVEL_OPTIONS = ["A","B","C"];
 var TRAINING_OPTIONS = ["2-5hrs","6-10hrs"];
 var GENDER_OPTIONS = ["Girls","Boys"];
 var CHECK_FIELDS = ["ageCategory","level","trainingHrs","gender"];
-
 function doLogin() {
   var pw = document.getElementById("password-input").value;
   var tk = document.getElementById("token-input").value.trim();
@@ -399,8 +398,7 @@ function doSearch() {
   var html='<div class="gymnast-card">';
   html+='<div class="gymnast-card-header"><div class="gymnast-card-id">Member ID: '+esc(id)+'</div><div class="gymnast-card-name">'+(name?esc(name)+' · ':'')+esc(entries[0].club||"Unknown Club")+'</div></div>';
   html+='<div>';
-  html+='<div class="result-row header"><div class="result-cell header-cell">Competition</div><div class="result-cell header-cell">Apparatus</div><div class="result-cell header-cell">Score</div><div class="result-cell header-cell">Gender</div><div class="result-cell header-cell">Age Cat.</div><div class="result-cell header-cell">Level</div><div class="result-cell header-cell">Training Hrs</div></div>';
-  entries.forEach(function(e,i){
+  html+='<div class="result-row header"><div class="result-cell header-cell">Competition</div><div class="result-cell header-cell">Apparatus</div><div class="result-cell header-cell">Score</div><div class="result-cell header-cell">Gender</div><div class="result-cell header-cell">Age Cat.</div><div class="result-cell header-cell">Level</div><div class="result-cell header-cell">Training Hrs</div></div>';  entries.forEach(function(e,i){
     var rowId="row-"+i;
     html+='<div class="result-row" id="'+rowId+'">';
     html+='<div class="result-cell" style="font-size:11px;color:var(--text-mid);">'+esc(e.competition)+'</div>';
@@ -441,6 +439,8 @@ function saveGymnastCorrections(memberId){
     var cell=document.getElementById("row-0-"+f);
     if(cell){var sel=cell.querySelector("select");if(sel)corr[f]=sel.value;}
   });
+  var clubOverride=document.getElementById("club-override");
+  if(clubOverride&&clubOverride.value.trim())corr.club=clubOverride.value.trim();
   corrections[memberId]=corr;
   saveCorrections().then(function(){renderCorrectionsList();doSearch();});
 }
@@ -458,12 +458,12 @@ function renderCorrectionsList(){
   var el=document.getElementById("corrections-list");
   if(!el)return;
   if(!ids.length){el.innerHTML='<div class="no-results-msg">No corrections saved yet.</div>';return;}
-  var html='<table class="data-table"><thead><tr><th>Member ID</th><th>Name</th><th>Gender</th><th>Age Cat.</th><th>Level</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
+  var html='<table class="data-table"><thead><tr><th>Member ID</th><th>Name</th><th>Club</th><th>Gender</th><th>Age Cat.</th><th>Level</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
   ids.forEach(function(id){
     var c=corrections[id];
     var orig=allData.find(function(e){return e.memberId===id;})||{};
     html+='<tr><td style="font-family:monospace;font-size:12px;">'+esc(id)+'</td><td style="font-weight:600;">'+esc(namesLookup[id]||"—")+'</td>';
-    html+=corrCell(orig.gender,c.gender)+corrCell(orig.ageCategory,c.ageCategory)+corrCell(orig.level,c.level)+corrCell(orig.trainingHrs,c.trainingHrs);
+    html+=corrCell(orig.club,c.club)+corrCell(orig.gender,c.gender)+corrCell(orig.ageCategory,c.ageCategory)+corrCell(orig.level,c.level)+corrCell(orig.trainingHrs,c.trainingHrs);
     html+='<td><button class="delete-btn" onclick="deleteCorrection(\''+esc(id)+'\')">Remove</button></td></tr>';
   });
   html+='</tbody></table>';
