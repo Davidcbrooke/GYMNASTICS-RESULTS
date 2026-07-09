@@ -15,8 +15,6 @@
     --green: #16a34a; --green-light: rgba(22,163,74,0.08);
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; }
-
-  /* Login */
   .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: var(--navy); }
   .login-card { background: #fff; border-radius: 16px; padding: 40px; width: 100%; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
   .login-title { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
@@ -26,8 +24,6 @@
   .login-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .login-btn:hover { background: #a50d26; }
   .login-error { font-size: 12px; color: var(--accent); margin-top: 8px; display: none; }
-
-  /* App */
   .app { display: none; }
   .app.visible { display: block; }
   .page-header { background: var(--navy); padding: 24px 32px; }
@@ -41,6 +37,13 @@
   .status-dot.error { background: var(--accent); }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
 
+  /* Tab bar */
+  .tab-bar { background: #fff; border-bottom: 1px solid var(--border); }
+  .tab-bar-inner { max-width: 1000px; margin: 0 auto; display: flex; }
+  .tab-btn { padding: 14px 24px; font-size: 13px; font-weight: 600; color: var(--text-light); background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.15s; }
+  .tab-btn:hover { color: var(--navy); }
+  .tab-btn.active { color: var(--navy); border-bottom-color: var(--accent); }
+
   .page-body { max-width: 1000px; margin: 0 auto; padding: 28px 32px; }
 
   /* Search */
@@ -52,33 +55,27 @@
   .search-btn { padding: 10px 20px; background: var(--navy); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .search-btn:hover { background: #243058; }
 
-  /* Results */
+  /* Gymnast card */
   .gymnast-card { background: #fff; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
   .gymnast-card-header { background: var(--navy); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
   .gymnast-card-id { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; }
   .gymnast-card-name { font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px; }
-
   .results-list { padding: 0; }
-  .result-row { display: grid; grid-template-columns: 120px 100px 80px 80px 100px 120px 1fr; gap: 0; border-bottom: 1px solid var(--border); align-items: center; }
+  .result-row { display: grid; grid-template-columns: 160px 120px 80px 80px 100px 120px 1fr; gap: 0; border-bottom: 1px solid var(--border); align-items: center; }
   .result-row:last-child { border-bottom: none; }
   .result-row.header { background: var(--off-white); }
   .result-cell { padding: 10px 14px; font-size: 12px; }
   .result-cell.header-cell { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.07em; }
-  .result-cell select, .result-cell input[type="text"] {
-    width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px;
-    font-size: 12px; font-family: inherit; outline: none; background: var(--off-white);
-  }
-  .result-cell select:focus, .result-cell input[type="text"]:focus { border-color: var(--accent); }
-  .result-cell.modified select, .result-cell.modified input { border-color: var(--gold); background: rgba(184,151,42,0.06); }
+  .result-cell select { width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: inherit; outline: none; background: var(--off-white); }
+  .result-cell select:focus { border-color: var(--accent); }
+  .result-cell.modified select { border-color: var(--gold); background: rgba(184,151,42,0.06); }
   .save-row-btn { padding: 5px 12px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .save-row-btn:hover { background: #a50d26; }
-  .save-row-btn.saved { background: var(--green); }
 
   /* Corrections list */
-  .corrections-section { margin-top: 32px; }
-  .corrections-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--navy); display: flex; align-items: center; gap: 10px; }
-  .corrections-count { font-size: 12px; font-weight: 600; color: var(--text-light); background: var(--off-white); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; }
-  .corrections-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  .section-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--navy); display: flex; align-items: center; gap: 10px; }
+  .section-count { font-size: 12px; font-weight: 600; color: var(--text-light); background: var(--off-white); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; }
+  .corrections-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 32px; }
   .corrections-table thead tr { background: var(--navy); }
   .corrections-table th { padding: 10px 13px; text-align: left; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
   .corrections-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); }
@@ -86,16 +83,48 @@
   .corrections-table tr:hover td { background: var(--off-white); }
   .delete-btn { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(200,16,46,0.3); background: var(--accent-light); color: var(--accent); }
   .delete-btn:hover { background: var(--accent); color: #fff; }
+  .fix-btn { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1px solid rgba(184,151,42,0.3); background: rgba(184,151,42,0.08); color: var(--gold); white-space: nowrap; }
+  .fix-btn:hover { background: rgba(184,151,42,0.2); }
   .changed-field { color: var(--accent); font-weight: 600; }
   .arrow { color: var(--text-light); margin: 0 4px; }
 
-  .empty-search { text-align: center; padding: 40px; color: var(--text-light); font-size: 14px; }
+  /* Data quality */
+  .dq-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 24px; }
+  .dq-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; box-shadow: var(--shadow); }
+  .dq-card-num { font-size: 28px; font-weight: 800; }
+  .dq-card-num.ok { color: var(--green); }
+  .dq-card-num.warn { color: var(--accent); }
+  .dq-card-lbl { font-size: 11px; color: var(--text-light); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .dq-flag { background: #fff; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 16px; overflow: hidden; }
+  .dq-flag-header { padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; background: rgba(200,16,46,0.04); border-bottom: 1px solid var(--border); }
+  .dq-flag-id { font-family: monospace; font-size: 13px; font-weight: 700; color: var(--navy); }
+  .dq-flag-name { font-size: 13px; color: var(--text-mid); margin-left: 8px; }
+  .dq-flag-body { padding: 12px 18px; }
+  .dq-field { margin-bottom: 10px; }
+  .dq-field:last-child { margin-bottom: 0; }
+  .dq-field-label { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .dq-values { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dq-value { display: inline-flex; align-items: center; gap: 6px; background: var(--off-white); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 12px; }
+  .dq-value.conflict { background: var(--accent-light); border-color: rgba(200,16,46,0.2); color: var(--accent); font-weight: 600; }
+  .dq-value-comp { font-size: 10px; color: var(--text-light); }
+  .dq-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); align-items: center; }
+  .dq-fix-label { font-size: 12px; color: var(--text-mid); }
+  .dq-select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: inherit; outline: none; background: var(--off-white); }
+  .dq-select:focus { border-color: var(--accent); }
+  .dq-apply-btn { padding: 6px 14px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .dq-apply-btn:hover { background: #a50d26; }
+
+  .empty-msg { text-align: center; padding: 40px; color: var(--text-light); font-size: 14px; background: #fff; border-radius: 12px; box-shadow: var(--shadow); }
   .no-results-msg { background: #fff; border-radius: 12px; padding: 32px; text-align: center; color: var(--text-light); box-shadow: var(--shadow); }
+  .all-ok { background: var(--green-light); border: 1px solid rgba(22,163,74,0.2); border-radius: 12px; padding: 32px; text-align: center; color: var(--green); box-shadow: var(--shadow); }
+  .all-ok-icon { font-size: 36px; margin-bottom: 10px; }
+  .all-ok-title { font-size: 16px; font-weight: 700; }
 
   @media (max-width: 768px) {
     .page-body { padding: 16px; }
     .page-header { padding: 16px; }
     .result-row { grid-template-columns: 1fr; }
+    .dq-summary { grid-template-columns: 1fr 1fr; }
   }
 </style>
 </head>
@@ -107,7 +136,7 @@
     <div class="login-sub">Result Corrections</div>
     <input class="login-input" type="password" id="password-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
     <input class="login-input" type="password" id="token-input" placeholder="Enter GitHub token" onkeydown="if(event.key==='Enter')doLogin()"/>
-    <button class="login-btn" onclick="doLogin()">Access Corrections</button>
+    <button class="login-btn" onclick="doLogin()">Access Admin</button>
     <div class="login-error" id="login-error">Incorrect password or missing token.</div>
   </div>
 </div>
@@ -116,8 +145,8 @@
   <div class="page-header">
     <div class="page-header-inner">
       <div>
-        <div class="page-title">Result Corrections</div>
-        <div class="page-sub">Search for a gymnast and edit their category details</div>
+        <div class="page-title">NGL Admin</div>
+        <div class="page-sub">Result corrections and data quality</div>
       </div>
       <div class="status-bar">
         <div class="status-dot loading" id="status-dot"></div>
@@ -125,19 +154,16 @@
       </div>
     </div>
   </div>
-  <div class="page-body">
-    <div class="search-box">
-      <div class="search-box-title">Search by Member ID</div>
-      <div class="search-row">
-        <input class="search-input" id="search-input" type="text" placeholder="Enter Member ID e.g. 4936998" onkeydown="if(event.key==='Enter')doSearch()"/>
-        <button class="search-btn" onclick="doSearch()">Search</button>
-      </div>
+
+  <div class="tab-bar">
+    <div class="tab-bar-inner">
+      <button class="tab-btn active" id="tab-corrections" onclick="switchTab('corrections')">Corrections</button>
+      <button class="tab-btn" id="tab-quality" onclick="switchTab('quality')">Data Quality</button>
     </div>
-    <div id="search-results"></div>
-    <div class="corrections-section">
-      <div class="corrections-title">Active Corrections <span class="corrections-count" id="corrections-count">0</span></div>
-      <div id="corrections-list"></div>
-    </div>
+  </div>
+
+  <div class="page-body" id="page-body">
+    <div class="empty-msg">Loading...</div>
   </div>
 </div>
 
@@ -145,7 +171,7 @@
 var GITHUB_USER = "Davidcbrooke";
 var GITHUB_REPO = "GYMNASTICS-RESULTS";
 var BRANCH = "main";
-var PASSWORD = "saadi2026";
+var PASSWORD = "ngl2026";
 var CORRECTIONS_FILE = "corrections.json";
 var NAMES_FILE = "gymnast-names.xlsx";
 
@@ -153,16 +179,19 @@ var RAW = "https://raw.githubusercontent.com/"+GITHUB_USER+"/"+GITHUB_REPO+"/"+B
 var API = "https://api.github.com/repos/"+GITHUB_USER+"/"+GITHUB_REPO+"/contents/";
 
 var TOKEN = "";
-var allData = []; // flat list of all entries
-var corrections = {}; // memberId -> {field: newValue}
+var allData = [];
+var corrections = {};
 var correctionsSha = null;
 var namesLookup = {};
+var activeTab = "corrections";
 
 var AGE_OPTIONS = ["6-8","9-11","12-14","15+"];
 var LEVEL_OPTIONS = ["A","B","C"];
 var TRAINING_OPTIONS = ["2-5hrs","6-10hrs"];
 var GENDER_OPTIONS = ["Girls","Boys"];
 var REGION_OPTIONS = ["N. Ireland","West Midlands","East","South West","East Midlands"];
+var CHECK_FIELDS = ["ageCategory","level","trainingHrs","gender"];
+var dqFieldFilter = "ageCategory"; // default to show age conflicts only
 
 function doLogin() {
   var pw = document.getElementById("password-input").value;
@@ -184,13 +213,21 @@ function setStatus(s,m) {
   document.getElementById("status-text").textContent = m;
 }
 
+function switchTab(tab) {
+  activeTab = tab;
+  ["corrections","quality"].forEach(function(t){
+    document.getElementById("tab-"+t).className = "tab-btn"+(t===tab?" active":"");
+  });
+  if (tab==="corrections") renderCorrectionsTab();
+  else renderQualityTab();
+}
+
 function loadAll() {
   setStatus("loading","Loading data...");
-  // Load names and competition data in parallel
   Promise.all([loadNames(), loadCompetitions(), loadCorrections()])
     .then(function() {
       setStatus("ok","Ready · "+allData.length+" entries loaded");
-      renderCorrectionsList();
+      renderCorrectionsTab();
     })
     .catch(function(e) { console.error(e); setStatus("error","Failed to load"); });
 }
@@ -215,7 +252,7 @@ function loadCompetitions() {
   return fetch(API+"?ref="+BRANCH,{headers:{"Accept":"application/vnd.github.v3+json"}})
     .then(function(r){return r.json();})
     .then(function(files){
-      var xl=files.filter(function(f){return f.type==="file"&&f.name.toLowerCase().endsWith(".xlsx")&&f.name.toLowerCase()!==NAMES_FILE&&f.name.toLowerCase()!==CORRECTIONS_FILE;});
+      var xl=files.filter(function(f){return f.type==="file"&&f.name.toLowerCase().endsWith(".xlsx")&&f.name.toLowerCase()!==NAMES_FILE;});
       return Promise.all(xl.map(function(f){return loadFile(f.name);}));
     })
     .then(function(results){
@@ -259,7 +296,7 @@ function loadCorrections() {
     .then(function(d){
       if(!d)return;
       correctionsSha=d.sha;
-      corrections=JSON.parse(atob(d.content.replace(/\n/g,"")));
+      try{corrections=JSON.parse(atob(d.content.replace(/\n/g,"")));}catch(e){}
     })
     .catch(function(){corrections={};});
 }
@@ -274,8 +311,21 @@ function saveCorrections() {
     body:JSON.stringify(body)
   })
   .then(function(r){if(!r.ok)return r.json().then(function(e){throw new Error(e.message);});return r.json();})
-  .then(function(d){correctionsSha=d.content.sha;setStatus("ok","Saved successfully");setTimeout(function(){setStatus("ok","Ready");},2000);})
+  .then(function(d){correctionsSha=d.content.sha;setStatus("ok","Saved");setTimeout(function(){setStatus("ok","Ready");},2000);})
   .catch(function(e){setStatus("error","Save failed: "+e.message);alert("Could not save: "+e.message);});
+}
+
+/* ── Corrections Tab ── */
+function renderCorrectionsTab() {
+  var html = '';
+  html += '<div class="search-box"><div class="search-box-title">Search by Member ID</div>';
+  html += '<div class="search-row"><input class="search-input" id="search-input" type="text" placeholder="Enter Member ID e.g. 4936998" onkeydown="if(event.key===\'Enter\')doSearch()"/>';
+  html += '<button class="search-btn" onclick="doSearch()">Search</button></div></div>';
+  html += '<div id="search-results"></div>';
+  html += '<div style="margin-top:32px"><div class="section-title">Active Corrections <span class="section-count" id="corrections-count">'+Object.keys(corrections).length+'</span></div>';
+  html += '<div id="corrections-list"></div></div>';
+  document.getElementById("page-body").innerHTML = html;
+  renderCorrectionsList();
 }
 
 function doSearch() {
@@ -283,28 +333,13 @@ function doSearch() {
   if(!id){alert("Please enter a Member ID");return;}
   var entries=allData.filter(function(e){return e.memberId===id;});
   var resultsEl=document.getElementById("search-results");
-  if(!entries.length){
-    resultsEl.innerHTML='<div class="no-results-msg">No results found for Member ID <strong>'+esc(id)+'</strong></div>';
-    return;
-  }
+  if(!entries.length){resultsEl.innerHTML='<div class="no-results-msg">No results found for Member ID <strong>'+esc(id)+'</strong></div>';return;}
   var name=namesLookup[id]||"";
   var corr=corrections[id]||{};
-
   var html='<div class="gymnast-card">';
   html+='<div class="gymnast-card-header"><div><div class="gymnast-card-id">Member ID: '+esc(id)+'</div><div class="gymnast-card-name">'+(name?esc(name)+' · ':'')+esc(entries[0].club||"Unknown Club")+'</div></div></div>';
-
-  // Header row
   html+='<div class="results-list">';
-  html+='<div class="result-row header">';
-  html+='<div class="result-cell header-cell">Competition</div>';
-  html+='<div class="result-cell header-cell">Apparatus</div>';
-  html+='<div class="result-cell header-cell">Score</div>';
-  html+='<div class="result-cell header-cell">Gender</div>';
-  html+='<div class="result-cell header-cell">Age Cat.</div>';
-  html+='<div class="result-cell header-cell">Level</div>';
-  html+='<div class="result-cell header-cell">Training Hrs</div>';
-  html+='</div>';
-
+  html+='<div class="result-row header"><div class="result-cell header-cell">Competition</div><div class="result-cell header-cell">Apparatus</div><div class="result-cell header-cell">Score</div><div class="result-cell header-cell">Gender</div><div class="result-cell header-cell">Age Cat.</div><div class="result-cell header-cell">Level</div><div class="result-cell header-cell">Training Hrs</div></div>';
   entries.forEach(function(e,i){
     var rowId="row-"+i;
     html+='<div class="result-row" id="'+rowId+'">';
@@ -317,14 +352,10 @@ function doSearch() {
     html+=editCell(rowId,"trainingHrs",e.trainingHrs,corr.trainingHrs,TRAINING_OPTIONS);
     html+='</div>';
   });
-
-  // Save all button
   html+='<div style="padding:12px 20px;background:var(--off-white);border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;">';
   html+='<div style="font-size:12px;color:var(--text-light);">Changes apply to <strong>all results</strong> for this gymnast across all competitions.</div>';
   html+='<button class="save-row-btn" style="margin-left:auto;" onclick="saveGymnastCorrections(\''+esc(id)+'\')">Save Corrections</button>';
-  html+='</div>';
-  html+='</div></div>';
-
+  html+='</div></div></div>';
   resultsEl.innerHTML=html;
 }
 
@@ -332,8 +363,7 @@ function editCell(rowId,field,original,corrected,options){
   var current=corrected||original;
   var isModified=corrected&&corrected!==original;
   var cls="result-cell"+(isModified?" modified":"");
-  var s='<div class="'+cls+'" id="'+rowId+'-'+field+'">';
-  s+='<select onchange="markModified(\''+rowId+'\',\''+field+'\',this.value,\''+esc(original)+'\')">';
+  var s='<div class="'+cls+'" id="'+rowId+'-'+field+'"><select onchange="markModified(\''+rowId+'\',\''+field+'\',this.value,\''+esc(original)+'\')">';
   options.forEach(function(o){s+='<option value="'+esc(o)+'"'+(current===o?' selected':'')+'>'+esc(o)+'</option>';});
   s+='</select></div>';
   return s;
@@ -341,16 +371,10 @@ function editCell(rowId,field,original,corrected,options){
 
 function markModified(rowId,field,newVal,original){
   var cell=document.getElementById(rowId+"-"+field);
-  if(cell){
-    if(newVal!==original)cell.className="result-cell modified";
-    else cell.className="result-cell";
-  }
+  if(cell)cell.className="result-cell"+(newVal!==original?" modified":"");
 }
 
 function saveGymnastCorrections(memberId){
-  // Read current values from all dropdowns for first row
-  var firstRow=document.getElementById("row-0");
-  if(!firstRow)return;
   var fields=["gender","ageCategory","level","trainingHrs"];
   var corr={};
   fields.forEach(function(f){
@@ -358,11 +382,7 @@ function saveGymnastCorrections(memberId){
     if(cell){var sel=cell.querySelector("select");if(sel)corr[f]=sel.value;}
   });
   corrections[memberId]=corr;
-  saveCorrections().then(function(){
-    renderCorrectionsList();
-    // Refresh search results
-    doSearch();
-  });
+  saveCorrections().then(function(){renderCorrectionsList();doSearch();});
 }
 
 function deleteCorrection(memberId){
@@ -377,29 +397,21 @@ function deleteCorrection(memberId){
 
 function renderCorrectionsList(){
   var ids=Object.keys(corrections);
-  document.getElementById("corrections-count").textContent=ids.length;
-  if(!ids.length){
-    document.getElementById("corrections-list").innerHTML='<div class="no-results-msg" style="padding:20px;">No corrections saved yet.</div>';
-    return;
-  }
+  var countEl=document.getElementById("corrections-count");
+  if(countEl)countEl.textContent=ids.length;
+  var el=document.getElementById("corrections-list");
+  if(!el)return;
+  if(!ids.length){el.innerHTML='<div class="no-results-msg">No corrections saved yet.</div>';return;}
   var html='<table class="corrections-table"><thead><tr><th>Member ID</th><th>Name</th><th>Gender</th><th>Age Cat.</th><th>Level</th><th>Training Hrs</th><th></th></tr></thead><tbody>';
   ids.forEach(function(id){
     var c=corrections[id];
-    var name=namesLookup[id]||"—";
-    // Get original values
     var orig=allData.find(function(e){return e.memberId===id;})||{};
-    html+='<tr>';
-    html+='<td style="font-family:monospace;font-size:12px;">'+esc(id)+'</td>';
-    html+='<td style="font-weight:600;">'+esc(name)+'</td>';
-    html+=corrCell(orig.gender,c.gender);
-    html+=corrCell(orig.ageCategory,c.ageCategory);
-    html+=corrCell(orig.level,c.level);
-    html+=corrCell(orig.trainingHrs,c.trainingHrs);
-    html+='<td><button class="delete-btn" onclick="deleteCorrection(\''+esc(id)+'\')">Remove</button></td>';
-    html+='</tr>';
+    html+='<tr><td style="font-family:monospace;font-size:12px;">'+esc(id)+'</td><td style="font-weight:600;">'+esc(namesLookup[id]||"—")+'</td>';
+    html+=corrCell(orig.gender,c.gender)+corrCell(orig.ageCategory,c.ageCategory)+corrCell(orig.level,c.level)+corrCell(orig.trainingHrs,c.trainingHrs);
+    html+='<td><button class="delete-btn" onclick="deleteCorrection(\''+esc(id)+'\')">Remove</button></td></tr>';
   });
   html+='</tbody></table>';
-  document.getElementById("corrections-list").innerHTML=html;
+  el.innerHTML=html;
 }
 
 function corrCell(original,corrected){
@@ -407,6 +419,114 @@ function corrCell(original,corrected){
     return'<td><span style="color:var(--text-light);text-decoration:line-through;font-size:11px;">'+esc(original||"—")+'</span><span class="arrow">→</span><span class="changed-field">'+esc(corrected)+'</span></td>';
   }
   return'<td>'+esc(corrected||original||"—")+'</td>';
+}
+
+/* ── Data Quality Tab ── */
+function renderQualityTab() {
+  // Build per-gymnast data map
+  var gymnasts = {};
+  allData.forEach(function(e){
+    if(!e.memberId)return;
+    if(!gymnasts[e.memberId])gymnasts[e.memberId]={memberId:e.memberId,values:{}};
+    CHECK_FIELDS.forEach(function(f){
+      if(!gymnasts[e.memberId].values[f])gymnasts[e.memberId].values[f]=[];
+      var val=e[f]||"";
+      if(val&&!gymnasts[e.memberId].values[f].some(function(v){return v.value===val;})){
+        gymnasts[e.memberId].values[f].push({value:val,competition:e.competition});
+      }
+    });
+  });
+
+  // Find conflicts
+  var conflicts=[];
+  Object.values(gymnasts).forEach(function(g){
+    var hasConflict=CHECK_FIELDS.some(function(f){return g.values[f]&&g.values[f].length>1;});
+    if(hasConflict)conflicts.push(g);
+  });
+
+  var totalGymnasts=Object.keys(gymnasts).length;
+  var html='';
+
+  // Summary
+  html+='<div class="dq-summary">';
+  html+='<div class="dq-card"><div class="dq-card-num '+(conflicts.length===0?"ok":"warn")+'">'+conflicts.length+'</div><div class="dq-card-lbl">Gymnasts with conflicts</div></div>';
+  html+='<div class="dq-card"><div class="dq-card-num" style="color:var(--navy);">'+totalGymnasts+'</div><div class="dq-card-lbl">Total gymnasts</div></div>';
+  html+='<div class="dq-card"><div class="dq-card-num ok">'+(totalGymnasts-conflicts.length)+'</div><div class="dq-card-lbl">Clean records</div></div>';
+  html+='</div>';
+
+  if(!conflicts.length){
+    html+='<div class="all-ok"><div class="all-ok-icon">✅</div><div class="all-ok-title">All gymnast records are consistent!</div></div>';
+    document.getElementById("page-body").innerHTML=html;
+    return;
+  }
+
+  html+='<div class="section-title">Conflicts Found <span class="section-count">'+conflicts.length+'</span></div>';
+
+  // Field filter
+  var fieldLabels={ageCategory:"Age Category",level:"Level",trainingHrs:"Training Hrs",gender:"Gender"};
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;background:#fff;padding:12px 16px;border-radius:10px;border:1px solid var(--border);box-shadow:var(--shadow);">';
+  html+='<span style="font-size:12px;font-weight:700;color:var(--text-light);">SHOW CONFLICTS IN:</span>';
+  html+='<select class="dq-select" onchange="dqFieldFilter=this.value;renderQualityTab()" style="min-width:160px;">';
+  html+='<option value="all">All Fields</option>';
+  Object.keys(fieldLabels).forEach(function(f){html+='<option value="'+f+'"'+(dqFieldFilter===f?' selected':'')+'>'+fieldLabels[f]+'</option>';});
+  html+='</select></div>';
+
+  conflicts.forEach(function(g){
+    // Filter to only show conflicts in the selected field
+    var fieldsToShow = dqFieldFilter==="all" ? CHECK_FIELDS : [dqFieldFilter];
+    var hasConflictInFilter = fieldsToShow.some(function(f){return g.values[f]&&g.values[f].length>1;});
+    if(!hasConflictInFilter)return;
+    var name=namesLookup[g.memberId]||"";
+    var corrAlready=corrections[g.memberId]||{};
+    html+='<div class="dq-flag">';
+    html+='<div class="dq-flag-header"><div><span class="dq-flag-id">'+esc(g.memberId)+'</span>'+(name?'<span class="dq-flag-name">· '+esc(name)+'</span>':'')+'</div>';
+    html+='<button class="fix-btn" onclick="loadIntoSearch(\''+esc(g.memberId)+'\')">Fix in Corrections →</button></div>';
+    html+='<div class="dq-flag-body">';
+
+    CHECK_FIELDS.forEach(function(f){
+      if(dqFieldFilter!=="all"&&f!==dqFieldFilter)return;
+      if(!g.values[f]||g.values[f].length<=1)return;
+      var fieldLabels={ageCategory:"Age Category",level:"Level",trainingHrs:"Training Hrs",gender:"Gender"};
+      html+='<div class="dq-field"><div class="dq-field-label">'+fieldLabels[f]+' — '+g.values[f].length+' different values found</div>';
+      html+='<div class="dq-values">';
+      g.values[f].forEach(function(v){
+        var isCorrected=corrAlready[f]&&corrAlready[f]===v.value;
+        html+='<div class="dq-value'+(isCorrected?"":" conflict")+'"><span>'+esc(v.value)+'</span><span class="dq-value-comp">'+esc(v.competition)+'</span></div>';
+      });
+      html+='</div>';
+
+      // Quick fix dropdown
+      var options=f==="ageCategory"?AGE_OPTIONS:f==="level"?LEVEL_OPTIONS:f==="trainingHrs"?TRAINING_OPTIONS:GENDER_OPTIONS;
+      html+='<div class="dq-actions">';
+      html+='<span class="dq-fix-label">Set correct value:</span>';
+      html+='<select class="dq-select" id="dq-'+esc(g.memberId)+'-'+f+'">';
+      options.forEach(function(o){html+='<option value="'+esc(o)+'"'+(corrAlready[f]===o?' selected':'')+'>'+esc(o)+'</option>';});
+      html+='</select>';
+      html+='<button class="dq-apply-btn" onclick="applyDqFix(\''+esc(g.memberId)+'\',\''+f+'\')">Apply Fix</button>';
+      html+='</div>';
+      html+='</div>';
+    });
+
+    html+='</div></div>';
+  });
+
+  document.getElementById("page-body").innerHTML=html;
+}
+
+function applyDqFix(memberId, field) {
+  var sel = document.getElementById("dq-"+memberId+"-"+field);
+  if(!sel)return;
+  if(!corrections[memberId])corrections[memberId]={};
+  corrections[memberId][field]=sel.value;
+  saveCorrections().then(function(){ renderQualityTab(); });
+}
+
+function loadIntoSearch(memberId) {
+  switchTab("corrections");
+  setTimeout(function(){
+    var inp=document.getElementById("search-input");
+    if(inp){inp.value=memberId;doSearch();}
+  },100);
 }
 
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
