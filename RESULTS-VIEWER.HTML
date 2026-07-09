@@ -491,6 +491,7 @@ function renderChamps(){
         html+='</div>';
         apparatus.forEach(function(app){
           var top=topByApp[app];
+          if(!top.length)return; // skip apparatus with no data
           html+='<div class="champs-apparatus-row"><div class="champs-cell champs-apparatus-label">'+esc(app)+'</div>';
           [0,1,2].forEach(function(i){
             html+='<div class="champs-cell">';
