@@ -6,7 +6,10 @@
     "trainingHrs": "6-10hrs"
   },
   "3296886": {
-    "ageCategory": "12-14"
+    "gender": "Girls",
+    "ageCategory": "12-14",
+    "level": "B",
+    "trainingHrs": "2-5hrs"
   },
   "4430749": {
     "gender": "Boys",
