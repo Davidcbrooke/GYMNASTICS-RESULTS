@@ -2303,28 +2303,11 @@ function emailAllClubs(){
   const emails = getClubEmails();
   if(!emails.length){ alert('No club email addresses found.'); return; }
 
-  if(emails.length >= 50){
-    const choice = confirm(
-      `You have ${emails.length} club emails — large BCC lists can be unreliable in Outlook.\n\nClick OK to try anyway, or Cancel to copy the emails to clipboard instead.`
-    );
-    if(!choice){ copyAllEmails(); return; }
-  }
-
   const subject = 'NGL Rotation Planner — Update from National Gymnastics League';
-  // Use comma separator — RFC standard for mailto, Outlook accepts this in BCC
-  // Do NOT encode the commas so Outlook parses them as separate addresses
-  const bcc = emails.join(',');
+  const bcc = emails.join(';');
   const mailto = 'mailto:?bcc=' + bcc + '&subject=' + encodeURIComponent(subject);
-
-  if(mailto.length > 2000){
-    const choice = confirm(
-      `The mailto link is very long (${emails.length} addresses) and may not open correctly.\n\nClick OK to try anyway, or Cancel to copy the emails to clipboard instead.`
-    );
-    if(!choice){ copyAllEmails(); return; }
-  }
-
   window.location.href = mailto;
-  showToast(`Opening email with ${emails.length} clubs in BCC`);
+  showToast(`Opening Outlook with ${emails.length} clubs in BCC`);
 }
 
 function copyAllEmails(){
