@@ -10,6 +10,7 @@
     --navy-light: #1e2d56;
     --red:        #c0392b;
     --red-hover:  #a93226;
+    --gold:       #d4a017;
     --white:      #ffffff;
     --off-white:  #f4f6f9;
     --border:     #dde1ea;
@@ -22,11 +23,11 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: var(--font); background: var(--off-white); color: var(--text); min-height: 100vh; font-size: 14px; }
 
-  /* NAV */
   .top-nav { background: var(--navy); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 52px; border-bottom: 3px solid var(--red); gap: 8px; }
   .brand { color: var(--white); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
   .brand span { display: none; }
-  .nav-tabs { display: flex; flex-shrink: 0; }
+  .nav-tabs { display: flex; flex-shrink: 1; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+  .nav-tabs::-webkit-scrollbar { display: none; }
   .nav-tab { background: none; border: none; color: rgba(255,255,255,0.55); padding: 0 12px; height: 52px; font-size: 0.72rem; font-family: var(--font); cursor: pointer; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; border-bottom: 3px solid transparent; margin-bottom: -3px; transition: all 0.15s; white-space: nowrap; }
   .nav-tab:hover { color: var(--white); }
   .nav-tab.active { color: var(--white); border-bottom-color: var(--red); }
@@ -39,7 +40,6 @@
   .panel { display: none; }
   .panel.active { display: block; }
 
-  /* HERO */
   .hero { background: var(--navy); padding: 36px 20px 32px; text-align: center; }
   .hero-kicker { display: inline-block; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; padding: 4px 16px; border-radius: 2px; margin-bottom: 18px; }
   .hero h1 { color: var(--white); font-size: clamp(1.5rem,5vw,2.8rem); font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
@@ -48,23 +48,20 @@
   .hero-badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .hero-badge { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 3px; font-size: 0.74rem; font-weight: 500; }
 
-  /* BOOKING LAYOUT */
   .booking-section { max-width: 1080px; margin: 0 auto; padding: 36px 20px 48px; display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start; }
   @media (max-width: 780px) { .booking-section { grid-template-columns: 1fr; } }
   .eyebrow { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--grey-mid); margin-bottom: 3px; }
   .sec-title { font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
   .sec-sub { font-size: 0.79rem; color: var(--grey-mid); margin-bottom: 18px; }
 
-  /* LOADING / ERROR */
   .loading-bar { display: flex; align-items: center; gap: 10px; padding: 20px; color: var(--grey-mid); font-size: 0.82rem; background: var(--white); border: 1px solid var(--border); }
   .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .load-error { padding: 16px; background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--red); font-size: 0.82rem; color: var(--red); }
 
-  /* COMPETITION CARDS */
-  .comp-card { background: var(--white); border: 1px solid var(--border); border-left: 4px solid transparent; margin-bottom: 10px; cursor: pointer; transition: border-color 0.12s, box-shadow 0.12s; }
+  .comp-card { background: var(--white); border: 1px solid var(--border); border-left: 4px solid transparent; margin-bottom: 10px; cursor: default; }
   .comp-card:hover { border-left-color: var(--grey-mid); box-shadow: 0 2px 10px rgba(13,27,62,0.07); }
-  .comp-card.selected { border-left-color: var(--red); box-shadow: 0 2px 14px rgba(192,57,43,0.1); }
+  .comp-card.selected { border-left-color: var(--red); background: #fefcfc; box-shadow: 0 2px 14px rgba(192,57,43,0.1); }
   .comp-card.unavailable { opacity: 0.5; cursor: default; pointer-events: none; }
   .comp-card-header { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; padding: 13px 15px; }
   .date-badge { background: var(--navy); color: var(--white); text-align: center; padding: 7px 4px; border-radius: 3px; }
@@ -81,13 +78,9 @@
   .pill.filling { background: #fef3e2; color: #b06000; }
   .pill.full    { background: #fde8e6; color: var(--red); }
   .pill.closed  { background: var(--grey-light); color: var(--grey-mid); }
-  .comp-reveal { max-height: 0; overflow: hidden; transition: max-height 0.22s ease; }
-  .comp-card.selected .comp-reveal { max-height: 60px; border-top: 1px solid var(--border); }
-  .comp-reveal-inner { padding: 9px 15px; font-size: 0.77rem; color: var(--navy); background: #fdf6f5; }
-  .comp-reveal-inner strong { color: var(--red); }
+  .pill.waitlist { background: #fff3e0; color: #b06000; }
   .no-comps { text-align: center; padding: 56px 20px; color: var(--grey-mid); font-size: 0.86rem; background: var(--white); border: 1px solid var(--border); }
 
-  /* COMPETITION ICONS */
   .comp-icons { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
   .comp-icon { display: inline-flex; align-items: center; gap: 4px; background: var(--grey-light); border: 1px solid var(--border); border-radius: 2px; padding: 2px 7px; font-size: 0.68rem; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; }
   .comp-icon.gender-girls { background: #fce8f3; border-color: #e8a0cc; color: #8c1a5e; }
@@ -95,10 +88,6 @@
   .comp-icon.gender-both  { background: #ede8fe; border-color: #b09af5; color: #3a1a8c; }
   .comp-icon.apparatus    { background: #fff8e6; border-color: #f5d87a; color: #7a5c00; }
 
-  /* MULTI-SELECT COMP CARDS */
-  .comp-card { cursor: default; }
-  .comp-card:hover { border-left-color: var(--grey-mid); box-shadow: 0 2px 10px rgba(13,27,62,0.07); }
-  .comp-card.selected { border-left-color: var(--red); background: #fefcfc; box-shadow: 0 2px 14px rgba(192,57,43,0.1); }
   .comp-check-row { display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-top: 1px solid var(--border); background: #fdf6f5; }
   .comp-check-row label { font-size: 0.75rem; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; }
   .comp-checkbox { width: 17px; height: 17px; accent-color: var(--red); cursor: pointer; flex-shrink: 0; }
@@ -106,36 +95,29 @@
   .spaces-input:focus { outline: none; border-color: var(--red); }
   .spaces-label { font-size: 0.72rem; color: var(--grey-mid); white-space: nowrap; }
 
-  /* SELECTED SUMMARY in form */
   .sel-summary { margin-bottom: 15px; }
   .sel-summary-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #fdf6f5; border: 1px solid rgba(192,57,43,0.18); border-left: 3px solid var(--red); border-radius: 2px; margin-bottom: 6px; font-size: 0.77rem; color: var(--navy); }
   .sel-summary-item .si-name { font-weight: 700; flex: 1; }
   .sel-summary-item .si-spaces { font-size: 0.72rem; color: var(--grey-mid); white-space: nowrap; margin-left: 8px; }
   .sel-empty { background: var(--grey-light); color: var(--grey-mid); text-align: center; border: 1px dashed var(--border); padding: 9px 12px; border-radius: 2px; font-size: 0.77rem; margin-bottom: 15px; }
 
-  /* BOOKING FORM */
   .form-card { background: var(--white); border: 1px solid var(--border); position: sticky; top: 16px; }
   .fc-head { background: var(--navy); padding: 15px 20px; border-bottom: 3px solid var(--red); }
   .fc-head h2 { color: var(--white); font-size: 0.92rem; font-weight: 700; }
   .fc-head p { color: rgba(255,255,255,0.45); font-size: 0.73rem; margin-top: 3px; }
   .fc-body { padding: 18px 20px; }
-  .sel-banner { padding: 9px 12px; border-radius: 2px; font-size: 0.77rem; margin-bottom: 15px; line-height: 1.45; }
-  .sel-banner.empty { background: var(--grey-light); color: var(--grey-mid); text-align: center; border: 1px dashed var(--border); }
-  .sel-banner.filled { background: #fdf6f5; color: var(--navy); border: 1px solid rgba(192,57,43,0.22); border-left: 3px solid var(--red); }
-  .sel-banner.filled strong { display: block; font-size: 0.84rem; margin-bottom: 1px; }
   .fg { margin-bottom: 13px; }
   .fg label { display: block; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--grey-mid); margin-bottom: 5px; }
   .fg label .req { color: var(--red); }
   .fg input, .fg select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 2px; font-size: 0.84rem; font-family: var(--font); color: var(--text); background: var(--white); appearance: none; transition: border-color 0.12s; }
   .fg input:focus, .fg select:focus { outline: none; border-color: var(--navy); }
   .fg .hint { font-size: 0.68rem; color: var(--grey-mid); margin-top: 4px; }
-  .btn-book { width: 100%; background: var(--red); color: var(--white); border: none; padding: 12px; font-size: 0.83rem; font-weight: 700; font-family: var(--font); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.12s; border-radius: 2px; margin-top: 4px; }
+  .btn-book { width: 100%; background: var(--red); color: var(--white); border: none; padding: 12px; font-size: 0.83rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.12s; border-radius: 2px; margin-top: 4px; }
   .btn-book:hover { background: var(--red-hover); }
   .btn-book:disabled { background: var(--grey-mid); cursor: not-allowed; }
   .guarantee-box { display: flex; gap: 9px; background: #eaf6ef; border: 1px solid rgba(39,174,96,0.22); border-radius: 2px; padding: 9px 11px; margin-top: 12px; font-size: 0.71rem; color: #1a6b3a; line-height: 1.5; }
   .submit-error { background: #fde8e6; border: 1px solid rgba(192,57,43,0.3); border-left: 3px solid var(--red); border-radius: 2px; padding: 9px 12px; margin-top: 10px; font-size: 0.77rem; color: var(--red); display: none; }
 
-  /* SUCCESS */
   .success-screen { display: none; }
   .success-screen.show { display: block; }
   .success-wrap { max-width: 500px; margin: 60px auto; background: var(--white); border: 1px solid var(--border); text-align: center; padding: 48px 32px; }
@@ -146,7 +128,6 @@
   .btn-again { background: var(--navy); color: var(--white); border: none; padding: 10px 28px; font-size: 0.79rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: var(--font); transition: background 0.12s; }
   .btn-again:hover { background: var(--navy-light); }
 
-  /* ADMIN */
   .admin-login-wrap { max-width: 380px; margin: 80px auto; background: var(--white); border: 1px solid var(--border); }
   .al-head { background: var(--navy); border-bottom: 3px solid var(--red); padding: 16px 22px; color: var(--white); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; }
   .al-head p { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 3px; font-weight: 400; letter-spacing: 0; }
@@ -189,7 +170,6 @@
   .btn-del { background: none; border: 1px solid var(--border); color: var(--red); padding: 3px 7px; font-size: 0.68rem; font-family: var(--font); cursor: pointer; border-radius: 2px; transition: all 0.1s; }
   .btn-del:hover { background: var(--red); color: var(--white); border-color: var(--red); }
 
-  /* BOOKINGS TABLE */
   .table-wrap { background: var(--white); border: 1px solid var(--border); }
   .table-toolbar { padding: 11px 17px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--grey-light); }
   .table-toolbar input, .table-toolbar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 2px; font-size: 0.79rem; font-family: var(--font); background: var(--white); appearance: none; }
@@ -214,13 +194,31 @@
   .footer p { color: rgba(255,255,255,0.38); font-size: 0.71rem; line-height: 1.8; }
   .footer strong { color: rgba(255,255,255,0.65); }
 
-  /* WAITLIST */
-  .pill.waitlist { background: #fff3e0; color: #b06000; }
   .waitlist-banner { background: #fff8e6; border: 1px solid #f5d87a; border-left: 3px solid #d4a017; border-radius: 2px; padding: 10px 13px; font-size: 0.78rem; color: #7a5c00; margin-bottom: 15px; line-height: 1.5; }
   .waitlist-banner strong { display: block; font-size: 0.84rem; margin-bottom: 2px; color: #5a4000; }
-  .comp-icon.waitlist-icon { background: #fff3e0; border-color: #f5d87a; color: #b06000; }
 
-  /* MOBILE */
+  /* MY BOOKINGS */
+  .lookup-card { max-width: 480px; margin: 0 auto 24px; background: var(--white); border: 1px solid var(--border); }
+  .lookup-body { padding: 20px; }
+  .cal-grid-wrap { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 28px; }
+  @media (max-width: 780px) { .cal-grid-wrap { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 520px) { .cal-grid-wrap { grid-template-columns: 1fr; } }
+  .mini-cal { background: var(--white); border: 1px solid var(--border); padding: 12px; }
+  .mini-cal-title { font-size: 0.78rem; font-weight: 700; color: var(--navy); text-align: center; margin-bottom: 8px; letter-spacing: 0.04em; }
+  .mini-cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+  .mini-cal-dow { font-size: 0.58rem; color: var(--grey-mid); text-align: center; font-weight: 700; padding-bottom: 3px; }
+  .mini-cal-day { font-size: 0.68rem; text-align: center; padding: 4px 0; border-radius: 2px; color: var(--text); }
+  .mini-cal-day.blank { visibility: hidden; }
+  .mini-cal-day.booked { background: var(--red); color: var(--white); font-weight: 700; cursor: default; }
+  .mini-cal-day.waitlisted { background: var(--gold); color: var(--white); font-weight: 700; cursor: default; }
+  .my-booking-row { display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: var(--white); border: 1px solid var(--border); border-left: 4px solid var(--red); margin-bottom: 8px; }
+  .my-booking-row.waitlist-row { border-left-color: var(--gold); }
+  .mb-date { background: var(--navy); color: var(--white); text-align: center; padding: 6px 10px; border-radius: 3px; min-width: 52px; }
+  .mb-date .mbday { font-size: 1.1rem; font-weight: 700; line-height: 1; }
+  .mb-date .mbmon { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+  .mb-name { font-size: 0.85rem; font-weight: 700; color: var(--navy); }
+  .mb-meta { font-size: 0.72rem; color: var(--grey-mid); margin-top: 2px; }
+
   @media (max-width: 500px) {
     .hero { padding: 28px 16px 26px; }
     .hero-kicker { font-size: 0.62rem; letter-spacing: 0.12em; padding: 3px 12px; margin-bottom: 14px; }
@@ -251,7 +249,6 @@
     .modal-body { padding: 14px; }
   }
 
-  /* EDIT MODAL */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(13,27,62,0.6); z-index: 1000; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: var(--white); border: 1px solid var(--border); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; margin: 20px; }
@@ -274,11 +271,11 @@
   <div class="brand">NGL <span>Competition Booking System</span></div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="window.showPanel('public',this)">Book a Competition</button>
+    <button class="nav-tab" onclick="window.showPanel('mybookings',this)">My Bookings</button>
     <button class="nav-tab" onclick="window.showPanel('admin',this)">Admin &#x1F512;</button>
   </div>
 </nav>
 
-<!-- ══ PUBLIC PANEL ══ -->
 <div id="panel-public" class="panel active">
   <div class="hero">
     <div class="hero-kicker">National Gymnastics League &middot; 2027 Season</div>
@@ -350,13 +347,30 @@
       <p>Your club has been registered for: <strong id="success-comps"></strong></p>
       <p style="margin-top:8px" id="success-note">We'll be in touch ahead of October 2026 to confirm entries and arrange payment. If you have joined a waiting list, you will be contacted if a place becomes available.</p>
       <div class="success-ref" id="success-ref" style="margin-top:20px">NGL-XXXXXX</div>
-      <p style="font-size:0.77rem;margin-bottom:24px;margin-top:12px">Keep your reference number safe. If you need to make changes, contact your NGL administrator quoting this reference.</p>
+      <p style="font-size:0.77rem;margin-bottom:24px;margin-top:12px">Keep your reference number safe. If you need to make changes, contact your NGL administrator quoting this reference. You can also check your bookings any time on the "My Bookings" tab using this email address.</p>
       <button class="btn-again" onclick="window.resetForm()">Make Another Booking</button>
     </div>
   </div>
 </div>
 
-<!-- ══ ADMIN PANEL ══ -->
+<div id="panel-mybookings" class="panel">
+  <div class="hero" style="padding:28px 20px 24px">
+    <div class="hero-kicker">Check Your Club's Places</div>
+    <h1 style="font-size:clamp(1.3rem,4vw,2rem)">Your <em>Bookings.</em></h1>
+    <p>Enter the email you booked with to see everything your club is entered into, on a calendar.</p>
+  </div>
+  <div style="max-width:1080px;margin:0 auto;padding:32px 20px 48px">
+    <div class="lookup-card">
+      <div class="lookup-body">
+        <div class="fg"><label>Email Used to Book <span class="req">*</span></label><input type="email" id="mb-email" placeholder="club@example.com" onkeydown="if(event.key==='Enter')window.searchMyBookings()"></div>
+        <button class="btn-book" onclick="window.searchMyBookings()">Find My Bookings &#8594;</button>
+        <div class="submit-error" id="mb-error"></div>
+      </div>
+    </div>
+    <div id="mb-results"></div>
+  </div>
+</div>
+
 <div id="panel-admin" class="panel">
 
   <div class="admin-login-wrap" id="admin-login">
@@ -382,7 +396,6 @@
     </div>
 
     <div class="admin-grid">
-      <!-- Add Competition -->
       <div class="panel-card">
         <div class="pc-head">&#x2795; Add Competition Date</div>
         <div class="pc-body">
@@ -422,7 +435,6 @@
         </div>
       </div>
 
-      <!-- Competition List -->
       <div class="panel-card">
         <div class="pc-head">&#x1F4C5; Competition Calendar <span class="pc-badge" id="comp-count">0</span></div>
         <div class="pc-body">
@@ -431,7 +443,6 @@
       </div>
     </div>
 
-    <!-- Bookings Table -->
     <div class="table-wrap">
       <div class="pc-head">
         &#x1F4DD; Club Bookings
@@ -455,7 +466,6 @@
   </div>
 </div>
 
-<!-- EDIT BOOKING MODAL -->
 <div class="modal-overlay" id="edit-booking-modal">
   <div class="modal">
     <div class="modal-head">
@@ -486,7 +496,6 @@
   </div>
 </div>
 
-<!-- EDIT COMPETITION MODAL -->
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
     <div class="modal-head">
@@ -540,13 +549,11 @@
   Book now &middot; Confirm October 2026 &middot; No upfront payment required</p>
 </div>
 
-<!-- Firebase SDKs -->
 <script type="module">
 import { initializeApp }                            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, collection, doc, addDoc, deleteDoc, updateDoc,
          onSnapshot, query, orderBy, getDocs }      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-// ══ FIREBASE CONFIG ══
 const firebaseConfig = {
   apiKey:            "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
   authDomain:        "saadi-rotation.firebaseapp.com",
@@ -562,14 +569,11 @@ const db  = getFirestore(app);
 const compsCol    = collection(db, 'ngl_competitions');
 const bookingsCol = collection(db, 'ngl_bookings');
 
-// ══ STATE ══
 const ADMIN_PASSWORD = 'ngl2026';
 let allCompetitions = [];
 let allBookings     = [];
-let selId           = null;
 let adminLoggedIn   = false;
 
-// ══ NAV ══
 window.showPanel = function(id, btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -577,7 +581,6 @@ window.showPanel = function(id, btn) {
   if (btn) btn.classList.add('active');
 };
 
-// ══ LISTEN TO COMPETITIONS (live) ══
 onSnapshot(query(compsCol, orderBy('date')), snap => {
   allCompetitions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   renderCalendar();
@@ -586,7 +589,6 @@ onSnapshot(query(compsCol, orderBy('date')), snap => {
   populateFilter();
 });
 
-// ══ LISTEN TO BOOKINGS (live) ══
 onSnapshot(query(bookingsCol, orderBy('bookedAt', 'desc')), snap => {
   allBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   renderCalendar();
@@ -594,10 +596,8 @@ onSnapshot(query(bookingsCol, orderBy('bookedAt', 'desc')), snap => {
   updateStats();
 });
 
-// ══ SELECTION STATE: map of compId -> spaces ══
-let selections = {}; // { compId: spacesCount }
+let selections = {};
 
-// ══ PUBLIC CALENDAR ══
 function renderCalendar() {
   const el = document.getElementById('comp-list');
   if (!allCompetitions.length) {
@@ -695,7 +695,6 @@ function updateSummary() {
   }).join('');
 }
 
-// ══ SUBMIT BOOKING ══
 window.submitBooking = async function() {
   const club   = document.getElementById('f-club').value.trim();
   const region = document.getElementById('f-region').value;
@@ -717,7 +716,6 @@ window.submitBooking = async function() {
 
   const ref = 'NGL-' + Math.random().toString(36).substr(2,6).toUpperCase();
   try {
-    // Create one booking record per selected competition
     const promises = selIds.map(compId => {
       const comp    = allCompetitions.find(x => x.id === compId);
       const sel     = selections[compId];
@@ -739,7 +737,6 @@ window.submitBooking = async function() {
     document.getElementById('booking-section').style.display = 'none';
     document.getElementById('success-screen').classList.add('show');
     document.getElementById('success-ref').textContent = ref;
-    // Show summary on success screen
     const compList = selIds.map(id => {
       const c = allCompetitions.find(x=>x.id===id);
       const sel = selections[id];
@@ -776,7 +773,6 @@ window.resetForm = function() {
   window.scrollTo({top:0,behavior:'smooth'});
 };
 
-// ══ ADMIN AUTH ══
 window.adminLogin = function() {
   if (document.getElementById('admin-pw').value === ADMIN_PASSWORD) {
     adminLoggedIn = true;
@@ -799,8 +795,6 @@ window.adminLogout = function() {
   document.getElementById('al-err').style.display='none';
 };
 
-// ══ ADMIN: ADD COMPETITION ══
-// ══ ICON HELPER ══
 function buildIcons(c) {
   let icons = '';
   if (c.gender === 'girls')  icons += '<span class="comp-icon gender-girls">&#x2640; Girls</span>';
@@ -835,16 +829,13 @@ window.addCompetition = async function() {
   btn.disabled=false; btn.textContent='+ Add to Calendar';
 };
 
-// ══ ADMIN: DELETE COMPETITION ══
 window.duplicateComp = async function(id) {
   const c = allCompetitions.find(x => x.id === id);
   if (!c) return;
-  // Open the edit modal pre-filled with copied data but blank date so admin must set it
   const copy = Object.assign({}, c);
   delete copy.id;
   copy.name = c.name + ' (Copy)';
   copy.date = '';
-  // Temporarily store copy data and open modal in "new" mode
   document.getElementById('edit-id').value         = '__duplicate__';
   document.getElementById('edit-name').value       = copy.name;
   document.getElementById('edit-date').value       = '';
@@ -856,7 +847,6 @@ window.duplicateComp = async function(id) {
   document.getElementById('edit-apparatus').value  = copy.apparatus || '';
   document.getElementById('edit-address').value    = copy.address   || '';
   document.getElementById('edit-postcode').value   = copy.postcode  || '';
-  // Change modal title and save button to reflect "create" mode
   document.querySelector('#edit-modal .modal-head').childNodes[0].textContent = '\u2398 Duplicate Competition \u2014 set a new date';
   document.getElementById('edit-modal').classList.add('open');
 };
@@ -866,7 +856,6 @@ window.deleteComp = async function(id) {
   await deleteDoc(doc(db,'ngl_competitions',id));
 };
 
-// ══ ADMIN: RENDER COMP LIST ══
 function renderAdminComps() {
   document.getElementById('comp-count').textContent = allCompetitions.length;
   const el = document.getElementById('admin-comp-list');
@@ -886,7 +875,6 @@ function renderAdminComps() {
   }).join('');
 }
 
-// ══ ADMIN: STATS ══
 function updateStats() {
   if (!adminLoggedIn) return;
   const gyms  = allBookings.reduce((s,b)=>s+(b.spaces||b.gymnasts||0),0);
@@ -899,7 +887,6 @@ function updateStats() {
   document.getElementById('bk-count').textContent      = allBookings.length;
 }
 
-// ══ ADMIN: BOOKINGS TABLE ══
 function populateFilter() {
   const sel = document.getElementById('bk-filter');
   const cur = sel.value;
@@ -939,7 +926,6 @@ function renderBookingsTable() {
   }).join('');
 }
 
-// ══ EDIT MODAL ══
 window.openEditModal = function(id) {
   const c = allCompetitions.find(x => x.id === id);
   if (!c) return;
@@ -980,24 +966,20 @@ window.saveEdit = async function() {
   if (!data.name || !data.date) return alert('Name and date are required.');
   try {
     if (id === '__duplicate__') {
-      // Create as new competition
       data.createdAt = new Date().toISOString();
       await addDoc(compsCol, data);
     } else {
       await updateDoc(doc(db,'ngl_competitions',id), data);
     }
     closeEditModal();
-    // Reset modal title back to default
     document.querySelector('#edit-modal .modal-head').childNodes[0].textContent = '\u270F\uFE0F Edit Competition';
   } catch(e) { alert('Error saving: ' + e.message); }
 };
 
-// close modal on overlay click
 document.getElementById('edit-modal').addEventListener('click', function(e) {
   if (e.target === this) closeEditModal();
 });
 
-// ══ BOOKING EDIT / DELETE ══
 window.editBooking = function(id) {
   const b = allBookings.find(x => x.id === id);
   if (!b) return;
@@ -1043,7 +1025,6 @@ document.getElementById('edit-booking-modal').addEventListener('click', function
   if (e.target === this) window.closeBookingModal();
 });
 
-// ══ EXPORT CSV ══
 window.exportCSV = function() {
   const hdr = ['Reference','Club','Region','Competition','Competition Date','Est. Gymnasts','Email','Phone','Booked On'];
   const rows = allBookings.map(b => {
@@ -1058,6 +1039,175 @@ window.exportCSV = function() {
   a.click();
 };
 
+let lastMyBookings = [];
+
+window.searchMyBookings = async function() {
+  const emailInput = document.getElementById('mb-email').value.trim().toLowerCase();
+  const errEl = document.getElementById('mb-error');
+  const resultsEl = document.getElementById('mb-results');
+  errEl.style.display = 'none';
+  if (!emailInput || !emailInput.includes('@')) {
+    errEl.textContent = 'Please enter a valid email address.';
+    errEl.style.display = 'block';
+    return;
+  }
+  resultsEl.innerHTML = '<div class="loading-bar"><div class="spinner"></div> Looking up your bookings&hellip;</div>';
+
+  try {
+    const snap = await getDocs(bookingsCol);
+    const mine = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(b => (b.email || '').trim().toLowerCase() === emailInput)
+      .sort((a,b) => (a.compDate||'').localeCompare(b.compDate||''));
+
+    if (!mine.length) {
+      resultsEl.innerHTML = '<div class="no-comps">No bookings found for that email. Double-check the address you used when booking, or contact your NGL administrator.</div>';
+      return;
+    }
+    lastMyBookings = mine;
+    renderMyBookingsResults(mine);
+  } catch(e) {
+    resultsEl.innerHTML = '<div class="load-error">Something went wrong looking up your bookings: ' + e.message + '</div>';
+  }
+};
+
+function renderMyBookingsResults(mine) {
+  const resultsEl = document.getElementById('mb-results');
+
+  const monthsPresent = [...new Set(mine.map(b => (b.compDate||'').slice(0,7)))].filter(Boolean).sort();
+  const byDateKey = {};
+  mine.forEach(b => {
+    if (!b.compDate) return;
+    if (!byDateKey[b.compDate]) byDateKey[b.compDate] = [];
+    byDateKey[b.compDate].push(b);
+  });
+
+  const calsHtml = monthsPresent.map(monthKey => buildMiniCalendar(monthKey, byDateKey)).join('');
+
+  const rowsHtml = mine.map(b => {
+    const d = b.compDate ? new Date(b.compDate+'T00:00:00') : null;
+    const isWait = !!b.waitlist;
+    return '<div class="my-booking-row' + (isWait?' waitlist-row':'') + '">' +
+      '<div class="mb-date"><div class="mbday">' + (d?d.getDate():'-') + '</div><div class="mbmon">' + (d?d.toLocaleString('en-GB',{month:'short'}).toUpperCase():'') + '</div></div>' +
+      '<div style="flex:1">' +
+      '<div class="mb-name">' + (b.compName||'') + (isWait ? ' <span class="pill waitlist">Waitlist</span>' : '') + '</div>' +
+      '<div class="mb-meta">Ref ' + (b.reference||b.id) + ' &middot; ' + (isWait ? 'Waiting for a place' : (b.spaces||1) + ' gymnast' + ((b.spaces||1)!==1?'s':'')) + '</div>' +
+      '</div>' +
+      '<button class="btn-edit" onclick="window.downloadBookingICS(\'' + b.id + '\')">&#x1F4C5; Add to Calendar</button>' +
+      '</div>';
+
+  }).join('');
+
+  resultsEl.innerHTML =
+    '<div class="eyebrow" style="margin-top:8px">' + mine[0].club + '</div>' +
+    '<div class="sec-title">Your 2027 Calendar</div>' +
+    '<div class="sec-sub">Red = confirmed &middot; Gold = waiting list</div>' +
+    '<div class="cal-grid-wrap">' + calsHtml + '</div>' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">' +
+    '<div class="sec-title" style="margin-bottom:0">All Bookings</div>' +
+    '<button class="btn-add" onclick="window.downloadAllBookingsICS()">&#x1F4C5; Add All to Calendar</button>' +
+    '</div>' +
+    '<div style="margin-top:12px">' + rowsHtml + '</div>';
+}
+
+function bookingToICSEvent(b) {
+  const dateStr = (b.compDate || '').replace(/-/g, '');
+  if (!dateStr) return null;
+  const nextDay = new Date(b.compDate + 'T00:00:00');
+  nextDay.setDate(nextDay.getDate() + 1);
+  const nextDayStr = nextDay.toISOString().slice(0,10).replace(/-/g,'');
+  const status = b.waitlist ? ' (Waiting List)' : '';
+  return [
+    'BEGIN:VEVENT',
+    'UID:' + (b.id || b.reference) + '@ngl-booking',
+    'DTSTART;VALUE=DATE:' + dateStr,
+    'DTEND;VALUE=DATE:' + nextDayStr,
+    'SUMMARY:' + (b.compName || 'NGL Competition') + status,
+    'DESCRIPTION:NGL 2027 Season. Reference ' + (b.reference || b.id) + '. ' + (b.waitlist ? 'You are on the waiting list for this competition.' : (b.spaces||1) + ' gymnast' + ((b.spaces||1)!==1?'s':'') + ' entered.'),
+    'END:VEVENT'
+  ].join('\r\n');
+}
+
+function bookingToPaymentReminderEvent(b) {
+  // Waitlisted spots aren't confirmed, so no payment is due for them yet
+  if (b.waitlist || !b.compDate) return null;
+  const compDate = new Date(b.compDate + 'T00:00:00');
+  const dueDate = new Date(compDate);
+  dueDate.setMonth(dueDate.getMonth() - 4);
+  const dueStr = dueDate.toISOString().slice(0,10).replace(/-/g,'');
+  const dueNextDay = new Date(dueDate);
+  dueNextDay.setDate(dueNextDay.getDate() + 1);
+  const dueNextDayStr = dueNextDay.toISOString().slice(0,10).replace(/-/g,'');
+  return [
+    'BEGIN:VEVENT',
+    'UID:' + (b.id || b.reference) + '-payment@ngl-booking',
+    'DTSTART;VALUE=DATE:' + dueStr,
+    'DTEND;VALUE=DATE:' + dueNextDayStr,
+    'SUMMARY:Payment Due: ' + (b.compName || 'NGL Competition'),
+    'DESCRIPTION:Payment is now due for your reserved place at ' + (b.compName||'this competition') + ' on ' + compDate.toLocaleDateString('en-GB') + '. Reference ' + (b.reference || b.id) + '. Contact your NGL administrator to arrange payment.',
+    'END:VEVENT'
+  ].join('\r\n');
+}
+
+function downloadICSFile(filename, veventsText) {
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//NGL Booking System//EN',
+    veventsText,
+    'END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+
+window.downloadBookingICS = function(bookingId) {
+  const b = lastMyBookings.find(x => x.id === bookingId);
+  if (!b) return;
+  const event = bookingToICSEvent(b);
+  if (!event) { alert('This booking has no date to add to a calendar.'); return; }
+  const paymentEvent = bookingToPaymentReminderEvent(b);
+  const allEvents = paymentEvent ? [event, paymentEvent].join('\r\n') : event;
+  downloadICSFile('NGL-' + (b.compName||'Competition').replace(/\s+/g,'-') + '.ics', allEvents);
+};
+
+window.downloadAllBookingsICS = function() {
+  if (!lastMyBookings.length) return;
+  const compEvents = lastMyBookings.map(bookingToICSEvent).filter(Boolean);
+  const paymentEvents = lastMyBookings.map(bookingToPaymentReminderEvent).filter(Boolean);
+  const events = compEvents.concat(paymentEvents);
+  if (!events.length) { alert('No dated bookings to add.'); return; }
+  downloadICSFile('NGL-2027-My-Bookings.ics', events.join('\r\n'));
+};
+
+function buildMiniCalendar(monthKey, byDateKey) {
+  const [year, month] = monthKey.split('-').map(Number);
+  const monthName = new Date(year, month-1, 1).toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+  const firstDow = (new Date(year, month-1, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  let cells = '';
+  for (let i = 0; i < firstDow; i++) cells += '<div class="mini-cal-day blank"></div>';
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = year + '-' + String(month).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    const bookingsForDay = byDateKey[dateStr];
+    let cls = 'mini-cal-day';
+    let title = '';
+    if (bookingsForDay && bookingsForDay.length) {
+      const anyConfirmed = bookingsForDay.some(b => !b.waitlist);
+      cls += anyConfirmed ? ' booked' : ' waitlisted';
+      title = ' title="' + bookingsForDay.map(b=>b.compName).join(', ').replace(/"/g,'') + '"';
+    }
+    cells += '<div class="' + cls + '"' + title + '>' + day + '</div>';
+  }
+
+  return '<div class="mini-cal">' +
+    '<div class="mini-cal-title">' + monthName + '</div>' +
+    '<div class="mini-cal-grid">' +
+    ['M','T','W','T','F','S','S'].map(d => '<div class="mini-cal-dow">' + d + '</div>').join('') +
+    cells +
+    '</div></div>';
+}
 </script>
 </body>
 </html>
