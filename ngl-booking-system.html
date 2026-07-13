@@ -1061,7 +1061,7 @@ window.emailAllClubs = function() {
     if (!confirm(emails.length + ' clubs found. Some email clients silently drop addresses from very long BCC lists (Outlook can struggle past ~50). Continue anyway, or click Cancel to copy the list instead and paste it manually.')) return;
   }
   const subject = encodeURIComponent('NGL 2027 Season Update');
-  const bcc = encodeURIComponent(emails.join(','));
+  const bcc = encodeURIComponent(emails.join(';'));
   window.location.href = 'mailto:?bcc=' + bcc + '&subject=' + subject;
 };
 
