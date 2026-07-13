@@ -2289,6 +2289,57 @@ function checkAdminPw(){
   }
 }
 
+function getClubEmails(){
+  // collect deduplicated emails from all registered clubs
+  const emails = [...new Set(
+    allClubs
+      .map(c => c.profile && c.profile.email ? c.profile.email.trim().toLowerCase() : null)
+      .filter(Boolean)
+  )];
+  return emails;
+}
+
+function emailAllClubs(){
+  const emails = getClubEmails();
+  if(!emails.length){ alert('No club email addresses found.'); return; }
+
+  const subject = 'NGL Rotation Planner — Update from National Gymnastics League';
+
+  if(emails.length >= 50){
+    const choice = confirm(
+      `You have ${emails.length} club emails — some mail clients silently fail with large BCC lists.\n\nClick OK to try the mailto link anyway, or Cancel to copy the emails to clipboard instead.`
+    );
+    if(!choice){ copyAllEmails(); return; }
+  }
+
+  // semicolon-separated for Outlook BCC
+  const bcc = emails.join(';');
+  const mailto = `mailto:?bcc=${encodeURIComponent(bcc)}&subject=${encodeURIComponent(subject)}`;
+
+  // check URL length — mailto links over ~2000 chars can fail silently
+  if(mailto.length > 2000){
+    const choice = confirm(
+      `The mailto link is very long (${emails.length} addresses) and may not open correctly in Outlook.\n\nClick OK to try anyway, or Cancel to copy the emails to clipboard instead.`
+    );
+    if(!choice){ copyAllEmails(); return; }
+  }
+
+  window.location.href = mailto;
+  showToast(`Opening email with ${emails.length} clubs in BCC`);
+}
+
+function copyAllEmails(){
+  const emails = getClubEmails();
+  if(!emails.length){ alert('No club email addresses found.'); return; }
+  const text = emails.join('; ');
+  navigator.clipboard.writeText(text).then(()=>{
+    showToast(`✓ ${emails.length} email address${emails.length!==1?'es':''} copied to clipboard`);
+  }).catch(()=>{
+    // fallback for browsers that block clipboard
+    prompt('Copy these emails (Ctrl+A, Ctrl+C):', text);
+  });
+}
+
 async function loadFeedbackInbox(){
   const wrap=document.getElementById('feedbackInbox');
   if(!wrap) return;
@@ -2410,7 +2461,13 @@ async function renderAdmin(){
         <div id="feedbackInbox" style="padding:14px;"><p style="color:var(--muted);font-style:italic;font-size:.82rem;">Loading...</p></div>
       </div>
       <div class="admin-panel">
-        <div class="admin-panel-hdr"><h2>All Clubs</h2><button onclick="renderAdmin()">↻ Refresh</button></div>
+        <div class="admin-panel-hdr"><h2>All Clubs</h2>
+          <div style="display:flex;gap:6px;">
+            <button onclick="emailAllClubs()" title="Open Outlook with all club emails in BCC">📧 Email All</button>
+            <button onclick="copyAllEmails()" title="Copy all emails to clipboard">📋 Copy Emails</button>
+            <button onclick="renderAdmin()">↻ Refresh</button>
+          </div>
+        </div>
         <div id="adminTableWrap"></div>
       </div>`;
 
