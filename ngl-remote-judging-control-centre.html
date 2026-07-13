@@ -560,19 +560,21 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 const APPARATUS = [
-  { id:'floor',    name:'Floor',    icon:'floor' },
-  { id:'vault',    name:'Vault',    icon:'vault' },
-  { id:'bars',     name:'Bars',     icon:'bars' },
-  { id:'beam',     name:'Beam',     icon:'beam' },
-  { id:'pommel',   name:'Pommel',   icon:'pommel' },
-  { id:'rings',    name:'Rings',    icon:'rings' },
-  { id:'highbar',  name:'High Bar', icon:'highbar' },
+  { id:'floor',    name:'Floor',        icon:'floor' },
+  { id:'vault',    name:'Vault',        icon:'vault' },
+  { id:'bars',     name:'Uneven Bars',  icon:'bars' },
+  { id:'pbars',    name:'P-Bars',       icon:'pbars' },
+  { id:'beam',     name:'Beam',         icon:'beam' },
+  { id:'pommel',   name:'Pommel',       icon:'pommel' },
+  { id:'rings',    name:'Rings',        icon:'rings' },
+  { id:'highbar',  name:'High Bar',     icon:'highbar' },
 ];
 
 const ICONS = {
   floor:   '<rect x="6" y="6" width="36" height="36" rx="2"/><path d="M6 6l36 36M42 6L6 42"/>',
   vault:   '<path d="M6 34c0-10 4-18 18-18s18 8 18 18" /><path d="M10 34v6M38 34v6" />',
   bars:    '<path d="M6 14h12M30 30h12" /><path d="M12 14v20M36 30v8" /><path d="M12 24h24" stroke-dasharray="1 4"/>',
+  pbars:   '<path d="M8 16h10M30 16h10" /><path d="M13 16v18M35 16v18" /><path d="M13 24h22" stroke-dasharray="1 4"/>',
   beam:    '<rect x="4" y="21" width="40" height="6" rx="1"/><path d="M12 27v10M36 27v10" />',
   pommel:  '<ellipse cx="24" cy="30" rx="18" ry="8"/><path d="M14 22a4 4 0 018 0M26 22a4 4 0 018 0" />',
   rings:   '<path d="M6 8h36" /><path d="M16 8v10M32 8v10" /><circle cx="16" cy="26" r="7"/><circle cx="32" cy="26" r="7"/>',
