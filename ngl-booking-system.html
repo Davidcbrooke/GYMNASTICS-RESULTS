@@ -1150,18 +1150,39 @@ function renderMyBookingsResults(mine) {
     '<div style="margin-top:12px">' + rowsHtml + '</div>';
 }
 
+// Timezone-safe date helpers: all math happens in UTC so British Summer Time
+// (or any DST) never shifts a date-only calculation by a day.
+function parseDateStr(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+function formatICSDate(utcDate) {
+  const y = utcDate.getUTCFullYear();
+  const m = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(utcDate.getUTCDate()).padStart(2, '0');
+  return '' + y + m + d;
+}
+function addDaysUTC(utcDate, days) {
+  const copy = new Date(utcDate);
+  copy.setUTCDate(copy.getUTCDate() + days);
+  return copy;
+}
+function addMonthsUTC(utcDate, months) {
+  const copy = new Date(utcDate);
+  copy.setUTCMonth(copy.getUTCMonth() + months);
+  return copy;
+}
+
 function bookingToICSEvent(b) {
-  const dateStr = (b.compDate || '').replace(/-/g, '');
-  if (!dateStr) return null;
-  const nextDay = new Date(b.compDate + 'T00:00:00');
-  nextDay.setDate(nextDay.getDate() + 1);
-  const nextDayStr = nextDay.toISOString().slice(0,10).replace(/-/g,'');
+  if (!b.compDate) return null;
+  const start = parseDateStr(b.compDate);
+  const end = addDaysUTC(start, 1);
   const status = b.waitlist ? ' (Waiting List)' : '';
   return [
     'BEGIN:VEVENT',
     'UID:' + (b.id || b.reference) + '@ngl-booking',
-    'DTSTART;VALUE=DATE:' + dateStr,
-    'DTEND;VALUE=DATE:' + nextDayStr,
+    'DTSTART;VALUE=DATE:' + formatICSDate(start),
+    'DTEND;VALUE=DATE:' + formatICSDate(end),
     'SUMMARY:' + (b.compName || 'NGL Competition') + status,
     'DESCRIPTION:NGL 2027 Season. Reference ' + (b.reference || b.id) + '. ' + (b.waitlist ? 'You are on the waiting list for this competition.' : (b.spaces||1) + ' gymnast' + ((b.spaces||1)!==1?'s':'') + ' entered.'),
     'END:VEVENT'
@@ -1171,27 +1192,25 @@ function bookingToICSEvent(b) {
 function bookingToPaymentReminderEvent(b) {
   // Waitlisted spots aren't confirmed, so no payment is due for them yet
   if (b.waitlist || !b.compDate) return null;
-  const compDate = new Date(b.compDate + 'T00:00:00');
-  const dueDate = new Date(compDate);
-  dueDate.setMonth(dueDate.getMonth() - 4);
-  const dueStr = dueDate.toISOString().slice(0,10).replace(/-/g,'');
-  const dueNextDay = new Date(dueDate);
-  dueNextDay.setDate(dueNextDay.getDate() + 1);
-  const dueNextDayStr = dueNextDay.toISOString().slice(0,10).replace(/-/g,'');
+  const compDate = parseDateStr(b.compDate);
+  const dueStart = addMonthsUTC(compDate, -4);
+  const dueEnd = addDaysUTC(dueStart, 1);
+  const compDateDisplay = compDate.getUTCDate().toString().padStart(2,'0') + '/' + (compDate.getUTCMonth()+1).toString().padStart(2,'0') + '/' + compDate.getUTCFullYear();
   return [
     'BEGIN:VEVENT',
     'UID:' + (b.id || b.reference) + '-payment@ngl-booking',
-    'DTSTART;VALUE=DATE:' + dueStr,
-    'DTEND;VALUE=DATE:' + dueNextDayStr,
+    'DTSTART;VALUE=DATE:' + formatICSDate(dueStart),
+    'DTEND;VALUE=DATE:' + formatICSDate(dueEnd),
     'SUMMARY:Payment Due: ' + (b.compName || 'NGL Competition'),
-    'DESCRIPTION:Payment is now due for your reserved place at ' + (b.compName||'this competition') + ' on ' + compDate.toLocaleDateString('en-GB') + '. Reference ' + (b.reference || b.id) + '. Contact your NGL administrator to arrange payment.',
+    'DESCRIPTION:Payment is now due for your reserved place at ' + (b.compName||'this competition') + ' on ' + compDateDisplay + '. Reference ' + (b.reference || b.id) + '. Contact your NGL administrator to arrange payment.',
     'END:VEVENT'
   ].join('\r\n');
 }
 
-function downloadICSFile(filename, veventsText) {
+function downloadICSFile(filename, veventsText, calName) {
   const ics = [
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//NGL Booking System//EN',
+    'X-WR-CALNAME:' + (calName || 'NGL Bookings'),
     veventsText,
     'END:VCALENDAR'
   ].join('\r\n');
@@ -1209,7 +1228,7 @@ window.downloadBookingICS = function(bookingId) {
   if (!event) { alert('This booking has no date to add to a calendar.'); return; }
   const paymentEvent = bookingToPaymentReminderEvent(b);
   const allEvents = paymentEvent ? [event, paymentEvent].join('\r\n') : event;
-  downloadICSFile('NGL-' + (b.compName||'Competition').replace(/\s+/g,'-') + '.ics', allEvents);
+  downloadICSFile('NGL-' + (b.compName||'Competition').replace(/\s+/g,'-') + '.ics', allEvents, b.compName || 'NGL Booking');
 };
 
 window.downloadAllBookingsICS = function() {
@@ -1218,7 +1237,7 @@ window.downloadAllBookingsICS = function() {
   const paymentEvents = lastMyBookings.map(bookingToPaymentReminderEvent).filter(Boolean);
   const events = compEvents.concat(paymentEvents);
   if (!events.length) { alert('No dated bookings to add.'); return; }
-  downloadICSFile('NGL-2027-My-Bookings.ics', events.join('\r\n'));
+  downloadICSFile('NGL-2027-My-Bookings.ics', events.join('\r\n'), (lastMyBookings[0].club || 'NGL') + ' - 2027 Bookings');
 };
 
 function buildMiniCalendar(monthKey, byDateKey) {
