@@ -385,7 +385,11 @@
   <div class="admin-dash" id="admin-dash" style="display:none">
     <div class="dash-top">
       <div><h2>NGL Booking Dashboard</h2><p>Live data from Firebase &mdash; updates in real time</p></div>
-      <button class="btn-logout" onclick="window.adminLogout()">Sign Out</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-add" style="margin-top:0" onclick="window.emailAllClubs()">&#x2709; Email All Clubs</button>
+        <button class="btn-logout" onclick="window.copyAllEmails()">&#x1F4CB; Copy Emails</button>
+        <button class="btn-logout" onclick="window.adminLogout()">Sign Out</button>
+      </div>
     </div>
 
     <div class="stats-row" id="stats-row">
@@ -1037,6 +1041,39 @@ window.exportCSV = function() {
   a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download = 'NGL-Bookings-' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
+};
+
+function getUniqueClubEmails() {
+  const seen = new Set();
+  const emails = [];
+  allBookings.forEach(b => {
+    const e = (b.email || '').trim();
+    const key = e.toLowerCase();
+    if (e && !seen.has(key)) { seen.add(key); emails.push(e); }
+  });
+  return emails;
+}
+
+window.emailAllClubs = function() {
+  const emails = getUniqueClubEmails();
+  if (!emails.length) { alert('No club emails found yet.'); return; }
+  if (emails.length > 50) {
+    if (!confirm(emails.length + ' clubs found. Some email clients silently drop addresses from very long BCC lists (Outlook can struggle past ~50). Continue anyway, or click Cancel to copy the list instead and paste it manually.')) return;
+  }
+  const subject = encodeURIComponent('NGL 2027 Season Update');
+  const bcc = encodeURIComponent(emails.join(','));
+  window.location.href = 'mailto:?bcc=' + bcc + '&subject=' + subject;
+};
+
+window.copyAllEmails = function() {
+  const emails = getUniqueClubEmails();
+  if (!emails.length) { alert('No club emails found yet.'); return; }
+  const text = emails.join('; ');
+  navigator.clipboard.writeText(text).then(() => {
+    alert(emails.length + ' email addresses copied to clipboard. Paste directly into the BCC field of a new email.');
+  }).catch(() => {
+    prompt('Copy failed automatically \u2014 select and copy manually:', text);
+  });
 };
 
 let lastMyBookings = [];
