@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NGL Remote Judging Control Centre</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --navy-950:#081327;
+    --navy-900:#0d1e3d;
+    --navy-800:#15305c;
+    --navy-700:#1d3f76;
+    --red:#c8102e;
+    --red-bright:#e3193a;
+    --green:#1f8a4c;
+    --green-bright:#26a95d;
+    --white:#ffffff;
+    --ink-dim:#c3cee2;
+    --radius:14px;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--navy-950);
+    color:var(--white);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(227,25,58,0.10), transparent 45%),
+      radial-gradient(circle at 100% 20%, rgba(227,25,58,0.08), transparent 40%),
+      var(--navy-950);
+    min-height:100vh;
+  }
+
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:36px 24px 56px;
+  }
+
+  /* ---------- Header / eyebrow ---------- */
+  .eyebrow{
+    font-family:'Oswald',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--red-bright);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:22px;
+    height:2px;
+    background:var(--red-bright);
+    display:inline-block;
+  }
+
+  h1{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:clamp(28px,4.5vw,42px);
+    letter-spacing:0.01em;
+    text-transform:uppercase;
+    margin:0 0 8px;
+    line-height:1.05;
+    color:var(--white);
+  }
+
+  .subtitle{
+    color:var(--ink-dim);
+    font-size:15px;
+    max-width:560px;
+    line-height:1.5;
+    margin:0 0 32px;
+  }
+
+  .top-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:6px;
+  }
+
+  .signout-btn{
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.2);
+    color:var(--ink-dim);
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+    white-space:nowrap;
+  }
+  .signout-btn:hover{ border-color:var(--red-bright); color:var(--red-bright); }
+
+  /* ---------- Login screen ---------- */
+  #view-login{
+    min-height:80vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .login-card{
+    background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
+    border:1px solid rgba(227,25,58,0.25);
+    border-radius:var(--radius);
+    padding:36px 32px;
+    width:100%;
+    max-width:360px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .login-card .eyebrow{ margin-bottom:2px; }
+  .login-card h1{ font-size:22px; margin-bottom:4px; }
+  .login-card .lead{ color:var(--ink-dim); font-size:13px; line-height:1.5; margin:0 0 8px; }
+
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .field label{
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+  }
+  .field input{
+    background:var(--navy-950);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:8px;
+    padding:12px 14px;
+    color:var(--white);
+    font-size:15px;
+    font-family:'Inter',sans-serif;
+  }
+  .field input:focus{
+    outline:none;
+    border-color:var(--red-bright);
+  }
+
+  .login-btn{
+    background:var(--red);
+    border:none;
+    color:var(--white);
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:14px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:background 0.15s ease, transform 0.12s ease;
+  }
+  .login-btn:hover{ background:var(--red-bright); }
+  .login-btn:active{ transform:scale(0.98); }
+  .login-btn:disabled{ opacity:0.6; cursor:default; }
+
+  .login-error{
+    color:var(--red-bright);
+    font-size:13px;
+    min-height:16px;
+  }
+
+  /* ---------- Landing grid ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(210px,1fr));
+    gap:16px;
+  }
+
+  .card{
+    background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
+    border:1px solid rgba(227,25,58,0.22);
+    border-radius:var(--radius);
+    padding:22px 18px 18px;
+    cursor:pointer;
+    text-decoration:none;
+    color:inherit;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    transition:transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .card:hover, .card:focus-visible{
+    transform:translateY(-3px);
+    border-color:var(--red-bright);
+    box-shadow:0 10px 24px rgba(0,0,0,0.35);
+    outline:none;
+  }
+  .card:active{ transform:translateY(-1px); }
+
+  .card .icon{
+    width:56px;
+    height:56px;
+    stroke:var(--white);
+    fill:none;
+    stroke-width:1.6;
+  }
+
+  .card .name{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:16px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    text-align:center;
+  }
+
+  .card .status-dot{
+    position:absolute;
+    top:14px;
+    right:14px;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:var(--ink-dim);
+    box-shadow:0 0 0 3px rgba(255,255,255,0.04);
+  }
+  .card .status-dot.go{ background:var(--green-bright); box-shadow:0 0 10px 2px rgba(38,169,93,0.6); }
+  .card .status-dot.stop{ background:var(--red-bright); box-shadow:0 0 10px 2px rgba(227,25,58,0.6); }
+
+  /* ---------- Apparatus view ---------- */
+  .back-link{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    color:var(--ink-dim);
+    text-decoration:none;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    margin-bottom:22px;
+    transition:color 0.15s ease;
+  }
+  .back-link:hover{ color:var(--red-bright); }
+
+  .apparatus-header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:24px;
+  }
+  .apparatus-header .icon{
+    width:44px; height:44px;
+    stroke:var(--white);
+    fill:none;
+    stroke-width:1.6;
+    flex-shrink:0;
+  }
+  .apparatus-header h1{ margin:0; }
+
+  .panel-grid{
+    display:grid;
+    grid-template-columns:1.3fr 1fr;
+    gap:20px;
+  }
+  @media (max-width:760px){
+    .panel-grid{ grid-template-columns:1fr; }
+  }
+
+  /* Feed placeholder */
+  .feed-box{
+    background:var(--navy-900);
+    border:1px solid rgba(227,25,58,0.18);
+    border-radius:var(--radius);
+    aspect-ratio:16/9;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    color:var(--ink-dim);
+    text-align:center;
+    padding:20px;
+  }
+  .feed-box svg{ width:40px; height:40px; stroke:var(--ink-dim); fill:none; stroke-width:1.4; opacity:0.6; }
+  .feed-box .feed-label{ font-size:13px; }
+  .feed-box .feed-sub{ font-size:12px; opacity:0.7; max-width:280px; }
+
+  /* Light control */
+  .control-panel{
+    background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
+    border:1px solid rgba(227,25,58,0.22);
+    border-radius:var(--radius);
+    padding:24px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+  }
+
+  .light-housing{
+    background:var(--navy-950);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:16px;
+    padding:16px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    align-items:center;
+  }
+
+  .lamp{
+    width:64px;
+    height:64px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #2a3550, #10182c);
+    box-shadow:inset 0 0 8px rgba(0,0,0,0.6);
+    transition:box-shadow 0.35s ease, background 0.35s ease;
+  }
+  .lamp.stop.active{
+    background:radial-gradient(circle at 35% 30%, var(--red-bright), var(--red));
+    box-shadow:0 0 24px 6px rgba(227,25,58,0.65), inset 0 0 10px rgba(0,0,0,0.25);
+  }
+  .lamp.go.active{
+    background:radial-gradient(circle at 35% 30%, var(--green-bright), var(--green));
+    box-shadow:0 0 24px 6px rgba(38,169,93,0.65), inset 0 0 10px rgba(0,0,0,0.25);
+  }
+
+  .state-label{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+  }
+  .state-label.stop{ color:var(--red-bright); }
+  .state-label.go{ color:var(--green-bright); }
+
+  .btn-row{
+    display:flex;
+    gap:12px;
+    width:100%;
+  }
+
+  .btn{
+    flex:1;
+    padding:18px 12px;
+    border-radius:10px;
+    border:2px solid transparent;
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn:active{ transform:scale(0.97); }
+
+  .btn-stop{
+    background:rgba(200,16,46,0.12);
+    border-color:var(--red);
+    color:var(--red-bright);
+  }
+  .btn-stop.selected{
+    background:var(--red);
+    color:#fff;
+    box-shadow:0 0 18px rgba(200,16,46,0.5);
+  }
+
+  .btn-go{
+    background:rgba(31,138,76,0.12);
+    border-color:var(--green);
+    color:var(--green-bright);
+  }
+  .btn-go.selected{
+    background:var(--green);
+    color:#fff;
+    box-shadow:0 0 18px rgba(31,138,76,0.5);
+  }
+
+  .sync-note{
+    font-size:11px;
+    color:var(--ink-dim);
+    text-align:center;
+    line-height:1.5;
+  }
+  .sync-note .dot{
+    display:inline-block;
+    width:6px; height:6px;
+    border-radius:50%;
+    background:var(--green-bright);
+    margin-right:5px;
+  }
+  .sync-note.offline .dot{ background:var(--red-bright); }
+
+  .hidden{ display:none !important; }
+
+  footer{
+    margin-top:44px;
+    padding-top:18px;
+    border-top:1px solid rgba(227,25,58,0.16);
+    font-size:11px;
+    color:var(--ink-dim);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ================= LOGIN VIEW ================= -->
+  <div id="view-login">
+    <div class="login-card">
+      <div class="eyebrow">National Gymnastics League</div>
+      <h1>Remote Judging Control Centre</h1>
+      <p class="lead">This system streams live footage of gymnasts. Sign in with your NGL judge account to continue.</p>
+
+      <div class="field">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" autocomplete="current-password" />
+      </div>
+
+      <div class="login-error" id="login-error"></div>
+
+      <button class="login-btn" id="login-btn">Sign in</button>
+    </div>
+  </div>
+
+  <!-- ================= LANDING VIEW ================= -->
+  <div id="view-landing" class="hidden">
+    <div class="top-bar">
+      <div class="eyebrow">National Gymnastics League</div>
+      <button class="signout-btn" id="signout-btn-landing">Sign out</button>
+    </div>
+    <h1>Remote Judging Control Centre</h1>
+    <p class="subtitle">Select an apparatus to view its feed and control the judge's light. Scores are still entered in Elevien as normal.</p>
+
+    <div class="grid" id="apparatus-grid"></div>
+  </div>
+
+  <!-- ================= APPARATUS VIEW ================= -->
+  <div id="view-apparatus" class="hidden">
+    <div class="top-bar">
+      <a href="#" id="back-link" class="back-link">&larr; All apparatus</a>
+      <button class="signout-btn" id="signout-btn-apparatus">Sign out</button>
+    </div>
+
+    <div class="apparatus-header">
+      <svg id="apparatus-icon" class="icon" viewBox="0 0 48 48"></svg>
+      <h1 id="apparatus-name">Apparatus</h1>
+    </div>
+
+    <div class="panel-grid">
+      <div class="feed-box">
+        <svg viewBox="0 0 24 24"><path d="M4 6h12v12H4z"/><path d="M16 10l4-2v8l-4-2z"/></svg>
+        <div class="feed-label">Live feed not yet connected</div>
+        <div class="feed-sub">This will show the camera feed for this apparatus once the video bridge is set up.</div>
+      </div>
+
+      <div class="control-panel">
+        <div class="light-housing">
+          <div class="lamp stop" id="lamp-stop"></div>
+          <div class="lamp go" id="lamp-go"></div>
+        </div>
+        <div class="state-label" id="state-label">STOP</div>
+
+        <div class="btn-row">
+          <button class="btn btn-stop" id="btn-stop">Stop</button>
+          <button class="btn btn-go" id="btn-go">Go</button>
+        </div>
+
+        <div class="sync-note" id="sync-note"><span class="dot"></span>Connecting…</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>NGL Remote Judging Control Centre &middot; SAADI Gymnastics</footer>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* ============================================================
+   NGL REMOTE JUDGING CONTROL CENTRE
+   ------------------------------------------------------------
+   SECURITY MODEL
+   This page streams live video of children and must not be
+   publicly reachable. Access is gated by Firebase Authentication
+   (email/password) — nothing in the UI renders until a user is
+   signed in, and Firestore itself also requires auth, so the
+   data can't be read even by someone who bypasses the UI.
+
+   Judge accounts must be created by you in the Firebase Console:
+   Authentication > Users > Add user (email + password). There is
+   no self-signup flow, by design — you control who gets in.
+
+   Firestore collection: ngl_apparatus_lights
+   Doc ID = apparatus id (e.g. "beam")
+   Fields: { state: "stop" | "go", updatedAt: <server timestamp> }
+
+   REQUIRED Firestore rule for this collection — signed-in users
+   only, no public access:
+
+   match /ngl_apparatus_lights/{apparatusId} {
+     allow read, write: if request.auth != null;
+   }
+
+   IMPORTANT FOR LATER (video phase): signing in here protects
+   this control page, but it does NOT automatically protect the
+   video stream URL itself once that's added. When the camera
+   feed is wired in, the stream should sit behind Cloudflare
+   Access (or equivalent) in front of the tunnel, not just behind
+   this page's login — otherwise someone with the raw stream URL
+   could bypass this login entirely. Flag this to Claude again
+   when you're ready to wire up video and it'll be built in from
+   the start.
+   ============================================================ */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
+  projectId: "saadi-rotation",
+  storageBucket: "saadi-rotation.firebasestorage.app",
+  messagingSenderId: "1066734803675",
+  appId: "1:1066734803675:web:0188fd601adea7db08cafe"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const APPARATUS = [
+  { id:'floor',    name:'Floor',    icon:'floor' },
+  { id:'vault',    name:'Vault',    icon:'vault' },
+  { id:'bars',     name:'Bars',     icon:'bars' },
+  { id:'beam',     name:'Beam',     icon:'beam' },
+  { id:'pommel',   name:'Pommel',   icon:'pommel' },
+  { id:'rings',    name:'Rings',    icon:'rings' },
+  { id:'highbar',  name:'High Bar', icon:'highbar' },
+];
+
+const ICONS = {
+  floor:   '<rect x="6" y="6" width="36" height="36" rx="2"/><path d="M6 6l36 36M42 6L6 42"/>',
+  vault:   '<path d="M6 34c0-10 4-18 18-18s18 8 18 18" /><path d="M10 34v6M38 34v6" />',
+  bars:    '<path d="M6 14h12M30 30h12" /><path d="M12 14v20M36 30v8" /><path d="M12 24h24" stroke-dasharray="1 4"/>',
+  beam:    '<rect x="4" y="21" width="40" height="6" rx="1"/><path d="M12 27v10M36 27v10" />',
+  pommel:  '<ellipse cx="24" cy="30" rx="18" ry="8"/><path d="M14 22a4 4 0 018 0M26 22a4 4 0 018 0" />',
+  rings:   '<path d="M6 8h36" /><path d="M16 8v10M32 8v10" /><circle cx="16" cy="26" r="7"/><circle cx="32" cy="26" r="7"/>',
+  highbar: '<path d="M8 6v36M40 6v36" /><path d="M8 14h32" /><path d="M14 14v6M34 14v6" />',
+};
+
+/* ---------- Build landing grid ---------- */
+const grid = document.getElementById('apparatus-grid');
+APPARATUS.forEach(a => {
+  const card = document.createElement('a');
+  card.href = '#' + a.id;
+  card.className = 'card';
+  card.innerHTML = `
+    <span class="status-dot" id="dot-${a.id}"></span>
+    <svg class="icon" viewBox="0 0 48 48">${ICONS[a.icon]}</svg>
+    <span class="name">${a.name}</span>
+  `;
+  grid.appendChild(card);
+});
+
+/* ---------- Views ---------- */
+const viewLogin      = document.getElementById('view-login');
+const viewLanding    = document.getElementById('view-landing');
+const viewApparatus  = document.getElementById('view-apparatus');
+const backLink       = document.getElementById('back-link');
+
+let statusDotUnsubs = [];
+let currentUnsub = null;
+
+function showLoggedOut(){
+  viewLogin.classList.remove('hidden');
+  viewLanding.classList.add('hidden');
+  viewApparatus.classList.add('hidden');
+  statusDotUnsubs.forEach(u => u());
+  statusDotUnsubs = [];
+  if (currentUnsub) { currentUnsub(); currentUnsub = null; }
+  reportHeight();
+}
+
+function showLoggedIn(){
+  viewLogin.classList.add('hidden');
+  /* Watch all apparatus for landing-page status dots, now that we're authed */
+  APPARATUS.forEach(a => {
+    const unsub = db.collection('ngl_apparatus_lights').doc(a.id).onSnapshot(doc => {
+      const dot = document.getElementById('dot-' + a.id);
+      if (!dot) return;
+      const state = doc.exists ? doc.data().state : 'stop';
+      dot.classList.remove('go','stop');
+      dot.classList.add(state === 'go' ? 'go' : 'stop');
+    }, () => { /* ignore transient errors on landing dots */ });
+    statusDotUnsubs.push(unsub);
+  });
+  route();
+}
+
+function showLanding(){
+  if (currentUnsub) { currentUnsub(); currentUnsub = null; }
+  viewApparatus.classList.add('hidden');
+  viewLanding.classList.remove('hidden');
+  reportHeight();
+}
+
+function showApparatus(id){
+  const a = APPARATUS.find(x => x.id === id);
+  if (!a) { location.hash = ''; return; }
+
+  viewLanding.classList.add('hidden');
+  viewApparatus.classList.remove('hidden');
+
+  document.getElementById('apparatus-name').textContent = a.name;
+  document.getElementById('apparatus-icon').innerHTML = ICONS[a.icon];
+
+  wireControls(a.id);
+  reportHeight();
+}
+
+backLink.addEventListener('click', e => { e.preventDefault(); location.hash = ''; });
+window.addEventListener('hashchange', () => { if (auth.currentUser) route(); });
+
+function route(){
+  const id = location.hash.replace('#','');
+  if (id) showApparatus(id); else showLanding();
+}
+
+/* ---------- Auth wiring ---------- */
+const loginEmail   = document.getElementById('login-email');
+const loginPassword = document.getElementById('login-password');
+const loginBtn      = document.getElementById('login-btn');
+const loginError    = document.getElementById('login-error');
+
+function attemptLogin(){
+  loginError.textContent = '';
+  const email = loginEmail.value.trim();
+  const password = loginPassword.value;
+  if (!email || !password) {
+    loginError.textContent = 'Enter your email and password.';
+    return;
+  }
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Signing in…';
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(err => {
+      loginError.textContent = 'Sign-in failed — check your email and password.';
+      console.error(err);
+    })
+    .finally(() => {
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Sign in';
+    });
+}
+
+loginBtn.addEventListener('click', attemptLogin);
+loginPassword.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+loginEmail.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+
+function doSignOut(){
+  auth.signOut();
+  location.hash = '';
+}
+document.getElementById('signout-btn-landing').addEventListener('click', doSignOut);
+document.getElementById('signout-btn-apparatus').addEventListener('click', doSignOut);
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    loginEmail.value = '';
+    loginPassword.value = '';
+    showLoggedIn();
+  } else {
+    showLoggedOut();
+  }
+});
+
+/* ---------- Light control wiring ---------- */
+function wireControls(apparatusId){
+  if (currentUnsub) { currentUnsub(); currentUnsub = null; }
+
+  const lampStop   = document.getElementById('lamp-stop');
+  const lampGo      = document.getElementById('lamp-go');
+  const stateLabel  = document.getElementById('state-label');
+  const btnStop     = document.getElementById('btn-stop');
+  const btnGo       = document.getElementById('btn-go');
+  const syncNote    = document.getElementById('sync-note');
+
+  const docRef = db.collection('ngl_apparatus_lights').doc(apparatusId);
+
+  function render(state){
+    const isGo = state === 'go';
+    lampStop.classList.toggle('active', !isGo);
+    lampGo.classList.toggle('active', isGo);
+    stateLabel.textContent = isGo ? 'GO' : 'STOP';
+    stateLabel.classList.toggle('go', isGo);
+    stateLabel.classList.toggle('stop', !isGo);
+    btnStop.classList.toggle('selected', !isGo);
+    btnGo.classList.toggle('selected', isGo);
+  }
+
+  currentUnsub = docRef.onSnapshot(doc => {
+    const state = doc.exists ? doc.data().state : 'stop';
+    render(state);
+    syncNote.classList.remove('offline');
+    syncNote.innerHTML = '<span class="dot"></span>Synced live';
+  }, err => {
+    syncNote.classList.add('offline');
+    syncNote.innerHTML = '<span class="dot"></span>Connection issue — retrying…';
+    console.error(err);
+  });
+
+  function setState(state){
+    docRef.set({
+      state,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(err => {
+      syncNote.classList.add('offline');
+      syncNote.innerHTML = '<span class="dot"></span>Could not update — check connection';
+      console.error(err);
+    });
+  }
+
+  btnStop.onclick = () => setState('stop');
+  btnGo.onclick    = () => setState('go');
+}
+
+/* ---------- Iframe auto-resize for Squarespace embed ---------- */
+function reportHeight(){
+  requestAnimationFrame(() => {
+    const height = document.body.scrollHeight;
+    window.parent.postMessage({ type: 'ngl-resize', height }, '*');
+  });
+}
+window.addEventListener('load', reportHeight);
+new ResizeObserver(reportHeight).observe(document.body);
+</script>
+
+</body>
+</html>
