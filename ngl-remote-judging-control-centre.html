@@ -417,6 +417,94 @@
   }
   .sync-note.offline .dot{ background:var(--red-bright); }
 
+  /* ---------- Full-screen display mode (apparatus-side screen) ---------- */
+  .display-mode-btn{
+    margin-top:4px;
+    padding:10px 16px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.25);
+    background:transparent;
+    color:var(--ink-dim);
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .display-mode-btn:hover{ color:var(--white); border-color:var(--white); }
+
+  #view-display{
+    position:fixed;
+    inset:0;
+    z-index:100;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2vh;
+    background:var(--red);
+    transition:background 0.3s ease;
+    cursor:none;
+  }
+  #view-display.go{ background:var(--green); }
+  #view-display .display-apparatus{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:6vw;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.85);
+  }
+  #view-display .display-state{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:22vw;
+    line-height:0.9;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:var(--white);
+    text-shadow:0 4px 30px rgba(0,0,0,0.25);
+  }
+  #view-display .display-exit{
+    position:fixed;
+    top:16px;
+    right:16px;
+    padding:8px 14px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.4);
+    background:rgba(0,0,0,0.15);
+    color:var(--white);
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    opacity:0;
+    transition:opacity 0.2s ease;
+  }
+  #view-display:hover .display-exit{ opacity:1; }
+  #view-display:hover{ cursor:default; }
+  #view-display .display-message{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:2.4vw;
+    line-height:1.4;
+    text-align:center;
+    color:rgba(255,255,255,0.92);
+    max-width:70vw;
+  }
+  #view-display .display-offline{
+    position:fixed;
+    bottom:16px;
+    left:0; right:0;
+    text-align:center;
+    font-size:14px;
+    color:rgba(255,255,255,0.75);
+    display:none;
+  }
+  #view-display.offline .display-offline{ display:block; }
+
   .hidden{ display:none !important; }
 
   footer{
@@ -499,8 +587,19 @@
         </div>
 
         <div class="sync-note" id="sync-note"><span class="dot"></span>Connecting…</div>
+
+        <button class="display-mode-btn" id="display-mode-btn">Open full-screen display</button>
       </div>
     </div>
+  </div>
+
+  <!-- ================= FULL-SCREEN DISPLAY MODE ================= -->
+  <div id="view-display" class="hidden">
+    <div class="display-apparatus" id="display-apparatus">Apparatus</div>
+    <div class="display-state" id="display-state">STOP</div>
+    <div class="display-message" id="display-message">Please wait — do not begin your routine.</div>
+    <button class="display-exit" id="display-exit">Exit display</button>
+    <div class="display-offline">Connection lost — state may be out of date</div>
   </div>
 
   <footer>NGL Remote Judging Control Centre &middot; SAADI Gymnastics</footer>
@@ -633,6 +732,7 @@ function showLoggedIn(){
 function showLanding(){
   if (currentUnsub) { currentUnsub(); currentUnsub = null; }
   viewApparatus.classList.add('hidden');
+  viewDisplay.classList.add('hidden');
   viewLanding.classList.remove('hidden');
   reportHeight();
 }
@@ -642,6 +742,7 @@ function showApparatus(id){
   if (!a) { location.hash = ''; return; }
 
   viewLanding.classList.add('hidden');
+  viewDisplay.classList.add('hidden');
   viewApparatus.classList.remove('hidden');
 
   document.getElementById('apparatus-name').textContent = a.name;
@@ -651,12 +752,62 @@ function showApparatus(id){
   reportHeight();
 }
 
+/* ---------- Full-screen display mode ---------- */
+const viewDisplay = document.getElementById('view-display');
+
+function showDisplay(id){
+  const a = APPARATUS.find(x => x.id === id);
+  if (!a) { location.hash = ''; return; }
+
+  if (currentUnsub) { currentUnsub(); currentUnsub = null; }
+  viewLanding.classList.add('hidden');
+  viewApparatus.classList.add('hidden');
+  viewDisplay.classList.remove('hidden');
+
+  document.getElementById('display-apparatus').textContent = a.name;
+
+  const stateEl = document.getElementById('display-state');
+  const messageEl = document.getElementById('display-message');
+  currentUnsub = db.collection('ngl_apparatus_lights').doc(a.id).onSnapshot(doc => {
+    const state = doc.exists ? doc.data().state : 'stop';
+    const isGo = state === 'go';
+    viewDisplay.classList.toggle('go', isGo);
+    viewDisplay.classList.remove('offline');
+    stateEl.textContent = isGo ? 'GO' : 'STOP';
+    messageEl.textContent = isGo
+      ? 'Please hold your number up clearly to the camera, present, and begin. Good luck!'
+      : 'Please wait — do not begin your routine.';
+  }, err => {
+    viewDisplay.classList.add('offline');
+    console.error(err);
+  });
+
+  // Try to enter browser full-screen (allowed here because the
+  // click that navigated us counts as a user gesture)
+  if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+}
+
+document.getElementById('display-exit').addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  const id = location.hash.replace('#','').replace('-display','');
+  location.hash = id; // back to the judge view for this apparatus
+});
+
+document.getElementById('display-mode-btn').addEventListener('click', () => {
+  const id = location.hash.replace('#','');
+  if (id) location.hash = id + '-display';
+});
+
 backLink.addEventListener('click', e => { e.preventDefault(); location.hash = ''; });
 window.addEventListener('hashchange', () => { if (auth.currentUser) route(); });
 
 function route(){
   const id = location.hash.replace('#','');
-  if (id) showApparatus(id); else showLanding();
+  if (id.endsWith('-display')) showDisplay(id.replace('-display',''));
+  else if (id) showApparatus(id);
+  else showLanding();
 }
 
 /* ---------- Auth wiring ---------- */
