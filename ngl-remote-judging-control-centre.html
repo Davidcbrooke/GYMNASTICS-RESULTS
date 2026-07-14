@@ -538,6 +538,60 @@
 
   .hidden{ display:none !important; }
 
+  /* ---------- Elevien section ---------- */
+  .elevien-section{
+    margin-top:20px;
+    background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
+    border:1px solid rgba(227,25,58,0.22);
+    border-radius:var(--radius);
+    padding:16px 20px;
+  }
+  .elevien-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .elevien-title{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--white);
+  }
+  .elevien-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .elevien-btn{
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.2);
+    color:var(--ink-dim);
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:9px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .elevien-btn:hover{ border-color:var(--white); color:var(--white); }
+  .elevien-frame-wrap{ margin-top:14px; }
+  #elevien-frame{
+    width:100%;
+    height:640px;
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:10px;
+    background:#fff;
+  }
+  .elevien-note{
+    margin-top:8px;
+    font-size:11px;
+    color:var(--ink-dim);
+    line-height:1.5;
+  }
+
   /* ---------- Auto timer panel ---------- */
   .auto-panel{
     width:100%;
@@ -728,6 +782,21 @@
         </div>
 
         <button class="display-mode-btn" id="display-mode-btn">Open full-screen display</button>
+      </div>
+    </div>
+
+    <!-- ================= ELEVIEN SCORING ================= -->
+    <div class="elevien-section">
+      <div class="elevien-bar">
+        <div class="elevien-title">Elevien scoring</div>
+        <div class="elevien-actions">
+          <button class="elevien-btn" id="elevien-toggle-btn">Show Elevien here</button>
+          <button class="elevien-btn" id="elevien-window-btn">Open in separate window</button>
+        </div>
+      </div>
+      <div class="elevien-frame-wrap hidden" id="elevien-frame-wrap">
+        <iframe id="elevien-frame" title="Elevien scoring"></iframe>
+        <div class="elevien-note">If this panel stays blank, Elevien doesn't allow embedding — use "Open in separate window" instead.</div>
       </div>
     </div>
   </div>
@@ -989,6 +1058,33 @@ document.getElementById('feed-expand-btn').addEventListener('click', () => {
   } else if (box.requestFullscreen) {
     box.requestFullscreen().catch(() => {});
   }
+});
+
+/* ---------- Elevien integration ---------- */
+const ELEVIEN_URL = 'https://app.elevien.com/';
+
+document.getElementById('elevien-toggle-btn').addEventListener('click', () => {
+  const wrap = document.getElementById('elevien-frame-wrap');
+  const frame = document.getElementById('elevien-frame');
+  const btn = document.getElementById('elevien-toggle-btn');
+  const showing = !wrap.classList.contains('hidden');
+  if (showing) {
+    wrap.classList.add('hidden');
+    btn.textContent = 'Show Elevien here';
+  } else {
+    if (!frame.src) frame.src = ELEVIEN_URL; // lazy-load on first open
+    wrap.classList.remove('hidden');
+    btn.textContent = 'Hide Elevien';
+  }
+  reportHeight();
+});
+
+document.getElementById('elevien-window-btn').addEventListener('click', () => {
+  // Open Elevien in a right-half popup so video + scoring sit side by side
+  const w = Math.floor(screen.availWidth / 2);
+  const h = screen.availHeight;
+  window.open(ELEVIEN_URL, 'elevien-scoring',
+    'width=' + w + ',height=' + h + ',left=' + w + ',top=0');
 });
 
 backLink.addEventListener('click', e => { e.preventDefault(); location.hash = ''; });
