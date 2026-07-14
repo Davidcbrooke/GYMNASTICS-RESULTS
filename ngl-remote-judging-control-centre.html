@@ -538,9 +538,176 @@
 
   .hidden{ display:none !important; }
 
+  /* ---------- Quadrant grid ---------- */
+  .quad-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    align-items:start;
+  }
+  @media (max-width:900px){
+    .quad-grid{ grid-template-columns:1fr; }
+  }
+  .quad{
+    background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
+    border:1px solid rgba(227,25,58,0.22);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    min-width:0;
+  }
+  .quad:fullscreen{
+    overflow:auto;
+    border-radius:0;
+    border:none;
+    padding:28px 6vw;
+  }
+  .quad-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .quad-title{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--white);
+  }
+  .quad-expand{
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.2);
+    color:var(--ink-dim);
+    font-family:'Inter',sans-serif;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:7px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .quad-expand:hover{ border-color:var(--white); color:var(--white); }
+
+  /* Rotation controller inner layout */
+  .control-inner{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .control-top{
+    display:flex;
+    gap:18px;
+    align-items:center;
+  }
+  .control-top-right{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:stretch;
+  }
+  .control-top-right .state-label{ text-align:center; }
+  .control-top-right .sync-note{ text-align:center; }
+
+  /* ---------- Rules quadrant ---------- */
+  .rules-controls{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  #rules-search{
+    background:var(--navy-950);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:8px;
+    padding:11px 14px;
+    color:var(--white);
+    font-size:14px;
+    font-family:'Inter',sans-serif;
+    width:100%;
+  }
+  #rules-search:focus{ outline:none; border-color:var(--red-bright); }
+  .rules-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+  .rules-chip{
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.2);
+    color:var(--ink-dim);
+    font-family:'Inter',sans-serif;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:7px 12px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .rules-chip.selected{
+    background:var(--red);
+    border-color:var(--red);
+    color:#fff;
+  }
+  .rules-list{
+    max-height:420px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding-right:4px;
+  }
+  .quad:fullscreen .rules-list{ max-height:none; }
+  .rules-section-head{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--red-bright);
+    padding:12px 4px 6px;
+    position:sticky;
+    top:0;
+    background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
+  }
+  .rules-item{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:7px 4px;
+    font-size:13px;
+    line-height:1.45;
+    color:var(--white);
+    border-bottom:1px solid rgba(255,255,255,0.05);
+  }
+  .rules-item .rv{
+    flex-shrink:0;
+    font-weight:700;
+    color:var(--gold-bright);
+    white-space:nowrap;
+  }
+  .rules-item .rv.deduct{ color:var(--red-bright); }
+  .rules-note{
+    font-size:12px;
+    font-style:italic;
+    color:var(--ink-dim);
+    padding:7px 4px;
+    line-height:1.5;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+  }
+  .rules-empty{
+    font-size:13px;
+    color:var(--ink-dim);
+    padding:16px 4px;
+    line-height:1.5;
+  }
+
   /* ---------- Elevien section ---------- */
   .elevien-section{
-    margin-top:20px;
+    margin-top:8px;
     background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
     border:1px solid rgba(227,25,58,0.22);
     border-radius:var(--radius);
@@ -580,11 +747,12 @@
   .elevien-frame-wrap{ margin-top:14px; }
   #elevien-frame{
     width:100%;
-    height:640px;
+    height:440px;
     border:1px solid rgba(255,255,255,0.1);
     border-radius:10px;
     background:#fff;
   }
+  .quad:fullscreen #elevien-frame{ height:calc(100vh - 180px); }
   .elevien-note{
     margin-top:8px;
     font-size:11px;
@@ -740,64 +908,102 @@
       <h1 id="apparatus-name">Apparatus</h1>
     </div>
 
-    <div class="panel-grid">
-      <div class="feed-wrap">
+    <div class="quad-grid">
+
+      <!-- Q1: LIVE VIEW -->
+      <section class="quad" id="quad-feed">
+        <div class="quad-head">
+          <span class="quad-title">Live View</span>
+          <button class="quad-expand" data-quad="quad-feed">Expand</button>
+        </div>
         <div class="feed-box" id="feed-box">
           <svg viewBox="0 0 24 24"><path d="M4 6h12v12H4z"/><path d="M16 10l4-2v8l-4-2z"/></svg>
           <div class="feed-label">Live feed not yet connected</div>
           <div class="feed-sub">This will show the camera feed for this apparatus once the video bridge is set up.</div>
         </div>
-        <button class="feed-expand-btn" id="feed-expand-btn">Expand live view</button>
-      </div>
+      </section>
 
-      <div class="control-panel">
-        <div class="light-housing">
-          <div class="lamp stop" id="lamp-stop"></div>
-          <div class="lamp go" id="lamp-go"></div>
+      <!-- Q2: ROTATION CONTROLLER -->
+      <section class="quad" id="quad-control">
+        <div class="quad-head">
+          <span class="quad-title">Rotation Controller</span>
+          <button class="quad-expand" data-quad="quad-control">Expand</button>
         </div>
-        <div class="state-label" id="state-label">STOP</div>
-
-        <div class="btn-row">
-          <button class="btn btn-stop" id="btn-stop">Stop</button>
-          <button class="btn btn-go" id="btn-go">Go</button>
-        </div>
-
-        <div class="sync-note" id="sync-note"><span class="dot"></span>Connecting…</div>
-
-        <div class="auto-panel">
-          <div class="auto-title">Auto timer</div>
-          <div class="auto-status" id="auto-status">Manual control</div>
-          <div class="auto-fields">
-            <label><span>Warm-up (mins)</span><input type="number" id="auto-warmup" value="5" min="0" step="1"></label>
-            <label><span>Gymnasts in rotation</span><input type="number" id="auto-count" value="0" min="0" step="1"></label>
-            <label><span>Mins per gymnast</span><input type="number" id="auto-slot" value="2" min="0.5" step="0.5"></label>
-            <label><span>Get-ready (secs)</span><input type="number" id="auto-ready" value="20" min="0" step="5"></label>
+        <div class="control-inner">
+          <div class="control-top">
+            <div class="light-housing">
+              <div class="lamp stop" id="lamp-stop"></div>
+              <div class="lamp go" id="lamp-go"></div>
+            </div>
+            <div class="control-top-right">
+              <div class="state-label" id="state-label">STOP</div>
+              <div class="btn-row">
+                <button class="btn btn-stop" id="btn-stop">Stop</button>
+                <button class="btn btn-go" id="btn-go">Go</button>
+              </div>
+              <div class="sync-note" id="sync-note"><span class="dot"></span>Connecting…</div>
+            </div>
           </div>
-          <div class="auto-hint">Settings are shared live with every judge on this apparatus. Leave gymnasts as 0 to run until stopped.</div>
-          <div class="auto-btn-row">
-            <button class="auto-btn start" id="auto-start-btn">Start auto</button>
-            <button class="auto-btn next" id="auto-next-btn">Next gymnast now</button>
-            <button class="auto-btn stop" id="auto-stop-btn">Back to manual</button>
+
+          <div class="auto-panel">
+            <div class="auto-title">Auto timer</div>
+            <div class="auto-status" id="auto-status">Manual control</div>
+            <div class="auto-fields">
+              <label><span>Warm-up (mins)</span><input type="number" id="auto-warmup" value="5" min="0" step="1"></label>
+              <label><span>Gymnasts in rotation</span><input type="number" id="auto-count" value="0" min="0" step="1"></label>
+              <label><span>Mins per gymnast</span><input type="number" id="auto-slot" value="2" min="0.5" step="0.5"></label>
+              <label><span>Get-ready (secs)</span><input type="number" id="auto-ready" value="20" min="0" step="5"></label>
+            </div>
+            <div class="auto-hint">Settings are shared live with every judge on this apparatus. Leave gymnasts as 0 to run until stopped.</div>
+            <div class="auto-btn-row">
+              <button class="auto-btn start" id="auto-start-btn">Start auto</button>
+              <button class="auto-btn next" id="auto-next-btn">Next gymnast now</button>
+              <button class="auto-btn stop" id="auto-stop-btn">Back to manual</button>
+            </div>
           </div>
+
+          <button class="display-mode-btn" id="display-mode-btn">Open full-screen display</button>
         </div>
+      </section>
 
-        <button class="display-mode-btn" id="display-mode-btn">Open full-screen display</button>
-      </div>
-    </div>
-
-    <!-- ================= ELEVIEN SCORING ================= -->
-    <div class="elevien-section">
-      <div class="elevien-bar">
-        <div class="elevien-title">Elevien scoring</div>
+      <!-- Q3: ELEVIEN SCORING -->
+      <section class="quad" id="quad-elevien">
+        <div class="quad-head">
+          <span class="quad-title">Elevien Scoring</span>
+          <button class="quad-expand" data-quad="quad-elevien">Expand</button>
+        </div>
         <div class="elevien-actions">
           <button class="elevien-btn" id="elevien-toggle-btn">Show Elevien here</button>
           <button class="elevien-btn" id="elevien-window-btn">Open in separate window</button>
         </div>
-      </div>
-      <div class="elevien-frame-wrap hidden" id="elevien-frame-wrap">
-        <iframe id="elevien-frame" title="Elevien scoring"></iframe>
-        <div class="elevien-note">If this panel stays blank, Elevien doesn't allow embedding — use "Open in separate window" instead.</div>
-      </div>
+        <div class="elevien-frame-wrap hidden" id="elevien-frame-wrap">
+          <iframe id="elevien-frame" title="Elevien scoring"></iframe>
+          <div class="elevien-note">If this panel stays blank, Elevien doesn't allow embedding — use "Open in separate window" instead.</div>
+        </div>
+      </section>
+
+      <!-- Q4: RULES -->
+      <section class="quad" id="quad-rules">
+        <div class="quad-head">
+          <span class="quad-title">Rules <span id="rules-apparatus-label"></span></span>
+          <button class="quad-expand" data-quad="quad-rules">Expand</button>
+        </div>
+        <div class="rules-controls">
+          <input type="search" id="rules-search" placeholder="Search rules… e.g. handspring, splits, -0.5">
+          <div class="rules-chips" id="rules-discipline-chips">
+            <button class="rules-chip selected" data-disc="WAG">WAG</button>
+            <button class="rules-chip" data-disc="MAG">MAG</button>
+          </div>
+          <div class="rules-chips" id="rules-chips">
+            <button class="rules-chip selected" data-level="ALL">All</button>
+            <button class="rules-chip" data-level="A">Level A</button>
+            <button class="rules-chip" data-level="B">Level B</button>
+            <button class="rules-chip" data-level="C">Level C</button>
+          </div>
+        </div>
+        <div class="rules-list" id="rules-list"></div>
+      </section>
+
     </div>
   </div>
 
@@ -965,6 +1171,12 @@ function showApparatus(id){
   document.getElementById('apparatus-name').textContent = a.name;
   document.getElementById('apparatus-icon').innerHTML = ICONS[a.icon];
 
+  rulesApparatusId = a.id;
+  document.getElementById('rules-apparatus-label').textContent = '— ' + a.name;
+  document.getElementById('rules-search').value = '';
+  configureDisciplineChips(a.id);
+  renderRules();
+
   wireControls(a.id);
   reportHeight();
 }
@@ -1051,14 +1263,444 @@ document.getElementById('display-mode-btn').addEventListener('click', () => {
   if (id) location.hash = id + '-display';
 });
 
-document.getElementById('feed-expand-btn').addEventListener('click', () => {
-  const box = document.getElementById('feed-box');
-  if (document.fullscreenElement) {
-    document.exitFullscreen().catch(() => {});
-  } else if (box.requestFullscreen) {
-    box.requestFullscreen().catch(() => {});
-  }
+/* ---------- Quadrant expand (fullscreen) ---------- */
+document.querySelectorAll('.quad-expand').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const quad = document.getElementById(btn.dataset.quad);
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else if (quad.requestFullscreen) {
+      quad.requestFullscreen().catch(() => {});
+    }
+  });
 });
+
+/* ---------- Rules reference (NGL WAG Competition Rules 2027) ----------
+   Extracted from the official handbook. Levels: A, B, C. 'ALL' items
+   apply at every level. Items: [text, value] — value shown gold for
+   requirements/DV, red for deductions. Notes are italic rows.        */
+const EXEC_FAULTS = [
+  ['Bent Arms or Bent Knees','-0.1 or -0.3'],
+  ['Leg or Knee Separations','-0.1 or -0.3'],
+  ['Insufficient Height in Elements','-0.1 or -0.3'],
+  ['Insufficient Exactness of Tuck or Pike in Single Salto','-0.1 or -0.3'],
+  ['Failure to Maintain Stretched Body Position','-0.1 or -0.3'],
+  ['Hesitation during performance of Elements','-0.1'],
+  ['Attempt without performance of an element','-0.3'],
+  ['Deviation from straight direction','-0.1'],
+  ['Body and/or leg position in elements (non-dance) Body Alignment','-0.1'],
+  ['Feet Not Pointed','-0.1'],
+  ['Insufficient Splits in Acro Non Flight','-0.1 or -0.3'],
+  ['Failure to fulfil technical requirements in dance elements','-0.1 or -0.3 or -0.5'],
+  ['Precision','-0.1'],
+  ['Dismount too close to apparatus (BB/UB)','-0.1'],
+];
+const LANDING_FAULTS = [
+  ['Feet apart, Extra Arm Swings','-0.1'],
+  ['Lack of Balance','-0.1 or -0.3'],
+  ['Extra Steps, Slight Hop','-0.1'],
+  ['Very Large Step or Jump','-0.3'],
+  ['Body Posture Fault','-0.1 or -0.3'],
+  ['Deep Squat','-0.5'],
+  ['Support on Mat','-1.0'],
+  ['Fall on Mat','-1.0'],
+  ['Fall on Apparatus','-1.0'],
+  ['Failure to land feet first','-1.0'],
+];
+const COMPOSITION = [
+  ['Non Attempt of Coded Requirements','-1.5 + Value of CR'],
+  ['Non Attempt of requirement from a set routine','-1.5'],
+  ['Not showing FWD/SWD and BWD elements when required','-0.5'],
+];
+const SHORT_EXERCISE = [
+  ['1 Element less than required in the routine','-2.0'],
+  ['2 Elements less than required in the routine','-3.0'],
+  ['3 Elements less than required in the routine','-4.0'],
+  ['4 Elements less than required in the routine','-6.0'],
+  ['5 Elements less than required in the routine','-7.0'],
+];
+const GENERAL_RULES = [
+  ['Failure to present to judge before or after exercise','-0.3'],
+  ['Coach Signalling or Speaking to gymnast during exercise','-1.0 Max x 2'],
+  ['Unauthorised Assistance from coach to complete skill','-2.0 each'],
+  ['Exercise Overtime by more than 5 seconds','-0.5'],
+  ['No connection of elements when required','-0.5 each'],
+  ['Pause over 2 seconds in routine','-0.5 each x 2 max'],
+  ['Unsafe or unsuitable clothing','-0.3 each apparatus (no deduction for non-matching leotards in Team Competitions)'],
+  ['Coach NOT stood in for safety when required','-1.0 each'],
+];
+const ARTISTRY = [
+  ['Lack of synchronisation between movement and musical beat at the end of exercise','-0.1'],
+  ['Poor expressive engagement according to the style of the music','-0.1'],
+  ['Insufficient Involvement of the body parts','-0.1'],
+  ['Poor foot work','-0.1'],
+  ['Poor body posture','-0.1'],
+];
+function commonSections(execTitle){
+  return [
+    { level:'ALL', title:execTitle, items:EXEC_FAULTS },
+    { level:'ALL', title:'Composition Faults', items:COMPOSITION },
+    { level:'ALL', title:'Short Exercise Deductions', items:SHORT_EXERCISE },
+    { level:'ALL', title:'General Rules', items:GENERAL_RULES },
+  ];
+}
+
+const RULES_WAG = {
+  vault: [
+    { level:'A', title:'Level A — Vaults (Minimum 100cm Vault Table)', items:[
+      ['Squat On, Jump Off','DV 0.5'],['Squat Through','DV 1.0'],['Straddle Over','DV 1.0'],['Round Off','DV 1.2'],['Handspring','DV 1.6'],
+    ]},
+    { level:'B', title:'Level B — Vaults (Minimum 100cm Vault Table)', items:[
+      ['Round Off','DV 0.5'],['Handspring','DV 1.6'],['Half On','DV 2.4'],
+    ]},
+    { level:'C', title:'Level C — Vaults (Minimum 100cm Table, any vault from COP)', items:[
+      ['Handspring','DV 1.6'],['Handspring ½ Twist','DV 2.0'],['Handspring 1/1 Twist','DV 2.6'],['Yamashita','DV 2.0'],['½ On','DV 1.6'],['½ On ½ Off','DV 2.4'],['½ On 1/1 Off','DV 2.6'],
+    ]},
+    { level:'ALL', title:'Landing Faults — All Apparatus', items:LANDING_FAULTS },
+    { level:'ALL', title:'Poor Technique (Vault)', items:[
+      ['Body Alignment','-0.1 to -0.3'],['Bent Knees','-0.1 to -0.5'],['Leg or Knee Separations','-0.1 to -0.3'],
+      ['Bent Arms / Shoulder Angle','-0.1 to -0.5'],['Failure to pass through vertical','-0.1'],
+      ['Prescribed LA turn began too early (on the table)','-0.1 to -0.3'],['Excessive Snap','-0.1 to -0.3'],
+      ['Height','-0.1 to -0.5'],['Under rotation of vault without fall','-0.1'],['Under rotation with fall','-0.3'],
+      ['Insufficient Distance','-0.1 to -0.3'],['Deviation from a straight direction','-0.1'],['Dynamics','-0.1 to -0.3'],
+    ]},
+    { level:'ALL', title:'Composition Faults', items:COMPOSITION },
+    { level:'ALL', title:'General Rules', items:GENERAL_RULES },
+  ],
+
+  bars: [
+    { level:'A', title:'Level A — Option 1 (DV 0.5)', items:[
+      ['Circle Up',''],['Cast to Horizontal',''],['Cast to Horizontal and Push Away',''],
+    ]},
+    { level:'A', title:'Level A — Option 2 (DV 1.0)', items:[
+      ['Circle Up',''],['Cast to Horizontal into Backward Hip Circle',''],['Cast to Horizontal Push Away to Stand',''],
+    ]},
+    { level:'A', title:'Level A — Notes', notes:[
+      'A Safety Mat of between 20–30cm may be used. Please ensure the judges view is not blocked.',
+      'Coach can stand in between bars for any level as long as they do not obstruct the judges view, and must be stood in when required.',
+    ]},
+    { level:'B', title:'Level B — Option 1 (DV 0.5)', items:[
+      ['Float/Glide Swing',''],['Chin Over',''],['Cast to Horizontal',''],['Backward Hip Circle (from previous cast)',''],['Squat On or Undershoot',''],
+    ]},
+    { level:'B', title:'Level B — Option 2 (DV 1.5)', items:[
+      ['Float/Glide Swing',''],['Chin Over',''],['Cast to Horizontal',''],['Backward Hip Circle (from previous cast)',''],['Squat On',''],['Jump to catch, then swing to dismount at the back',''],
+    ]},
+    { level:'B', title:'Level B — Uncoded Bar Elements (Level B Only)', items:[
+      ['Float Swing (Level B Only)',''],['Circle Up',''],['Chin Up Over',''],['Cast Below Horizontal',''],['Cast Above Horizontal',''],['¾ Sole Circle (Low Bar Only)',''],['Squat On Jump Off',''],['Baby Giant',''],['Undershoot Dismount',''],
+    ]},
+    { level:'B', title:'Level B — Notes', notes:[
+      'No deduction for an empty swing out of the back hip circle; no deduction for squat on.',
+    ]},
+    { level:'C', title:'Level C — Option 1 (Max 8 to count, minimum 5 elements; CR = 0.5 each)', items:[
+      ['Uncoded or Coded Mount','CR 0.5'],['Cast to Horizontal','CR 0.5'],['Close Bar Element','CR 0.5'],['Use of Both Bars','CR 0.5'],['Coded or Uncoded Dismount','CR 0.5'],
+    ]},
+    { level:'C', title:'Level C — Option 2 (Max 8 to count, minimum 6 elements; CR = 0.5 each)', items:[
+      ['Coded Mount','CR 0.5'],['Cast to Above Horizontal','CR 0.5'],['Close Bar Element','CR 0.5'],['Use of Both Bars','CR 0.5'],['1 Additional Element','CR 0.5'],['Coded or Uncoded Dismount','CR 0.5'],
+    ]},
+    { level:'C', title:'Level C — Notes', notes:[
+      'No deduction for bent legs in a forward or backward sole circle. No deduction for squat on.',
+    ]},
+    ...commonSections('Bars Execution Faults'),
+  ],
+
+  beam: [
+    { level:'A', title:'Level A — Beam (Uncoded and A Elements Only; B Dance allowed; 5 elements to count)', items:[
+      ['Mount','CR 0.5'],['1 Acrobatic Element','CR 0.5'],['1 Jump or Leap','CR 0.5'],['Half Spin','CR 0.5'],['Jump Dismount','CR 0.5'],
+    ]},
+    { level:'B', title:'Level B — Beam (Uncoded and A Elements Only; B Dance allowed; 6 elements to count)', items:[
+      ['Mount','CR 0.5'],['1 Acrobatic Element','CR 0.5'],['2 Jumps or Leaps Connected','CR 1.0'],['Half Spin (to finish in relevé) connected into half turn','CR 0.5'],['Dismount','CR 0.5'],
+    ]},
+    { level:'C', title:'Level C — Beam (Uncoded + Coded; A/B/C Dance, A/B Acro; min 6, max 8 to count)', items:[
+      ['Mount','CR 0.5'],['2 Acrobatic Elements (do not need to be connected)','CR 0.5'],['2 Jumps or Leaps connected, 1 with minimum 180° split','CR 1.0'],['Minimum Full Spin','CR 0.5'],['Dismount','CR 0.5'],
+    ]},
+    { level:'C', title:'Level C — Beam Bonus', items:[
+      ['Bonus Flighted Acro','+0.5'],['Bonus 2 Linked Acro Elements','+0.5'],['Bonus Mixed Series','+0.2'],
+    ]},
+    { level:'ALL', title:'Suggested Uncoded Beam Elements (Level A/B)', items:[
+      ['Front Support Lift Leg to Cross Sit (UC)',''],['Squat On or Straddle On (UC)',''],['Half Spin (UC)',''],
+      ['Stretch Jump or Tuck Jump (UC)',''],['Forward Roll (UC)',''],['Handstand — held 2 seconds (Level A only)',''],
+      ['Cartwheel to Handstand — held 2 seconds (Level A only)',''],['Dive Cartwheel',''],
+      ['Tuck Jump Dismount (Level A only)',''],['Straddle Jump Dismount (Level A only)',''],['Pike Jump Dismount (Level A only)',''],
+      ['Round Off Dismount',''],['Handspring Dismount',''],
+    ]},
+    ...commonSections('Beam Execution Faults'),
+  ],
+
+  floor: [
+    { level:'A', title:'Level A — Floor (music 1 min 30 max; Uncoded and A Elements, B Dance allowed; 6 to count)', items:[
+      ['2 Acrobatic Elements Connected — minimum 1 with flight','CR 1.0'],['2 Jumps or Leaps — do not need to be connected','CR 1.0'],['Full Spin (on one foot)','CR 0.5'],['1 Additional Acro Element','CR 0.5'],
+    ]},
+    { level:'B', title:'Level B — Floor (music 1 min 30 max; Uncoded + Coded, A/B/C Dance only, A/B Acro only; 6–8 elements)', items:[
+      ['2 Acrobatic Elements Connected — both with flight','CR 1.0'],['2 Jumps or Leaps — connected','CR 1.0'],['Full Spin','CR 0.5'],['2 Additional Acro Elements (or 1 Acro Element with flight)','CR 1.0'],
+    ]},
+    { level:'C', title:'Level C — Floor (music 1 min 30 max; any A/B/C elements; 6–8 elements)', items:[
+      ['Backward Acro Line','CR 1.0'],['Forward Acro Line','CR 1.0'],['2 Leaps connected with 180° split','CR 1.0'],['Minimum Full Spin','CR 0.5'],
+    ]},
+    { level:'ALL', title:'Floor — Notes', notes:[
+      'Must show acro elements in a different direction (FWD/SWD and BWD).',
+      'An acro line consists of a minimum of 2 directly connected flight elements, one of which must be a salto.',
+    ]},
+    { level:'ALL', title:'Floor Exercise Artistry Deductions (max -0.5 total)', items:ARTISTRY },
+    { level:'ALL', title:'Suggested Uncoded Floor Elements (Level A/B)', items:[
+      ['Half Turn Jump (Level A only)',''],['Star Jump (Level A only)',''],['Tuck Jump (Levels A and B only)',''],
+      ['Half Spin (Level A only)',''],['Forward Roll to Stand (Level A only)',''],['Handstand — held 3 seconds (Level A only)',''],
+      ['Backward Roll — optional exit (Levels A/B only)',''],['Handstand Forward Roll (Levels A/B only)',''],['Cartwheel',''],
+      ['1 Handed Cartwheel',''],['Backward Walkover',''],['Forward Walkover',''],['Dive Cartwheel',''],
+    ]},
+    ...commonSections('Floor Execution Faults'),
+  ],
+};
+
+let rulesApparatusId = null;
+let rulesLevel = 'ALL';
+let rulesDiscipline = 'WAG';
+
+/* ---------- MAG rules (NGL MAG Competition Rules 2027 — Boys Artistic) ---------- */
+const MAG_EXEC = [
+  ['Non-Distinct Positions (Tuck, Pike, Straight)','-0.1 or -0.3'],
+  ['Adjust or Correct Hand or Grip Position (each time)','-0.1'],
+  ['Walking in Handstand or Hopping (each step or hop)','-0.1'],
+  ['Touching Apparatus or Floor with Legs or Feet','-0.1'],
+  ['Hitting Apparatus or Floor','-0.5'],
+  ['Gymnast touched but not assisted by spotter during exercise','-0.3'],
+  ['Interruption of exercise without a fall','-0.5'],
+  ['Bent Arms, Bent Legs or Legs Apart','-0.1 or -0.3'],
+  ['Poor Posture or Body Position, or Postural Corrections in end positions','-0.1 or -0.3'],
+  ['Atypical Straddle','-0.3'],
+  ['Other aesthetic errors','-0.1 to -0.5'],
+  ['Deviations in swings to or through handstand, or in circle elements','-0.1 to -0.5'],
+  ['Angular Deviations from perfect hold positions','-0.1 to -0.5'],
+  ['Press from poorly held positions','-0.3'],
+  ['Incomplete twist','-0.1 to -0.5'],
+  ['Lack of height or amplitude on salto and flight elements','-0.1 to -0.3'],
+  ['Additional or Intermediate Hand Support','-0.1'],
+  ['Duration of hold part','-0.3 to -0.5'],
+  ['Interruption in upward movement','-0.1 to -0.3'],
+  ['Lowering of legs on any element to handstand or hold parts','-0.1 to -0.5'],
+  ['Unsteadiness in or fall from handstand','-0.1 to -0.3'],
+  ['Intermediate Swing or Layaway','-0.3 to -0.5'],
+];
+const MAG_LANDING = [
+  ['Feet apart, Extra Arm Swings','-0.1'],
+  ['Lack of Balance','-0.1 or -0.3'],
+  ['Extra Steps, Slight Hop','-0.1'],
+  ['Very Large Step or Jump','-0.3'],
+  ['Body Posture Fault','-0.1 or -0.3'],
+  ['Deep Squat','-0.5'],
+  ['Support on Mat, Fall on Mat, Fall on Apparatus, Failure to land feet first','-1.0'],
+  ['Unsteadiness, Minor Adjustment of Feet or Excessive Arm Swings on Landing','-0.1'],
+];
+const MAG_VAULT_SPECIFIC = [
+  ['Execution errors in 1st Flight','-0.1 to -0.5'],
+  ['Technical errors in 1st Flight','-0.1 to -0.5'],
+  ['Passing the handstand position not through the vertical','-0.1 to -0.5'],
+  ['Execution errors in 2nd Flight','-0.1 to -0.5'],
+  ['Technical errors in 2nd Flight','-0.1 to -0.5'],
+  ['Insufficient height, no conspicuous rise of the body','-0.1 to -0.5'],
+  ['Lack of extension in preparation for landing','-0.1 to -0.3'],
+];
+const MAG_FLOOR_UNCODED = [
+  ['Cartwheel',''],['Round Off',''],['1 Handed Cartwheel',''],['Forward Roll',''],
+  ['Backward Roll to Stand',''],['Backward Roll to Handstand',''],['Backward Roll to Front Support',''],
+  ['Handstand Forward Roll',''],['Headstand',''],['Arabesque',''],['Y Balance',''],
+  ['Tuck Jumps',''],['Half Turn Jump',''],['Star Jump',''],['Split Jump',''],['Straddle Jump',''],['Full Turn Jump',''],
+];
+function magCommon(execTitle){
+  return [
+    { level:'ALL', title:execTitle, items:MAG_EXEC },
+    { level:'ALL', title:'General Rules', items:GENERAL_RULES },
+  ];
+}
+
+const RULES_MAG = {
+  floor: [
+    { level:'A', title:'Level A — Floor (Uncoded and A Elements; 6 elements to count)', items:[
+      ['2 Acrobatic Elements Connected','CR 1.0'],['1 Additional Acro Element','CR 0.5'],
+    ]},
+    { level:'B', title:'Level B — Floor (Uncoded and A Elements; 6 elements to count)', items:[
+      ['2 Acrobatic Elements Connected','CR 1.0'],['1 Additional Acro Element','CR 0.5'],
+    ]},
+    { level:'C', title:'Level C — Floor (Uncoded and A, B, C Elements; 6 to count, maximum 8)', items:[
+      ['Forward Tumble — 2 connected tumble elements minimum','CR 1.0'],
+      ['Backward Tumble — 2 connected tumble elements minimum','CR 1.0'],
+      ['1 Non Additional Acro Element','CR 0.5'],
+      ['Single Leg Balance','CR 0.5'],
+    ]},
+    { level:'ALL', title:'Floor — Notes', notes:[
+      'Must show acro elements in a different direction (FWD/SWD and BWD).',
+    ]},
+    { level:'ALL', title:'Floor Uncoded Elements', items:MAG_FLOOR_UNCODED },
+    ...magCommon('Floor Execution Faults'),
+  ],
+
+  vault: [
+    { level:'A', title:'Level A — Vault (Minimum 100cm Table)', items:[
+      ['Squat On, Jump Off','10.0'],['Squat Through','11.0'],
+    ]},
+    { level:'A', title:'Level A — Notes', notes:['Prohibited: any other vault.'] },
+    { level:'B', title:'Level B — Vault (Minimum 100cm Table)', items:[
+      ['Squat On, Jump Off','10.0'],['Squat Through','11.0'],
+    ]},
+    { level:'B', title:'Level B — Notes', notes:['Prohibited: any other vault.'] },
+    { level:'C', title:'Level C — Vault (Minimum 100cm Table)', items:[
+      ['Any Vault from COP except Salto/Yurchenko style vaults','DV as per COP'],
+    ]},
+    { level:'C', title:'Level C — Notes', notes:['Prohibited: Salto/Yurchenko style vaults.'] },
+    { level:'ALL', title:'Landing Faults — All Apparatus', items:MAG_LANDING },
+    { level:'ALL', title:'Vault Specific Errors and Deductions', items:MAG_VAULT_SPECIFIC },
+    { level:'ALL', title:'General Rules', items:GENERAL_RULES },
+  ],
+
+  pommel: [
+    { level:'A', title:'Level A — Mushroom 10.0 Routine', items:[
+      ['3 Half Circles',''],['Walk to Return',''],
+    ]},
+    { level:'A', title:'Level A — Mushroom 12.0 Routine', items:[
+      ['3 Circles, allowing stops in between each circle',''],
+    ]},
+    { level:'B', title:'Level B — Mushroom 10.0 Routine', items:[
+      ['3 Half Circles',''],['Walk to Return',''],
+    ]},
+    { level:'B', title:'Level B — Mushroom 12.0 Routine', items:[
+      ['3 Circles, allowing stops in between each circle',''],
+    ]},
+    { level:'C', title:'Level C — Mushroom 10.0 Routine', items:[
+      ['5 Circles, 3 Linked',''],
+    ]},
+    { level:'C', title:'Level C — Mushroom 12.0 Routine', items:[
+      ['5 Circles, All Linked',''],
+    ]},
+    ...magCommon('Mushroom Execution Faults'),
+  ],
+
+  rings: [
+    { level:'A', title:'Level A — Rings', items:[
+      ['Chin Up Hold and Lower',''],['Tuck Lever',''],['Hang and extend into a straight hang',''],['Inlocate',''],['Dislocate',''],
+    ]},
+    { level:'B', title:'Level B — Rings', items:[
+      ['Chin Up Hold and Lower',''],['Tuck Lever',''],['Hang and extend into a straight hang',''],['Inlocate',''],['Dislocate',''],
+    ]},
+    { level:'C', title:'Level C — Rings Set Routine (10.0 plus bonuses)', items:[
+      ['Assisted Muscle Up (unassisted for bonus of 1.0)',''],['½ Lever Hold',''],['Dip',''],['Lower to Hang',''],
+      ['Static Inlocate Hold',''],['German Hang',''],['Pull to Inverted Hang',''],['Cast into 3 Swings',''],
+      ['Inlocate to pike or straight swing',''],['Backwards into Back Salto Straight Dismount',''],
+    ]},
+    ...magCommon('Rings Execution Faults'),
+  ],
+
+  pbars: [
+    { level:'A', title:'Level A — Parallel Bars (140cm and above) — Set Routine', items:[
+      ['Jump to support on the end of the bars',''],['Dip to 90',''],['Hand Walks to middle of bar',''],
+      ['Tuck Lever Hold (2 secs)',''],['Kick out forward into 3 Full Swings',''],['Release between bars at the back',''],
+    ]},
+    { level:'B', title:'Level B — Parallel Bars (140cm and above) — Set Routine', items:[
+      ['Jump to support on the end of the bars',''],['Dip to 90',''],['Hand Walks to middle of bar',''],
+      ['Tuck Lever Hold (2 secs)',''],['Kick out forward into 3 Full Swings',''],['Release between bars at the back',''],
+    ]},
+    { level:'C', title:'Level C — Parallel Bars (140cm and above)', items:[
+      ['Upstart to Support',''],['Half Lever Hold (2 secs)',''],['Full Turn in support on bars',''],
+      ['2 Dips — 90 degree bend in arms',''],['3 Full Swings including 1 above horizontal',''],
+      ['Flank Vault Dismount or Turn Out (at front of swing)',''],
+    ]},
+    { level:'C', title:'Level C — Parallel Bars Bonus', items:[
+      ['Bonus Tuck Back Somi','+0.5'],['Bonus each swing to Handstand','+0.1'],
+    ]},
+    { level:'C', title:'Level C — Notes', notes:['Springboard can be used for mount.'] },
+    ...magCommon('Parallel Bars Execution Faults'),
+  ],
+
+  highbar: [
+    { level:'A', title:'Level A — High Bar / Loop Bar', items:[
+      ['Chin Hold',''],['Dish Hold',''],['Arch Hold',''],['Leg Lift and lower to hang',''],
+      ['Pike kick out into swing forward',''],['5 Swings to horizontal',''],
+    ]},
+    { level:'B', title:'Level B — High Bar / Loop Bar', items:[
+      ['Chin Hold',''],['Dish Hold',''],['Arch Hold',''],['Leg Lift and lower to hang',''],
+      ['Pike kick out into swing forward',''],['5 Swings to horizontal',''],
+    ]},
+    { level:'C', title:'Level C — High Bar / Loop Bar', items:[
+      ['Chin Hold',''],['Cast to Horizontal',''],['Back Hip Circle / Clear to Horizontal',''],
+      ['Cast Push Away into Swing Forward, Swing Back',''],['Swing into 3 Longswings',''],
+    ]},
+    { level:'C', title:'Level C — High Bar Bonus', items:[
+      ['Bonus Trolley Swing into upstart (instead of Chin Over)','+0.5'],
+      ['Bonus Forward Longswings instead of Backward Longswings','+0.5'],
+    ]},
+    ...magCommon('High Bar Execution Faults'),
+  ],
+};
+
+/* Which disciplines have rules for each apparatus */
+const APPARATUS_DISCIPLINES = {
+  floor:  ['WAG','MAG'],
+  vault:  ['WAG','MAG'],
+  bars:   ['WAG'],
+  beam:   ['WAG'],
+  pommel: ['MAG'],
+  rings:  ['MAG'],
+  pbars:  ['MAG'],
+  highbar:['MAG'],
+};
+
+function renderRules(){
+  const list = document.getElementById('rules-list');
+  const q = (document.getElementById('rules-search').value || '').trim().toLowerCase();
+  const dataset = rulesDiscipline === 'MAG' ? RULES_MAG : RULES_WAG;
+  const sections = dataset[rulesApparatusId];
+
+  if (!sections) {
+    list.innerHTML = '<div class="rules-empty">No ' + rulesDiscipline + ' rules exist for this apparatus.</div>';
+    return;
+  }
+
+  let html = '';
+  sections.forEach(sec => {
+    if (rulesLevel !== 'ALL' && sec.level !== 'ALL' && sec.level !== rulesLevel) return;
+    let rows = '';
+    (sec.items || []).forEach(([text, value]) => {
+      if (q && !(text.toLowerCase().includes(q) || String(value).toLowerCase().includes(q) || sec.title.toLowerCase().includes(q))) return;
+      const cls = String(value).startsWith('-') ? 'rv deduct' : 'rv';
+      rows += '<div class="rules-item"><span>' + text + '</span>' + (value ? '<span class="' + cls + '">' + value + '</span>' : '') + '</div>';
+    });
+    (sec.notes || []).forEach(note => {
+      if (q && !(note.toLowerCase().includes(q) || sec.title.toLowerCase().includes(q))) return;
+      rows += '<div class="rules-note">' + note + '</div>';
+    });
+    if (rows) html += '<div class="rules-section-head">' + sec.title + '</div>' + rows;
+  });
+
+  list.innerHTML = html || '<div class="rules-empty">No rules match "' + q + '" — try a different word, or clear the search.</div>';
+}
+
+document.getElementById('rules-search').addEventListener('input', renderRules);
+document.querySelectorAll('#rules-chips .rules-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#rules-chips .rules-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    rulesLevel = chip.dataset.level;
+    renderRules();
+  });
+});
+document.querySelectorAll('#rules-discipline-chips .rules-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#rules-discipline-chips .rules-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    rulesDiscipline = chip.dataset.disc;
+    renderRules();
+  });
+});
+
+function configureDisciplineChips(apparatusId){
+  const available = APPARATUS_DISCIPLINES[apparatusId] || ['WAG'];
+  const chipsWrap = document.getElementById('rules-discipline-chips');
+  // Default to the first (WAG where both exist)
+  rulesDiscipline = available[0];
+  // Only show the toggle when the apparatus genuinely has both rule sets
+  chipsWrap.style.display = available.length > 1 ? '' : 'none';
+  document.querySelectorAll('#rules-discipline-chips .rules-chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.disc === rulesDiscipline);
+  });
+}
 
 /* ---------- Elevien integration ---------- */
 const ELEVIEN_URL = 'https://app.elevien.com/';
