@@ -33,6 +33,7 @@
     color:var(--white);
     font-family:'Inter',sans-serif;
     -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
   }
 
   body{
@@ -289,11 +290,19 @@
   }
 
   /* Feed placeholder */
+  .feed-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    min-width:0;
+  }
   .feed-box{
     background:var(--navy-900);
     border:1px solid rgba(227,25,58,0.18);
     border-radius:var(--radius);
     aspect-ratio:16/9;
+    width:100%;
+    max-height:46vh;
     display:flex;
     flex-direction:column;
     align-items:center;
@@ -302,7 +311,29 @@
     color:var(--ink-dim);
     text-align:center;
     padding:20px;
+    position:relative;
   }
+  .feed-box:fullscreen{
+    max-height:none;
+    border-radius:0;
+    border:none;
+  }
+  .feed-expand-btn{
+    align-self:flex-end;
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.2);
+    color:var(--ink-dim);
+    font-family:'Inter',sans-serif;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .feed-expand-btn:hover{ border-color:var(--white); color:var(--white); }
   .feed-box svg{ width:40px; height:40px; stroke:var(--ink-dim); fill:none; stroke-width:1.4; opacity:0.6; }
   .feed-box .feed-label{ font-size:13px; }
   .feed-box .feed-sub{ font-size:12px; opacity:0.7; max-width:280px; }
@@ -656,10 +687,13 @@
     </div>
 
     <div class="panel-grid">
-      <div class="feed-box">
-        <svg viewBox="0 0 24 24"><path d="M4 6h12v12H4z"/><path d="M16 10l4-2v8l-4-2z"/></svg>
-        <div class="feed-label">Live feed not yet connected</div>
-        <div class="feed-sub">This will show the camera feed for this apparatus once the video bridge is set up.</div>
+      <div class="feed-wrap">
+        <div class="feed-box" id="feed-box">
+          <svg viewBox="0 0 24 24"><path d="M4 6h12v12H4z"/><path d="M16 10l4-2v8l-4-2z"/></svg>
+          <div class="feed-label">Live feed not yet connected</div>
+          <div class="feed-sub">This will show the camera feed for this apparatus once the video bridge is set up.</div>
+        </div>
+        <button class="feed-expand-btn" id="feed-expand-btn">Expand live view</button>
       </div>
 
       <div class="control-panel">
@@ -946,6 +980,15 @@ document.getElementById('display-exit').addEventListener('click', () => {
 document.getElementById('display-mode-btn').addEventListener('click', () => {
   const id = location.hash.replace('#','');
   if (id) location.hash = id + '-display';
+});
+
+document.getElementById('feed-expand-btn').addEventListener('click', () => {
+  const box = document.getElementById('feed-box');
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  } else if (box.requestFullscreen) {
+    box.requestFullscreen().catch(() => {});
+  }
 });
 
 backLink.addEventListener('click', e => { e.preventDefault(); location.hash = ''; });
