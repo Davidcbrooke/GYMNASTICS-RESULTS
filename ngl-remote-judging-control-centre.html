@@ -666,6 +666,7 @@
     padding-right:4px;
   }
   .quad:fullscreen .rules-list{ max-height:none; }
+  .quad.wide .rules-list{ min-height:300px; }
   .rules-section-head{
     font-family:'Oswald',sans-serif;
     font-weight:600;
@@ -997,23 +998,8 @@
         </div>
       </section>
 
-      <!-- Q3: ELEVIEN SCORING (always loaded, full width) -->
-      <section class="quad wide" id="quad-elevien">
-        <div class="quad-head">
-          <span class="quad-title">Elevien Scoring</span>
-          <div class="elevien-actions">
-            <button class="elevien-btn" id="elevien-window-btn">Open in separate window</button>
-            <button class="quad-expand" data-quad="quad-elevien">Expand</button>
-          </div>
-        </div>
-        <div class="elevien-frame-wrap" id="elevien-frame-wrap">
-          <iframe id="elevien-frame" title="Elevien scoring"></iframe>
-          <div class="elevien-note">If this panel stays blank, Elevien doesn't allow embedding — use "Open in separate window" instead.</div>
-        </div>
-      </section>
-
-      <!-- Q4: RULES -->
-      <section class="quad" id="quad-rules">
+      <!-- Q3: RULES (full width) -->
+      <section class="quad wide" id="quad-rules">
         <div class="quad-head">
           <span class="quad-title">Rules <span id="rules-apparatus-label"></span></span>
           <button class="quad-expand" data-quad="quad-rules">Expand</button>
@@ -1032,6 +1018,21 @@
           </div>
         </div>
         <div class="rules-list" id="rules-list"></div>
+      </section>
+
+      <!-- Q4: ELEVIEN SCORING (always loaded, full width) -->
+      <section class="quad wide" id="quad-elevien">
+        <div class="quad-head">
+          <span class="quad-title">Elevien Scoring</span>
+          <div class="elevien-actions">
+            <button class="elevien-btn" id="elevien-window-btn">Open in separate window</button>
+            <button class="quad-expand" data-quad="quad-elevien">Expand</button>
+          </div>
+        </div>
+        <div class="elevien-frame-wrap" id="elevien-frame-wrap">
+          <iframe id="elevien-frame" title="Elevien scoring"></iframe>
+          <div class="elevien-note">If this panel stays blank, Elevien doesn't allow embedding — use "Open in separate window" instead.</div>
+        </div>
       </section>
 
     </div>
