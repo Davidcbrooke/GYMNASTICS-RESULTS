@@ -507,6 +507,75 @@
 
   .hidden{ display:none !important; }
 
+  /* ---------- Auto timer panel ---------- */
+  .auto-panel{
+    width:100%;
+    border-top:1px solid rgba(255,255,255,0.1);
+    padding-top:16px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .auto-title{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+  }
+  .auto-status{
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink-dim);
+  }
+  .auto-status.running{ color:var(--green-bright); }
+  .auto-fields{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .auto-fields label{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+  }
+  .auto-fields input{
+    background:var(--navy-950);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:8px;
+    padding:10px 12px;
+    color:var(--white);
+    font-size:15px;
+    font-family:'Inter',sans-serif;
+    width:100%;
+  }
+  .auto-fields input:focus{ outline:none; border-color:var(--red-bright); }
+  .auto-btn-row{ display:flex; gap:10px; }
+  .auto-btn{
+    flex:1;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.2);
+    background:transparent;
+    color:var(--white);
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .auto-btn.start:hover{ border-color:var(--green-bright); background:rgba(31,138,76,0.15); }
+  .auto-btn.next:hover{ border-color:var(--white); background:rgba(255,255,255,0.08); }
+  .auto-btn.stop:hover{ border-color:var(--red-bright); background:rgba(200,16,46,0.15); }
+
   footer{
     margin-top:44px;
     padding-top:18px;
@@ -587,6 +656,22 @@
         </div>
 
         <div class="sync-note" id="sync-note"><span class="dot"></span>Connecting…</div>
+
+        <div class="auto-panel">
+          <div class="auto-title">Auto timer</div>
+          <div class="auto-status" id="auto-status">Manual control</div>
+          <div class="auto-fields">
+            <label>Warm-up (mins)<input type="number" id="auto-warmup" value="5" min="0" step="1"></label>
+            <label>Gymnasts (0 = until stopped)<input type="number" id="auto-count" value="0" min="0" step="1"></label>
+            <label>Mins per gymnast<input type="number" id="auto-slot" value="2" min="0.5" step="0.5"></label>
+            <label>Get-ready (secs)<input type="number" id="auto-ready" value="20" min="0" step="5"></label>
+          </div>
+          <div class="auto-btn-row">
+            <button class="auto-btn start" id="auto-start-btn">Start auto</button>
+            <button class="auto-btn next" id="auto-next-btn">Next gymnast now</button>
+            <button class="auto-btn stop" id="auto-stop-btn">Back to manual</button>
+          </div>
+        </div>
 
         <button class="display-mode-btn" id="display-mode-btn">Open full-screen display</button>
       </div>
@@ -703,13 +788,20 @@ const backLink       = document.getElementById('back-link');
 let statusDotUnsubs = [];
 let currentUnsub = null;
 
+function clearTimers(){
+  if (typeof controlTickInterval !== 'undefined' && controlTickInterval) { clearInterval(controlTickInterval); controlTickInterval = null; }
+  if (typeof displayTickInterval !== 'undefined' && displayTickInterval) { clearInterval(displayTickInterval); displayTickInterval = null; }
+}
+
 function showLoggedOut(){
   viewLogin.classList.remove('hidden');
   viewLanding.classList.add('hidden');
   viewApparatus.classList.add('hidden');
+  viewDisplay.classList.add('hidden');
   statusDotUnsubs.forEach(u => u());
   statusDotUnsubs = [];
   if (currentUnsub) { currentUnsub(); currentUnsub = null; }
+  clearTimers();
   reportHeight();
 }
 
@@ -731,6 +823,7 @@ function showLoggedIn(){
 
 function showLanding(){
   if (currentUnsub) { currentUnsub(); currentUnsub = null; }
+  clearTimers();
   viewApparatus.classList.add('hidden');
   viewDisplay.classList.add('hidden');
   viewLanding.classList.remove('hidden');
@@ -741,6 +834,7 @@ function showApparatus(id){
   const a = APPARATUS.find(x => x.id === id);
   if (!a) { location.hash = ''; return; }
 
+  clearTimers();
   viewLanding.classList.add('hidden');
   viewDisplay.classList.add('hidden');
   viewApparatus.classList.remove('hidden');
@@ -754,12 +848,14 @@ function showApparatus(id){
 
 /* ---------- Full-screen display mode ---------- */
 const viewDisplay = document.getElementById('view-display');
+let displayTickInterval = null;
 
 function showDisplay(id){
   const a = APPARATUS.find(x => x.id === id);
   if (!a) { location.hash = ''; return; }
 
   if (currentUnsub) { currentUnsub(); currentUnsub = null; }
+  clearTimers();
   viewLanding.classList.add('hidden');
   viewApparatus.classList.add('hidden');
   viewDisplay.classList.remove('hidden');
@@ -768,19 +864,51 @@ function showDisplay(id){
 
   const stateEl = document.getElementById('display-state');
   const messageEl = document.getElementById('display-message');
+  let currentData = null;
+
+  function renderDisplay(){
+    // Manual mode (or no data yet): simple STOP/GO from state field
+    if (!currentData || currentData.mode !== 'auto' || !currentData.timer) {
+      const isGo = currentData && currentData.state === 'go';
+      viewDisplay.classList.toggle('go', isGo);
+      stateEl.textContent = isGo ? 'GO' : 'STOP';
+      messageEl.textContent = isGo
+        ? 'Please hold your number up clearly to the camera, present, and begin. Good luck!'
+        : 'Please wait — do not begin your routine.';
+      return;
+    }
+    // Auto mode: compute phase from the shared schedule
+    const t = currentData.timer;
+    const p = computePhase(t, Date.now());
+    if (p.phase === 'warmup') {
+      viewDisplay.classList.add('go');
+      stateEl.textContent = 'WARM-UP';
+      messageEl.textContent = 'Warm-up in progress — first gymnast starts in ' + fmtTime(p.remaining);
+    } else if (p.phase === 'ready') {
+      viewDisplay.classList.remove('go');
+      stateEl.textContent = fmtTime(p.remaining);
+      messageEl.textContent = gymnastLabel(p, t) + ' — get ready. Your start is coming up.';
+    } else if (p.phase === 'go') {
+      viewDisplay.classList.add('go');
+      stateEl.textContent = 'GO';
+      messageEl.textContent = gymnastLabel(p, t) + ' — hold your number up clearly to the camera, present, and begin. Good luck!';
+    } else {
+      viewDisplay.classList.remove('go');
+      stateEl.textContent = 'DONE';
+      messageEl.textContent = 'Rotation complete — please wait for instructions.';
+    }
+  }
+
   currentUnsub = db.collection('ngl_apparatus_lights').doc(a.id).onSnapshot(doc => {
-    const state = doc.exists ? doc.data().state : 'stop';
-    const isGo = state === 'go';
-    viewDisplay.classList.toggle('go', isGo);
+    currentData = doc.exists ? doc.data() : null;
     viewDisplay.classList.remove('offline');
-    stateEl.textContent = isGo ? 'GO' : 'STOP';
-    messageEl.textContent = isGo
-      ? 'Please hold your number up clearly to the camera, present, and begin. Good luck!'
-      : 'Please wait — do not begin your routine.';
+    renderDisplay();
   }, err => {
     viewDisplay.classList.add('offline');
     console.error(err);
   });
+
+  displayTickInterval = setInterval(renderDisplay, 500);
 
   // Try to enter browser full-screen (allowed here because the
   // click that navigated us counts as a user gesture)
@@ -858,9 +986,50 @@ auth.onAuthStateChanged(user => {
   }
 });
 
+/* ---------- Auto timer: shared phase computation ----------
+   Firestore doc fields for auto mode:
+   mode: 'manual' | 'auto'
+   timer: { startAt (ms epoch), warmupSec, readySec, slotSec,
+            count (0 = run until stopped), startNum }
+   Phases: warmup -> [ready -> go] repeating -> done (if count set)
+   "Next now" re-anchors startAt/startNum so the schedule can be
+   pulled forward at any moment without changing the settings.  */
+function computePhase(timer, nowMs){
+  const t = (nowMs - timer.startAt) / 1000; // seconds since anchor
+  const startNum = timer.startNum || 1;
+  if (t < 0) return { phase:'warmup', remaining:-t, gymnast:0 };
+  if (t < timer.warmupSec) {
+    return { phase:'warmup', remaining: timer.warmupSec - t, gymnast:0 };
+  }
+  const cycleSec = timer.slotSec;
+  const sinceWarmup = t - timer.warmupSec;
+  const idx = Math.floor(sinceWarmup / cycleSec);
+  const num = startNum + idx;
+  if (timer.count && num > timer.count) return { phase:'done' };
+  const inSlot = sinceWarmup - idx * cycleSec;
+  if (inSlot < timer.readySec) {
+    return { phase:'ready', remaining: timer.readySec - inSlot, gymnast: num };
+  }
+  return { phase:'go', remaining: cycleSec - inSlot, gymnast: num };
+}
+
+function gymnastLabel(p, timer){
+  return 'Gymnast ' + p.gymnast + (timer.count ? ' of ' + timer.count : '');
+}
+
+function fmtTime(sec){
+  sec = Math.max(0, Math.ceil(sec));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return m + ':' + String(s).padStart(2,'0');
+}
+
 /* ---------- Light control wiring ---------- */
+let controlTickInterval = null;
+
 function wireControls(apparatusId){
   if (currentUnsub) { currentUnsub(); currentUnsub = null; }
+  if (controlTickInterval) { clearInterval(controlTickInterval); controlTickInterval = null; }
 
   const lampStop   = document.getElementById('lamp-stop');
   const lampGo      = document.getElementById('lamp-go');
@@ -868,8 +1037,10 @@ function wireControls(apparatusId){
   const btnStop     = document.getElementById('btn-stop');
   const btnGo       = document.getElementById('btn-go');
   const syncNote    = document.getElementById('sync-note');
+  const autoStatus  = document.getElementById('auto-status');
 
   const docRef = db.collection('ngl_apparatus_lights').doc(apparatusId);
+  let currentData = null;
 
   function render(state){
     const isGo = state === 'go';
@@ -882,9 +1053,35 @@ function wireControls(apparatusId){
     btnGo.classList.toggle('selected', isGo);
   }
 
+  function tick(){
+    if (!currentData || currentData.mode !== 'auto' || !currentData.timer) {
+      autoStatus.textContent = 'Manual control';
+      autoStatus.classList.remove('running');
+      return;
+    }
+    const p = computePhase(currentData.timer, Date.now());
+    autoStatus.classList.add('running');
+    if (p.phase === 'warmup') {
+      autoStatus.textContent = 'Auto: warm-up — ' + fmtTime(p.remaining) + ' remaining';
+      render('go');
+    } else if (p.phase === 'ready') {
+      autoStatus.textContent = 'Auto: ' + gymnastLabel(p, currentData.timer) + ' starts in ' + fmtTime(p.remaining);
+      render('stop');
+    } else if (p.phase === 'go') {
+      autoStatus.textContent = 'Auto: ' + gymnastLabel(p, currentData.timer) + ' — ' + fmtTime(p.remaining) + ' in slot';
+      render('go');
+    } else {
+      autoStatus.textContent = 'Auto: rotation complete';
+      render('stop');
+    }
+  }
+
   currentUnsub = docRef.onSnapshot(doc => {
-    const state = doc.exists ? doc.data().state : 'stop';
-    render(state);
+    currentData = doc.exists ? doc.data() : null;
+    if (!currentData || currentData.mode !== 'auto') {
+      render(currentData && currentData.state === 'go' ? 'go' : 'stop');
+    }
+    tick();
     syncNote.classList.remove('offline');
     syncNote.innerHTML = '<span class="dot"></span>Synced live';
   }, err => {
@@ -893,9 +1090,12 @@ function wireControls(apparatusId){
     console.error(err);
   });
 
+  controlTickInterval = setInterval(tick, 500);
+
   function setState(state){
     docRef.set({
       state,
+      mode: 'manual',
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true }).catch(err => {
       syncNote.classList.add('offline');
@@ -903,6 +1103,45 @@ function wireControls(apparatusId){
       console.error(err);
     });
   }
+
+  document.getElementById('auto-start-btn').onclick = () => {
+    const warmupSec = Math.max(0, parseFloat(document.getElementById('auto-warmup').value || 0) * 60);
+    const count     = Math.max(0, parseInt(document.getElementById('auto-count').value || 0, 10)); // 0 = until stopped
+    const slotSec   = Math.max(30, parseFloat(document.getElementById('auto-slot').value || 2) * 60);
+    const readySec  = Math.max(0, parseFloat(document.getElementById('auto-ready').value || 0));
+    docRef.set({
+      mode: 'auto',
+      timer: { startAt: Date.now(), warmupSec, readySec, slotSec, count, startNum: 1 },
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(err => console.error(err));
+  };
+
+  document.getElementById('auto-next-btn').onclick = () => {
+    if (!currentData || currentData.mode !== 'auto' || !currentData.timer) return;
+    const t = currentData.timer;
+    const p = computePhase(t, Date.now());
+    let newTimer;
+    if (p.phase === 'ready') {
+      // Skip the remaining countdown: gymnast starts right now
+      newTimer = { ...t, warmupSec: 0, startNum: p.gymnast, startAt: Date.now() - t.readySec * 1000 };
+    } else if (p.phase === 'go') {
+      // Current gymnast finished early: begin next gymnast's countdown now
+      newTimer = { ...t, warmupSec: 0, startNum: p.gymnast + 1, startAt: Date.now() };
+    } else if (p.phase === 'warmup') {
+      // Cut warm-up short: first gymnast's countdown starts now
+      newTimer = { ...t, warmupSec: 0, startNum: t.startNum || 1, startAt: Date.now() };
+    } else {
+      return; // done — nothing to advance to
+    }
+    if (newTimer.count && newTimer.startNum > newTimer.count) return;
+    docRef.set({
+      mode: 'auto',
+      timer: newTimer,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(err => console.error(err));
+  };
+
+  document.getElementById('auto-stop-btn').onclick = () => setState('stop');
 
   btnStop.onclick = () => setState('stop');
   btnGo.onclick    = () => setState('go');
