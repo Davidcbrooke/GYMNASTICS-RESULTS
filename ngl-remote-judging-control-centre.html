@@ -543,7 +543,6 @@
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:16px;
-    align-items:start;
   }
   @media (max-width:900px){
     .quad-grid{ grid-template-columns:1fr; }
@@ -599,6 +598,8 @@
     display:flex;
     flex-direction:column;
     gap:16px;
+    flex:1;
+    justify-content:space-between;
   }
   .control-top{
     display:flex;
@@ -653,8 +654,11 @@
     color:#fff;
   }
   .rules-list{
-    max-height:420px;
+    flex:1 1 0;
+    min-height:200px;
+    max-height:520px;
     overflow-y:auto;
+    overflow-x:hidden;
     display:flex;
     flex-direction:column;
     gap:2px;
@@ -669,9 +673,8 @@
     text-transform:uppercase;
     color:var(--red-bright);
     padding:12px 4px 6px;
-    position:sticky;
-    top:0;
-    background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
+    line-height:1.4;
+    overflow-wrap:break-word;
   }
   .rules-item{
     display:flex;
@@ -683,11 +686,14 @@
     color:var(--white);
     border-bottom:1px solid rgba(255,255,255,0.05);
   }
+  .rules-item span{ overflow-wrap:break-word; min-width:0; }
   .rules-item .rv{
     flex-shrink:0;
     font-weight:700;
     color:var(--gold-bright);
-    white-space:nowrap;
+    max-width:45%;
+    text-align:right;
+    white-space:normal;
   }
   .rules-item .rv.deduct{ color:var(--red-bright); }
   .rules-note{
@@ -764,19 +770,37 @@
   .auto-panel{
     width:100%;
     border-top:1px solid rgba(255,255,255,0.1);
-    padding-top:16px;
+    padding-top:12px;
     display:flex;
     flex-direction:column;
     gap:12px;
   }
-  .auto-title{
+  .auto-toggle{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:transparent;
+    border:none;
+    padding:4px 0;
+    cursor:pointer;
     font-family:'Oswald',sans-serif;
     font-weight:600;
     font-size:13px;
     letter-spacing:0.1em;
     text-transform:uppercase;
     color:var(--ink-dim);
+    width:100%;
+    transition:color 0.15s ease;
   }
+  .auto-toggle:hover{ color:var(--white); }
+  .auto-toggle-arrow{ transition:transform 0.2s ease; }
+  .auto-panel:not(.collapsed) .auto-toggle-arrow{ transform:rotate(90deg); }
+  .auto-body{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .auto-panel.collapsed .auto-body{ display:none; }
   .auto-status{
     font-size:12px;
     font-weight:600;
@@ -945,20 +969,25 @@
             </div>
           </div>
 
-          <div class="auto-panel">
-            <div class="auto-title">Auto timer</div>
-            <div class="auto-status" id="auto-status">Manual control</div>
-            <div class="auto-fields">
-              <label><span>Warm-up (mins)</span><input type="number" id="auto-warmup" value="5" min="0" step="1"></label>
-              <label><span>Gymnasts in rotation</span><input type="number" id="auto-count" value="0" min="0" step="1"></label>
-              <label><span>Mins per gymnast</span><input type="number" id="auto-slot" value="2" min="0.5" step="0.5"></label>
-              <label><span>Get-ready (secs)</span><input type="number" id="auto-ready" value="20" min="0" step="5"></label>
-            </div>
-            <div class="auto-hint">Settings are shared live with every judge on this apparatus. Leave gymnasts as 0 to run until stopped.</div>
-            <div class="auto-btn-row">
-              <button class="auto-btn start" id="auto-start-btn">Start auto</button>
-              <button class="auto-btn next" id="auto-next-btn">Next gymnast now</button>
-              <button class="auto-btn stop" id="auto-stop-btn">Back to manual</button>
+          <div class="auto-panel collapsed" id="auto-panel">
+            <button class="auto-toggle" id="auto-toggle">
+              <span>Auto timer</span>
+              <span class="auto-toggle-arrow" id="auto-toggle-arrow">&#9656;</span>
+            </button>
+            <div class="auto-body" id="auto-body">
+              <div class="auto-status" id="auto-status">Manual control</div>
+              <div class="auto-fields">
+                <label><span>Warm-up (mins)</span><input type="number" id="auto-warmup" value="5" min="0" step="1"></label>
+                <label><span>Gymnasts in rotation</span><input type="number" id="auto-count" value="0" min="0" step="1"></label>
+                <label><span>Mins per gymnast</span><input type="number" id="auto-slot" value="2" min="0.5" step="0.5"></label>
+                <label><span>Get-ready (secs)</span><input type="number" id="auto-ready" value="20" min="0" step="5"></label>
+              </div>
+              <div class="auto-hint">Settings are shared live with every judge on this apparatus. Leave gymnasts as 0 to run until stopped.</div>
+              <div class="auto-btn-row">
+                <button class="auto-btn start" id="auto-start-btn">Start auto</button>
+                <button class="auto-btn next" id="auto-next-btn">Next gymnast now</button>
+                <button class="auto-btn stop" id="auto-stop-btn">Back to manual</button>
+              </div>
             </div>
           </div>
 
@@ -1261,6 +1290,11 @@ document.getElementById('display-exit').addEventListener('click', () => {
 document.getElementById('display-mode-btn').addEventListener('click', () => {
   const id = location.hash.replace('#','');
   if (id) location.hash = id + '-display';
+});
+
+document.getElementById('auto-toggle').addEventListener('click', () => {
+  document.getElementById('auto-panel').classList.toggle('collapsed');
+  reportHeight();
 });
 
 /* ---------- Quadrant expand (fullscreen) ---------- */
