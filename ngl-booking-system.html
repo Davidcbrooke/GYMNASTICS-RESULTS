@@ -48,6 +48,15 @@
   .hero-badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .hero-badge { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 3px; font-size: 0.74rem; font-weight: 500; }
 
+  /* SEASON THERMOMETER */
+  .thermo-wrap { max-width: 460px; margin: 26px auto 0; }
+  .thermo-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .thermo-status { color: var(--white); font-size: 0.95rem; font-weight: 800; letter-spacing: 0.04em; }
+  .thermo-pct { color: rgba(255,255,255,0.55); font-size: 0.78rem; font-weight: 700; font-family: var(--mono); }
+  .thermo-track { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); border-radius: 20px; height: 18px; overflow: hidden; position: relative; }
+  .thermo-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #2e9e5b 0%, #d4a017 55%, #c0392b 100%); width: 0%; transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
+  .thermo-caption { color: rgba(255,255,255,0.55); font-size: 0.74rem; margin-top: 8px; text-align: center; }
+
   .booking-section { max-width: 1080px; margin: 0 auto; padding: 36px 20px 48px; display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start; }
   @media (max-width: 780px) { .booking-section { grid-template-columns: 1fr; } }
   .eyebrow { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--grey-mid); margin-bottom: 3px; }
@@ -285,6 +294,14 @@
       <div class="hero-badge">&#x1F4C5; No payment until October 2026</div>
       <div class="hero-badge">&#x2705; Place guaranteed on booking</div>
       <div class="hero-badge">&#x1F3C6; Full season visibility</div>
+    </div>
+    <div class="thermo-wrap" id="thermo-wrap" style="display:none">
+      <div class="thermo-label-row">
+        <span class="thermo-status" id="thermo-status">&#x1F331; Fresh</span>
+        <span class="thermo-pct" id="thermo-pct">0%</span>
+      </div>
+      <div class="thermo-track"><div class="thermo-fill" id="thermo-fill"></div></div>
+      <div class="thermo-caption" id="thermo-caption">The 2027 season is just opening up &mdash; plenty of choice.</div>
     </div>
   </div>
 
@@ -588,6 +605,7 @@ window.showPanel = function(id, btn) {
 onSnapshot(query(compsCol, orderBy('date')), snap => {
   allCompetitions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   renderCalendar();
+  updateThermometer();
   if (adminLoggedIn) renderAdminComps();
   updateStats();
   populateFilter();
@@ -596,11 +614,42 @@ onSnapshot(query(compsCol, orderBy('date')), snap => {
 onSnapshot(query(bookingsCol, orderBy('bookedAt', 'desc')), snap => {
   allBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   renderCalendar();
+  updateThermometer();
   if (adminLoggedIn) renderBookingsTable();
   updateStats();
 });
 
 let selections = {};
+
+function updateThermometer() {
+  const wrap = document.getElementById('thermo-wrap');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcoming = allCompetitions.filter(c => new Date(c.date + 'T00:00:00') >= today);
+  if (!upcoming.length) { wrap.style.display = 'none'; return; }
+
+  let totalPlaces = 0, totalBooked = 0;
+  upcoming.forEach(c => {
+    const max = c.maxPlaces || 20;
+    const booked = allBookings.filter(b => b.compId === c.id && !b.waitlist).reduce((s,b) => s + (parseInt(b.spaces)||1), 0);
+    totalPlaces += max;
+    totalBooked += Math.min(booked, max);
+  });
+  if (!totalPlaces) { wrap.style.display = 'none'; return; }
+
+  const pct = Math.round((totalBooked / totalPlaces) * 100);
+  let status, caption;
+  if (pct < 20)      { status = '\u{1F331} Fresh';                          caption = 'The 2027 season is just opening up \u2014 first pick of dates goes to early birds.'; }
+  else if (pct < 40) { status = '\u{1F336}\uFE0F Warming Up';               caption = 'Clubs are starting to claim their places \u2014 good availability across the season.'; }
+  else if (pct < 65) { status = '\u{1F336}\uFE0F\u{1F336}\uFE0F Popular';   caption = 'Over a third of season places are gone \u2014 favourites are filling.'; }
+  else if (pct < 85) { status = '\u{1F336}\uFE0F\u{1F336}\uFE0F\u{1F336}\uFE0F Spicy'; caption = 'Booking fast \u2014 several competitions are close to capacity.'; }
+  else               { status = '\u{1F525} On Fire';                        caption = 'The 2027 season is almost full \u2014 last chance for remaining places!'; }
+
+  wrap.style.display = 'block';
+  document.getElementById('thermo-status').innerHTML = status;
+  document.getElementById('thermo-pct').textContent = pct + '% booked';
+  document.getElementById('thermo-fill').style.width = Math.max(pct, 3) + '%';
+  document.getElementById('thermo-caption').textContent = caption;
+}
 
 function renderCalendar() {
   const el = document.getElementById('comp-list');
