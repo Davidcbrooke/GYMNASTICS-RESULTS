@@ -997,17 +997,16 @@
         </div>
       </section>
 
-      <!-- Q3: ELEVIEN SCORING -->
-      <section class="quad" id="quad-elevien">
+      <!-- Q3: ELEVIEN SCORING (always loaded, full width) -->
+      <section class="quad wide" id="quad-elevien">
         <div class="quad-head">
           <span class="quad-title">Elevien Scoring</span>
-          <button class="quad-expand" data-quad="quad-elevien">Expand</button>
+          <div class="elevien-actions">
+            <button class="elevien-btn" id="elevien-window-btn">Open in separate window</button>
+            <button class="quad-expand" data-quad="quad-elevien">Expand</button>
+          </div>
         </div>
-        <div class="elevien-actions">
-          <button class="elevien-btn" id="elevien-toggle-btn">Show Elevien here</button>
-          <button class="elevien-btn" id="elevien-window-btn">Open in separate window</button>
-        </div>
-        <div class="elevien-frame-wrap hidden" id="elevien-frame-wrap">
+        <div class="elevien-frame-wrap" id="elevien-frame-wrap">
           <iframe id="elevien-frame" title="Elevien scoring"></iframe>
           <div class="elevien-note">If this panel stays blank, Elevien doesn't allow embedding — use "Open in separate window" instead.</div>
         </div>
@@ -1207,6 +1206,7 @@ function showApparatus(id){
   document.getElementById('rules-search').value = '';
   configureDisciplineChips(a.id);
   renderRules();
+  ensureElevienLoaded();
 
   wireControls(a.id);
   reportHeight();
@@ -1308,6 +1308,13 @@ document.querySelectorAll('.quad-expand').forEach(btn => {
     } else if (quad.requestFullscreen) {
       quad.requestFullscreen().catch(() => {});
     }
+  });
+});
+
+document.addEventListener('fullscreenchange', () => {
+  document.querySelectorAll('.quad-expand').forEach(btn => {
+    const quad = document.getElementById(btn.dataset.quad);
+    btn.textContent = (document.fullscreenElement === quad) ? 'Minimise' : 'Expand';
   });
 });
 
@@ -1741,24 +1748,11 @@ function configureDisciplineChips(apparatusId){
 /* ---------- Elevien integration ---------- */
 const ELEVIEN_URL = 'https://app.elevien.com/';
 
-document.getElementById('elevien-toggle-btn').addEventListener('click', () => {
-  const wrap = document.getElementById('elevien-frame-wrap');
+/* Elevien loads automatically the first time an apparatus page opens */
+function ensureElevienLoaded(){
   const frame = document.getElementById('elevien-frame');
-  const btn = document.getElementById('elevien-toggle-btn');
-  const quad = document.getElementById('quad-elevien');
-  const showing = !wrap.classList.contains('hidden');
-  if (showing) {
-    wrap.classList.add('hidden');
-    quad.classList.remove('wide');
-    btn.textContent = 'Show Elevien here';
-  } else {
-    if (!frame.src) frame.src = ELEVIEN_URL; // lazy-load on first open
-    wrap.classList.remove('hidden');
-    quad.classList.add('wide'); // Elevien needs full width to render its desktop UI
-    btn.textContent = 'Hide Elevien';
-  }
-  reportHeight();
-});
+  if (!frame.src) frame.src = ELEVIEN_URL;
+}
 
 document.getElementById('elevien-window-btn').addEventListener('click', () => {
   // Open Elevien in a right-half popup so video + scoring sit side by side
