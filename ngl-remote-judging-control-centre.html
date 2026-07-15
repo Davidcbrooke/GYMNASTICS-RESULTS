@@ -2120,6 +2120,14 @@ function wireControls(apparatusId){
       syncNote.innerHTML = '<span class="dot"></span>Could not update — check connection';
       console.error(err);
     });
+    /* Routine log: timestamps every press so recordings can be
+       located later ("Beam GO at 14:47:12"). One doc per press. */
+    db.collection('ngl_light_log').add({
+      apparatus: apparatusId,
+      action: state,
+      by: (auth.currentUser && auth.currentUser.email) || 'unknown',
+      at: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(err => console.error('log write failed', err));
   }
 
   document.getElementById('auto-start-btn').onclick = () => {
