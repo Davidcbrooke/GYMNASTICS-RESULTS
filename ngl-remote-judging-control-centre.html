@@ -89,6 +89,14 @@
     line-height:1.5;
     margin:0 0 32px;
   }
+  .setup-link{
+    color:var(--red-bright);
+    font-weight:600;
+    text-decoration:none;
+    border-bottom:1px solid rgba(227,25,58,0.4);
+    transition:border-color 0.15s ease;
+  }
+  .setup-link:hover{ border-color:var(--red-bright); }
 
   .top-bar{
     display:flex;
@@ -947,7 +955,7 @@
       <button class="signout-btn" id="signout-btn-landing">Sign out</button>
     </div>
     <h1>Remote Judging Control Centre</h1>
-    <p class="subtitle">Select an apparatus to view its feed and control the judge's light. Scores are still entered in Elevien as normal.</p>
+    <p class="subtitle">Select an apparatus to view its feed and control the judge's light. Scores are still entered in Elevien as normal. <a class="setup-link" href="ngl-remote-judging-setup.html" target="_blank" rel="noopener">Setup instructions</a></p>
 
     <div class="grid" id="apparatus-grid"></div>
   </div>
