@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NGL Remote Judging — Setup Guide</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --navy-950:#081327;
+    --navy-900:#0d1e3d;
+    --navy-800:#15305c;
+    --red:#c8102e;
+    --red-bright:#e3193a;
+    --green-bright:#26a95d;
+    --white:#ffffff;
+    --ink-dim:#c3cee2;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0;
+    background:var(--navy-950);
+    color:var(--white);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(227,25,58,0.10), transparent 45%),
+      radial-gradient(circle at 100% 20%, rgba(227,25,58,0.08), transparent 40%),
+      var(--navy-950);
+  }
+  .wrap{ max-width:900px; margin:0 auto; padding:36px 24px 64px; }
+
+  .eyebrow{
+    font-family:'Oswald',sans-serif;
+    font-size:12px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase;
+    color:var(--red-bright);
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:10px;
+  }
+  .eyebrow::before{ content:''; width:22px; height:2px; background:var(--red-bright); }
+
+  h1{
+    font-family:'Oswald',sans-serif; font-weight:700;
+    font-size:clamp(28px,4.5vw,40px);
+    text-transform:uppercase; line-height:1.05;
+    margin:0 0 8px;
+  }
+  .subtitle{ color:var(--ink-dim); font-size:15px; line-height:1.6; max-width:640px; margin:0 0 28px; }
+
+  h2{
+    font-family:'Oswald',sans-serif; font-weight:600;
+    font-size:20px; text-transform:uppercase; letter-spacing:0.04em;
+    color:var(--white);
+    margin:44px 0 6px;
+    padding-top:20px;
+    border-top:1px solid rgba(227,25,58,0.25);
+  }
+  h3{
+    font-family:'Oswald',sans-serif; font-weight:600;
+    font-size:15px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--red-bright);
+    margin:26px 0 6px;
+  }
+  p, li{ font-size:14px; line-height:1.7; color:var(--white); }
+  .dim{ color:var(--ink-dim); }
+  ol, ul{ padding-left:22px; margin:8px 0 16px; }
+  li{ margin-bottom:6px; }
+
+  code{
+    background:var(--navy-900);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:6px;
+    padding:2px 7px;
+    font-size:13px;
+    color:#ffd9de;
+    word-break:break-all;
+  }
+  pre{
+    background:var(--navy-900);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:10px;
+    padding:14px 16px;
+    overflow-x:auto;
+    font-size:13px;
+    line-height:1.6;
+  }
+  pre code{ background:none; border:none; padding:0; }
+
+  .callout{
+    background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
+    border:1px solid rgba(227,25,58,0.35);
+    border-left:4px solid var(--red-bright);
+    border-radius:10px;
+    padding:14px 18px;
+    margin:16px 0;
+    font-size:13px;
+    line-height:1.6;
+  }
+  .callout.ok{ border-color:rgba(38,169,93,0.5); border-left-color:var(--green-bright); }
+  .callout strong{ text-transform:uppercase; font-family:'Oswald',sans-serif; letter-spacing:0.06em; font-size:12px; }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:14px 0 20px;
+    font-size:13px;
+  }
+  th{
+    text-align:left;
+    font-family:'Oswald',sans-serif;
+    font-weight:600; font-size:12px;
+    letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--red-bright);
+    padding:8px 10px;
+    border-bottom:1px solid rgba(227,25,58,0.3);
+  }
+  td{
+    padding:8px 10px;
+    border-bottom:1px solid rgba(255,255,255,0.07);
+    vertical-align:top;
+    line-height:1.6;
+  }
+
+  /* Table of contents */
+  .toc{
+    background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
+    border:1px solid rgba(227,25,58,0.22);
+    border-radius:var(--radius);
+    padding:18px 22px;
+    margin-bottom:8px;
+  }
+  .toc-title{
+    font-family:'Oswald',sans-serif; font-weight:600;
+    font-size:13px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:10px;
+  }
+  .toc a{
+    display:block;
+    color:var(--white);
+    text-decoration:none;
+    font-size:14px;
+    padding:5px 0;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    transition:color 0.15s ease;
+  }
+  .toc a:hover{ color:var(--red-bright); }
+  .toc a:last-child{ border-bottom:none; }
+
+  a{ color:var(--red-bright); }
+
+  footer{
+    margin-top:56px; padding-top:18px;
+    border-top:1px solid rgba(227,25,58,0.16);
+    font-size:11px; color:var(--ink-dim); text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">National Gymnastics League</div>
+  <h1>Remote Judging — Setup Guide</h1>
+  <p class="subtitle">Everything needed to set up and run the NGL Remote Judging system: the physical kit, the software on the competition laptop, and the routine for competition day. Written for the person running the venue — no technical background assumed.</p>
+
+  <div class="callout"><strong>Never put passwords in this page.</strong> This guide is publicly readable. Wherever it says <code>YOUR-CAMERA-PASSWORD</code> or similar, use the real value from your private notes — do not edit real passwords into this file.</div>
+
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <a href="#overview">1 · How the system fits together</a>
+    <a href="#kit">2 · Equipment list</a>
+    <a href="#wiring">3 · Physical wiring</a>
+    <a href="#router">4 · Router setup (GL.iNet Beryl)</a>
+    <a href="#cameras">5 · Camera setup (Reolink)</a>
+    <a href="#laptop">6 · Laptop preparation</a>
+    <a href="#mediamtx">7 · MediaMTX (video server)</a>
+    <a href="#tunnel">8 · Cloudflare tunnel</a>
+    <a href="#compday">9 · Competition-day startup checklist</a>
+    <a href="#judges">10 · Adding and removing judges</a>
+    <a href="#addcamera">11 · Adding another camera</a>
+    <a href="#trouble">12 · Troubleshooting</a>
+  </div>
+
+  <h2 id="overview">1 · How the system fits together</h2>
+  <p>Cameras at each apparatus plug into a PoE switch, which powers them and carries their video. The switch connects to <strong>our own travel router</strong>, which connects to whatever internet the venue provides. The competition laptop, also wired to the switch, runs two programs:</p>
+  <ul>
+    <li><strong>MediaMTX</strong> — pulls video from the cameras and converts it into a format web browsers can play.</li>
+    <li><strong>cloudflared</strong> — an encrypted tunnel that carries that video out to <code>feed.ngljudge.com</code>.</li>
+  </ul>
+  <p>Remote judges use the <strong>Remote Judging Control Centre</strong> web page. It shows the live video, the Stop/Go rotation controller, the rules reference, and Elevien scoring — all in one place. Two separate logins protect it: the page itself (email + password) and the video feed (email + one-time PIN, approved addresses only).</p>
+
+  <h2 id="kit">2 · Equipment list</h2>
+  <table>
+    <tr><th>Item</th><th>Purpose</th></tr>
+    <tr><td>Reolink RLC-810A PoE cameras (1 per apparatus)</td><td>Video at each apparatus. Powered through the network cable — no plug needed at the camera.</td></tr>
+    <tr><td>Reolink 8-port Gigabit PoE switch</td><td>Powers the cameras and joins everything together. 8 ports covers 6–7 cameras + laptop; a larger switch is needed for a full 8-camera setup.</td></tr>
+    <tr><td>GL.iNet Beryl AX travel router</td><td>Creates our own private network wherever we are. One cable to the venue's internet; everything else stays inside our bubble.</td></tr>
+    <tr><td>Windows laptop</td><td>Runs MediaMTX and the tunnel. Needs to stay on and connected for the whole competition.</td></tr>
+    <tr><td>USB-to-Ethernet adapter</td><td>Wires the laptop to the switch (most modern laptops have no Ethernet port).</td></tr>
+    <tr><td>Cat6 Ethernet cables</td><td>One per camera (up to 100m runs are fine), one for the laptop, one router-to-switch, one router-to-venue-internet.</td></tr>
+  </table>
+
+  <h2 id="wiring">3 · Physical wiring</h2>
+  <ol>
+    <li>Each <strong>camera</strong> → Cat6 cable → any numbered <strong>PoE port</strong> on the switch. The camera powers itself from the cable; allow 30–60 seconds for it to boot.</li>
+    <li><strong>Laptop</strong> → USB-Ethernet adapter → Cat6 → any spare PoE port on the switch.</li>
+    <li><strong>Switch uplink port</strong> → Cat6 → the Beryl router's <strong>LAN</strong> port.</li>
+    <li><strong>Beryl's WAN port</strong> → Cat6 → the venue's internet point (wall port or their router's LAN port).</li>
+    <li>Power the Beryl with its USB-C adapter (needs a 20W+ adapter).</li>
+  </ol>
+  <div class="callout"><strong>Shared buildings:</strong> never plug the switch's uplink directly into an unknown wall port or someone else's router. Always go through our own Beryl router — it keeps the cameras invisible to everyone else on the building's network.</div>
+
+  <h2 id="router">4 · Router setup (GL.iNet Beryl)</h2>
+  <p>Already configured — normally nothing to do beyond plugging it in. For reference, first-time setup was:</p>
+  <ol>
+    <li>Connect a laptop/phone to the Beryl's own wifi (name and password printed on its underside).</li>
+    <li>A setup page opens automatically (or go to <code>192.168.8.1</code>). Set the admin password; defaults are fine for everything else.</li>
+  </ol>
+  <p>The Beryl gives all our devices addresses starting <code>192.168.8.x</code>. To see what's connected (including camera IP addresses): browse to <code>192.168.8.1</code> → Clients.</p>
+
+  <h2 id="cameras">5 · Camera setup (Reolink)</h2>
+  <p>For each new camera, one-time setup:</p>
+  <ol>
+    <li>Install the <strong>Reolink Client</strong> (Windows desktop app from reolink.com) on the laptop.</li>
+    <li>Plug the camera into the PoE switch. The client scans the network and finds it; add it and set its admin password (same password for every camera, kept in your private notes).</li>
+    <li>In the camera's settings: <strong>Network → Advanced → Server Settings → tick RTSP → Save</strong>. Video cannot leave the camera without this.</li>
+    <li>Note the camera's IP address (from the Beryl's Clients page, or the Reolink Client).</li>
+  </ol>
+  <div class="callout ok"><strong>Quick test:</strong> in VLC (Media → Open Network Stream) paste<br><code>rtsp://admin:YOUR-CAMERA-PASSWORD@CAMERA-IP:554/h264Preview_01_sub</code><br>Live video = camera fully working.</div>
+
+  <h2 id="laptop">6 · Laptop preparation</h2>
+  <ul>
+    <li>Wire it to the switch via the USB-Ethernet adapter. Turn the laptop's <strong>wifi off</strong> so all traffic goes over the wire.</li>
+    <li><strong>Quit NordVPN</strong> (or any VPN) — it breaks the connection between the laptop, cameras, and tunnel.</li>
+    <li>Windows Settings → System → Power: set the laptop to <strong>never sleep</strong> when plugged in. A sleeping laptop kills the video for every judge.</li>
+    <li>Keep it on mains power for the whole competition.</li>
+  </ul>
+
+  <h2 id="mediamtx">7 · MediaMTX (video server)</h2>
+  <p>MediaMTX lives in a folder on the laptop (currently <code>C:\Users\info\Downloads\mediamtx_v1.19.2_windows_amd64</code>) containing <code>mediamtx.exe</code> and its settings file <code>mediamtx.yml</code>.</p>
+  <p>The settings file lists each camera. Example:</p>
+  <pre><code>paths:
+  camera1:
+    source: rtsp://admin:YOUR-CAMERA-PASSWORD@192.168.8.200:554/h264Preview_01_sub
+    sourceOnDemand: no
+
+  camera2:
+    source: rtsp://admin:YOUR-CAMERA-PASSWORD@192.168.8.222:554/h264Preview_01_sub
+    sourceOnDemand: no</code></pre>
+  <p><strong>To run it:</strong> double-click <code>mediamtx.exe</code>. A black window opens and must stay open. Within a few seconds the log should mention each camera as ready.</p>
+  <div class="callout ok"><strong>Checkpoint:</strong> on the laptop, browse to <code>http://localhost:8889/camera1</code> — live video in the browser means MediaMTX is working.</div>
+
+  <h2 id="tunnel">8 · Cloudflare tunnel</h2>
+  <p>The tunnel (named <code>ngl-feed</code>) is already created and linked to <code>feed.ngljudge.com</code>. Day to day, it only needs to be <strong>run</strong>:</p>
+  <ol>
+    <li>Open Command Prompt (Windows key → type <code>cmd</code> → Enter).</li>
+    <li>Paste and run:</li>
+  </ol>
+  <pre><code>cloudflared tunnel --config C:\Users\info\Downloads\mediamtx_v1.19.2_windows_amd64\tunnel-config.yml run</code></pre>
+  <p>A second black window opens showing "Registered tunnel connection" lines. It must also stay open.</p>
+  <div class="callout ok"><strong>Checkpoint:</strong> on a phone using mobile data, go to <code>https://feed.ngljudge.com/camera1</code>. Expect the email/PIN login, then live video.</div>
+  <h3>If the laptop is ever replaced</h3>
+  <p>The tunnel must be re-authorised on the new machine: install cloudflared, then run <code>cloudflared tunnel login</code> (sign into the NGL Cloudflare account, pick ngljudge.com), <code>cloudflared tunnel create ngl-feed2</code>, <code>cloudflared tunnel route dns ngl-feed2 feed.ngljudge.com</code> (deleting the old DNS record first), and update <code>tunnel-config.yml</code> with the new tunnel name and credentials file path it prints.</p>
+
+  <h2 id="compday">9 · Competition-day startup checklist</h2>
+  <ol>
+    <li>Wire everything per section 3. Power the switch, router, and cameras. Wait one minute.</li>
+    <li>Laptop on, mains power, wifi off, VPN off.</li>
+    <li>Double-click <code>mediamtx.exe</code> → window stays open.</li>
+    <li>Run the tunnel command (section 8) → second window stays open.</li>
+    <li>Phone check on mobile data: <code>feed.ngljudge.com/camera1</code> shows video after PIN login.</li>
+    <li>Open the Remote Judging Control Centre page, sign in, open an apparatus, confirm video appears (use <em>Authorise video access</em> → PIN → <em>Reload feed</em> if prompted).</li>
+    <li>Set each apparatus display device (laptop/screen at the venue) to its full-screen display link and leave it running.</li>
+  </ol>
+  <div class="callout"><strong>Both black windows must stay open all day.</strong> Closing either one cuts video for every judge. Minimise them, don't close them.</div>
+
+  <h2 id="judges">10 · Adding and removing judges</h2>
+  <p>Each judge needs to be added in <strong>two places</strong>, using the same email address in both:</p>
+  <h3>Control Centre login (Firebase)</h3>
+  <ol>
+    <li>console.firebase.google.com → project <code>saadi-rotation</code> → Authentication → Users → <strong>Add user</strong>.</li>
+    <li>Enter the judge's email and set them a password. Tell them the password yourself — no automatic email is sent.</li>
+    <li>To remove a judge: same screen → three-dot menu on their row → Delete.</li>
+  </ol>
+  <h3>Video feed access (Cloudflare)</h3>
+  <ol>
+    <li>Cloudflare dashboard → Zero Trust → Access controls → Applications → <code>feed</code> → its policy (<em>NGL Judges Only</em>).</li>
+    <li>Add the judge's email to the <strong>Include → Emails</strong> list (press Enter so it becomes a confirmed tag) → Save.</li>
+    <li>To remove: delete their email from the same list. Their access ends when their current session (max 8 hours) expires.</li>
+  </ol>
+
+  <h2 id="addcamera">11 · Adding another camera</h2>
+  <ol>
+    <li>Physically install and set up the camera (sections 3 and 5). Note its new IP address.</li>
+    <li>Edit <code>mediamtx.yml</code>: copy an existing camera block, give it the next name (e.g. <code>camera3</code>), and set its IP.</li>
+    <li>Restart MediaMTX (close its window, double-click <code>mediamtx.exe</code> again).</li>
+    <li>Edit the Control Centre page file: find the <code>CAMERA_FEEDS</code> map near the top of the script and set the apparatus to the new camera name, e.g. <code>beam: 'camera3'</code>. Re-upload the file to GitHub.</li>
+  </ol>
+
+  <h2 id="trouble">12 · Troubleshooting</h2>
+  <table>
+    <tr><th>Symptom</th><th>Likely cause and fix</th></tr>
+    <tr><td>Judge page video box says "refused to connect"</td><td>The judge hasn't signed in for video this session. Click <em>Authorise video access</em>, complete the email/PIN, then <em>Reload feed</em>.</td></tr>
+    <tr><td>"Bad gateway" / error 502 at feed.ngljudge.com</td><td>The tunnel is running but MediaMTX isn't (or vice versa). Check both black windows are open on the laptop; restart whichever is missing.</td></tr>
+    <tr><td>feed.ngljudge.com won't load at all</td><td>The tunnel window isn't running, or the laptop has no internet. Check the tunnel window and the Beryl's WAN connection.</td></tr>
+    <tr><td>MediaMTX log shows camera errors</td><td>Camera unplugged, wrong IP in <code>mediamtx.yml</code> (IPs can change if the router was reset — check the Beryl's Clients page), or RTSP got disabled on the camera.</td></tr>
+    <tr><td>Reolink Client finds no cameras</td><td>Camera not powered (check switch port lights), or laptop on the wrong network — it must be wired to the switch (or on the Beryl's wifi), with VPN off.</td></tr>
+    <tr><td>VLC can't connect to a camera</td><td>RTSP not enabled and saved on that camera (section 5), wrong IP, or laptop on a different network to the cameras.</td></tr>
+    <tr><td>Everything worked, then all video died mid-session</td><td>Laptop went to sleep, a window was closed, or VPN auto-started. Check power settings, both windows, and the system tray.</td></tr>
+    <tr><td>Judge can't log into the Control Centre</td><td>Check their account exists in Firebase Authentication → Users; reset the password from there if needed.</td></tr>
+    <tr><td>Judge gets "access denied" at video login</td><td>Their email isn't on the Cloudflare policy list — section 10, second part.</td></tr>
+  </table>
+
+  <footer>NGL Remote Judging Control Centre · Setup Guide · SAADI Gymnastics</footer>
+</div>
+</body>
+</html>
