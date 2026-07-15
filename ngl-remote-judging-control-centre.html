@@ -375,6 +375,42 @@
     min-width:180px;
   }
 
+  /* Stop/Go overlay in fullscreen Live View */
+  .fs-controls{ display:none; }
+  #quad-feed:fullscreen .fs-controls{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    position:fixed;
+    bottom:28px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(8,19,39,0.85);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:14px;
+    padding:12px 18px;
+    backdrop-filter:blur(6px);
+    z-index:60;
+  }
+  .fs-controls .btn{ flex:none; min-width:120px; padding:14px 20px; }
+  .fs-state{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    min-width:64px;
+    text-align:center;
+  }
+  .fs-state.stop{ color:var(--red-bright); }
+  .fs-state.go{ color:var(--green-bright); }
+  #quad-feed:fullscreen .feed-box{
+    max-height:none;
+    height:100%;
+    aspect-ratio:auto;
+  }
+  #quad-feed:fullscreen .feed-controls{ display:none !important; }
+
   /* Light control */
   .control-panel{
     background:linear-gradient(160deg, var(--navy-800), var(--navy-900));
@@ -991,6 +1027,13 @@
           <button class="elevien-btn" id="feed-reload-btn">Reload feed</button>
           <button class="elevien-btn" id="feed-auth-btn">Authorise video access</button>
           <span class="feed-auth-note">If the video shows a login or error, click Authorise, sign in with your one-time PIN, then Reload.</span>
+        </div>
+
+        <!-- Stop/Go overlay, visible only when Live View is fullscreen -->
+        <div class="fs-controls" id="fs-controls">
+          <span class="fs-state" id="fs-state">STOP</span>
+          <button class="btn btn-stop" id="fs-btn-stop">Stop</button>
+          <button class="btn btn-go" id="fs-btn-go">Go</button>
         </div>
       </section>
 
@@ -1969,6 +2012,9 @@ function wireControls(apparatusId){
   const btnGo       = document.getElementById('btn-go');
   const syncNote    = document.getElementById('sync-note');
   const autoStatus  = document.getElementById('auto-status');
+  const fsState     = document.getElementById('fs-state');
+  const fsBtnStop   = document.getElementById('fs-btn-stop');
+  const fsBtnGo     = document.getElementById('fs-btn-go');
 
   const docRef = db.collection('ngl_apparatus_lights').doc(apparatusId);
   let currentData = null;
@@ -2017,6 +2063,11 @@ function wireControls(apparatusId){
     stateLabel.classList.toggle('stop', !isGo);
     btnStop.classList.toggle('selected', !isGo);
     btnGo.classList.toggle('selected', isGo);
+    fsState.textContent = isGo ? 'GO' : 'STOP';
+    fsState.classList.toggle('go', isGo);
+    fsState.classList.toggle('stop', !isGo);
+    fsBtnStop.classList.toggle('selected', !isGo);
+    fsBtnGo.classList.toggle('selected', isGo);
   }
 
   function tick(){
@@ -2112,6 +2163,8 @@ function wireControls(apparatusId){
 
   btnStop.onclick = () => setState('stop');
   btnGo.onclick    = () => setState('go');
+  fsBtnStop.onclick = () => setState('stop');
+  fsBtnGo.onclick   = () => setState('go');
 }
 
 /* ---------- Iframe auto-resize for Squarespace embed ---------- */
