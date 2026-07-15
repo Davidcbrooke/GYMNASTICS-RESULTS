@@ -337,6 +337,35 @@
   .feed-box svg{ width:40px; height:40px; stroke:var(--ink-dim); fill:none; stroke-width:1.4; opacity:0.6; }
   .feed-box .feed-label{ font-size:13px; }
   .feed-box .feed-sub{ font-size:12px; opacity:0.7; max-width:280px; }
+  .feed-placeholder{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+  }
+  .feed-box.live{ padding:0; overflow:hidden; }
+  .feed-box.live .feed-placeholder{ display:none; }
+  .feed-box iframe{
+    width:100%;
+    height:100%;
+    border:none;
+    display:block;
+    background:#000;
+  }
+  .feed-controls{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .feed-auth-note{
+    font-size:11px;
+    color:var(--ink-dim);
+    line-height:1.4;
+    flex:1;
+    min-width:180px;
+  }
 
   /* Light control */
   .control-panel{
@@ -944,9 +973,16 @@
           <button class="quad-expand" data-quad="quad-feed">Expand</button>
         </div>
         <div class="feed-box" id="feed-box">
-          <svg viewBox="0 0 24 24"><path d="M4 6h12v12H4z"/><path d="M16 10l4-2v8l-4-2z"/></svg>
-          <div class="feed-label">Live feed not yet connected</div>
-          <div class="feed-sub">This will show the camera feed for this apparatus once the video bridge is set up.</div>
+          <div class="feed-placeholder" id="feed-placeholder">
+            <svg viewBox="0 0 24 24"><path d="M4 6h12v12H4z"/><path d="M16 10l4-2v8l-4-2z"/></svg>
+            <div class="feed-label" id="feed-label">No camera connected to this apparatus yet</div>
+            <div class="feed-sub">Live video will appear here once a camera is assigned to this apparatus.</div>
+          </div>
+        </div>
+        <div class="feed-controls hidden" id="feed-controls">
+          <button class="elevien-btn" id="feed-reload-btn">Reload feed</button>
+          <button class="elevien-btn" id="feed-auth-btn">Authorise video access</button>
+          <span class="feed-auth-note">If the video shows a login or error, click Authorise, sign in with your one-time PIN, then Reload.</span>
         </div>
       </section>
 
@@ -1208,6 +1244,7 @@ function showApparatus(id){
   configureDisciplineChips(a.id);
   renderRules();
   ensureElevienLoaded();
+  setupFeed(a.id);
 
   wireControls(a.id);
   reportHeight();
@@ -1298,6 +1335,57 @@ document.getElementById('display-mode-btn').addEventListener('click', () => {
 document.getElementById('auto-toggle').addEventListener('click', () => {
   document.getElementById('auto-panel').classList.toggle('collapsed');
   reportHeight();
+});
+
+/* ---------- Live camera feeds ----------
+   Video is served by MediaMTX on the competition laptop, relayed
+   through the Cloudflare tunnel to feed.ngljudge.com, and protected
+   by Cloudflare Access (one-time PIN, approved emails only).
+
+   TO CHANGE WHICH CAMERA COVERS WHICH APPARATUS, edit this map.
+   camera1 = 192.168.8.200, camera2 = 192.168.8.222 (MediaMTX paths).
+   Use null for apparatus with no camera yet.                       */
+const FEED_BASE = 'https://feed.ngljudge.com/';
+const CAMERA_FEEDS = {
+  floor:   'camera1',
+  vault:   'camera2',
+  bars:    null,
+  pbars:   null,
+  beam:    null,
+  pommel:  null,
+  rings:   null,
+  highbar: null,
+};
+
+function setupFeed(apparatusId){
+  const feedBox = document.getElementById('feed-box');
+  const controls = document.getElementById('feed-controls');
+  const existing = feedBox.querySelector('iframe');
+  if (existing) existing.remove();
+
+  const path = CAMERA_FEEDS[apparatusId];
+  if (!path) {
+    feedBox.classList.remove('live');
+    controls.classList.add('hidden');
+    return;
+  }
+
+  const frame = document.createElement('iframe');
+  frame.id = 'feed-frame';
+  frame.allow = 'autoplay; fullscreen';
+  frame.src = FEED_BASE + path;
+  feedBox.appendChild(frame);
+  feedBox.classList.add('live');
+  controls.classList.remove('hidden');
+}
+
+document.getElementById('feed-reload-btn').addEventListener('click', () => {
+  const frame = document.getElementById('feed-frame');
+  if (frame) frame.src = frame.src;
+});
+
+document.getElementById('feed-auth-btn').addEventListener('click', () => {
+  window.open(FEED_BASE, '_blank');
 });
 
 /* ---------- Quadrant expand (fullscreen) ---------- */
