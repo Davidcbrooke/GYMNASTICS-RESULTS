@@ -373,13 +373,13 @@
   }
 
   var pages = [
-    {kind:"static", img:"page-01.jpg", alt:"Cover", eyebrow:"NGL Schools Awards Scheme", note:"The official NGL Schools course book, alongside every routine video for Levels 1–6."},
-    {kind:"static", img:"page-02.jpg", alt:"Welcome to the NGL Schools Awards Programme", eyebrow:"Welcome", note:"How the programme works and what each Level builds towards."},
-    {kind:"static", img:"page-03.jpg", alt:"Meet Somi and Flic, the NGL mascots", eyebrow:"Meet Somi & Flic", note:"The programme’s mascots, appearing throughout the book."},
-    {kind:"static", img:"page-04.jpg", alt:"Progress tracker for Terms 1 to 3", eyebrow:"Progress Tracker", note:"Bronze, Silver and Gold — tracked across three terms per Level."},
-    {kind:"static", img:"page-05.jpg", alt:"Congratulations and Level medals", eyebrow:"Certificates & Medals", note:"What happens once all three certificates for a Level are complete."},
+    {kind:"static", img:"pages/page-01.jpg", alt:"Cover", eyebrow:"NGL Schools Awards Scheme", note:"The official NGL Schools course book, alongside every routine video for Levels 1–6."},
+    {kind:"static", img:"pages/page-02.jpg", alt:"Welcome to the NGL Schools Awards Programme", eyebrow:"Welcome", note:"How the programme works and what each Level builds towards."},
+    {kind:"static", img:"pages/page-03.jpg", alt:"Meet Somi and Flic, the NGL mascots", eyebrow:"Meet Somi & Flic", note:"The programme’s mascots, appearing throughout the book."},
+    {kind:"static", img:"pages/page-04.jpg", alt:"Progress tracker for Terms 1 to 3", eyebrow:"Progress Tracker", note:"Bronze, Silver and Gold — tracked across three terms per Level."},
+    {kind:"static", img:"pages/page-05.jpg", alt:"Congratulations and Level medals", eyebrow:"Certificates & Medals", note:"What happens once all three certificates for a Level are complete."},
     null,null,null,null,null,null, // levels 1-6 built below
-    {kind:"static", img:"page-12.jpg", alt:"The NGL pathway from Pre-School to Masters", eyebrow:"The NGL Pathway", note:"Where the Schools Awards Programme sits in the wider NGL journey."}
+    {kind:"static", img:"pages/page-12.jpg", alt:"The NGL pathway from Pre-School to Masters", eyebrow:"The NGL Pathway", note:"Where the Schools Awards Programme sits in the wider NGL journey."}
   ];
 
   for (var i = 0; i < 6; i++){
@@ -387,7 +387,7 @@
     pages[5 + i] = {
       kind:"level",
       level:n,
-      img:"page-0" + (6 + i) + ".jpg",
+      img:"pages/page-0" + (6 + i) + ".jpg",
       alt:"Schools Level " + n + " skill sheet",
       color:levelColors[i],
       tiles:[
