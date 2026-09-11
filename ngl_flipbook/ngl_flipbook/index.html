@@ -1,0 +1,533 @@
+<title>NGL Schools Video Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1B1E4D;
+    --navy-deep:#12143A;
+    --navy-panel:#242861;
+    --paper:#FBF8F0;
+    --paper-shadow:rgba(18,20,58,.35);
+    --ink:#22243F;
+    --ink-soft:#585B7E;
+    --gold:#F0BB3E;
+    --on-navy:#F4F1E6;
+    --on-navy-soft:#B9BBE0;
+    --ring:#F0BB3E;
+
+    --piece-floor:#2B2F6E;
+    --piece-bench:#DE4360;
+    --piece-block:#2E6FB0;
+    --piece-spring:#178A8C;
+
+    --lvl-1:#E8A33D;
+    --lvl-2:#D8434F;
+    --lvl-3:#4CAF6D;
+    --lvl-4:#2FA6A0;
+    --lvl-5:#3B72C4;
+    --lvl-6:#A24FA0;
+
+    --radius-lg:22px;
+    --radius-md:14px;
+    --radius-sm:9px;
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--navy-deep);
+    color:var(--on-navy);
+    font-family:'Roboto',system-ui,-apple-system,Segoe UI,sans-serif;
+    padding-inline:16px;
+    padding-block:20px 32px;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{
+    font-family:'Roboto',system-ui,sans-serif;
+    text-wrap:balance;
+    margin:0;
+  }
+
+  .stage{
+    max-width:1180px;
+    margin-inline:auto;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    padding-block:4px;
+  }
+  .brand{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+  .brand-mark{
+    font-family:'Roboto',sans-serif;
+    font-weight:900;
+    font-size:clamp(22px,4vw,30px);
+    letter-spacing:.02em;
+    color:var(--on-navy);
+  }
+  .brand-mark span{color:var(--gold);}
+  .brand-sub{
+    font-size:13px;
+    font-weight:600;
+    color:var(--on-navy-soft);
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+
+  /* ---------- level rail ---------- */
+  .level-rail{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-block:2px 6px;
+    scrollbar-width:thin;
+  }
+  .rail-chip{
+    flex:0 0 auto;
+    border:1.5px solid rgba(244,241,230,.18);
+    background:rgba(244,241,230,.05);
+    color:var(--on-navy);
+    font-family:'Roboto',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    padding:8px 14px;
+    border-radius:999px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    white-space:nowrap;
+    transition:background .15s ease, border-color .15s ease, transform .1s ease;
+  }
+  .rail-chip:hover{background:rgba(244,241,230,.12);}
+  .rail-chip:active{transform:scale(.96);}
+  .rail-chip:focus-visible{outline:2px solid var(--ring); outline-offset:2px;}
+  .rail-chip .dot{width:9px; height:9px; border-radius:50%; background:var(--chip,var(--gold)); flex:0 0 auto;}
+  .rail-chip[data-active="true"]{
+    background:var(--chip, var(--gold));
+    border-color:transparent;
+    color:var(--navy-deep);
+  }
+  .rail-chip[data-active="true"] .dot{background:var(--navy-deep);}
+
+  /* ---------- viewer ---------- */
+  .viewer{
+    background:linear-gradient(180deg,var(--navy-panel),var(--navy));
+    border-radius:var(--radius-lg);
+    padding:clamp(14px,3vw,28px);
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04);
+    position:relative;
+  }
+
+  .spread{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:18px;
+    min-height:280px;
+  }
+  .spread[data-kind="level"]{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    align-items:start;
+  }
+  @media (max-width:720px){
+    .spread[data-kind="level"]{grid-template-columns:1fr;}
+  }
+
+  .spread.is-animating{animation:pageIn .32s ease;}
+  @keyframes pageIn{
+    from{opacity:0; transform:translateY(6px) scale(.995);}
+    to{opacity:1; transform:none;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .spread.is-animating{animation:none;}
+  }
+
+  /* ---------- page image pane ---------- */
+  .page-pane{
+    background:var(--paper);
+    border-radius:var(--radius-md);
+    padding:10px;
+    box-shadow:0 14px 32px -14px var(--paper-shadow);
+    position:relative;
+  }
+  .page-pane[data-lvl]{border-top:7px solid var(--pane-accent,var(--gold));}
+  .page-pane img{
+    display:block;
+    width:100%;
+    height:auto;
+    border-radius:8px;
+    aspect-ratio:962/1328;
+    object-fit:cover;
+    background:#eee;
+  }
+  .spread[data-kind="static"] .page-pane{
+    max-width:460px;
+    margin-inline:auto;
+  }
+
+  /* ---------- video pane ---------- */
+  .video-pane{display:flex; flex-direction:column; gap:10px;}
+  .video-pane .eyebrow{
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    color:var(--on-navy-soft);
+    padding-inline:2px;
+  }
+  .tile-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  @media (max-width:420px){
+    .tile-grid{grid-template-columns:1fr;}
+  }
+
+  .tile{
+    --tc: #2B2F6E;
+    background:linear-gradient(155deg, var(--tc), color-mix(in srgb, var(--tc) 72%, black));
+    border-radius:var(--radius-md);
+    padding:14px;
+    color:#fff;
+    text-decoration:none;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-height:132px;
+    position:relative;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.08);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .tile:hover{transform:translateY(-2px); box-shadow:0 12px 24px -10px rgba(0,0,0,.55);}
+  .tile:active{transform:translateY(0) scale(.98);}
+  .tile:focus-visible{outline:2px solid var(--ring); outline-offset:2px;}
+  .tile-top{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .tile-icon{
+    width:34px; height:34px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.14);
+    border-radius:9px;
+    flex:0 0 auto;
+  }
+  .tile-icon svg{width:19px; height:19px;}
+  .tile-play{
+    width:26px; height:26px;
+    border-radius:50%;
+    background:rgba(255,255,255,.92);
+    display:flex; align-items:center; justify-content:center;
+    flex:0 0 auto;
+  }
+  .tile-play svg{width:10px; height:10px; margin-left:1px;}
+  .tile-name{font-family:'Roboto',sans-serif; font-weight:700; font-size:15.5px; line-height:1.15;}
+  .tile-caption{font-size:12px; line-height:1.35; color:rgba(255,255,255,.82); font-weight:500;}
+
+  /* ---------- static intro copy ---------- */
+  .intro-note{
+    text-align:center;
+    font-size:13px;
+    color:var(--on-navy-soft);
+    max-width:460px;
+    margin-inline:auto;
+    padding-inline:4px;
+  }
+
+  /* ---------- controls ---------- */
+  .controls{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .ctrl-btn{
+    font-family:'Roboto',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    color:var(--navy-deep);
+    background:var(--gold);
+    border:none;
+    padding:11px 18px;
+    border-radius:999px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  .ctrl-btn:hover{filter:brightness(1.07);}
+  .ctrl-btn:active{transform:scale(.97);}
+  .ctrl-btn:disabled{opacity:.35; cursor:default;}
+  .ctrl-btn:focus-visible{outline:2px solid #fff; outline-offset:2px;}
+
+  .pageinfo{
+    text-align:center;
+    font-size:13px;
+    font-weight:700;
+    color:var(--on-navy-soft);
+    min-width:170px;
+  }
+  .pageinfo b{color:var(--on-navy); font-weight:800;}
+
+  .dots{
+    display:flex;
+    justify-content:center;
+    gap:7px;
+    flex-wrap:wrap;
+  }
+  .dot-btn{
+    width:9px; height:9px;
+    border-radius:50%;
+    border:none;
+    background:rgba(244,241,230,.22);
+    cursor:pointer;
+    padding:0;
+  }
+  .dot-btn[data-active="true"]{
+    width:22px;
+    border-radius:5px;
+    background:var(--gold);
+  }
+  .dot-btn:focus-visible{outline:2px solid var(--ring); outline-offset:2px;}
+
+  .sr-only{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+</style>
+
+<div class="stage">
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-mark">NGL <span>Schools</span></span>
+      <span class="brand-sub">Awards Video Library</span>
+    </div>
+  </div>
+
+  <nav class="level-rail" id="levelRail" aria-label="Jump to a page"></nav>
+
+  <main class="viewer">
+    <div class="spread" id="spread" data-kind="static"></div>
+  </main>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="prevBtn" type="button">‹ Previous</button>
+    <div class="pageinfo" id="pageinfo"></div>
+    <button class="ctrl-btn" id="nextBtn" type="button">Next ›</button>
+  </div>
+
+  <div class="dots" id="dots"></div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var floorIds  = ["RNUwhMXiYis","eADe1GviPLM","h16vKU5tP4U","FpKpFKOUYyU","iOsuHJGkO1c","YAgIG_0C6uw"];
+  var blockIds  = ["Tk9rSyeja-4","lZ-UoxomKzw","sLOY2MHdAXk","W5be9WitaYE","HJTE-yp1MWY","EdxpJ7TUja0"];
+  var springIds = ["DYYRmbEa50s","M70tbYs7Ld8","5pyvEyEWVW0","Oh_UWsoI0NM","L6_0UBX5dj8","CRlrSVHQGi0"];
+  var benchIds  = ["svkVbP3FZ3g","7jVy-1UzC3A","xitDvlyhDuk","AxkCpULTco4","zN4otrQRZn0","58-lBeUAII4"];
+
+  var springCaptions = [
+    "Run, straight jump off springboard to land",
+    "Run, star jump off springboard to land",
+    "Run, tuck jump off springboard to land",
+    "Run, straddle jump off springboard to land",
+    "Run, star jump off springboard, over low table",
+    "Run, tuck jump off springboard, over low table"
+  ];
+  var blockCaptions = [
+    "Squat on low table from stand, straight jump off",
+    "Squat on low table from stand, star jump off",
+    "Run, squat on, tuck jump off",
+    "Run, squat on, star jump off",
+    "Run side vault over, tucked legs",
+    "Run side vault over, straight legs"
+  ];
+
+  var levelColors = ["var(--lvl-1)","var(--lvl-2)","var(--lvl-3)","var(--lvl-4)","var(--lvl-5)","var(--lvl-6)"];
+
+  var icons = {
+    floor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15a5 5 0 0 1 8-4 5 5 0 0 0 8-4"/><circle cx="4" cy="15" r="1.4" fill="currentColor" stroke="none"/><circle cx="20" cy="7" r="1.4" fill="currentColor" stroke="none"/></svg>',
+    bench: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="9" width="19" height="4" rx="1"/><path d="M6 13v4M18 13v4"/></svg>',
+    block: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="7" rx="1.2"/><path d="M8 10V7.5A1.5 1.5 0 0 1 9.5 6h5A1.5 1.5 0 0 1 16 7.5V10"/></svg>',
+    spring: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="6" rx="1.1"/><path d="M9 15 3 19"/><path d="M3 19h5"/></svg>'
+  };
+  var playIcon = '<svg viewBox="0 0 10 10" fill="#1B1E4D"><path d="M1 0.5v9l8-4.5z"/></svg>';
+
+  function levelPiece(pieceKey, colorVar, iconKey, label, id, caption){
+    return {pieceKey:pieceKey, color:colorVar, icon:icons[iconKey], label:label, id:id, caption:caption};
+  }
+
+  var pages = [
+    {kind:"static", img:"page-01.jpg", alt:"Cover", eyebrow:"NGL Schools Awards Scheme", note:"The official NGL Schools course book, alongside every routine video for Levels 1–6."},
+    {kind:"static", img:"page-02.jpg", alt:"Welcome to the NGL Schools Awards Programme", eyebrow:"Welcome", note:"How the programme works and what each Level builds towards."},
+    {kind:"static", img:"page-03.jpg", alt:"Meet Somi and Flic, the NGL mascots", eyebrow:"Meet Somi & Flic", note:"The programme’s mascots, appearing throughout the book."},
+    {kind:"static", img:"page-04.jpg", alt:"Progress tracker for Terms 1 to 3", eyebrow:"Progress Tracker", note:"Bronze, Silver and Gold — tracked across three terms per Level."},
+    {kind:"static", img:"page-05.jpg", alt:"Congratulations and Level medals", eyebrow:"Certificates & Medals", note:"What happens once all three certificates for a Level are complete."},
+    null,null,null,null,null,null, // levels 1-6 built below
+    {kind:"static", img:"page-12.jpg", alt:"The NGL pathway from Pre-School to Masters", eyebrow:"The NGL Pathway", note:"Where the Schools Awards Programme sits in the wider NGL journey."}
+  ];
+
+  for (var i = 0; i < 6; i++){
+    var n = i + 1;
+    pages[5 + i] = {
+      kind:"level",
+      level:n,
+      img:"page-0" + (6 + i) + ".jpg",
+      alt:"Schools Level " + n + " skill sheet",
+      color:levelColors[i],
+      tiles:[
+        levelPiece("floor","--piece-floor","floor","Floor",floorIds[i],"Full Level " + n + " floor routine"),
+        levelPiece("bench","--piece-bench","bench","Bench / Beam",benchIds[i],"Full Level " + n + " bench routine"),
+        levelPiece("block","--piece-block","block","Block Routine",blockIds[i],blockCaptions[i]),
+        levelPiece("spring","--piece-spring","spring","Block & Springboard",springIds[i],springCaptions[i])
+      ]
+    };
+  }
+
+  var total = pages.length;
+  var current = 0;
+
+  var spreadEl = document.getElementById("spread");
+  var railEl = document.getElementById("levelRail");
+  var dotsEl = document.getElementById("dots");
+  var pageinfoEl = document.getElementById("pageinfo");
+  var prevBtn = document.getElementById("prevBtn");
+  var nextBtn = document.getElementById("nextBtn");
+
+  function railChips(){
+    var chips = [{ toIdx:0, label:"Cover" }];
+    for (var i=0;i<6;i++){ chips.push({toIdx:5+i, label:"L"+(i+1), color:levelColors[i]}); }
+    chips.push({ toIdx:11, label:"Pathway" });
+    return chips;
+  }
+
+  function buildRail(){
+    var chips = railChips();
+    railEl.innerHTML = chips.map(function(c){
+      var styleAttr = c.color ? ' style="--chip:'+c.color+'"' : "";
+      return '<button type="button" class="rail-chip" data-goto="'+c.toIdx+'"'+styleAttr+'>'+
+        '<span class="dot"></span>'+c.label+'</button>';
+    }).join("");
+  }
+
+  function buildDots(){
+    var html = "";
+    for (var i=0;i<total;i++){
+      html += '<button type="button" class="dot-btn" data-goto="'+i+'" aria-label="Go to page '+(i+1)+'"></button>';
+    }
+    dotsEl.innerHTML = html;
+  }
+
+  function tileHtml(t){
+    return (
+      '<a class="tile" style="--tc:var('+t.color+')" href="https://youtu.be/'+t.id+'" target="_blank" rel="noopener noreferrer">'+
+        '<div class="tile-top">'+
+          '<span class="tile-icon">'+t.icon+'</span>'+
+          '<span class="tile-play">'+playIcon+'</span>'+
+        '</div>'+
+        '<span class="tile-name">'+t.label+'</span>'+
+        '<span class="tile-caption">'+t.caption+'</span>'+
+      '</a>'
+    );
+  }
+
+  function render(){
+    var p = pages[current];
+    spreadEl.setAttribute("data-kind", p.kind);
+    spreadEl.classList.remove("is-animating");
+    // force reflow so the animation can restart
+    void spreadEl.offsetWidth;
+    spreadEl.classList.add("is-animating");
+
+    if (p.kind === "level"){
+      spreadEl.innerHTML =
+        '<div class="page-pane" data-lvl style="--pane-accent:'+p.color+'">'+
+          '<img src="'+p.img+'" alt="'+p.alt+'" loading="lazy">'+
+        '</div>'+
+        '<div class="video-pane">'+
+          '<div class="eyebrow">Level '+p.level+' — watch the routines</div>'+
+          '<div class="tile-grid">'+p.tiles.map(tileHtml).join("")+'</div>'+
+        '</div>';
+    } else {
+      spreadEl.innerHTML =
+        '<div class="page-pane">'+
+          '<img src="'+p.img+'" alt="'+p.alt+'" loading="lazy">'+
+        '</div>'+
+        '<div class="intro-note">'+p.note+'</div>';
+    }
+
+    var label = p.kind === "level" ? ("Level " + p.level) : p.eyebrow;
+    pageinfoEl.innerHTML = 'Page <b>'+(current+1)+'</b> of '+total+' — '+label;
+
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === total - 1;
+
+    var chips = railEl.querySelectorAll(".rail-chip");
+    chips.forEach(function(ch){
+      ch.setAttribute("data-active", String(Number(ch.getAttribute("data-goto")) === current));
+    });
+    var dots = dotsEl.querySelectorAll(".dot-btn");
+    dots.forEach(function(d,i){
+      d.setAttribute("data-active", String(i === current));
+    });
+  }
+
+  function goTo(idx){
+    current = Math.max(0, Math.min(total - 1, idx));
+    render();
+  }
+
+  prevBtn.addEventListener("click", function(){ goTo(current - 1); });
+  nextBtn.addEventListener("click", function(){ goTo(current + 1); });
+
+  railEl.addEventListener("click", function(e){
+    var btn = e.target.closest(".rail-chip");
+    if (btn) goTo(Number(btn.getAttribute("data-goto")));
+  });
+  dotsEl.addEventListener("click", function(e){
+    var btn = e.target.closest(".dot-btn");
+    if (btn) goTo(Number(btn.getAttribute("data-goto")));
+  });
+
+  document.addEventListener("keydown", function(e){
+    if (e.key === "ArrowLeft") goTo(current - 1);
+    else if (e.key === "ArrowRight") goTo(current + 1);
+    else if (e.key === "Home") goTo(0);
+    else if (e.key === "End") goTo(total - 1);
+  });
+
+  var touchStartX = null, touchStartY = null;
+  document.querySelector(".viewer").addEventListener("touchstart", function(e){
+    touchStartX = e.changedTouches[0].clientX;
+    touchStartY = e.changedTouches[0].clientY;
+  }, {passive:true});
+  document.querySelector(".viewer").addEventListener("touchend", function(e){
+    if (touchStartX === null) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4){
+      if (dx < 0) goTo(current + 1); else goTo(current - 1);
+    }
+    touchStartX = null; touchStartY = null;
+  }, {passive:true});
+
+  buildRail();
+  buildDots();
+  render();
+})();
+</script>
