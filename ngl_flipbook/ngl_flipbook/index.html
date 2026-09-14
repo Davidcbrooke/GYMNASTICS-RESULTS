@@ -384,10 +384,12 @@
 
   for (var i = 0; i < 6; i++){
     var n = i + 1;
+    var pageNum = 6 + i;
+    var pageNumStr = pageNum < 10 ? ("0" + pageNum) : String(pageNum);
     pages[5 + i] = {
       kind:"level",
       level:n,
-      img:"pages/page-0" + (6 + i) + ".jpg",
+      img:"pages/page-" + pageNumStr + ".jpg",
       alt:"Schools Level " + n + " skill sheet",
       color:levelColors[i],
       tiles:[
