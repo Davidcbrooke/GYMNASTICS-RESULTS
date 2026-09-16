@@ -226,16 +226,17 @@ const SEASON_DATA = {
 
 function actionCardHTML(a){
   if(!a || !a.url){
+    const sub = (a && a.subOverride) ? a.subOverride : 'Coming soon';
     return `
       <div class="action-card disabled">
         <span class="action-icon">${a ? a.icon : ''}</span>
         <span class="action-title">${a ? a.title : ''}</span>
-        <span class="action-sub">Coming soon</span>
+        <span class="action-sub">${sub}</span>
       </div>
     `;
   }
   return `
-    <a class="action-card" href="${a.url}" target="_blank" rel="noopener">
+    <a class="action-card" href="${a.url}" target="_top">
       <span class="action-icon">${a.icon}</span>
       <span class="action-title">${a.title}</span>
       <span class="action-sub">${a.sub || ''}</span>
@@ -249,9 +250,22 @@ const PLACEHOLDER_ACTIONS = [
   { icon:"📖", title:"Rules" }
 ];
 
+// Per-pathway overrides for the placeholder cards above — use this for cards that
+// will never apply (e.g. no league table), as opposed to ones that just aren't built yet.
+const PLACEHOLDER_OVERRIDES = {
+  preschool: { "League Table & Qualification": "Not applicable", "Rules": "Not applicable" },
+  schools: { "League Table & Qualification": "Not applicable", "Rules": "Not applicable" }
+};
+
+function placeholderActionsFor(p){
+  const overrides = PLACEHOLDER_OVERRIDES[p.id] || {};
+  return PLACEHOLDER_ACTIONS.map(a => Object.assign({}, a, { subOverride: overrides[a.title] || null }));
+}
+
 function pathwayPanelHTML(p){
   const data = SEASON_DATA[p.id];
   if(!data){
+    const actions = placeholderActionsFor(p);
     return `
       <div class="card">
         <p class="lede">Competition details for ${p.name} are coming soon.</p>
@@ -261,10 +275,10 @@ function pathwayPanelHTML(p){
         <div class="stab" data-sec="s1">Next Season</div>
       </div>
       <div class="section-panel active" data-sec="s0">
-        <div class="action-grid">${PLACEHOLDER_ACTIONS.map(a => actionCardHTML(a)).join('')}</div>
+        <div class="action-grid">${actions.map(a => actionCardHTML(a)).join('')}</div>
       </div>
       <div class="section-panel" data-sec="s1">
-        <div class="action-grid">${PLACEHOLDER_ACTIONS.map(a => actionCardHTML(a)).join('')}</div>
+        <div class="action-grid">${actions.map(a => actionCardHTML(a)).join('')}</div>
       </div>
     `;
   }
@@ -275,7 +289,7 @@ function pathwayPanelHTML(p){
       <div class="action-grid">${s.actions.map(a => actionCardHTML(a)).join('')}</div>
       ${s.extra ? `
         <div class="action-grid" style="margin-top:12px;">
-          <a class="action-card secondary" href="${s.extra.url}" target="_blank" rel="noopener">
+          <a class="action-card secondary" href="${s.extra.url}" target="_top">
             <span class="action-title">${s.extra.title}</span>
             <span class="action-sub">${s.extra.sub || ''}</span>
           </a>
