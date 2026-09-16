@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Competitions</title>
+<style>
+  :root{
+    --navy:#0a1440;
+    --navy-3:#152463;
+    --navy-4:#1d2f7a;
+    --line:rgba(255,255,255,0.14);
+    --white:#ffffff;
+    --muted:#b7c1e6;
+    --gold:#f2a900;
+
+    --c-preschool:#ef2891;
+    --c-schools:#f5d12f;
+    --c-recreational:#ea732c;
+    --c-general:#0f6bac;
+    --c-performance:#38bcb9;
+    --c-university:#59ac29;
+    --c-masters:#851a6c;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy);
+    color:var(--white);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+
+  .wrap{max-width:980px;margin:0 auto;padding:20px 16px 64px;}
+
+  .page-title{
+    font-size:15px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:center;
+    margin:6px 0 4px;
+    font-weight:600;
+  }
+  .page-sub{
+    text-align:center;
+    color:var(--white);
+    font-size:19px;
+    font-weight:700;
+    margin:0 0 18px;
+  }
+
+  /* ---------- Pathway tabs ---------- */
+  .pathway-tabs{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:4px 2px 14px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .pathway-tabs::-webkit-scrollbar{display:none;}
+
+  .ptab{
+    flex:0 0 auto;
+    padding:11px 16px;
+    border-radius:999px;
+    background:var(--navy-3);
+    border:1px solid var(--line);
+    color:var(--white);
+    font-size:14px;
+    font-weight:600;
+    white-space:nowrap;
+    cursor:pointer;
+    transition:background .18s ease, transform .12s ease, border-color .18s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .ptab:active{transform:scale(0.97);}
+  .ptab.active{
+    background:var(--tab-color, var(--gold));
+    border-color:var(--tab-color, var(--gold));
+    color:var(--tab-text, #0a1440);
+  }
+
+  /* ---------- Pathway panels ---------- */
+  .pathway-panel{display:none;}
+  .pathway-panel.active{display:block; animation:fadein .22s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .lede{font-size:15px; line-height:1.55; color:var(--white); margin:0 0 20px;}
+  .lede:last-child{margin-bottom:0;}
+
+  .card{
+    background:var(--navy-3);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:22px;
+    margin-bottom:16px;
+  }
+
+  /* ---------- Season tabs ---------- */
+  .section-tabs{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  .stab{
+    flex:1 1 auto;
+    min-width:140px;
+    text-align:center;
+    padding:14px 10px;
+    border-radius:12px;
+    background:var(--navy-3);
+    border:1px solid var(--line);
+    color:var(--white);
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:background .18s ease, transform .12s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .stab:active{transform:scale(0.98);}
+  .stab.active{
+    background:var(--pathway-color, var(--gold));
+    color:var(--pathway-text, #0a1440);
+    border-color:var(--pathway-color, var(--gold));
+  }
+
+  .section-panel{display:none;}
+  .section-panel.active{display:block; animation:fadein .22s ease;}
+
+  /* ---------- Action cards (Schedule & Booking / League Table & Qualification / Rules) ---------- */
+  .action-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  @media (min-width:640px){
+    .action-grid{grid-template-columns:repeat(3,1fr);}
+  }
+  .action-card{
+    display:block;
+    background:var(--navy-4);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px 18px;
+    text-decoration:none;
+    color:var(--white);
+    transition:background .15s ease, transform .12s ease, border-color .15s ease;
+  }
+  .action-card:hover{background:#243a94; border-color:var(--pathway-color, var(--line));}
+  .action-card:active{transform:scale(0.98);}
+  .action-icon{font-size:22px; display:block; margin-bottom:10px;}
+  .action-title{display:block; font-weight:700; font-size:15px; margin-bottom:4px;}
+  .action-sub{display:block; font-weight:400; font-size:12.5px; color:var(--muted); line-height:1.4;}
+  .action-card.disabled{
+    opacity:.55;
+    cursor:default;
+    pointer-events:none;
+  }
+  .action-card.secondary{
+    background:transparent;
+    border-style:dashed;
+  }
+
+  .coming-soon{
+    color:var(--muted);
+    font-size:13px;
+    font-style:italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="page-title">NGL Competitions</div>
+  <div class="page-sub">Which competition or event is your gymnast interested in?</div>
+
+  <div class="pathway-tabs" id="pathwayTabs"></div>
+
+  <div id="panels"></div>
+</div>
+
+<script>
+const DARK_TEXT = '#0a1440';
+const LIGHT_TEXT = '#ffffff';
+
+const PATHWAYS = [
+  { id:"preschool",    name:"Pre-School",         color:"var(--c-preschool)",    text:LIGHT_TEXT },
+  { id:"schools",      name:"Schools",            color:"var(--c-schools)",      text:DARK_TEXT },
+  { id:"recreational", name:"Recreational",       color:"var(--c-recreational)", text:DARK_TEXT },
+  { id:"general",      name:"General League",     color:"var(--c-general)",      text:LIGHT_TEXT },
+  { id:"performance",  name:"Performance League", color:"var(--c-performance)",  text:DARK_TEXT },
+  { id:"university",   name:"University League",  color:"var(--c-university)",   text:DARK_TEXT },
+  { id:"masters",      name:"Masters",            color:"var(--c-masters)",      text:LIGHT_TEXT }
+];
+
+// Everything here is plain data — swap a URL, label or "live" flag any time without touching the render code below.
+const SEASON_DATA = {
+  general: {
+    overview: "The National Gymnastics League — local competitions captured live through a National League Table, leading to qualification to represent your Region at National Finals.",
+    seasons: [
+      {
+        label: "This Season (2026)",
+        actions: [
+          { icon:"📅", title:"Season Schedule & Booking", sub:"Find and book your club's place via JustGo.", url:"https://www.nationalgymnasticsleague.co.uk/league-schedule-4" },
+          { icon:"🏆", title:"League Table & Qualification", sub:"Live results, league table and National Qualifiers.", url:"https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" },
+          { icon:"📖", title:"Rules", sub:"Girls Rules, Girls Element Book and Boys Rules.", url:"https://www.nationalgymnasticsleague.co.uk/handbook" }
+        ],
+        extra: { title:"National Qualifiers", sub:"Regional qualification tracker for the 2026 season.", url:"https://davidcbrooke.github.io/GYMNASTICS-RESULTS/national-qualifier.html" }
+      },
+      {
+        label: "Next Season (2027)",
+        actions: [
+          { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve your club's place now, pay later.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
+          { icon:"🏆", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
+          { icon:"📖", title:"Rules", sub:"Girls Rules and Boys Rules for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/handbook-1" }
+        ]
+      }
+    ]
+  }
+};
+
+function actionCardHTML(a){
+  if(!a || !a.url){
+    return `
+      <div class="action-card disabled">
+        <span class="action-icon">${a ? a.icon : ''}</span>
+        <span class="action-title">${a ? a.title : ''}</span>
+        <span class="action-sub">Coming soon</span>
+      </div>
+    `;
+  }
+  return `
+    <a class="action-card" href="${a.url}" target="_blank" rel="noopener">
+      <span class="action-icon">${a.icon}</span>
+      <span class="action-title">${a.title}</span>
+      <span class="action-sub">${a.sub || ''}</span>
+    </a>
+  `;
+}
+
+const PLACEHOLDER_ACTIONS = [
+  { icon:"📅", title:"Season Schedule & Booking" },
+  { icon:"🏆", title:"League Table & Qualification" },
+  { icon:"📖", title:"Rules" }
+];
+
+function pathwayPanelHTML(p){
+  const data = SEASON_DATA[p.id];
+  if(!data){
+    return `
+      <div class="card">
+        <p class="lede">Competition details for ${p.name} are coming soon.</p>
+      </div>
+      <div class="section-tabs">
+        <div class="stab active" data-sec="s0">This Season</div>
+        <div class="stab" data-sec="s1">Next Season</div>
+      </div>
+      <div class="section-panel active" data-sec="s0">
+        <div class="action-grid">${PLACEHOLDER_ACTIONS.map(a => actionCardHTML(a)).join('')}</div>
+      </div>
+      <div class="section-panel" data-sec="s1">
+        <div class="action-grid">${PLACEHOLDER_ACTIONS.map(a => actionCardHTML(a)).join('')}</div>
+      </div>
+    `;
+  }
+
+  const tabs = data.seasons.map((s, i) => `<div class="stab${i===0 ? ' active' : ''}" data-sec="s${i}">${s.label}</div>`).join('');
+  const panels = data.seasons.map((s, i) => `
+    <div class="section-panel${i===0 ? ' active' : ''}" data-sec="s${i}">
+      <div class="action-grid">${s.actions.map(a => actionCardHTML(a)).join('')}</div>
+      ${s.extra ? `
+        <div class="action-grid" style="margin-top:12px;">
+          <a class="action-card secondary" href="${s.extra.url}" target="_blank" rel="noopener">
+            <span class="action-title">${s.extra.title}</span>
+            <span class="action-sub">${s.extra.sub || ''}</span>
+          </a>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+
+  return `
+    <div class="card"><p class="lede">${data.overview}</p></div>
+    <div class="section-tabs">${tabs}</div>
+    ${panels}
+  `;
+}
+
+const tabsEl = document.getElementById('pathwayTabs');
+const panelsEl = document.getElementById('panels');
+
+PATHWAYS.forEach((p, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'ptab' + (i === 0 ? ' active' : '');
+  btn.style.setProperty('--tab-color', p.color);
+  btn.style.setProperty('--tab-text', p.text);
+  btn.textContent = p.name;
+  btn.dataset.target = p.id;
+  btn.addEventListener('click', () => selectPathway(p.id));
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'pathway-panel' + (i === 0 ? ' active' : '');
+  panel.id = 'panel-' + p.id;
+  panel.style.setProperty('--pathway-color', p.color);
+  panel.style.setProperty('--pathway-text', p.text);
+  panel.innerHTML = pathwayPanelHTML(p);
+  panelsEl.appendChild(panel);
+});
+
+function selectPathway(id){
+  document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('active', b.dataset.target === id));
+  document.querySelectorAll('.pathway-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
+}
+
+document.addEventListener('click', (e) => {
+  const stab = e.target.closest('.stab');
+  if(stab){
+    const sec = stab.dataset.sec;
+    const scope = stab.closest('.pathway-panel');
+    scope.querySelectorAll('.stab').forEach(b => b.classList.toggle('active', b === stab));
+    scope.querySelectorAll('.section-panel').forEach(p => p.classList.toggle('active', p.dataset.sec === sec));
+  }
+});
+</script>
+
+</body>
+</html>
