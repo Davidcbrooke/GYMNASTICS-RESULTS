@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Club Support — What Are You Looking For?</title>
+<style>
+  :root{
+    --navy:#0a1440;
+    --navy-3:#152463;
+    --navy-4:#1d2f7a;
+    --line:rgba(255,255,255,0.14);
+    --white:#ffffff;
+    --muted:#b7c1e6;
+    --gold:#f2a900;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy);
+    color:var(--white);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:980px;margin:0 auto;padding:8px 16px 24px;}
+
+  .section-title{
+    text-align:center;
+    color:var(--white);
+    font-size:19px;
+    font-weight:700;
+    margin:0 0 6px;
+  }
+  .section-sub{
+    text-align:center;
+    color:var(--muted);
+    font-size:14.5px;
+    margin:0 0 20px;
+    line-height:1.5;
+  }
+
+  .link-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:12px;
+  }
+  @media (min-width:700px){
+    .link-grid{grid-template-columns:repeat(4, 1fr);}
+  }
+
+  .link-card{
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    background:var(--navy-3);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 14px;
+    text-decoration:none;
+    color:var(--white);
+    min-height:150px;
+    transition:transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .link-card:active{transform:scale(0.98);}
+  @media (hover:hover){
+    .link-card.filled:hover{background:#1a2a70; border-color:var(--gold);}
+    .link-card.open:hover{border-color:var(--muted);}
+  }
+
+  .link-icon{font-size:24px; line-height:1; margin-bottom:10px; display:block;}
+  .link-title{font-size:14.5px; font-weight:800; line-height:1.3; margin-bottom:6px;}
+  .link-desc{font-size:12.5px; line-height:1.4; color:var(--muted); margin-bottom:10px;}
+
+  .link-card.filled .link-cta{
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--gold);
+    letter-spacing:.02em;
+  }
+
+  .link-card.open{
+    background:transparent;
+    border:1.5px dashed var(--line);
+  }
+  .link-card.open .badge{
+    display:inline-block;
+    font-size:10.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--navy);
+    background:var(--muted);
+    padding:3px 8px;
+    border-radius:999px;
+    margin-bottom:8px;
+    width:fit-content;
+  }
+  .link-card.open .link-cta{
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--muted);
+    text-decoration:underline;
+    letter-spacing:.02em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="section-title">What are you looking for?</div>
+  <div class="section-sub">Jump straight to the support your club needs — or, if you're a business that could fill a gap below, we'd love to hear from you.</div>
+
+  <div class="link-grid">
+
+    <a class="link-card filled" href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-club-support.html?pillar=coach&tab=co-partners" target="_blank" rel="noopener">
+      <div>
+        <span class="link-icon">🎓</span>
+        <div class="link-title">Coaching Expertise</div>
+        <div class="link-desc">High-performance coaching consultancy for your club.</div>
+      </div>
+      <div class="link-cta">Explore →</div>
+    </a>
+
+    <a class="link-card filled" href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-club-support.html?pillar=operate&tab=op-it" target="_blank" rel="noopener">
+      <div>
+        <span class="link-icon">⚙️</span>
+        <div class="link-title">Club Management Systems</div>
+        <div class="link-desc">JustGo class management, built for British Gymnastics clubs.</div>
+      </div>
+      <div class="link-cta">Explore →</div>
+    </a>
+
+    <a class="link-card filled" href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-club-support.html?pillar=care&tab=ca-partners" target="_blank" rel="noopener">
+      <div>
+        <span class="link-icon">🛡️</span>
+        <div class="link-title">HR Advice</div>
+        <div class="link-desc">HR support and safeguarding-aware guidance for clubs.</div>
+      </div>
+      <div class="link-cta">Explore →</div>
+    </a>
+
+    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
+      <div>
+        <span class="badge">Partnership Opportunity</span>
+        <div class="link-title">Legal Support</div>
+        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
+      </div>
+      <div class="link-cta">Are you interested? →</div>
+    </a>
+
+    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
+      <div>
+        <span class="badge">Partnership Opportunity</span>
+        <div class="link-title">Branded Clothing</div>
+        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
+      </div>
+      <div class="link-cta">Are you interested? →</div>
+    </a>
+
+    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
+      <div>
+        <span class="badge">Partnership Opportunity</span>
+        <div class="link-title">Medals &amp; Awards</div>
+        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
+      </div>
+      <div class="link-cta">Are you interested? →</div>
+    </a>
+
+    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
+      <div>
+        <span class="badge">Partnership Opportunity</span>
+        <div class="link-title">Accounting Advice</div>
+        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
+      </div>
+      <div class="link-cta">Are you interested? →</div>
+    </a>
+
+    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
+      <div>
+        <span class="badge">Partnership Opportunity</span>
+        <div class="link-title">Social Media Support</div>
+        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
+      </div>
+      <div class="link-cta">Are you interested? →</div>
+    </a>
+
+  </div>
+
+</div>
+</body>
+</html>
