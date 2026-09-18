@@ -22,7 +22,6 @@
     color:var(--white);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
-    min-height:100vh;
   }
 
   .wrap{max-width:980px;margin:0 auto;padding:20px 16px 64px;}
@@ -675,6 +674,37 @@ document.querySelectorAll('.close-panel').forEach(btn => {
     document.getElementById('linkGrid').scrollIntoView({behavior: 'smooth', block: 'start'});
   });
 });
+
+// ---- Auto-resize for iframe embedding ----
+// Whenever an accordion or partner panel opens/closes, this page's real
+// height changes a lot. Rather than the Squarespace iframe guessing a
+// fixed height (always wrong for one state or another), this page tells
+// its parent window exactly how tall it is, every time it changes, via
+// postMessage. The matching snippet on the Squarespace side listens for
+// this and resizes the iframe to match. If this page is viewed on its
+// own (not inside an iframe), this simply has no effect.
+(function(){
+  function reportHeight(){
+    // body.scrollHeight (not documentElement's) — the html element's
+    // scrollHeight reports the iframe's current viewport height whenever
+    // that's larger than the content, which would prevent this from ever
+    // reporting a SMALLER number after something collapses.
+    const h = document.body.scrollHeight;
+    window.parent.postMessage({ type: 'ngl-club-support-resize', height: h }, '*');
+  }
+
+  window.addEventListener('load', reportHeight);
+  window.addEventListener('resize', reportHeight);
+
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(reportHeight).observe(document.body);
+  } else {
+    // Fallback for older browsers: just poll occasionally.
+    setInterval(reportHeight, 500);
+  }
+
+  reportHeight();
+})();
 </script>
 
 </body>
