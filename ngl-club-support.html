@@ -128,6 +128,22 @@
   .pathway-panel{display:none;}
   .pathway-panel.active{display:block; animation:fadein .22s ease;}
 
+  /* Slim, capped-height pillar banner: fills width but never towers on a
+     wide screen — on a phone the natural aspect ratio already sits under
+     the cap, so it renders full-size there. */
+  .hero-img{
+    width:100%;
+    max-height:190px;
+    object-fit:cover;
+    object-position:center 30%;
+    display:block;
+    border-radius:16px;
+    margin:0 0 16px;
+  }
+  @media (max-width:480px){
+    .hero-img{ max-height:260px; }
+  }
+
   .lede{font-size:15px; line-height:1.55; color:var(--white); margin:0 0 14px;}
   .lede:last-child{margin-bottom:0;}
 
@@ -285,6 +301,8 @@
   <!-- ===================== OPERATE BETTER ===================== -->
   <div class="pillar-section active" id="pillar-operate">
 
+    <img class="hero-img" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/e2fe23ab-df44-4d57-93da-1cbea66389c4/ChatGPT+Image+Feb+5%2C+2026%2C+12_00_40+PM.png" alt="Operate Better">
+
     <div class="pathway-tabs">
       <div class="ptab active" data-target="op-means">What This Means</div>
       <div class="ptab" data-target="op-it">IT Systems</div>
@@ -349,6 +367,8 @@
 
   <!-- ===================== COACH BETTER ===================== -->
   <div class="pillar-section" id="pillar-coach">
+
+    <img class="hero-img" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/de834680-dc62-4e17-8268-f12b958b0b31/nationalgymnasticsleague-1767611191.png" alt="Coach Better">
 
     <div class="pathway-tabs">
       <div class="ptab active" data-target="co-means">What This Means</div>
@@ -435,6 +455,8 @@
 
   <!-- ===================== CARE BETTER ===================== -->
   <div class="pillar-section" id="pillar-care">
+
+    <img class="hero-img" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/eaf170e7-ea4b-4de6-9431-ace90e506126/07e34cab-f36b-433b-86d3-11a6cc520836.png" alt="Care Better">
 
     <div class="pathway-tabs">
       <div class="ptab active" data-target="ca-means">What This Means</div>
@@ -525,6 +547,8 @@
   <!-- ===================== GROW BETTER ===================== -->
   <div class="pillar-section" id="pillar-grow">
 
+    <img class="hero-img" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/94c92de2-a159-4cfb-82ef-25751d829a87/ChatGPT+Image+Feb+5%2C+2026%2C+03_23_10+PM.png" alt="Grow Better">
+
     <div class="card">
       <h3>Building sustainable, future-ready clubs</h3>
       <p class="lede">For clubs to thrive long term, growth must be planned, informed and sustainable. The Grow Better pillar focuses on helping clubs make smarter decisions around sales, marketing and programme development — using data, insight and shared national visibility rather than guesswork.</p>
@@ -535,6 +559,8 @@
 
   <!-- ===================== CONNECT BETTER ===================== -->
   <div class="pillar-section" id="pillar-connect">
+
+    <img class="hero-img" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/40cb2536-0fad-438f-bade-279cdc6228dc/ChatGPT+Image+Feb+5%2C+2026%2C+03_29_17+PM.png" alt="Connect Better">
 
     <div class="card">
       <h3>Let's talk!</h3>
