@@ -119,6 +119,11 @@
     display:grid;
     grid-template-columns:repeat(2, 1fr);
     gap:12px;
+    /* "dense" lets the grid slot later cards back into the row a card
+       came from once its expand panel (a full-width item) has been
+       placed below it, so the row above the panel always looks the
+       same as when everything is closed. */
+    grid-auto-flow:row dense;
   }
   @media (min-width:700px){
     .link-grid{grid-template-columns:repeat(4, 1fr);}
@@ -182,8 +187,10 @@
     letter-spacing:.02em;
   }
 
-  /* ---------- Expand panels (partner detail, shown below the grid) ---------- */
-  .expand-panel{display:none; margin-top:20px;}
+  /* ---------- Expand panels (partner detail — sit inline in the grid,
+     directly under the card that opened them, and push the other
+     cards down rather than appearing at the bottom of the page) ---------- */
+  .expand-panel{display:none; grid-column:1 / -1; margin-top:4px;}
   .expand-panel.active{display:block; animation:fadein .22s ease;}
 
   .lede{font-size:15px; line-height:1.55; color:var(--white); margin:0 0 14px;}
@@ -389,74 +396,7 @@
       <div class="link-cta">See partners ▾</div>
     </div>
 
-    <div class="link-card filled" data-target="itsystems">
-      <div>
-        <span class="link-icon">⚙️</span>
-        <div class="link-title">Club Management Systems</div>
-        <div class="link-desc">JustGo class management, plus NGL's own Rotation Planner tool.</div>
-      </div>
-      <div class="link-cta">See partners ▾</div>
-    </div>
-
-    <div class="link-card filled" data-target="hradvice">
-      <div>
-        <span class="link-icon">🛡️</span>
-        <div class="link-title">HR Advice</div>
-        <div class="link-desc">HR support and parent/athlete wellbeing guidance for clubs.</div>
-      </div>
-      <div class="link-cta">See partners ▾</div>
-    </div>
-
-    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
-      <div>
-        <span class="badge">Partnership Opportunity</span>
-        <div class="link-title">Legal Support</div>
-        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
-      </div>
-      <div class="link-cta">Are you interested? →</div>
-    </a>
-
-    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
-      <div>
-        <span class="badge">Partnership Opportunity</span>
-        <div class="link-title">Branded Clothing</div>
-        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
-      </div>
-      <div class="link-cta">Are you interested? →</div>
-    </a>
-
-    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
-      <div>
-        <span class="badge">Partnership Opportunity</span>
-        <div class="link-title">Medals &amp; Awards</div>
-        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
-      </div>
-      <div class="link-cta">Are you interested? →</div>
-    </a>
-
-    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
-      <div>
-        <span class="badge">Partnership Opportunity</span>
-        <div class="link-title">Accounting Advice</div>
-        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
-      </div>
-      <div class="link-cta">Are you interested? →</div>
-    </a>
-
-    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
-      <div>
-        <span class="badge">Partnership Opportunity</span>
-        <div class="link-title">Social Media Support</div>
-        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
-      </div>
-      <div class="link-cta">Are you interested? →</div>
-    </a>
-
-  </div>
-
-  <!-- ===================== EXPAND PANELS ===================== -->
-
-  <div class="expand-panel" id="panel-coaching">
+    <div class="expand-panel" id="panel-coaching">
     <button class="close-panel" data-close="coaching">✕ Close</button>
 
     <div class="card">
@@ -523,7 +463,16 @@
     </div>
   </div>
 
-  <div class="expand-panel" id="panel-itsystems">
+    <div class="link-card filled" data-target="itsystems">
+      <div>
+        <span class="link-icon">⚙️</span>
+        <div class="link-title">Club Management Systems</div>
+        <div class="link-desc">JustGo class management, plus NGL's own Rotation Planner tool.</div>
+      </div>
+      <div class="link-cta">See partners ▾</div>
+    </div>
+
+    <div class="expand-panel" id="panel-itsystems">
     <button class="close-panel" data-close="itsystems">✕ Close</button>
 
     <div class="card">
@@ -572,7 +521,16 @@
     </div>
   </div>
 
-  <div class="expand-panel" id="panel-hradvice">
+    <div class="link-card filled" data-target="hradvice">
+      <div>
+        <span class="link-icon">🛡️</span>
+        <div class="link-title">HR Advice</div>
+        <div class="link-desc">HR support and parent/athlete wellbeing guidance for clubs.</div>
+      </div>
+      <div class="link-cta">See partners ▾</div>
+    </div>
+
+    <div class="expand-panel" id="panel-hradvice">
     <button class="close-panel" data-close="hradvice">✕ Close</button>
 
     <div class="card">
@@ -626,9 +584,93 @@
     </div>
   </div>
 
+    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
+      <div>
+        <span class="badge">Partnership Opportunity</span>
+        <div class="link-title">Legal Support</div>
+        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
+      </div>
+      <div class="link-cta">Are you interested? →</div>
+    </a>
+
+    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
+      <div>
+        <span class="badge">Partnership Opportunity</span>
+        <div class="link-title">Branded Clothing</div>
+        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
+      </div>
+      <div class="link-cta">Are you interested? →</div>
+    </a>
+
+    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
+      <div>
+        <span class="badge">Partnership Opportunity</span>
+        <div class="link-title">Medals &amp; Awards</div>
+        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
+      </div>
+      <div class="link-cta">Are you interested? →</div>
+    </a>
+
+    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
+      <div>
+        <span class="badge">Partnership Opportunity</span>
+        <div class="link-title">Accounting Advice</div>
+        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
+      </div>
+      <div class="link-cta">Are you interested? →</div>
+    </a>
+
+    <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
+      <div>
+        <span class="badge">Partnership Opportunity</span>
+        <div class="link-title">Social Media Support</div>
+        <div class="link-desc">No trusted partner here yet — could that be your business?</div>
+      </div>
+      <div class="link-cta">Are you interested? →</div>
+    </a>
+
+  </div>
+
+
 </div>
 
 <script>
+// This page is normally embedded in an iframe that's auto-resized to
+// exactly fit its content (see below), which means there's nothing to
+// scroll INSIDE the iframe itself — scrollIntoView() here would be a
+// no-op. The actual scrolling has to happen on the parent Squarespace
+// page, so instead we measure where the target element sits and ask
+// the parent to scroll there, the same way we report height.
+function scrollParentTo(el, offset){
+  const top = el.getBoundingClientRect().top; // iframe has no internal scroll, so this is already relative to the iframe's own top
+  window.parent.postMessage({ type: 'ngl-club-support-scrollto', top: top - (offset || 16) }, '*');
+}
+
+// Tells the parent page how tall this page's content currently is (see the
+// full explanation further down, next to where this used to live). Defined
+// up here too so the click handlers below can call it directly before
+// scrolling.
+function reportHeight(){
+  // body.scrollHeight (not documentElement's) — the html element's
+  // scrollHeight reports the iframe's current viewport height whenever
+  // that's larger than the content, which would prevent this from ever
+  // reporting a SMALLER number after something collapses.
+  const h = document.body.scrollHeight;
+  window.parent.postMessage({ type: 'ngl-club-support-resize', height: h }, '*');
+}
+
+// Opening/closing a section changes this page's height, which means the
+// parent needs to resize the iframe BEFORE we ask it to scroll — otherwise
+// the scroll position we calculate (based on the iframe's own layout) won't
+// line up with the iframe's still-stale box size on the parent page yet.
+// So: report the new height right away, then wait a couple of frames
+// (giving the resize message time to arrive and be applied) before asking
+// the parent to scroll.
+function syncThenScroll(el, offset){
+  reportHeight();
+  requestAnimationFrame(() => requestAnimationFrame(() => scrollParentTo(el, offset)));
+}
+
 // 5-Pillars accordion — one open at a time, click again to close.
 document.querySelectorAll('.pillar-row').forEach(row => {
   row.addEventListener('click', () => {
@@ -642,6 +684,7 @@ document.querySelectorAll('.pillar-row').forEach(row => {
     if (!wasActive) {
       row.classList.add('active');
       body.classList.add('active');
+      syncThenScroll(row);
     }
   });
 });
@@ -660,7 +703,7 @@ document.querySelectorAll('.link-card.filled').forEach(card => {
     if (!wasActive) {
       card.classList.add('active');
       panel.classList.add('active');
-      panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+      syncThenScroll(panel);
     }
   });
 });
@@ -671,7 +714,7 @@ document.querySelectorAll('.close-panel').forEach(btn => {
     document.getElementById('panel-' + id).classList.remove('active');
     const card = document.querySelector('.link-card.filled[data-target="' + id + '"]');
     if (card) card.classList.remove('active');
-    document.getElementById('linkGrid').scrollIntoView({behavior: 'smooth', block: 'start'});
+    syncThenScroll(document.getElementById('linkGrid'));
   });
 });
 
@@ -684,15 +727,6 @@ document.querySelectorAll('.close-panel').forEach(btn => {
 // this and resizes the iframe to match. If this page is viewed on its
 // own (not inside an iframe), this simply has no effect.
 (function(){
-  function reportHeight(){
-    // body.scrollHeight (not documentElement's) — the html element's
-    // scrollHeight reports the iframe's current viewport height whenever
-    // that's larger than the content, which would prevent this from ever
-    // reporting a SMALLER number after something collapses.
-    const h = document.body.scrollHeight;
-    window.parent.postMessage({ type: 'ngl-club-support-resize', height: h }, '*');
-  }
-
   window.addEventListener('load', reportHeight);
   window.addEventListener('resize', reportHeight);
 
