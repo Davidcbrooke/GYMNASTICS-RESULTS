@@ -209,6 +209,18 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .ls-alert-label{ margin-top:.6em; font-size:.55em; font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); }
 .ls-alert-names{ margin-top:.2em; }
 .ls-chip{ display:inline-block; margin:.12em; padding:.08em .5em; border-radius:.5em; background:rgba(0,0,0,.28); font-weight:800; }
+
+/* FINAL GOES announcement (right-hand panel, sits under the red ROTATE NOW alert) */
+.ls-final{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--gold); color:var(--navy); padding:3em 4em; z-index:4; overflow:hidden; }
+.ls-final.show{ display:flex; animation:lsAlertIn .35s ease-out, lsFinalPulse 1.2s ease-in-out .35s infinite; }
+.ls-final-icon{ font-size:12em; line-height:1; margin-bottom:.1em; }
+.ls-final-title{ font-size:21em; font-weight:900; letter-spacing:.02em; line-height:.95; white-space:nowrap; }
+.ls-final-title span{ display:block; }
+.ls-final-sub{ margin-top:.9em; font-size:4.6em; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+.ls-final-body{ margin-top:.8em; font-size:5em; max-width:100%; }
+.ls-final-body .ls-alert-label{ color:var(--navy); opacity:.75; }
+.ls-final-body .ls-chip{ background:rgba(26,42,74,.16); }
+@keyframes lsFinalPulse{ 0%,100%{ background:#c9a227; } 50%{ background:#e0b93a; } }
 @keyframes lsAlertIn{ from{ opacity:0; transform:scale(.92); } to{ opacity:1; transform:scale(1); } }
 @keyframes lsAlertPulse{ 0%,100%{ background:#c0392b; } 50%{ background:#e04b3b; } }
 @media (max-width:700px){
@@ -218,6 +230,10 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
   .ls-alert{ padding:1em 2em; }
   .ls-alert-title{ font-size:11em; line-height:1; }
   .ls-alert-title span{ display:inline; }
+  .ls-final{ padding:1em 2em; }
+  .ls-final-icon{ display:none; }
+  .ls-final-title{ font-size:11em; line-height:1; }
+  .ls-final-title span{ display:inline; }
 }
 
 @keyframes alertPop{ 0%{ transform:translate(-50%,-50%) scale(.7); opacity:0; } 100%{ transform:translate(-50%,-50%) scale(1); opacity:1; } }
@@ -582,6 +598,12 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
           <div class="ls-time" id="lsTime"><span id="lsHH">--</span><span class="ls-colon" id="lsColon">:</span><span id="lsMM">--</span></div>
           <div class="ls-secs" id="lsSecs">:--</div>
           <div class="ls-date" id="lsDate"></div>
+        </div>
+        <div class="ls-final" id="lsFinal">
+          <div class="ls-final-icon">⏳</div>
+          <div class="ls-final-title"><span>FINAL</span> <span>GOES</span></div>
+          <div class="ls-final-sub">Rotating in 1 minute</div>
+          <div class="ls-final-body" id="lsFinalBody"></div>
         </div>
         <div class="ls-alert" id="lsAlert">
           <div class="ls-alert-bell">🔔</div>
@@ -2058,6 +2080,7 @@ function exitLive(){
   document.getElementById('sponsorBand').style.display='';
   document.getElementById('liveQR').style.display='none';
   hideRotationAlert();
+  hideFinalGoes();
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('plannerView').classList.add('active');
   try{document.exitFullscreen&&document.exitFullscreen();}catch(e){}
@@ -2073,6 +2096,7 @@ function startLiveClock(){
     updateSideClock(n);
     updateNowLine();
     checkFlash();
+    checkFinalGoes();
     // re-render timeline every minute to show/hide groups as sessions start and end
     if(n.getSeconds()===0){
       renderTimeline(getTodayName());
@@ -2236,25 +2260,48 @@ function toggleBell(){
   btn.style.background = bellEnabled ? 'var(--gold)' : 'rgba(255,255,255,.15)';
   btn.style.color = bellEnabled ? 'var(--navy)' : '#fff';
   showToast(bellEnabled ? 'Bell alerts on' : 'Bell alerts off');
+  if(bellEnabled) ringBell(); // test chime: unlocks audio on this click and lets you check the volume
+}
+
+// ---- Bell loudness settings (edit these two numbers) ----
+const BELL_VOLUME  = 1.0; // 0 to 1 — 1 is the loudest the browser can make it
+const BELL_REPEATS = 1;   // how many times the ding-dong plays each time the alert fires
+
+// shared audio output for every sound: one context, with a compressor so we can drive the level hard
+function bellOut(){
+  if(!audioCtxBell) audioCtxBell = new (window.AudioContext||window.webkitAudioContext)();
+  const ctx = audioCtxBell;
+  if(ctx.state==='suspended') ctx.resume();
+  // compressor lets us drive the level hard without crackling, so the bell is much louder
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -14; comp.knee.value = 6; comp.ratio.value = 10;
+  comp.attack.value = 0.003; comp.release.value = 0.25;
+  const master = ctx.createGain(); master.gain.value = BELL_VOLUME;
+  comp.connect(master); master.connect(ctx.destination);
+  return { ctx, comp, t0: ctx.currentTime + 0.05 };
 }
 
 function ringBell(){
   try{
-    if(!audioCtxBell) audioCtxBell = new (window.AudioContext||window.webkitAudioContext)();
-    const ctx = audioCtxBell;
-    // ding-dong: two tones
-    [880, 660].forEach((freq, i)=>{
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      osc.type = 'sine';
-      const start = ctx.currentTime + i * 0.4;
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.4, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.8);
-      osc.start(start); osc.stop(start + 0.8);
-    });
+    const { ctx, comp, t0 } = bellOut();
+    for(let r=0; r<BELL_REPEATS; r++){
+      // ding-dong: two notes. Each is a full triangle wave plus a bright octave-up tone,
+      // which carries much better across a noisy hall than a plain sine.
+      [880, 660].forEach((freq, i)=>{
+        const start = t0 + r*1.4 + i*0.4;
+        [['triangle', freq, 0.75], ['sine', freq*2, 0.35]].forEach(([type, f, level])=>{
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = type; osc.frequency.value = f;
+          osc.connect(gain); gain.connect(comp);
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(level, start + 0.02);
+          gain.gain.setValueAtTime(level, start + 0.3);            // hold at full for a moment
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 1.1);
+          osc.start(start); osc.stop(start + 1.1);
+        });
+      });
+    }
   }catch(e){ console.warn('Bell audio failed:', e); }
 }
 
@@ -2306,6 +2353,106 @@ function hideRotationAlert(){
   clearTimeout(el._t);
   el.classList.remove('show');
 }
+
+// ================================================================
+// FINAL GOES — announced 1 minute before a group's session ends and it moves on
+// ================================================================
+const FINAL_GOES_LEAD    = 1;     // minutes before the rotation
+const FINAL_GOES_MS      = 8000;  // how long the announcement stays on screen before the clock returns
+const FINAL_GOES_SPOKEN  = true;  // also say "Final goes" out loud (only while the 🔔 is on). false = screen + chime only
+const FINAL_GOES_MAXGAP  = 5;     // a session only counts as "rotating" if the group's next one starts within this many minutes
+let lastFinalGoes = -999;
+
+function checkFinalGoes(){
+  if(!liveMode || !DATA || !DATA.groups) return;
+  const day = getTodayName();
+  const nowMin = nowMinutes();
+  const ends = {}; // session end minute -> groups that move on at that time
+  DATA.groups.forEach(g=>{
+    if(!(g.days||DAYS).includes(day)) return;
+    const ss = (DATA.sessions[day]&&DATA.sessions[day][g.id])||[];
+    ss.forEach(s=>{
+      const end = s.start_min + s.duration;
+      // only when the group actually moves on to another session shortly after
+      if(!ss.some(n=>n.start_min>=end && n.start_min<=end+FINAL_GOES_MAXGAP)) return;
+      (ends[end] = ends[end]||[]).push(g);
+    });
+  });
+  Object.keys(ends).forEach(k=>{
+    const end = +k;
+    const from = end - FINAL_GOES_LEAD;
+    if(nowMin>=from && nowMin<from+0.5 && lastFinalGoes!==end){
+      lastFinalGoes = end;
+      showFinalGoes(ends[k]);
+    }
+  });
+}
+
+function showFinalGoes(groups){
+  const el = document.getElementById('lsFinal');
+  const body = document.getElementById('lsFinalBody');
+  if(!el||!body) return;
+  const sorted = groups.slice().sort((a,b)=>{
+    if(a.section!==b.section) return a.section==='squad'?-1:1;
+    return a.name.localeCompare(b.name);
+  });
+  const sections = [];
+  const squads = sorted.filter(g=>g.section==='squad').map(g=>g.name);
+  const rec = sorted.filter(g=>g.section!=='squad').map(g=>g.name);
+  if(squads.length) sections.push({ label:'Squads', names:squads });
+  if(rec.length) sections.push({ label:'Recreational', names:rec });
+  const total = sections.reduce((n,s)=>n+s.names.join(' ').length,0);
+  body.style.fontSize = (total<40?6:total<90?5:total<160?4.2:total<280?3.4:2.8)+'em';
+  body.innerHTML = sections.map(s=>
+    `<div class="ls-alert-label">${escHtml(s.label)}</div><div class="ls-alert-names">${s.names.map(n=>`<span class="ls-chip">${escHtml(n)}</span>`).join('')}</div>`
+  ).join('');
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(hideFinalGoes, FINAL_GOES_MS);
+  if(bellEnabled){
+    ringFinalChime();
+    if(FINAL_GOES_SPOKEN) setTimeout(speakFinalGoes, 900);
+  }
+}
+
+function hideFinalGoes(){
+  const el = document.getElementById('lsFinal'); if(!el) return;
+  clearTimeout(el._t);
+  el.classList.remove('show');
+}
+
+// two quick pings — clearly different from the ding-dong used for ROTATE NOW
+function ringFinalChime(){
+  try{
+    const { ctx, comp, t0 } = bellOut();
+    [0, 0.25].forEach(off=>{
+      const start = t0 + off;
+      [['triangle', 1175, 0.75], ['sine', 2350, 0.3]].forEach(([type, f, level])=>{
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type; osc.frequency.value = f;
+        osc.connect(gain); gain.connect(comp);
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(level, start + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.55);
+        osc.start(start); osc.stop(start + 0.55);
+      });
+    });
+  }catch(e){ console.warn('Final chime failed:', e); }
+}
+
+function speakFinalGoes(){
+  try{
+    if(!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance('Final goes');
+    u.lang = 'en-GB'; u.rate = 0.9; u.pitch = 1; u.volume = 1;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){ console.warn('Speech failed:', e); }
+}
+
+// handy for testing: open the browser console (F12) while in Live mode and type previewFinalGoes()
+window.previewFinalGoes = function(){ showFinalGoes((DATA.groups||[]).slice(0,4)); };
 
 function checkFlash(){
   if(!liveMode) return;
