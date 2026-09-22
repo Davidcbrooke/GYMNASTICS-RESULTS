@@ -585,7 +585,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
       <div class="live-day" id="liveDayLabel"></div>
       <button class="live-exit" onclick="exitLive()">⏸ Exit Live</button>
       <button onclick="showStreamLink()" style="background:rgba(255,255,255,.15);color:#fff;border:none;padding:7px 14px;border-radius:5px;font-weight:700;cursor:pointer;font-size:.82rem;margin-left:8px;" title="Get shareable streaming link">📡 Stream</button>
-      <button id="bellBtn" onclick="toggleBell()" style="background:rgba(255,255,255,.15);color:#fff;border:none;padding:7px 14px;border-radius:5px;font-weight:700;cursor:pointer;font-size:1rem;margin-left:8px;" title="Toggle rotation bell alert">🔔</button>
+      <button id="bellBtn" onclick="toggleBell()" style="background:var(--gold);color:var(--navy);border:none;padding:7px 14px;border-radius:5px;font-weight:700;cursor:pointer;font-size:1rem;margin-left:8px;" title="Toggle rotation bell alert">🔔</button>
       <!-- Persistent QR code for parents/coaches to scan -->
       <div id="liveQR" style="display:none;flex-direction:column;align-items:center;margin-left:8px;">
         <img id="liveQRImg" style="width:54px;height:54px;border-radius:4px;border:2px solid rgba(255,255,255,.3);" alt="QR">
@@ -2042,6 +2042,7 @@ function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 // ================================================================
 function enterLive(){
   liveMode=true;
+  if(bellEnabled) unlockLiveAudio(); // "Go Live" is a real click, so use it to unlock sound for later automatic alerts
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('liveView').classList.add('active');
   document.getElementById('tabs').style.display='none';
@@ -2254,12 +2255,26 @@ function updateNowLine(){
   document.querySelectorAll('.tl-block').forEach(b=>{ const s=parseInt(b.dataset.startMin),e=parseInt(b.dataset.endMin); b.classList.toggle('dim',!(nowMin>=s&&nowMin<e)); });
 }
 
-let bellEnabled = false;
+let bellEnabled = true; // sound defaults to on each time the page loads
 let lastAlertMin = -999;
 let audioCtxBell = null;
 
+// primes the AudioContext and the speech voice from a genuine click, so ringBell()/speakFinalGoes()
+// called later from a timer (not a click) aren't silently blocked by the browser's autoplay policy
+function unlockLiveAudio(){
+  try{ bellOut(); }catch(e){}
+  try{
+    if('speechSynthesis' in window){
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    }
+  }catch(e){}
+}
+
 function toggleBell(){
   bellEnabled = !bellEnabled;
+  if(bellEnabled) unlockLiveAudio();
   const btn = document.getElementById('bellBtn');
   btn.textContent = bellEnabled ? '🔔' : '🔕';
   btn.style.background = bellEnabled ? 'var(--gold)' : 'rgba(255,255,255,.15)';
