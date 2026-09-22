@@ -142,7 +142,7 @@ function render(){
   var day = getTodayName();
   var week = detectWeek();
   var now = nowMin();
-  document.getElementById('dayLabel').textContent = day + ' - Week ' + week;
+  document.getElementById('dayLabel').textContent = day + ' - Rotation Week ' + (week==='B'?2:1);
   var content = document.getElementById('groupsContent');
   content.innerHTML = '';
 
@@ -155,7 +155,7 @@ function render(){
     if(!groups.length) return;
     var lbl = document.createElement('div');
     lbl.className='section-label';
-    lbl.textContent = section==='squad'?'Squads':'Recreational - Week '+week;
+    lbl.textContent = section==='squad'?'Squads':'Recreational - Rotation Week '+(week==='B'?2:1);
     content.appendChild(lbl);
     groups.forEach(function(group){
       var sessions = (DATA.sessions[day]&&DATA.sessions[day][group.id])||[];

@@ -100,6 +100,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .week-toggle{ display:flex; background:rgba(255,255,255,.1); border-radius:6px; overflow:hidden; gap:2px; padding:2px; }
 .week-btn{ background:none; border:none; color:rgba(255,255,255,.6); padding:7px 12px; cursor:pointer; font-weight:700; font-size:.8rem; }
 .week-btn.active{ background:var(--gold); color:var(--navy); }
+.week-btn{ white-space:nowrap; }
+@media (max-width:768px){ .wk-pre{ display:none; } } /* phones: 'Week 1' / 'Week 2' so the header still fits */
 .header-clock{ font-size:1.3rem; font-weight:700; color:var(--gold); font-variant-numeric:tabular-nums; display:none; }
 .header-clock.visible{ display:block; }
 
@@ -199,6 +201,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .ls-colon{ transition:opacity .25s; }
 .ls-colon.off{ opacity:.2; }
 .ls-secs{ margin-top:.1em; font-size:10em; font-weight:700; color:rgba(201,162,39,.65); font-variant-numeric:tabular-nums; line-height:1; }
+.ls-week{ margin-top:.35em; font-size:1.2em; font-weight:800; color:var(--gold); }
 .ls-date{ margin-top:1.4em; font-size:4.6em; font-weight:600; color:rgba(255,255,255,.75); letter-spacing:.02em; }
 .ls-alert{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--red); color:#fff; padding:3em 4em; z-index:5; overflow:hidden; }
 .ls-alert.show{ display:flex; animation:lsAlertIn .35s ease-out, lsAlertPulse 1s ease-in-out .35s infinite; }
@@ -516,8 +519,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
       <button class="secondary" onclick="saveNow()">💾 Save</button>
       <span id="saveStatus" class="save-status"></span>
       <div class="week-toggle">
-        <button id="weekABtn" class="week-btn active" onclick="setWeek('A')">Week A</button>
-        <button id="weekBBtn" class="week-btn" onclick="setWeek('B')">Week B</button>
+        <button id="weekABtn" class="week-btn active" onclick="setWeek('A')"><span class="wk-pre">Rotation </span>Week 1</button>
+        <button id="weekBBtn" class="week-btn" onclick="setWeek('B')"><span class="wk-pre">Rotation </span>Week 2</button>
       </div>
       <button class="secondary" onclick="doLogout()" title="Sign out">⏏ Sign Out</button>
     </div>
@@ -538,10 +541,10 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
     <div id="mobileDayView">
       <div class="mob-day-nav">
         <button onclick="mobPrevDay()">&#8592;</button>
-        <div class="mob-day-name" id="mobDayName">Monday<span id="mobWeekLabel">Week A</span></div>
+        <div class="mob-day-name" id="mobDayName">Monday<span id="mobWeekLabel">Rotation Week 1</span></div>
         <div class="mob-week-toggle">
-          <button class="mob-week-btn active" id="mobWeekABtn" onclick="mobSetWeek('A')">A</button>
-          <button class="mob-week-btn" id="mobWeekBBtn" onclick="mobSetWeek('B')">B</button>
+          <button class="mob-week-btn active" id="mobWeekABtn" onclick="mobSetWeek('A')">1</button>
+          <button class="mob-week-btn" id="mobWeekBBtn" onclick="mobSetWeek('B')">2</button>
         </div>
         <button onclick="mobNextDay()">&#8594;</button>
       </div>
@@ -619,8 +622,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 <div class="modal-overlay" id="sessionModal">
   <div class="modal-box">
     <h3 id="smTitle">Add Session</h3>
-    <div class="mf"><label>Week A Location</label><select id="sm_loc"></select></div>
-    <div class="mf" id="sm_locB_field"><label>Week B Location <span style="font-weight:400;color:var(--muted);font-size:.7rem">(optional — leave blank if same every week)</span></label><select id="sm_locB"><option value="">— Same as Week A —</option></select></div>
+    <div class="mf"><label>Rotation Week 1 Location</label><select id="sm_loc"></select></div>
+    <div class="mf" id="sm_locB_field"><label>Rotation Week 2 Location <span style="font-weight:400;color:var(--muted);font-size:.7rem">(optional — leave blank if same every week)</span></label><select id="sm_locB"><option value="">— Same as Rotation Week 1 —</option></select></div>
     <div class="mf-row">
       <div class="mf"><label>Start time</label><select id="sm_start"></select></div>
       <div class="mf"><label>Duration (mins)</label><input type="number" id="sm_dur" value="30" min="5" max="240" step="5"></div>
@@ -1099,6 +1102,8 @@ function showToast(msg){ const t=document.getElementById('toast'); t.textContent
 function setDur(v){ document.getElementById('sm_dur').value=v; document.querySelectorAll('.dur-chip').forEach(c=>c.classList.toggle('active',parseInt(c.textContent)===v)); }
 function getGroupById(id){ return DATA.groups.find(g=>g.id===id); }
 function getLocByName(name){ return DATA.locations.find(l=>l.name===name); }
+// Display names for the two rotation weeks — internally they are still stored as 'A' and 'B'
+function weekName(w){ return 'Rotation Week '+(w==='B'?2:1); }
 function getSessionLocation(s){ return currentWeek==='B'&&s.locationB?s.locationB:s.location; }
 
 function getDayBounds(day){
@@ -1177,7 +1182,7 @@ function setWeek(w){
   document.getElementById('weekABtn').classList.toggle('active',w==='A');
   document.getElementById('weekBBtn').classList.toggle('active',w==='B');
   renderWeekTable();
-  showToast('Showing Week '+w+' rotations');
+  showToast('Showing '+weekName(w));
 }
 
 // ================================================================
@@ -1206,7 +1211,7 @@ function renderWeekTable(){
 function renderSection(tbody,section,label){
   const groups=DATA.groups.filter(g=>g.section===section);
   const sep=document.createElement('tr'); sep.className='section-header';
-  const td=document.createElement('td'); td.colSpan=8; td.textContent=label+(section==='recreational'?` — Week ${currentWeek}`:'');
+  const td=document.createElement('td'); td.colSpan=8; td.textContent=label+(section==='recreational'?` — ${weekName(currentWeek)}`:'');
   sep.appendChild(td); tbody.appendChild(sep);
   groups.forEach(group=>{
     const tr=document.createElement('tr');
@@ -1282,7 +1287,7 @@ function openSessionModal(day,groupId,sessionIdx){
   document.getElementById('sm_autoadjust_field').style.display=isNew?'none':'block';
   // populate locations — grouped by category, alphabetically within each
   const sl=document.getElementById('sm_loc'), slB=document.getElementById('sm_locB');
-  sl.innerHTML=''; slB.innerHTML='<option value="">— Same as Week A —</option>';
+  sl.innerHTML=''; slB.innerHTML='<option value="">— Same as Rotation Week 1 —</option>';
   const catOrder=['Floor','Bars','Beam','Vault','Tumble / Track','Pommel / Rings','Rooms','Other'];
   const grouped={};
   DATA.locations.forEach(l=>{ const cat=l.category||'Other'; if(!grouped[cat]) grouped[cat]=[]; grouped[cat].push(l); });
@@ -1491,7 +1496,7 @@ function printPlanner(){
     }).join('');
     return `<tr><td style="padding:5px 8px;font-size:10px;font-weight:700;border:1px solid #ddd;white-space:nowrap;background:#f5f5f5;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${g.colour};margin-right:4px;"></span>${g.name}</td>${dayCells}</tr>`;
   }).join('');
-  const weekLabel=`Week ${currentWeek}`;
+  const weekLabel=weekName(currentWeek);
   printWin.document.write(`<!DOCTYPE html><html><head><title>Rotation Planner</title><style>
     body{font-family:Arial,sans-serif;margin:16px;}
     h2{color:#1a2a4a;margin-bottom:4px;}
@@ -1830,11 +1835,11 @@ function renderWeeklyTotals(){
   let html=`<div class="totals-wrap">`;
   if(hasWeekB){
     html+=`<div class="totals-week-toggle" style="margin-bottom:16px;">
-      <button class="totals-week-btn active" id="totals_weekA" onclick="switchTotalsWeek('A')">Week A</button>
-      <button class="totals-week-btn" id="totals_weekB" onclick="switchTotalsWeek('B')">Week B</button>
+      <button class="totals-week-btn active" id="totals_weekA" onclick="switchTotalsWeek('A')">Rotation Week 1</button>
+      <button class="totals-week-btn" id="totals_weekB" onclick="switchTotalsWeek('B')">Rotation Week 2</button>
     </div>
-    <div id="totals_tableA">${buildView(calcTotals('A'),'Week A')}</div>
-    <div id="totals_tableB" style="display:none">${buildView(calcTotals('B'),'Week B')}</div>`;
+    <div id="totals_tableA">${buildView(calcTotals('A'),weekName('A'))}</div>
+    <div id="totals_tableB" style="display:none">${buildView(calcTotals('B'),weekName('B'))}</div>`;
   } else {
     html+=buildView(calcTotals(currentWeek),'Weekly');
   }
@@ -1940,7 +1945,7 @@ function renderMobDay(){
 
   // update header
   document.getElementById('mobDayName').childNodes[0].textContent = day;
-  document.getElementById('mobWeekLabel').textContent = 'Week ' + currentWeek;
+  document.getElementById('mobWeekLabel').textContent = weekName(currentWeek);
   document.getElementById('mobWeekABtn').classList.toggle('active', currentWeek==='A');
   document.getElementById('mobWeekBBtn').classList.toggle('active', currentWeek==='B');
 
@@ -2045,7 +2050,7 @@ function enterLive(){
   document.getElementById('sponsorBand').style.display='none';
   document.getElementById('liveClock').classList.add('visible');
   const day=getTodayName();
-  document.getElementById('liveDayLabel').textContent=day+' — Week '+currentWeek;
+  document.getElementById('liveDayLabel').textContent=day+' — '+weekName(currentWeek);
   // show persistent QR for parents/coaches to scan
   const baseUrl = window.location.href.replace(/\/[^\/]*$/, '/');
   const streamUrl = `${baseUrl}NGL_Live.html?c=${currentClubId}`;
@@ -2181,7 +2186,7 @@ function renderTimeline(day){
     if(!groups.length) return;
     const sep=document.createElement('div'); sep.className='tl-sep'; sep.style.width=totalW+'px'; sep.style.height=sepH+'px'; sep.style.fontSize=sepH<22?'.6rem':'.68rem';
     const hasWeekBInSection = groups.some(g=>DAYS.some(day=>(DATA.sessions[day]&&DATA.sessions[day][g.id]||[]).some(s=>s.locationB)));
-    sep.innerHTML=`<span>${section==='squad'?(hasWeekBInSection?'Squads — Week '+currentWeek:'Squads'):'Recreational — Week '+currentWeek}</span>`; inner.appendChild(sep);
+    sep.innerHTML=`<span>${section==='squad'?(hasWeekBInSection?'Squads — '+weekName(currentWeek):'Squads'):'Recreational — '+weekName(currentWeek)}</span>`; inner.appendChild(sep);
     groups.forEach(group=>{
       const sessions=(DATA.sessions[day]&&DATA.sessions[day][group.id])||[];
       const row=document.createElement('div'); row.className='tl-row'; row.style.width=totalW+'px'; row.style.height=rowH+'px';
@@ -2312,7 +2317,7 @@ function updateSideClock(n){
   document.getElementById('lsMM').textContent=String(n.getMinutes()).padStart(2,'0');
   document.getElementById('lsSecs').textContent=':'+String(n.getSeconds()).padStart(2,'0');
   document.getElementById('lsColon').classList.toggle('off', n.getSeconds()%2===1);
-  document.getElementById('lsDate').textContent=n.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+' · Week '+currentWeek;
+  document.getElementById('lsDate').innerHTML='<div>'+n.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+'</div><div class="ls-week">'+weekName(currentWeek)+'</div>';
 }
 
 // scale everything in the right-hand panel from its own width so it fills the space on any screen
