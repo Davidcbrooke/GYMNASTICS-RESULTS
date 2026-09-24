@@ -264,6 +264,7 @@
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="window.showPanel('passport',this)">My Pathway</button>
     <button class="nav-tab" onclick="window.showPanel('signup',this)">Judge a Competition</button>
+    <button class="nav-tab" onclick="window.showPanel('quiz',this)">Fun Quiz</button>
     <button class="nav-tab" onclick="window.showPanel('calendar',this)">Judging Calendar</button>
     <button class="nav-tab" onclick="window.showPanel('resources',this)">Resources</button>
     <button class="nav-tab" onclick="window.showPanel('admin',this)">Admin &#x1F512;</button>
@@ -284,14 +285,14 @@
       <p>New to judging? No qualification needed to begin. Shadow real NGL competitions, learn from qualified judges, and build toward your first BG qualification &mdash; completely free.</p>
     </div>
     <div class="why-card">
-      <div class="wt">Junior Judge</div>
-      <h3>Turn your qualification into experience</h3>
-      <p>Already a Club Judge? A qualification on its own doesn't give you real panel time. Get second-judging (and sometimes main-judging) experience at real competitions &mdash; exactly what you need to reach Regional level.</p>
+      <div class="wt">Club Judge</div>
+      <h3>Turn your qualification into experience &mdash; and paid work</h3>
+      <p>Already BG Club Judge qualified? Get second-judging (and sometimes main-judging) experience at real competitions, build toward Regional level, and pick up paid remote bookings when a Senior Judge isn't available.</p>
     </div>
     <div class="why-card">
       <div class="wt">Senior Judge</div>
       <h3>Get paid to judge from home</h3>
-      <p>Regional qualified or above? Pick up remote judging bookings from clubs &mdash; &pound;50 per competition, judging live from wherever you are, on your own schedule.</p>
+      <p>Regional qualified or above? You're first in line for remote judging bookings from clubs &mdash; &pound;50 per competition, judging live from wherever you are, on your own schedule.</p>
     </div>
   </div>
 </div>
@@ -307,19 +308,19 @@
         <div class="pwi">&#x1F393;</div>
         <div class="pwn">1. Apprentice Judge</div>
         <div class="pwu">No qualification needed</div>
-        <ul><li>Everyone starts here</li><li>Shadow real competitions</li><li>Shadow 3+ to unlock Junior</li></ul>
+        <ul><li>Everyone starts here</li><li>Shadow real competitions</li><li>Shadow 3+ to unlock Club Judge</li></ul>
       </div>
       <div class="pw-card">
         <div class="pwi">&#x1F948;</div>
-        <div class="pwn">2. Junior Judge</div>
+        <div class="pwn">2. Club Judge</div>
         <div class="pwu">BG Club Judge, or 3+ shadows</div>
-        <ul><li>Second-judge real competitions</li><li>Main-judge when approved by NGL</li><li>Working toward Regional</li></ul>
+        <ul><li>Second-judge real competitions</li><li>Main-judge when approved by NGL</li><li>Eligible for paid remote judging</li></ul>
       </div>
       <div class="pw-card">
         <div class="pwi">&#x1F3C6;</div>
         <div class="pwn">3. Senior Judge</div>
         <div class="pwu">BG Regional Judge or above</div>
-        <ul><li>Main-judge any competition</li><li>Eligible for paid remote judging</li><li>&pound;50 per Sunday competition</li></ul>
+        <ul><li>Main-judge any competition</li><li>First priority for paid remote judging</li><li>&pound;50 per Sunday competition</li></ul>
       </div>
     </div>
   </div>
@@ -362,7 +363,7 @@
                 <option value="National Judge">National Judge</option>
                 <option value="Brevet">Brevet</option>
               </select>
-              <div class="hint">Your qualification sets your starting tier: none = Apprentice, Club Judge = Junior, Regional or above = Senior.</div>
+              <div class="hint">Your qualification sets your starting tier: none = Apprentice, Club Judge = Club Judge, Regional or above = Senior.</div>
             </div>
             <div id="rg-prior-wrap" style="display:none">
               <div class="form-row2">
@@ -431,6 +432,20 @@
         <span class="res-icon-open" style="color:var(--gold-light);font-size:0.75rem;font-weight:700">Open &#8594;</span>
       </a>
 
+      <div class="card" style="margin-bottom:16px; cursor:pointer" onclick="window.showPanel('quiz', document.querySelectorAll('.nav-tab')[2])">
+        <div class="card-head"><h2>Fun Quiz &mdash; Personal Bests</h2><p>Based on the NGL 2027 rules</p></div>
+        <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="text-align:center;background:var(--grey-light);border-radius:4px;padding:12px 8px">
+            <div style="font-size:1.4rem;font-weight:700;color:var(--navy)" id="pp-quiz-wag">&mdash;</div>
+            <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--grey-mid);margin-top:2px">Girls (WAG)</div>
+          </div>
+          <div style="text-align:center;background:var(--grey-light);border-radius:4px;padding:12px 8px">
+            <div style="font-size:1.4rem;font-weight:700;color:var(--navy)" id="pp-quiz-mag">&mdash;</div>
+            <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--grey-mid);margin-top:2px">Boys (MAG)</div>
+          </div>
+        </div>
+      </div>
+
       <div class="card" style="margin-bottom:16px" id="notif-card">
         <div class="card-head"><h2>Notifications</h2><p>Booking confirmations from NGL</p></div>
         <div class="card-body" id="notif-list" style="padding:0">
@@ -463,6 +478,67 @@
 
     <div id="signup-list">
       <div class="loading-bar"><div class="spinner"></div> Loading competitions&hellip;</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FUN QUIZ ══ -->
+<div id="panel-quiz" class="panel">
+  <div class="wrap" style="max-width:640px">
+    <div class="eyebrow">Just for Fun</div>
+    <div class="sec-title">NGL Judging Quiz</div>
+    <div class="sec-sub">50 questions built from the actual NGL 2027 rules. Doesn't affect your tier &mdash; just a fun way to test your knowledge and beat your own best.</div>
+
+    <div id="quiz-gate" style="display:none">
+      <div class="login-gate"><strong>Sign in to play</strong>You need to join the NGL Judging Pathway to take the quiz and save your scores. Head to "My Pathway" to register or sign in.</div>
+    </div>
+
+    <div id="quiz-menu" style="display:none">
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-head"><h2>&#x1F390; Girls Judging Quiz (WAG)</h2><p>Vault, Bars, Beam &amp; Floor &mdash; Levels A, B &amp; C</p></div>
+        <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div><span style="font-size:0.68rem;color:var(--grey-mid);text-transform:uppercase;letter-spacing:0.06em;font-weight:700">Personal Best</span><div style="font-size:1.6rem;font-weight:700;color:var(--navy)" id="menu-quiz-wag">&mdash;</div></div>
+          <button class="btn btn-primary" style="width:auto" onclick="window.startQuiz('wag')">Start &#8594;</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-head"><h2>&#x1F938; Boys Judging Quiz (MAG)</h2><p>Floor, Mushroom/Rings, Vault, Parallel Bars &amp; H.Bar &mdash; Levels A, B &amp; C</p></div>
+        <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div><span style="font-size:0.68rem;color:var(--grey-mid);text-transform:uppercase;letter-spacing:0.06em;font-weight:700">Personal Best</span><div style="font-size:1.6rem;font-weight:700;color:var(--navy)" id="menu-quiz-mag">&mdash;</div></div>
+          <button class="btn btn-primary" style="width:auto" onclick="window.startQuiz('mag')">Start &#8594;</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="quiz-active" style="display:none">
+      <div class="card">
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span class="role-pill" id="quiz-type-tag">WAG</span>
+            <span style="font-size:0.75rem;color:var(--grey-mid)" id="quiz-progress-text">Question 1 of 50</span>
+          </div>
+          <div class="app-bar-track" style="background:var(--grey-light);margin-bottom:18px"><div class="app-bar-fill" id="quiz-progress-bar" style="width:0%"></div></div>
+          <div style="font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:16px" id="quiz-question-text"></div>
+          <div id="quiz-options"></div>
+          <div id="quiz-feedback" style="display:none;margin-top:12px;padding:10px 14px;border-radius:2px;font-size:0.85rem;font-weight:700"></div>
+          <button class="btn btn-navy btn-full" id="quiz-next-btn" style="display:none;margin-top:14px" onclick="window.nextQuizQuestion()">Next Question &#8594;</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="quiz-result" style="display:none">
+      <div class="passport-wrap" style="max-width:100%">
+        <div class="passport-card">
+          <div class="passport-inner" style="text-align:center">
+            <div style="font-size:2.4rem;margin-bottom:8px" id="quiz-result-icon">&#x1F3C6;</div>
+            <div style="color:var(--gold-light);font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px" id="quiz-result-tag">New Personal Best!</div>
+            <div style="color:var(--white);font-size:2rem;font-weight:700;margin-bottom:4px" id="quiz-result-pct">0%</div>
+            <div style="color:rgba(255,255,255,0.5);font-size:0.8rem" id="quiz-result-fraction">0 / 50 correct</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" id="quiz-retake-btn" onclick="">Retake Quiz</button>
+      <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="window.showPanel('quiz', document.querySelectorAll('.nav-tab')[2])">Back to Quizzes</button>
     </div>
   </div>
 </div>
@@ -674,19 +750,19 @@ const ROLES = {
   second_judge: { label: 'Second Judge', icon: '\u{1F91D}' },
   judge:        { label: 'Main Judge', icon: '\u{1F93D}' }
 };
-// which roles each tier may apply for (main judge for Junior is admin discretion at confirm time)
+// which roles each tier may apply for (main judge for Club Judge is admin discretion at confirm time)
 const ROLES_BY_TIER = { 1: ['shadow'], 2: ['shadow','second_judge','judge'], 3: ['shadow','second_judge','judge'] };
 
 // ══ TIER DEFINITIONS (simplified 3-tier pathway) ══
 const TIERS = {
   1: { icon: '\u{1F393}', name: 'Apprentice Judge' },
-  2: { icon: '\u{1F948}', name: 'Junior Judge' },
+  2: { icon: '\u{1F948}', name: 'Club Judge' },
   3: { icon: '\u{1F3C6}', name: 'Senior Judge' }
 };
 const SENIOR_QUALS = ['Regional Judge', 'National Judge', 'Brevet'];
 const SHADOWS_TO_UNLOCK_JUNIOR = 3;
 
-// Tier is driven by BG qualification, with one experience-based route to Junior for those with no qualification yet.
+// Tier is driven by BG qualification, with one experience-based route to Club Judge for those with no qualification yet.
 function calcTier(profile, shadowCount) {
   const qual = profile.qualification;
   let qualTier = 1;
@@ -700,12 +776,126 @@ function calcTier(profile, shadowCount) {
   return { num, ...TIERS[num] };
 }
 
+function getJudgeTier(judge) {
+  const mine = allAssignments.filter(a => a.judgeUid === judge.uid && a.status === 'confirmed');
+  const shadowCount = new Set(mine.filter(a => a.role === 'shadow').map(a => a.compId)).size + (judge.priorShadowed || 0);
+  return calcTier(judge, shadowCount);
+}
+
 function calcSpecialism(count) {
   if (count >= 5) return { tier: 'Expert', icon: '\u{1F3C6}', pct: 100 };
   if (count >= 3) return { tier: 'Skilled', icon: '\u{1F948}', pct: Math.min(100, (count/5)*100) };
   if (count >= 1) return { tier: 'Developing', icon: '\u{1F949}', pct: Math.min(100, (count/5)*100) };
   return { tier: 'New', icon: '\u{1F331}', pct: 0 };
 }
+
+// ══ FUN QUIZ — QUESTION BANKS (built from the NGL 2027 WAG & MAG rulebooks) ══
+const QUIZ_BANKS = {
+  wag: [
+    { q:'What is the minimum vault table height across all NGL 2027 WAG levels?', options:['80cm','90cm','100cm','110cm'], correct:2 },
+    { q:'Level A Vault: what DV is awarded for a Handspring?', options:['0.5','1.0','1.2','1.6'], correct:3 },
+    { q:'Level A Vault: what DV is awarded for a Round Off?', options:['0.5','1.0','1.2','1.6'], correct:2 },
+    { q:'Level A Bars Option 1: what is the DV?', options:['0.5','1.0','1.5','2.0'], correct:0 },
+    { q:'Level A Bars Option 2: what is the DV?', options:['0.5','1.0','1.5','2.0'], correct:1 },
+    { q:'What height range is a permitted safety mat noted in the Level A bars rules?', options:['10-20cm','20-30cm','30-40cm','40-50cm'], correct:1 },
+    { q:'Level A Beam: how many elements must count?', options:['4','5','6','8'], correct:1 },
+    { q:'Level A Beam: what is the coded requirement value for the Mount?', options:['0.3','0.5','1.0','1.5'], correct:1 },
+    { q:'Level A Beam: what is the coded requirement value for Half Spin?', options:['0.3','0.5','1.0','1.5'], correct:1 },
+    { q:'What is the maximum music length for Floor at all NGL levels?', options:['1 minute','1 min 15 sec','1 min 30 sec','2 minutes'], correct:2 },
+    { q:'Level A Floor: how many elements must count?', options:['4','5','6','8'], correct:2 },
+    { q:'Level A Floor: what value is given for 2 Acrobatic Elements Connected (min 1 with flight)?', options:['0.5','1.0','1.5','2.0'], correct:1 },
+    { q:'Level A Floor: what value is given for a Full Spin on one foot?', options:['0.2','0.5','1.0','1.5'], correct:1 },
+    { q:'An acro line must consist of a minimum of how many directly connected flight elements (one being a salto)?', options:['1','2','3','4'], correct:1 },
+    { q:'What is the maximum total for Floor Artistry Deductions?', options:['-0.3','-0.5','-0.8','-1.0'], correct:1 },
+    { q:'What is the deduction for non-attempt of a Coded Requirement?', options:['-0.5','-1.0','-1.5 plus the value of the CR','-2.0'], correct:2 },
+    { q:'What is the deduction for 3 elements less than required in a routine?', options:['-2.0','-3.0','-4.0','-5.0'], correct:2 },
+    { q:'What is the deduction for 5 elements less than required in a routine?', options:['-4.0','-5.0','-6.0','-7.0'], correct:3 },
+    { q:'What is the maximum deduction for a coach signalling or speaking to a gymnast during exercise?', options:['-1.0 once only','-1.0, max twice','-2.0 once only','-2.0, max twice'], correct:1 },
+    { q:'What is the deduction for unauthorised assistance from a coach to complete a skill?', options:['-0.5 each','-1.0 each','-2.0 each','-3.0 each'], correct:2 },
+    { q:'Exercise overtime by more than how many seconds incurs a -0.5 deduction?', options:['3 seconds','5 seconds','8 seconds','10 seconds'], correct:1 },
+    { q:'A pause of over 2 seconds in a routine is penalised how, and up to how many times?', options:['-0.3, once only','-0.5, max twice','-0.5, unlimited','-1.0, once only'], correct:1 },
+    { q:'What deduction applies for a deep squat on landing?', options:['-0.1','-0.3','-0.5','-1.0'], correct:2 },
+    { q:'What deduction applies for a fall on the apparatus?', options:['-0.3','-0.5','-1.0','-2.0'], correct:2 },
+    { q:'What is the deduction range for under rotation of a vault with a fall?', options:['-0.1','-0.3','-0.5','-1.0'], correct:1 },
+    { q:'What is the deduction range for excessive snap on vault?', options:['-0.1 to -0.3','-0.1 to -0.5','-0.3 to -0.5','-0.5 to -1.0'], correct:0 },
+    { q:'What deduction applies for an attempt without performance of an element?', options:['-0.1','-0.3','-0.5','-1.0'], correct:1 },
+    { q:'What deduction applies for hesitation during performance of an element?', options:['-0.1','-0.3','-0.5','-1.0'], correct:0 },
+    { q:'What deduction applies for a dismount too close to the apparatus on Bars or Beam?', options:['-0.1','-0.3','-0.5','-1.0'], correct:0 },
+    { q:'Level B Vault: what DV is awarded for a Half On?', options:['1.6','2.0','2.4','2.6'], correct:2 },
+    { q:'Level B Vault: what DV is awarded for a Handspring?', options:['1.2','1.6','2.0','2.4'], correct:1 },
+    { q:'Level B Bars Option 2: what is the DV?', options:['1.0','1.5','2.0','2.5'], correct:1 },
+    { q:'At Level B, is there a deduction for an empty swing out of the back hip circle?', options:['Yes, -0.1','Yes, -0.3','No deduction','Only above Level B'], correct:2 },
+    { q:'Level B Beam: how many elements must count?', options:['4','5','6','8'], correct:2 },
+    { q:'Level B Beam: what value is given for 2 Jumps or Leaps Connected?', options:['0.5','1.0','1.5','2.0'], correct:1 },
+    { q:'Level B Floor: what are the minimum and maximum element counts?', options:['4 min, 6 max','5 min, 7 max','6 min, 8 max','8 min, 10 max'], correct:2 },
+    { q:'Level B Floor: what value is given for 2 Acrobatic Elements Connected, both with flight?', options:['0.5','1.0','1.5','2.0'], correct:1 },
+    { q:'Level B Floor: what value is given for 2 Additional Acro Elements, OR 1 Acro Element with Flight?', options:['0.5','1.0','1.5','2.0'], correct:1 },
+    { q:'Level C Vault: what DV is awarded for a Yamashita?', options:['1.6','2.0','2.4','2.6'], correct:1 },
+    { q:'Level C Vault: what DV is awarded for a Handspring 1/1 Twist?', options:['2.0','2.4','2.6','3.0'], correct:2 },
+    { q:'Level C Vault: what DV is awarded for a ½ On ½ Off?', options:['2.0','2.4','2.6','3.0'], correct:1 },
+    { q:'Level C Bars Option 1: what are the minimum and maximum element counts?', options:['4 min, 6 max','5 min, 8 max','6 min, 8 max','6 min, 10 max'], correct:1 },
+    { q:'At Level C, is there a deduction for bent legs in a forward or backward sole circle?', options:['Yes, -0.1','Yes, -0.3','No deduction','Only on the low bar'], correct:2 },
+    { q:'Level C Beam: what are the minimum and maximum element counts?', options:['4 min, 6 max','5 min, 7 max','6 min, 8 max','8 min, 10 max'], correct:2 },
+    { q:'Level C Beam: what value is given for 2 Jumps or Leaps connected with a minimum 180° split?', options:['0.5','1.0','1.5','2.0'], correct:1 },
+    { q:'Level C Beam: what bonus is available for Flighted Acro?', options:['0.2','0.5','0.8','1.0'], correct:1 },
+    { q:'Level C Beam: what bonus is available for a Mixed Series?', options:['0.1','0.2','0.5','1.0'], correct:1 },
+    { q:'Level C Floor: what value is given for the Backward Acro Line coded requirement?', options:['0.5','1.0','1.5','2.0'], correct:1 },
+    { q:'Level C Floor: what are the minimum and maximum element counts?', options:['4 min, 6 max','5 min, 7 max','6 min, 8 max','8 min, 10 max'], correct:2 },
+    { q:'Is there a deduction for non-matching leotards in Team Competitions?', options:['-0.1 per gymnast','-0.3 per gymnast','No deduction','Only if 3 or more differ'], correct:2 }
+  ],
+  mag: [
+    { q:'Level A Floor: how many elements must count?', options:['4','5','6','8'], correct:2 },
+    { q:'Level A Floor: what value is given for 2 Acrobatic Elements Connected?', options:['0.5','1.0','1.5','2.0'], correct:1 },
+    { q:'Level A Floor: what value is given for 1 Additional Acro Element?', options:['0.3','0.5','1.0','1.5'], correct:1 },
+    { q:'Level A Mushroom 10.0 Routine: how many Half Circles are required?', options:['2','3','4','5'], correct:1 },
+    { q:'Level A Mushroom 12.0 Routine: how many circles (allowing stops in between) are required?', options:['2','3','4','5'], correct:1 },
+    { q:'Which of the following IS a Level A Rings requirement?', options:['Iron Cross','Tuck Lever Hang and extend into a straight hang','Maltese','Planche'], correct:1 },
+    { q:'What is the minimum vault table height for MAG at all NGL levels?', options:['80cm','90cm','100cm','110cm'], correct:2 },
+    { q:'Level A Vault: what value is awarded for Squat On, Jump Off?', options:['9.0','10.0','11.0','12.0'], correct:1 },
+    { q:'Level A Vault: what value is awarded for Squat Through?', options:['9.0','10.0','11.0','12.0'], correct:2 },
+    { q:'At Level A, which vaults are prohibited?', options:['None, any vault is allowed','Any vault other than Squat On/Jump Off and Squat Through','Only Yurchenko-style vaults','Only handspring vaults'], correct:1 },
+    { q:'What is the minimum apparatus height for Parallel Bars at Level A?', options:['120cm','130cm','140cm','150cm'], correct:2 },
+    { q:'Level A Parallel Bars set routine: how many Full Swings are required?', options:['2','3','4','5'], correct:1 },
+    { q:'Level A Parallel Bars set routine: how long must the Tuck Lever Hold be held?', options:['1 second','2 seconds','3 seconds','5 seconds'], correct:1 },
+    { q:'Level A H.Bar/Loop Bar: how many Swings to horizontal are required?', options:['3','4','5','6'], correct:2 },
+    { q:'Which of the following IS a Level A uncoded Floor element?', options:['Double Back Tuck','Headstand','Triple Twist','Iron Cross'], correct:1 },
+    { q:'What is the maximum deduction for a coach signalling or speaking to a gymnast during exercise, and how many times?', options:['-1.0, once only','-1.0, max twice','-2.0, once only','-2.0, max twice'], correct:1 },
+    { q:'What deduction applies for unauthorised assistance from a coach to complete a skill?', options:['-0.5 each','-1.0 each','-2.0 each','-3.0 each'], correct:2 },
+    { q:'Exercise overtime by more than how many seconds incurs a -0.5 deduction?', options:['3 seconds','5 seconds','8 seconds','10 seconds'], correct:1 },
+    { q:'A pause of over 2 seconds is penalised how, and up to how many times?', options:['-0.3, once only','-0.5, max twice','-0.5, unlimited','-1.0, once only'], correct:1 },
+    { q:'Is there a deduction for non-matching leotards/kit in Team Competitions?', options:['Yes, -0.3 per gymnast','Yes, -0.1 per gymnast','No deduction','Only if 3 or more differ'], correct:2 },
+    { q:'What deduction applies for support on mat, fall on mat, fall on apparatus, or failure to land feet first?', options:['-0.3','-0.5','-1.0','-2.0'], correct:2 },
+    { q:'What is the deduction range for insufficient height with no conspicuous rise of the body on vault?', options:['-0.1 to -0.3','-0.1 to -0.5','-0.3 to -0.5','-0.5 to -1.0'], correct:1 },
+    { q:'What is the deduction range for lack of extension in preparation for landing?', options:['-0.1 to -0.3','-0.1 to -0.5','-0.3 to -0.5','-0.5 to -1.0'], correct:0 },
+    { q:'What deduction applies for hitting apparatus or floor?', options:['-0.1','-0.3','-0.5','-1.0'], correct:2 },
+    { q:'What deduction applies if the gymnast is touched but not assisted by the spotter during exercise?', options:['-0.1','-0.3','-0.5','-1.0'], correct:1 },
+    { q:'What deduction applies for an atypical straddle?', options:['-0.1','-0.3','-0.5','-1.0'], correct:1 },
+    { q:'What is the deduction range for duration of a hold part?', options:['-0.1 to -0.3','-0.1 to -0.5','-0.3 to -0.5','-0.5 to -1.0'], correct:2 },
+    { q:'What deduction applies for additional or intermediate hand support?', options:['-0.1','-0.3','-0.5','-1.0'], correct:0 },
+    { q:'Level B Floor: how many elements must count?', options:['4','5','6','8'], correct:2 },
+    { q:'Level B Vault: what value is awarded for Squat Through?', options:['9.0','10.0','11.0','12.0'], correct:2 },
+    { q:'Level B Mushroom 12.0 Routine: how many circles allowing stops in between are required?', options:['2','3','4','5'], correct:1 },
+    { q:'What is the minimum apparatus height for Parallel Bars at Level B?', options:['120cm','130cm','140cm','150cm'], correct:2 },
+    { q:'Level C Floor: what are the minimum and maximum element counts?', options:['4 min, 6 max','5 min, 7 max','6 min, 8 max','8 min, 10 max'], correct:2 },
+    { q:'Level C Floor: what is the minimum number of connected tumble elements for the Forward Tumble coded requirement?', options:['1','2','3','4'], correct:1 },
+    { q:'Level C Floor: what value is given for the Backward Tumble coded requirement?', options:['0.5','1.0','1.5','2.0'], correct:1 },
+    { q:'Level C Floor: what value is given for Single Leg Balance?', options:['0.3','0.5','1.0','1.5'], correct:1 },
+    { q:'Level C Mushroom 10.0 Routine: how many circles are required, and how many must be linked?', options:['3 circles, 1 linked','5 circles, 3 linked','5 circles, 5 linked','6 circles, 4 linked'], correct:1 },
+    { q:'Level C Mushroom 12.0 Routine: how many circles are required, all linked?', options:['3','4','5','6'], correct:2 },
+    { q:'Level C Rings Set Routine: what is the base value before bonuses?', options:['8.0','9.0','10.0','11.0'], correct:2 },
+    { q:'Level C Rings: what bonus is available for an unassisted Muscle Up?', options:['0.5','1.0','1.5','2.0'], correct:1 },
+    { q:'Level C Vault: which style of vaults is prohibited?', options:['Handspring-style vaults','Salto/Yurchenko style vaults','Any vault from the COP','Squat-style vaults'], correct:1 },
+    { q:'Level C Vault: how is the DV of the chosen vault determined?', options:['Fixed at 2.0 regardless of vault','As per the Code of Points (COP)','Set by the head judge on the day','Always 1.6'], correct:1 },
+    { q:'Level C Parallel Bars: how long must the Half Lever Hold be held?', options:['1 second','2 seconds','3 seconds','5 seconds'], correct:1 },
+    { q:'Level C Parallel Bars: how many Full Swings are required, including how many above horizontal?', options:['2 swings, 1 above horizontal','3 swings, 1 above horizontal','3 swings, 2 above horizontal','4 swings, 1 above horizontal'], correct:1 },
+    { q:'Level C Parallel Bars: what bonus value is given for a Tuck Back Somi?', options:['0.2','0.5','0.8','1.0'], correct:1 },
+    { q:'Level C Parallel Bars: what bonus value is given per swing to Handstand?', options:['0.1 each','0.2 each','0.5 each','1.0 each'], correct:0 },
+    { q:'Level C H.Bar/Loop Bar: how many Longswings are required in the swing sequence?', options:['2','3','4','5'], correct:1 },
+    { q:'Level C H.Bar/Loop Bar: what bonus value replaces the Chin Over with a Trolley Swing into upstart?', options:['0.2','0.5','0.8','1.0'], correct:1 },
+    { q:'Level C H.Bar/Loop Bar: what bonus value is given for Forward Longswings instead of Backward Longswings?', options:['0.2','0.5','0.8','1.0'], correct:1 },
+    { q:'What is the minimum apparatus height stated for Parallel Bars across the NGL MAG rules?', options:['120cm','130cm','140cm','150cm'], correct:2 }
+  ]
+};
 
 // ══ STATE ══
 let allComps        = [];
@@ -718,6 +908,10 @@ let adminLoggedIn    = false;
 let notifUnsub       = null;
 let allResources     = [];
 let resourceType     = 'file';
+let quizType         = null;
+let quizOrder        = [];
+let quizIndex        = 0;
+let quizAnswers      = [];
 
 // ══ NAV ══
 window.showPanel = function(id, btn) {
@@ -728,6 +922,7 @@ window.showPanel = function(id, btn) {
   if (id === 'signup') renderSignupList();
   if (id === 'admin' && adminLoggedIn) { window.renderAdminApplications(); renderAdminJudgesList(); }
   if (id === 'resources') renderResourcesList();
+  if (id === 'quiz') renderQuizMenu();
 };
 
 window.setAuthMode = function(mode) {
@@ -743,6 +938,116 @@ window.togglePriorExperience = function() {
   const qual = document.getElementById('rg-qual').value;
   document.getElementById('rg-prior-wrap').style.display = (qual === 'None') ? 'block' : 'none';
 };
+
+// ══ FUN QUIZ ══
+function renderQuizMenu() {
+  const gateEl = document.getElementById('quiz-gate');
+  const menuEl = document.getElementById('quiz-menu');
+  document.getElementById('quiz-active').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+
+  if (!currentUser || !currentProfile) {
+    gateEl.style.display = 'block';
+    menuEl.style.display = 'none';
+    return;
+  }
+  gateEl.style.display = 'none';
+  menuEl.style.display = 'block';
+  document.getElementById('menu-quiz-wag').textContent = (currentProfile.quizBestWag != null) ? currentProfile.quizBestWag + '%' : '\u2014';
+  document.getElementById('menu-quiz-mag').textContent = (currentProfile.quizBestMag != null) ? currentProfile.quizBestMag + '%' : '\u2014';
+}
+
+window.startQuiz = function(type) {
+  quizType = type;
+  quizOrder = QUIZ_BANKS[type].slice();
+  quizIndex = 0;
+  quizAnswers = [];
+  document.getElementById('quiz-menu').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-active').style.display = 'block';
+  document.getElementById('quiz-type-tag').textContent = type === 'wag' ? 'Girls (WAG)' : 'Boys (MAG)';
+  renderQuizQuestion();
+};
+
+function renderQuizQuestion() {
+  const q = quizOrder[quizIndex];
+  document.getElementById('quiz-progress-text').textContent = 'Question ' + (quizIndex + 1) + ' of ' + quizOrder.length;
+  document.getElementById('quiz-progress-bar').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+  document.getElementById('quiz-question-text').textContent = q.q;
+  document.getElementById('quiz-feedback').style.display = 'none';
+  document.getElementById('quiz-next-btn').style.display = 'none';
+
+  const optsEl = document.getElementById('quiz-options');
+  optsEl.innerHTML = q.options.map((opt, i) =>
+    '<button class="btn btn-ghost btn-full" style="text-align:left;margin-bottom:8px;font-weight:500;text-transform:none;letter-spacing:0" id="quiz-opt-' + i + '" onclick="window.selectQuizOption(' + i + ')">' + opt + '</button>'
+  ).join('');
+}
+
+window.selectQuizOption = function(idx) {
+  if (quizAnswers[quizIndex] !== undefined) return;
+  const q = quizOrder[quizIndex];
+  const isCorrect = idx === q.correct;
+  quizAnswers[quizIndex] = isCorrect;
+
+  for (let i = 0; i < q.options.length; i++) {
+    const btn = document.getElementById('quiz-opt-' + i);
+    btn.onclick = null;
+    btn.style.cursor = 'default';
+    if (i === idx) {
+      btn.style.borderColor = isCorrect ? '#1a6b3a' : 'var(--red)';
+      btn.style.color = isCorrect ? '#1a6b3a' : 'var(--red)';
+      btn.style.fontWeight = '700';
+    } else {
+      btn.style.opacity = '0.5';
+    }
+  }
+
+  const fbEl = document.getElementById('quiz-feedback');
+  fbEl.style.display = 'block';
+  if (isCorrect) {
+    fbEl.style.background = '#e6f4ee'; fbEl.style.color = '#1a6b3a';
+    fbEl.textContent = '\u2705 Correct!';
+  } else {
+    fbEl.style.background = '#fde8e6'; fbEl.style.color = 'var(--red)';
+    fbEl.textContent = '\u274C Not quite \u2014 on to the next one.';
+  }
+
+  const nextBtn = document.getElementById('quiz-next-btn');
+  nextBtn.textContent = (quizIndex === quizOrder.length - 1) ? 'See My Result \u2192' : 'Next Question \u2192';
+  nextBtn.style.display = 'block';
+};
+
+window.nextQuizQuestion = function() {
+  quizIndex++;
+  if (quizIndex >= quizOrder.length) { submitQuiz(); return; }
+  renderQuizQuestion();
+};
+
+async function submitQuiz() {
+  const correct = quizAnswers.filter(Boolean).length;
+  const total = quizOrder.length;
+  const pct = Math.round((correct / total) * 100);
+  const fieldName = quizType === 'wag' ? 'quizBestWag' : 'quizBestMag';
+  const prevBest = currentProfile ? currentProfile[fieldName] : null;
+  const isNewBest = (prevBest == null) || (pct > prevBest);
+
+  if (isNewBest && currentUser && currentProfile) {
+    try {
+      await updateDoc(doc(db, 'ngl_judges', currentUser.uid), { [fieldName]: pct });
+      currentProfile[fieldName] = pct;
+    } catch (e) { /* non-critical, quiz is just for fun */ }
+  }
+
+  document.getElementById('quiz-active').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'block';
+  document.getElementById('quiz-result-icon').textContent = pct >= 90 ? '\u{1F3C6}' : pct >= 70 ? '\u2705' : '\u{1F4DA}';
+  document.getElementById('quiz-result-tag').textContent = isNewBest ? 'New Personal Best!' : ('Personal Best: ' + prevBest + '%');
+  document.getElementById('quiz-result-pct').textContent = pct + '%';
+  document.getElementById('quiz-result-fraction').textContent = correct + ' / ' + total + ' correct';
+  document.getElementById('quiz-retake-btn').onclick = function() { window.startQuiz(quizType); };
+
+  renderPassport();
+}
 
 // ══ AUTH ══
 window.doRegister = async function() {
@@ -914,6 +1219,9 @@ function renderPassport() {
     ? '<img class="avatar-img" src="' + currentProfile.photoUrl + '">'
     : '<div class="avatar-placeholder">\u{1F93D}</div>';
 
+  document.getElementById('pp-quiz-wag').textContent = (currentProfile.quizBestWag != null) ? currentProfile.quizBestWag + '%' : '\u2014';
+  document.getElementById('pp-quiz-mag').textContent = (currentProfile.quizBestMag != null) ? currentProfile.quizBestMag + '%' : '\u2014';
+
   const mine = allAssignments.filter(a => a.judgeUid === currentUser.uid && a.status === 'confirmed');
   const priorShadowed = currentProfile.priorShadowed || 0;
   const priorSecond = currentProfile.priorSecondJudged || 0;
@@ -961,7 +1269,7 @@ function renderProgress(tierNum, profile, shadowCount) {
   }
 
   if (tierNum === 1) {
-    titleEl.textContent = 'Next Tier: Junior Judge';
+    titleEl.textContent = 'Next Tier: Club Judge';
     subEl.textContent = "Get there with a BG Club Judge qualification, or through real experience.";
     listEl.innerHTML =
       '<div class="progress-item"><span class="pi-check">' + (shadowCount >= SHADOWS_TO_UNLOCK_JUNIOR ? '\u2705' : '\u2b1c') + '</span>' +
@@ -1208,8 +1516,8 @@ window.renderAdminApplications = function() {
     const status = a.status || 'pending';
     const judge = allJudges.find(j => j.uid === a.judgeUid);
     const d = a.compDate ? new Date(a.compDate+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
-    const isMainJudgeRequest = a.role === 'judge';
-    const juniorFlag = (judge && judge.qualification !== 'Club Judge' && !SENIOR_QUALS.includes(judge.qualification) && isMainJudgeRequest) ? '' : '';
+    const tier = judge ? getJudgeTier(judge) : null;
+    const tierBadge = tier ? '<span class="role-pill" style="background:' + (tier.num === 3 ? '#e6f4ee' : tier.num === 2 ? '#e8eefc' : '#f4f6f9') + ';color:' + (tier.num === 3 ? '#1a6b3a' : tier.num === 2 ? '#2451b8' : 'var(--grey-mid)') + '">' + tier.icon + ' ' + tier.name + '</span>' : '';
     const actions = status === 'pending'
       ? '<button class="btn btn-navy btn-small" onclick="window.openAcceptModal(\'' + a.id + '\')">Accept</button>' +
         '<button class="btn btn-ghost btn-small" onclick="window.declineApplication(\'' + a.id + '\')">Decline</button>'
@@ -1217,9 +1525,9 @@ window.renderAdminApplications = function() {
         ? '<span style="color:var(--grey-mid);font-size:0.72rem">&pound;' + (a.payment!=null?a.payment:50) + ' &middot; ' + (a.confirmedTime||'') + '</span>'
         : '<span style="color:var(--grey-mid);font-size:0.72rem">Declined</span>';
     return '<div class="app-row">' +
-      '<div><div class="aj-name">' + a.judgeName + '</div><div class="aj-meta">' + (judge ? (judge.qualification || 'No qualification') : '') + '</div></div>' +
+      '<div><div class="aj-name">' + a.judgeName + '</div><div class="aj-meta">' + tierBadge + '</div></div>' +
       '<div>' + a.compName + '<div class="aj-meta">' + d + '</div></div>' +
-      '<div>' + (ROLES[a.role] ? ROLES[a.role].icon + ' ' + ROLES[a.role].label : '') + ' &middot; ' + a.piece + ' <span class="aj-meta">(' + a.discipline + ')</span>' + (isMainJudgeRequest ? ' <span class="role-pill" style="background:#fff3e0;color:#b06000">check tier</span>' : '') + '</div>' +
+      '<div>' + (ROLES[a.role] ? ROLES[a.role].icon + ' ' + ROLES[a.role].label : '') + ' &middot; ' + a.piece + ' <span class="aj-meta">(' + a.discipline + ')</span></div>' +
       '<div><span class="status-pill ' + status + '">' + status + '</span></div>' +
       '<div style="display:flex;gap:6px">' + actions + '</div>' +
       '</div>';
@@ -1294,9 +1602,7 @@ function renderAdminJudgesList() {
   if (!allJudges.length) { el.innerHTML = '<div class="no-rows">No judges registered yet.</div>'; return; }
   const sorted = [...allJudges].sort((a,b) => (a.name||'').localeCompare(b.name||''));
   el.innerHTML = sorted.map(j => {
-    const mine = allAssignments.filter(a => a.judgeUid === j.uid && a.status === 'confirmed');
-    const shadowCount = new Set(mine.filter(a => a.role === 'shadow').map(a => a.compId)).size + (j.priorShadowed || 0);
-    const tier = calcTier(j, shadowCount);
+    const tier = getJudgeTier(j);
     return '<div class="app-row" style="grid-template-columns:1fr 1fr auto">' +
       '<div><div class="aj-name">' + (j.name||'') + '</div><div class="aj-meta">' + (j.email||'') + (j.club ? ' &middot; ' + j.club : '') + '</div></div>' +
       '<div><span class="role-pill">' + tier.icon + ' ' + tier.name + '</span><div class="aj-meta">BG: ' + (j.qualification||'None') + '</div></div>' +
