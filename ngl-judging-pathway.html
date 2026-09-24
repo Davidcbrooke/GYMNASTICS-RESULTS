@@ -329,6 +329,10 @@
 
     <!-- Logged out: auth forms -->
     <div id="auth-area">
+      <div id="no-profile-warning" style="display:none;max-width:440px;margin:0 auto 14px" class="err-box">
+        Your login exists but no pathway profile is linked to it. Please sign out, then register again below with a new email &mdash; or contact an NGL admin to fix your existing account.
+        <button class="btn btn-ghost btn-small" style="margin-top:8px" onclick="window.doLogout()">Sign Out</button>
+      </div>
       <div class="card" style="max-width:440px;margin:0 auto">
         <div class="card-head"><h2>Join the NGL Judging Pathway</h2><p>Register once, judge forever</p></div>
         <div class="card-body">
@@ -941,19 +945,19 @@ window.togglePriorExperience = function() {
 
 // ══ FUN QUIZ ══
 function renderQuizMenu() {
-  console.log('[QuizDebug] renderQuizMenu called. currentUser:', currentUser ? currentUser.uid : null, '| currentProfile:', currentProfile);
   const gateEl = document.getElementById('quiz-gate');
   const menuEl = document.getElementById('quiz-menu');
   document.getElementById('quiz-active').style.display = 'none';
   document.getElementById('quiz-result').style.display = 'none';
 
   if (!currentUser || !currentProfile) {
-    console.log('[QuizDebug] Showing SIGN-IN GATE because', !currentUser ? 'currentUser is falsy' : 'currentProfile is falsy');
+    if (currentUser && !currentProfile) {
+      gateEl.innerHTML = '<div class="login-gate"><strong>Profile not found</strong>Your login exists but no pathway profile is linked to it. Please sign out and register again, or contact an NGL admin.</div>';
+    }
     gateEl.style.display = 'block';
     menuEl.style.display = 'none';
     return;
   }
-  console.log('[QuizDebug] Showing QUIZ MENU normally.');
   gateEl.style.display = 'none';
   menuEl.style.display = 'block';
   document.getElementById('menu-quiz-wag').textContent = (currentProfile.quizBestWag != null) ? currentProfile.quizBestWag + '%' : '\u2014';
@@ -1166,17 +1170,23 @@ function friendlyAuthError(e) {
 }
 
 onAuthStateChanged(auth, async (user) => {
-  console.log('[QuizDebug] onAuthStateChanged fired. user:', user ? user.uid : null);
   currentUser = user;
   if (notifUnsub) { notifUnsub(); notifUnsub = null; }
   if (user) {
     const snap = await getDoc(doc(db, 'ngl_judges', user.uid));
     currentProfile = snap.exists() ? snap.data() : null;
-    console.log('[QuizDebug] Profile doc exists:', snap.exists(), '| currentProfile set to:', currentProfile);
-    document.getElementById('auth-area').style.display = 'none';
-    document.getElementById('passport-area').style.display = 'block';
-    document.getElementById('signup-gate').style.display = 'none';
-    renderPassport();
+    if (!currentProfile) {
+      document.getElementById('no-profile-warning').style.display = 'block';
+      document.getElementById('auth-area').style.display = 'block';
+      document.getElementById('passport-area').style.display = 'none';
+      document.getElementById('signup-gate').style.display = 'block';
+    } else {
+      document.getElementById('no-profile-warning').style.display = 'none';
+      document.getElementById('auth-area').style.display = 'none';
+      document.getElementById('passport-area').style.display = 'block';
+      document.getElementById('signup-gate').style.display = 'none';
+      renderPassport();
+    }
     notifUnsub = onSnapshot(query(notifCol, where('judgeUid', '==', user.uid)), nsnap => {
       const notifs = nsnap.docs.map(d => ({ id: d.id, ...d.data() }))
         .sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
@@ -1184,6 +1194,7 @@ onAuthStateChanged(auth, async (user) => {
     });
   } else {
     currentProfile = null;
+    document.getElementById('no-profile-warning').style.display = 'none';
     document.getElementById('auth-area').style.display = 'block';
     document.getElementById('passport-area').style.display = 'none';
     document.getElementById('signup-gate').style.display = 'block';
@@ -1608,10 +1619,11 @@ function renderAdminJudgesList() {
   const sorted = [...allJudges].sort((a,b) => (a.name||'').localeCompare(b.name||''));
   el.innerHTML = sorted.map(j => {
     const tier = getJudgeTier(j);
-    return '<div class="app-row" style="grid-template-columns:1fr 1fr auto">' +
+    return '<div class="app-row" style="grid-template-columns:1fr 1fr auto auto">' +
       '<div><div class="aj-name">' + (j.name||'') + '</div><div class="aj-meta">' + (j.email||'') + (j.club ? ' &middot; ' + j.club : '') + '</div></div>' +
       '<div><span class="role-pill">' + tier.icon + ' ' + tier.name + '</span><div class="aj-meta">BG: ' + (j.qualification||'None') + '</div></div>' +
       '<button class="btn btn-ghost btn-small" onclick="window.openQualModal(\'' + j.uid + '\')">Edit Qualification</button>' +
+      '<button class="btn btn-ghost btn-small" style="color:var(--red)" onclick="window.deleteJudge(\'' + j.uid + '\')">Delete</button>' +
       '</div>';
   }).join('');
 }
@@ -1639,6 +1651,32 @@ window.saveQualification = async function() {
     window.closeQualModal();
   } catch (e) {
     alert('Could not update qualification: ' + e.message);
+  }
+};
+
+window.deleteJudge = async function(uid) {
+  const j = allJudges.find(x => x.uid === uid);
+  const name = j ? j.name : 'this judge';
+  if (!confirm(
+    'Delete ' + name + '\u2019s pathway profile?\n\n' +
+    'This removes their pathway profile, competition applications and notifications.\n\n' +
+    'IMPORTANT: this does NOT delete their login (email/password) \u2014 that has to be removed separately in the Firebase Console (Authentication tab) if you want to free up their email address for re-registration.'
+  )) return;
+
+  try {
+    await deleteDoc(doc(db, 'ngl_judges', uid));
+
+    const assignSnap = await getDocs(query(assignCol, where('judgeUid', '==', uid)));
+    await Promise.all(assignSnap.docs.map(d => deleteDoc(doc(db, 'ngl_judging_assignments', d.id))));
+
+    const notifSnap = await getDocs(query(notifCol, where('judgeUid', '==', uid)));
+    await Promise.all(notifSnap.docs.map(d => deleteDoc(doc(db, 'ngl_judge_notifications', d.id))));
+
+    await loadAllJudges();
+    renderAdminJudgesList();
+    window.renderAdminApplications();
+  } catch (e) {
+    alert('Could not delete this judge: ' + e.message);
   }
 };
 
