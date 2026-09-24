@@ -941,16 +941,19 @@ window.togglePriorExperience = function() {
 
 // ══ FUN QUIZ ══
 function renderQuizMenu() {
+  console.log('[QuizDebug] renderQuizMenu called. currentUser:', currentUser ? currentUser.uid : null, '| currentProfile:', currentProfile);
   const gateEl = document.getElementById('quiz-gate');
   const menuEl = document.getElementById('quiz-menu');
   document.getElementById('quiz-active').style.display = 'none';
   document.getElementById('quiz-result').style.display = 'none';
 
   if (!currentUser || !currentProfile) {
+    console.log('[QuizDebug] Showing SIGN-IN GATE because', !currentUser ? 'currentUser is falsy' : 'currentProfile is falsy');
     gateEl.style.display = 'block';
     menuEl.style.display = 'none';
     return;
   }
+  console.log('[QuizDebug] Showing QUIZ MENU normally.');
   gateEl.style.display = 'none';
   menuEl.style.display = 'block';
   document.getElementById('menu-quiz-wag').textContent = (currentProfile.quizBestWag != null) ? currentProfile.quizBestWag + '%' : '\u2014';
@@ -1163,11 +1166,13 @@ function friendlyAuthError(e) {
 }
 
 onAuthStateChanged(auth, async (user) => {
+  console.log('[QuizDebug] onAuthStateChanged fired. user:', user ? user.uid : null);
   currentUser = user;
   if (notifUnsub) { notifUnsub(); notifUnsub = null; }
   if (user) {
     const snap = await getDoc(doc(db, 'ngl_judges', user.uid));
     currentProfile = snap.exists() ? snap.data() : null;
+    console.log('[QuizDebug] Profile doc exists:', snap.exists(), '| currentProfile set to:', currentProfile);
     document.getElementById('auth-area').style.display = 'none';
     document.getElementById('passport-area').style.display = 'block';
     document.getElementById('signup-gate').style.display = 'none';
