@@ -171,6 +171,33 @@
     font-size:13px;
     font-style:italic;
   }
+
+  /* ---------- Recreational competition content ---------- */
+  .card ul{margin:0 0 18px; padding-left:20px;}
+  .card li{margin-bottom:8px; line-height:1.5; font-size:14.5px;}
+  .gallery-label{font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:0 0 12px; font-weight:700;}
+  .buy-btn{display:inline-block; background:var(--pathway-color, var(--gold)); color:var(--pathway-text, #0a1440); font-weight:700; font-size:14px; padding:12px 26px; border-radius:999px; text-decoration:none; transition:filter .15s ease, transform .12s ease;}
+  .buy-btn:hover{filter:brightness(1.1);}
+  .buy-btn:active{transform:scale(0.97);}
+  .lvl-dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle;}
+  .lvl-tag{font-size:11px; font-weight:600; color:var(--muted); margin-left:6px; text-transform:uppercase; letter-spacing:.03em;}
+  .level-block{margin-bottom:8px;}
+  .level-row{display:flex; align-items:center; justify-content:space-between; padding:13px 14px; border-radius:10px; background:var(--navy-4); font-size:14px; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .15s ease;}
+  .level-row:active{background:#243a94;}
+  .level-row .ph{display:flex; align-items:center; gap:8px; color:var(--muted); font-weight:500; font-size:12.5px;}
+  .level-arrow{display:inline-block; transition:transform .2s ease; font-size:12px; color:var(--muted);}
+  .level-block.open .level-arrow{transform:rotate(90deg);}
+  .level-videos{display:none; padding:8px 6px 2px;}
+  .level-block.open .level-videos{display:block;}
+  .video-link-row{display:flex; align-items:flex-start; gap:10px; padding:10px 12px; margin-bottom:6px; border-radius:8px; background:rgba(255,255,255,0.07); color:var(--white); text-decoration:none; font-size:13.5px; font-weight:600; transition:background .15s ease;}
+  .video-link-row:hover{background:rgba(255,255,255,0.14);}
+  .video-link-row .num{color:var(--muted); font-weight:500; margin-top:2px;}
+  .vrow-text{display:flex; flex-direction:column; gap:2px;}
+  .vrow-label{font-weight:700;}
+  .vrow-caption{font-weight:400; font-size:12px; color:var(--muted); line-height:1.35;}
+  .vrow-status{display:block; font-size:11.5px; font-style:italic; color:var(--muted); margin-top:3px;}
+  .video-link-row.video-pending{cursor:default;}
+  .video-link-row.video-pending:hover{background:rgba(255,255,255,0.07);}
 </style>
 </head>
 <body>
@@ -262,7 +289,137 @@ function placeholderActionsFor(p){
   return PLACEHOLDER_ACTIONS.map(a => Object.assign({}, a, { subOverride: overrides[a.title] || null }));
 }
 
+/* ---------- Recreational Competitions (moved from the Award Programmes page) ---------- */
+// Recreational 'Book Now' -> 2027 season pre-booking system.
+const REC_BOOK_URL = 'https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration';
+const REC_LEVELS = [
+  {id:'ruby',   name:'Ruby',   tag:'Beginner',       color:'#c90511'},
+  {id:'pink',   name:'Pink',   tag:'Beginner Plus',  color:'#f65eb7'},
+  {id:'teal',   name:'Teal',   tag:'Intermediate',   color:'#02a1c7'},
+  {id:'indigo', name:'Indigo', tag:'Advanced Club',  color:'#603dac'}
+];
+const REC_PIECES = ['floor','vault','beam','bars'];
+const REC_PIECE_LABELS = { floor:'Floor', vault:'Vault', beam:'Beam', bars:'Bars' };
+const REC_SKILLS = {
+  ruby: {
+    floor: ["Forward Roll","Star Jump","Bunny Hops","Half Turn Jump","Arabesque"],
+    vault: ["Squat on","Walk across block","Stretch jump off"],
+    beam: ["Mount","Walk Forwards","Straight Jump","Arabesque","Stretch Jump Dismount"],
+    bars: ["Front Support","Cast","Walk Around Bar","Underswing Dismount"]
+  },
+  pink: {
+    floor: ["Forward Roll","Stretch Jump","Cartwheel","Half Turn Jump","Lever Balance","Straight Jump"],
+    vault: ["Straddle on","Walk across block","Stretch jump off"],
+    beam: ["Mount","Forward Walk","Sideways Walk","Lever","Half Turn","Stretch Jump Dismount"],
+    bars: ["Front Support","Cast","Pullover Attempt","Underswing Dismount"]
+  },
+  teal: {
+    floor: ["Handstand Forward Roll","Tuck Jump","Full Turn","Cartwheel","Backward Roll","Cat Leap","Round Off"],
+    vault: ["Jump to Handstand Flatback"],
+    beam: ["Mount","Cat Leap","Full Turn","Tuck Jump","Cartwheel","Split Jump Dismount"],
+    bars: ["Pullover","Cast","Back Hip Circle","Tap Swings","Straddle Underswing"]
+  },
+  indigo: {
+    floor: ["Handstand Forward Roll","Split Jump","Full Turn","Round Off","Backward Walkover","Balance Hold","Jump Sequence"],
+    vault: ["Handstand Flatback OR Half-on to Feet"],
+    beam: ["Mount","Split Leap","Full Turn","Cartwheel","Balance Hold","Round Off Dismount"],
+    bars: ["Pullover","Cast Above Horizontal","Back Hip Circle","Squat On","Straight Jump Dismount"]
+  }
+};
+// Fill in as Dave sends links: position n -> level = REC_LEVELS[(n-1)%4], piece = REC_PIECES[Math.floor((n-1)/4)]
+const REC_VIDEO_IDS = {
+  ruby:   { floor:'QUmO-2VM4jQ', vault:'TKV4rRq4JoQ', beam:'6Xf6tzbyuI0', bars:'UqIItuGwqmg' },
+  pink:   { floor:'cXcmczamdLs', vault:'8IE9zY81g_g', beam:'YyuTaVTMHto', bars:'Mm_Dnm3WXzw' },
+  teal:   { floor:'AYcnuE1zZc8', vault:'4Lgkq3aaues', beam:'PwY_MOdLzKs', bars:'9n-AtEJIr_U' },
+  indigo: { floor:'Uu8si-DM_CI', vault:'w58EYcW2Loo', beam:'0GzVp2KSjbI', bars:'pv8VOObrh0Q' }
+};
+
+function recVideoLevelsHTML(){
+  let rows = '';
+  REC_LEVELS.forEach(level => {
+    const inner = REC_PIECES.map(piece => {
+      const vid = REC_VIDEO_IDS[level.id][piece];
+      const label = REC_PIECE_LABELS[piece];
+      const caption = REC_SKILLS[level.id][piece].join(', ');
+      if(vid){
+        return `
+          <a class="video-link-row" href="https://youtu.be/${vid}" target="_blank" rel="noopener">
+            <span class="num">&#9654;</span>
+            <span class="vrow-text">
+              <span class="vrow-label">${label}</span>
+              <span class="vrow-caption">${caption}</span>
+            </span>
+          </a>
+        `;
+      }
+      return `
+        <div class="video-link-row video-pending">
+          <span class="num">&#9654;</span>
+          <span class="vrow-text">
+            <span class="vrow-label">${label}</span>
+            <span class="vrow-caption">${caption}</span>
+            <span class="vrow-status">Video coming soon</span>
+          </span>
+        </div>
+      `;
+    }).join('');
+    rows += `
+      <div class="level-block">
+        <div class="level-row">
+          <span><span class="lvl-dot" style="background:${level.color}"></span>${level.name} <span class="lvl-tag">${level.tag}</span></span>
+          <span class="ph"><span class="level-arrow">&#9654;</span></span>
+        </div>
+        <div class="level-videos">${inner}</div>
+      </div>
+    `;
+  });
+  return rows;
+}
+
+function recreationalPanelHTML(){
+  return `
+    <div class="card">
+      <p class="lede">A simple, positive-scoring club competition, exclusively for British Gymnastics clubs &mdash; every gymnast leaves with a medal.</p>
+      <a class="buy-btn" href="${REC_BOOK_URL}" target="_top">Book Now</a>
+    </div>
+    <div class="section-tabs">
+      <div class="stab active" data-sec="rec-comp">Competition</div>
+      <div class="stab" data-sec="rec-videos">Routine Videos</div>
+    </div>
+    <div class="section-panel active" data-sec="rec-comp">
+      <div class="card">
+        <div class="gallery-label">Levels</div>
+        <ul>
+          ${REC_LEVELS.map(l => `<li><span class="lvl-dot" style="background:${l.color}"></span><strong>${l.name}</strong> &mdash; ${l.tag}</li>`).join('')}
+        </ul>
+        <div class="gallery-label">Medals &mdash; every gymnast receives one</div>
+        <ul>
+          <li>Gold &mdash; 8.0+</li>
+          <li>Silver &mdash; 6.0&ndash;7.999</li>
+          <li>Bronze &mdash; 5.999 &amp; below</li>
+        </ul>
+        <div class="gallery-label">Scoring &mdash; simple 10.0 positive scoring</div>
+        <ul>
+          <li>Skill Completion &mdash; 4.0</li>
+          <li>Shapes &amp; Technique &mdash; 3.0</li>
+          <li>Confidence &amp; Presentation &mdash; 2.0</li>
+          <li>Finish &amp; Salute &mdash; 1.0</li>
+        </ul>
+        <p class="lede">2 Piece (Floor &amp; Vault) or 4 Piece (Floor, Vault, Beam &amp; Bars) competitions, 1.5&ndash;2.5 hours, with routines that are simple, age-appropriate and confidence-building.</p>
+        <a class="buy-btn" href="${REC_BOOK_URL}" target="_top">Book Now</a>
+      </div>
+    </div>
+    <div class="section-panel" data-sec="rec-videos">
+      <div class="card">
+        <p class="lede">Every competition routine, organised by Level &mdash; tap a Level to reveal its Floor, Vault, Beam and Bars videos.</p>
+        ${recVideoLevelsHTML()}
+      </div>
+    </div>
+  `;
+}
+
 function pathwayPanelHTML(p){
+  if(p.id === 'recreational') return recreationalPanelHTML();
   const data = SEASON_DATA[p.id];
   if(!data){
     const actions = placeholderActionsFor(p);
@@ -340,7 +497,22 @@ document.addEventListener('click', (e) => {
     scope.querySelectorAll('.stab').forEach(b => b.classList.toggle('active', b === stab));
     scope.querySelectorAll('.section-panel').forEach(p => p.classList.toggle('active', p.dataset.sec === sec));
   }
+  const levelRow = e.target.closest('.level-row');
+  if(levelRow){
+    const block = levelRow.closest('.level-block');
+    if(block){ block.classList.toggle('open'); }
+  }
 });
+
+// Deep link: open a pathway tab when arriving from another NGL page
+// (e.g. Recreational "Book Now" on the Award Programmes page), or via ?pathway= / #pathway on this page.
+(function(){
+  let target = null;
+  try{ target = localStorage.getItem('ngl-open-pathway'); localStorage.removeItem('ngl-open-pathway'); }catch(e){}
+  const q = new URLSearchParams(location.search).get('pathway') || location.hash.replace('#','');
+  target = q || target;
+  if(target && PATHWAYS.some(p => p.id === target)) selectPathway(target);
+})();
 </script>
 
 </body>
