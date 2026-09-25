@@ -3,838 +3,1352 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NGL Remote Judge Booking</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
+<title>NGL Competition Booking 2027</title>
 <style>
-  :root{
-    --navy:#1a2a4a;
-    --navy-light:#233a63;
-    --red:#c0392b;
-    --gold:#c9a227;
-    --gold-light:#e8c766;
-    --bg:#f4f6fa;
-    --card:#ffffff;
-    --border:#e1e5ee;
-    --text:#1c2536;
-    --muted:#6b7488;
-    --success:#1e8a4c;
+  :root {
+    --navy:       #0d1b3e;
+    --navy-light: #1e2d56;
+    --red:        #c0392b;
+    --red-hover:  #a93226;
+    --gold:       #d4a017;
+    --white:      #ffffff;
+    --off-white:  #f4f6f9;
+    --border:     #dde1ea;
+    --grey-light: #edf0f5;
+    --grey-mid:   #8892a4;
+    --text:       #1a1f2e;
+    --font:       'Segoe UI', Arial, sans-serif;
+    --mono:       'Courier New', monospace;
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
-    background:var(--bg);
-    color:var(--text);
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--off-white); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+  .top-nav { background: var(--navy); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 52px; border-bottom: 3px solid var(--red); gap: 8px; }
+  .brand { color: var(--white); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
+  .brand span { display: none; }
+  .nav-tabs { display: flex; flex-shrink: 1; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab { background: none; border: none; color: rgba(255,255,255,0.55); padding: 0 12px; height: 52px; font-size: 0.72rem; font-family: var(--font); cursor: pointer; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; border-bottom: 3px solid transparent; margin-bottom: -3px; transition: all 0.15s; white-space: nowrap; }
+  .nav-tab:hover { color: var(--white); }
+  .nav-tab.active { color: var(--white); border-bottom-color: var(--red); }
+  @media (min-width: 600px) {
+    .top-nav { padding: 0 24px; height: 56px; }
+    .brand { font-size: 0.95rem; letter-spacing: 0.08em; }
+    .brand span { display: inline; }
+    .nav-tab { padding: 0 20px; height: 56px; font-size: 0.78rem; letter-spacing: 0.08em; }
   }
-  header{
-    background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-    color:#fff;
-    padding:36px 20px 30px;
-    text-align:center;
-    border-bottom:4px solid var(--gold);
-  }
-  header .tag{
-    display:inline-block;
-    background:var(--red);
-    color:#fff;
-    font-size:12px;
-    letter-spacing:1.5px;
-    text-transform:uppercase;
-    padding:5px 14px;
-    border-radius:20px;
-    margin-bottom:14px;
-    font-weight:600;
-  }
-  header h1{
-    margin:0 0 8px;
-    font-size:30px;
-    letter-spacing:.5px;
-  }
-  header p{
-    margin:0;
-    color:#c9d2e6;
-    font-size:15px;
-    max-width:640px;
-    margin:0 auto;
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .hero { background: var(--navy); padding: 36px 20px 32px; text-align: center; }
+  .hero-kicker { display: inline-block; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; padding: 4px 16px; border-radius: 2px; margin-bottom: 18px; }
+  .hero h1 { color: var(--white); font-size: clamp(1.5rem,5vw,2.8rem); font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .hero h1 em { color: var(--red); font-style: normal; }
+  .hero p { color: rgba(255,255,255,0.6); font-size: 0.88rem; max-width: 520px; margin: 0 auto 22px; line-height: 1.6; }
+  .hero-badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .hero-badge { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 3px; font-size: 0.74rem; font-weight: 500; }
+
+  /* SEASON THERMOMETER */
+  .thermo-wrap { max-width: 460px; margin: 26px auto 0; }
+  .thermo-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .thermo-status { color: var(--white); font-size: 0.95rem; font-weight: 800; letter-spacing: 0.04em; }
+  .thermo-pct { color: rgba(255,255,255,0.55); font-size: 0.78rem; font-weight: 700; font-family: var(--mono); }
+  .thermo-track { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); border-radius: 20px; height: 18px; overflow: hidden; position: relative; }
+  .thermo-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #2e9e5b 0%, #d4a017 55%, #c0392b 100%); width: 0%; transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
+  .thermo-caption { color: rgba(255,255,255,0.55); font-size: 0.74rem; margin-top: 8px; text-align: center; }
+  .thermo-scale { display: flex; justify-content: space-between; margin-top: 10px; gap: 4px; }
+  .thermo-scale-item { flex: 1; text-align: center; font-size: 0.62rem; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 0.03em; padding: 4px 2px; border-radius: 3px; border: 1px solid transparent; transition: all 0.3s; line-height: 1.5; }
+  .thermo-scale-item.active { color: var(--white); background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); }
+  .thermo-scale-item .ts-range { display: block; font-weight: 500; color: rgba(255,255,255,0.35); font-size: 0.58rem; }
+  .thermo-scale-item.active .ts-range { color: rgba(255,255,255,0.6); }
+
+  .booking-section { max-width: 1080px; margin: 0 auto; padding: 36px 20px 48px; display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start; }
+  @media (max-width: 780px) { .booking-section { grid-template-columns: 1fr; } }
+  .eyebrow { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--grey-mid); margin-bottom: 3px; }
+  .sec-title { font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .sec-sub { font-size: 0.79rem; color: var(--grey-mid); margin-bottom: 18px; }
+
+  .loading-bar { display: flex; align-items: center; gap: 10px; padding: 20px; color: var(--grey-mid); font-size: 0.82rem; background: var(--white); border: 1px solid var(--border); }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .load-error { padding: 16px; background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--red); font-size: 0.82rem; color: var(--red); }
+
+  .comp-card { background: var(--white); border: 1px solid var(--border); border-left: 4px solid transparent; margin-bottom: 10px; cursor: default; }
+  .comp-card:hover { border-left-color: var(--grey-mid); box-shadow: 0 2px 10px rgba(13,27,62,0.07); }
+  .comp-card.selected { border-left-color: var(--red); background: #fefcfc; box-shadow: 0 2px 14px rgba(192,57,43,0.1); }
+  .comp-card.unavailable { opacity: 0.5; cursor: default; pointer-events: none; }
+  .comp-card-header { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; padding: 13px 15px; }
+  .date-badge { background: var(--navy); color: var(--white); text-align: center; padding: 7px 4px; border-radius: 3px; }
+  .date-badge .dbday { font-size: 1.45rem; font-weight: 700; line-height: 1; }
+  .date-badge .dbmon { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .ci-name { font-size: 0.88rem; font-weight: 700; color: var(--navy); }
+  .ci-meta { font-size: 0.73rem; color: var(--grey-mid); margin-top: 4px; }
+  .ci-meta span { margin-right: 12px; }
+  .comp-right { text-align: right; min-width: 90px; }
+  .spots { font-size: 0.8rem; font-weight: 700; color: var(--navy); }
+  .spots.low { color: var(--red); }
+  .pill { display: inline-block; font-size: 0.63rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 2px; margin-top: 4px; }
+  .pill.open    { background: #e6f4ee; color: #1a6b3a; }
+  .pill.filling { background: #fef3e2; color: #b06000; }
+  .pill.full    { background: #fde8e6; color: var(--red); }
+  .pill.closed  { background: var(--grey-light); color: var(--grey-mid); }
+  .pill.waitlist { background: #fff3e0; color: #b06000; }
+  .no-comps { text-align: center; padding: 56px 20px; color: var(--grey-mid); font-size: 0.86rem; background: var(--white); border: 1px solid var(--border); }
+
+  .comp-icons { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .comp-icon { display: inline-flex; align-items: center; gap: 4px; background: var(--grey-light); border: 1px solid var(--border); border-radius: 2px; padding: 2px 7px; font-size: 0.68rem; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; }
+  .comp-icon.gender-girls { background: #fce8f3; border-color: #e8a0cc; color: #8c1a5e; }
+  .comp-icon.gender-boys  { background: #e8f0fe; border-color: #9ab5f5; color: #1a3a8c; }
+  .comp-icon.gender-both  { background: #ede8fe; border-color: #b09af5; color: #3a1a8c; }
+  .comp-icon.apparatus    { background: #fff8e6; border-color: #f5d87a; color: #7a5c00; }
+
+  .comp-check-row { display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-top: 1px solid var(--border); background: #fdf6f5; }
+  .comp-check-row label { font-size: 0.75rem; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; }
+  .comp-checkbox { width: 17px; height: 17px; accent-color: var(--red); cursor: pointer; flex-shrink: 0; }
+  .spaces-input { width: 72px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 2px; font-size: 0.84rem; font-family: var(--font); text-align: center; }
+  .spaces-input:focus { outline: none; border-color: var(--red); }
+  .spaces-label { font-size: 0.72rem; color: var(--grey-mid); white-space: nowrap; }
+
+  .sel-summary { margin-bottom: 15px; }
+  .sel-summary-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #fdf6f5; border: 1px solid rgba(192,57,43,0.18); border-left: 3px solid var(--red); border-radius: 2px; margin-bottom: 6px; font-size: 0.77rem; color: var(--navy); }
+  .sel-summary-item .si-name { font-weight: 700; flex: 1; }
+  .sel-summary-item .si-spaces { font-size: 0.72rem; color: var(--grey-mid); white-space: nowrap; margin-left: 8px; }
+  .sel-empty { background: var(--grey-light); color: var(--grey-mid); text-align: center; border: 1px dashed var(--border); padding: 9px 12px; border-radius: 2px; font-size: 0.77rem; margin-bottom: 15px; }
+
+  .form-card { background: var(--white); border: 1px solid var(--border); position: sticky; top: 16px; }
+  .fc-head { background: var(--navy); padding: 15px 20px; border-bottom: 3px solid var(--red); }
+  .fc-head h2 { color: var(--white); font-size: 0.92rem; font-weight: 700; }
+  .fc-head p { color: rgba(255,255,255,0.45); font-size: 0.73rem; margin-top: 3px; }
+  .fc-body { padding: 18px 20px; }
+  .fg { margin-bottom: 13px; }
+  .fg label { display: block; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--grey-mid); margin-bottom: 5px; }
+  .fg label .req { color: var(--red); }
+  .fg input, .fg select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 2px; font-size: 0.84rem; font-family: var(--font); color: var(--text); background: var(--white); appearance: none; transition: border-color 0.12s; }
+  .fg input:focus, .fg select:focus { outline: none; border-color: var(--navy); }
+  .fg .hint { font-size: 0.68rem; color: var(--grey-mid); margin-top: 4px; }
+  .btn-book { width: 100%; background: var(--red); color: var(--white); border: none; padding: 12px; font-size: 0.83rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.12s; border-radius: 2px; margin-top: 4px; }
+  .btn-book:hover { background: var(--red-hover); }
+  .btn-book:disabled { background: var(--grey-mid); cursor: not-allowed; }
+  .guarantee-box { display: flex; gap: 9px; background: #eaf6ef; border: 1px solid rgba(39,174,96,0.22); border-radius: 2px; padding: 9px 11px; margin-top: 12px; font-size: 0.71rem; color: #1a6b3a; line-height: 1.5; }
+  .submit-error { background: #fde8e6; border: 1px solid rgba(192,57,43,0.3); border-left: 3px solid var(--red); border-radius: 2px; padding: 9px 12px; margin-top: 10px; font-size: 0.77rem; color: var(--red); display: none; }
+
+  .success-screen { display: none; }
+  .success-screen.show { display: block; }
+  .success-wrap { max-width: 500px; margin: 60px auto; background: var(--white); border: 1px solid var(--border); text-align: center; padding: 48px 32px; }
+  .s-icon { font-size: 3rem; margin-bottom: 16px; }
+  .success-wrap h2 { font-size: 1.45rem; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+  .success-wrap p { font-size: 0.83rem; color: var(--grey-mid); line-height: 1.65; margin-bottom: 16px; }
+  .success-ref { display: inline-block; background: var(--navy); color: var(--white); font-family: var(--mono); font-size: 1rem; letter-spacing: 0.12em; padding: 9px 28px; border-radius: 2px; margin-bottom: 24px; }
+  .btn-again { background: var(--navy); color: var(--white); border: none; padding: 10px 28px; font-size: 0.79rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: var(--font); transition: background 0.12s; }
+  .btn-again:hover { background: var(--navy-light); }
+
+  .admin-login-wrap { max-width: 380px; margin: 80px auto; background: var(--white); border: 1px solid var(--border); }
+  .al-head { background: var(--navy); border-bottom: 3px solid var(--red); padding: 16px 22px; color: var(--white); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; }
+  .al-head p { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 3px; font-weight: 400; letter-spacing: 0; }
+  .al-body { padding: 22px; }
+  .btn-signin { width: 100%; background: var(--navy); color: var(--white); border: none; padding: 10px; font-size: 0.83rem; font-weight: 700; font-family: var(--font); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; margin-top: 6px; border-radius: 2px; transition: background 0.12s; }
+  .btn-signin:hover { background: var(--navy-light); }
+  .al-err { color: var(--red); font-size: 0.77rem; margin-top: 8px; display: none; }
+
+  .admin-dash { max-width: 1080px; margin: 0 auto; padding: 26px 20px; }
+  .dash-top { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 22px; gap: 12px; flex-wrap: wrap; }
+  .dash-top h2 { font-size: 1.15rem; font-weight: 700; color: var(--navy); }
+  .dash-top p { font-size: 0.77rem; color: var(--grey-mid); margin-top: 3px; }
+  .btn-logout { background: none; border: 1px solid var(--border); color: var(--grey-mid); padding: 6px 15px; font-size: 0.73rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: var(--font); transition: all 0.12s; }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 22px; }
+  @media (max-width: 580px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+  .stat-tile { background: var(--white); border: 1px solid var(--border); border-top: 3px solid var(--navy); padding: 13px 15px; }
+  .sv { font-size: 1.85rem; font-weight: 700; color: var(--navy); line-height: 1; }
+  .sv.red { color: var(--red); }
+  .sl { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--grey-mid); margin-top: 5px; }
+
+  .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+  @media (max-width: 680px) { .admin-grid { grid-template-columns: 1fr; } }
+  .panel-card { background: var(--white); border: 1px solid var(--border); }
+  .pc-head { background: var(--navy); padding: 11px 17px; color: var(--white); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+  .pc-badge { background: var(--red); color: var(--white); font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-left: auto; }
+  .pc-body { padding: 16px; }
+  .form-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-add { background: var(--red); color: var(--white); border: none; padding: 8px 16px; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 2px; margin-top: 10px; transition: background 0.12s; font-family: var(--font); }
+  .btn-add:hover { background: var(--red-hover); }
+  .btn-add:disabled { background: var(--grey-mid); cursor: not-allowed; }
+
+  .acl-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--grey-light); font-size: 0.79rem; }
+  .acl-row:last-child { border-bottom: none; }
+  .acl-date { font-weight: 700; color: var(--navy); min-width: 74px; font-family: var(--mono); font-size: 0.74rem; }
+  .acl-name { flex: 1; }
+  .acl-reg { color: var(--grey-mid); font-size: 0.7rem; white-space: nowrap; }
+  .acl-spots { font-size: 0.7rem; color: var(--grey-mid); white-space: nowrap; }
+  .btn-del { background: none; border: 1px solid var(--border); color: var(--red); padding: 3px 7px; font-size: 0.68rem; font-family: var(--font); cursor: pointer; border-radius: 2px; transition: all 0.1s; }
+  .btn-del:hover { background: var(--red); color: var(--white); border-color: var(--red); }
+
+  .table-wrap { background: var(--white); border: 1px solid var(--border); }
+  .table-toolbar { padding: 11px 17px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--grey-light); }
+  .table-toolbar input, .table-toolbar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 2px; font-size: 0.79rem; font-family: var(--font); background: var(--white); appearance: none; }
+  .table-toolbar input { width: 200px; }
+  .table-toolbar input:focus, .table-toolbar select:focus { outline: none; border-color: var(--navy); }
+  .btn-export { margin-left: auto; background: var(--navy); color: var(--white); border: none; padding: 6px 13px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: var(--font); transition: background 0.12s; }
+  .btn-export:hover { background: var(--navy-light); }
+  .bk-table { width: 100%; border-collapse: collapse; }
+  .bk-table thead tr { background: var(--navy); }
+  .bk-table th { padding: 10px 13px; font-size: 0.63rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.65); text-align: left; white-space: nowrap; border-right: 1px solid rgba(255,255,255,0.06); }
+  .bk-table th:last-child { border-right: none; }
+  .bk-table td { padding: 10px 13px; font-size: 0.79rem; border-bottom: 1px solid var(--grey-light); }
+  .bk-table tbody tr:last-child td { border-bottom: none; }
+  .bk-table tbody tr:nth-child(even) td { background: rgba(244,246,249,0.5); }
+  .bk-table tbody tr:hover td { background: rgba(13,27,62,0.04); }
+  .td-ref { font-family: var(--mono); font-size: 0.7rem; color: var(--grey-mid); }
+  .td-club { font-weight: 700; color: var(--navy); }
+  .td-num { font-weight: 700; color: var(--red); }
+  .no-rows { text-align: center; padding: 48px; color: var(--grey-mid); font-size: 0.84rem; }
+
+  .footer { background: var(--navy); border-top: 3px solid var(--red); padding: 20px 24px; text-align: center; margin-top: 40px; }
+  .footer p { color: rgba(255,255,255,0.38); font-size: 0.71rem; line-height: 1.8; }
+  .footer strong { color: rgba(255,255,255,0.65); }
+
+  .waitlist-banner { background: #fff8e6; border: 1px solid #f5d87a; border-left: 3px solid #d4a017; border-radius: 2px; padding: 10px 13px; font-size: 0.78rem; color: #7a5c00; margin-bottom: 15px; line-height: 1.5; }
+  .waitlist-banner strong { display: block; font-size: 0.84rem; margin-bottom: 2px; color: #5a4000; }
+
+  /* MY BOOKINGS */
+  .lookup-card { max-width: 480px; margin: 0 auto 24px; background: var(--white); border: 1px solid var(--border); }
+  .lookup-body { padding: 20px; }
+  .cal-grid-wrap { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 28px; }
+  @media (max-width: 780px) { .cal-grid-wrap { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 520px) { .cal-grid-wrap { grid-template-columns: 1fr; } }
+  .mini-cal { background: var(--white); border: 1px solid var(--border); padding: 12px; }
+  .mini-cal-title { font-size: 0.78rem; font-weight: 700; color: var(--navy); text-align: center; margin-bottom: 8px; letter-spacing: 0.04em; }
+  .mini-cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+  .mini-cal-dow { font-size: 0.58rem; color: var(--grey-mid); text-align: center; font-weight: 700; padding-bottom: 3px; }
+  .mini-cal-day { font-size: 0.68rem; text-align: center; padding: 4px 0; border-radius: 2px; color: var(--text); }
+  .mini-cal-day.blank { visibility: hidden; }
+  .mini-cal-day.booked { background: var(--red); color: var(--white); font-weight: 700; cursor: default; }
+  .mini-cal-day.waitlisted { background: var(--gold); color: var(--white); font-weight: 700; cursor: default; }
+  .my-booking-row { display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: var(--white); border: 1px solid var(--border); border-left: 4px solid var(--red); margin-bottom: 8px; }
+  .my-booking-row.waitlist-row { border-left-color: var(--gold); }
+  .mb-date { background: var(--navy); color: var(--white); text-align: center; padding: 6px 10px; border-radius: 3px; min-width: 52px; }
+  .mb-date .mbday { font-size: 1.1rem; font-weight: 700; line-height: 1; }
+  .mb-date .mbmon { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+  .mb-name { font-size: 0.85rem; font-weight: 700; color: var(--navy); }
+  .mb-meta { font-size: 0.72rem; color: var(--grey-mid); margin-top: 2px; }
+
+  @media (max-width: 500px) {
+    .hero { padding: 28px 16px 26px; }
+    .hero-kicker { font-size: 0.62rem; letter-spacing: 0.12em; padding: 3px 12px; margin-bottom: 14px; }
+    .hero h1 { font-size: 1.55rem; line-height: 1.2; margin-bottom: 10px; }
+    .hero p { font-size: 0.83rem; margin-bottom: 18px; }
+    .hero-badge { font-size: 0.7rem; padding: 5px 10px; width: 100%; justify-content: center; text-align: center; }
+    .hero-badges { flex-direction: column; align-items: stretch; gap: 6px; padding: 0 10px; }
+    .booking-section { padding: 20px 14px 36px; gap: 20px; }
+    .comp-card-header { grid-template-columns: 48px 1fr auto; gap: 10px; padding: 11px 12px; }
+    .date-badge .dbday { font-size: 1.2rem; }
+    .ci-name { font-size: 0.82rem; }
+    .ci-meta { font-size: 0.68rem; }
+    .comp-right { min-width: 70px; }
+    .spots { font-size: 0.72rem; }
+    .comp-check-row { padding: 8px 12px; gap: 8px; }
+    .spaces-input { width: 60px; }
+    .form-card { position: static; }
+    .fc-body { padding: 14px 16px; }
+    .admin-dash { padding: 16px 14px; }
+    .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .admin-grid { gap: 14px; }
+    .pc-body { padding: 12px; }
+    .form-row2 { grid-template-columns: 1fr; gap: 0; }
+    .table-toolbar { padding: 10px 12px; }
+    .table-toolbar input { width: 160px; }
+    .bk-table th, .bk-table td { padding: 8px 10px; font-size: 0.72rem; }
+    .modal { margin: 10px; }
+    .modal-body { padding: 14px; }
   }
 
-  .wrap{
-    max-width:1100px;
-    margin:-18px auto 60px;
-    padding:0 20px;
-  }
-
-  .package-card{
-    background:var(--card);
-    border-radius:14px;
-    box-shadow:0 10px 30px rgba(26,42,74,0.12);
-    padding:30px 32px;
-    margin-bottom:26px;
-    border-top:5px solid var(--gold);
-  }
-  .package-card h2{
-    margin:0 0 6px;
-    color:var(--navy);
-    font-size:20px;
-  }
-  .package-card .price-lead{
-    color:var(--red);
-    font-weight:700;
-    font-size:15px;
-    margin-bottom:18px;
-  }
-  .features{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
-    gap:14px;
-  }
-  .feature{
-    display:flex;
-    gap:10px;
-    align-items:flex-start;
-    padding:12px;
-    background:#f8f9fc;
-    border-radius:10px;
-    border:1px solid var(--border);
-  }
-  .feature .icon{
-    flex:0 0 26px;
-    width:26px;
-    height:26px;
-    border-radius:50%;
-    background:var(--navy);
-    color:var(--gold);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:13px;
-    font-weight:700;
-  }
-  .feature .label{
-    font-size:13.5px;
-    line-height:1.4;
-    color:var(--text);
-  }
-  .feature .label b{
-    display:block;
-    color:var(--navy);
-    font-size:13.5px;
-    margin-bottom:2px;
-  }
-
-  .pricing-note{
-    margin-top:18px;
-    background:#fff8e8;
-    border:1px solid var(--gold-light);
-    border-radius:10px;
-    padding:14px 16px;
-    font-size:13.5px;
-    color:#7a5c0a;
-  }
-
-  form.card{
-    background:var(--card);
-    border-radius:14px;
-    box-shadow:0 10px 30px rgba(26,42,74,0.12);
-    padding:32px;
-  }
-  .section-title{
-    color:var(--navy);
-    font-size:17px;
-    font-weight:700;
-    margin:0 0 4px;
-    padding-bottom:10px;
-    border-bottom:2px solid var(--border);
-  }
-  .section-title span{color:var(--red);}
-  .grid2{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:18px;
-    margin-top:18px;
-  }
-  .field{margin-bottom:18px;}
-  .field label{
-    display:block;
-    font-size:13px;
-    font-weight:600;
-    color:var(--navy);
-    margin-bottom:6px;
-  }
-  .field .hint{
-    font-size:11.5px;
-    color:var(--muted);
-    margin-top:4px;
-  }
-  input[type=text], input[type=email], input[type=tel], input[type=date],
-  input[type=time], input[type=number], textarea, select{
-    width:100%;
-    padding:11px 12px;
-    border:1.5px solid var(--border);
-    border-radius:8px;
-    font-size:14px;
-    font-family:inherit;
-    color:var(--text);
-    background:#fff;
-    transition:border .15s;
-  }
-  input:focus, textarea:focus, select:focus{
-    outline:none;
-    border-color:var(--gold);
-  }
-  textarea{resize:vertical; min-height:70px;}
-
-  .file-drop{
-    border:2px dashed var(--border);
-    border-radius:10px;
-    padding:18px;
-    text-align:center;
-    background:#fafbfd;
-    cursor:pointer;
-    transition:border .15s, background .15s;
-  }
-  .file-drop:hover{border-color:var(--gold); background:#fff9ec;}
-  .file-drop.has-file{border-color:var(--success); background:#f0fbf4;}
-  .file-drop .fname{font-size:13px; font-weight:600; color:var(--navy); margin-top:6px;}
-
-  .checkbox-row{
-    display:flex;
-    align-items:flex-start;
-    gap:10px;
-    background:#f8f9fc;
-    border:1px solid var(--border);
-    border-radius:8px;
-    padding:12px 14px;
-    margin-top:6px;
-  }
-  .checkbox-row input{width:auto; margin-top:3px;}
-  .checkbox-row label{font-size:13px; color:var(--text); font-weight:500;}
-
-  .price-box{
-    background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-    border-radius:12px;
-    padding:24px 26px;
-    color:#fff;
-    margin:24px 0;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:14px;
-  }
-  .price-box .breakdown{font-size:13px; color:#c9d2e6; line-height:1.6;}
-  .price-box .breakdown .line{display:flex; justify-content:space-between; gap:24px; min-width:220px;}
-  .price-box .total{
-    text-align:right;
-  }
-  .price-box .total .amount{
-    font-size:34px;
-    font-weight:800;
-    color:var(--gold);
-    line-height:1;
-  }
-  .price-box .total .label{
-    font-size:12px;
-    text-transform:uppercase;
-    letter-spacing:1px;
-    color:#c9d2e6;
-    margin-top:4px;
-  }
-
-  button.submit-btn{
-    width:100%;
-    padding:15px;
-    background:var(--red);
-    color:#fff;
-    border:none;
-    border-radius:9px;
-    font-size:16px;
-    font-weight:700;
-    cursor:pointer;
-    letter-spacing:.3px;
-    transition:background .15s, transform .1s;
-  }
-  button.submit-btn:hover{background:#a5301f;}
-  button.submit-btn:disabled{background:#b9b9b9; cursor:not-allowed;}
-
-  .status-msg{
-    margin-top:14px;
-    padding:12px 14px;
-    border-radius:8px;
-    font-size:13.5px;
-    display:none;
-  }
-  .status-msg.error{display:block; background:#fdeceb; color:var(--red); border:1px solid #f3c6c1;}
-  .status-msg.success{display:block; background:#eafaf0; color:var(--success); border:1px solid #b9ecc9;}
-
-  .confirm-screen{
-    display:none;
-    text-align:center;
-    padding:50px 30px;
-  }
-  .confirm-screen .tick{
-    width:64px; height:64px; border-radius:50%;
-    background:var(--success); color:#fff;
-    display:flex; align-items:center; justify-content:center;
-    font-size:32px; margin:0 auto 18px;
-  }
-  .confirm-screen h2{color:var(--navy); margin-bottom:8px;}
-  .confirm-screen p{color:var(--muted); font-size:14px; max-width:440px; margin:0 auto 6px;}
-  .ref{
-    display:inline-block;
-    margin-top:16px;
-    background:#f4f6fa;
-    border:1px solid var(--border);
-    padding:8px 18px;
-    border-radius:8px;
-    font-weight:700;
-    color:var(--navy);
-    letter-spacing:.5px;
-  }
-
-  @media(max-width:640px){
-    .grid2{grid-template-columns:1fr;}
-    .price-box{flex-direction:column; align-items:flex-start;}
-    .price-box .total{text-align:left;}
-  }
-
-  /* ══ NAV ══ */
-  .top-nav{
-    background:var(--navy);
-    display:flex; align-items:center; justify-content:center;
-    height:52px; border-bottom:3px solid var(--red);
-  }
-  .nav-tab{
-    background:none; border:none; color:rgba(255,255,255,0.55);
-    padding:0 20px; height:52px; font-size:13px; font-family:inherit;
-    cursor:pointer; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;
-    border-bottom:3px solid transparent; margin-bottom:-3px; transition:all .15s;
-  }
-  .nav-tab:hover{color:#fff;}
-  .nav-tab.active{color:#fff; border-bottom-color:var(--gold);}
-  .page-panel{display:none;}
-  .page-panel.active{display:block;}
-
-  /* ══ ADMIN ══ */
-  .admin-login-wrap{ max-width:380px; margin:60px auto; background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(26,42,74,0.12); }
-  .al-head{ background:var(--navy); border-bottom:3px solid var(--red); padding:18px 22px; color:#fff; font-size:16px; font-weight:700; }
-  .al-head p{ font-size:12px; color:rgba(255,255,255,0.5); margin-top:4px; font-weight:400; }
-  .al-body{ padding:22px; }
-  .al-body input{ width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; margin-bottom:14px; }
-  .al-err{ color:var(--red); font-size:13px; margin-top:8px; display:none; }
-  .btn-navy{ background:var(--navy); color:#fff; border:none; width:100%; padding:11px 16px; font-size:13px; font-weight:700; cursor:pointer; border-radius:8px; font-family:inherit; }
-  .btn-navy:hover{ background:var(--navy-light); }
-  .btn-ghost-admin{ background:none; border:1px solid var(--border); color:var(--muted); padding:11px 16px; font-size:13px; font-weight:700; cursor:pointer; border-radius:8px; font-family:inherit; }
-  .btn-ghost-admin:hover{ border-color:var(--navy); color:var(--navy); }
-  .btn-small-admin{ padding:7px 12px; font-size:12px; }
-
-  .admin-header{
-    background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-    color:#fff; padding:22px 24px; border-bottom:4px solid var(--gold);
-    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
-  }
-  .admin-header h1{ margin:0; font-size:20px; }
-  .admin-header p{ margin:2px 0 0; font-size:13px; color:#c9d2e6; }
-
-  .admin-wrap{ max-width:1000px; margin:0 auto; padding:24px 20px 60px; }
-
-  .stats-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px; }
-  @media(max-width:600px){ .stats-row{ grid-template-columns:1fr 1fr; } }
-  .stat-tile{ background:var(--card); border:1px solid var(--border); border-top:3px solid var(--gold); border-radius:8px; padding:14px 16px; }
-  .stat-tile .sv{ font-size:24px; font-weight:800; color:var(--navy); }
-  .stat-tile .sl{ font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
-
-  .admin-toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
-  .admin-toolbar input, .admin-toolbar select{ padding:9px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; font-family:inherit; background:#fff; }
-  .admin-toolbar input{ flex:1; min-width:200px; }
-
-  .booking-card{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:14px; box-shadow:0 4px 14px rgba(26,42,74,0.06); }
-  .bc-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
-  .bc-title{ font-size:16px; font-weight:700; color:var(--navy); }
-  .bc-sub{ font-size:13px; color:var(--muted); margin-top:2px; }
-  .bc-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px 16px; margin-bottom:10px; }
-  .bc-field{ font-size:13px; color:var(--text); }
-  .bc-field a{ color:var(--red); text-decoration:none; }
-  .bc-field a:hover{ text-decoration:underline; }
-  .bc-label{ display:block; font-size:10.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:2px; }
-  .bc-notes{ background:#f8f9fc; border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:12px; }
-  .bc-actions{ display:flex; gap:8px; flex-wrap:wrap; border-top:1px solid var(--border); padding-top:12px; }
-
-  .status-pill{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:4px 11px; border-radius:12px; white-space:nowrap; display:inline-block; }
-  .status-pill.pending{ background:#fff3e0; color:#b06000; }
-  .status-pill.confirmed{ background:#e6f4ee; color:#1a6b3a; }
-  .status-pill.declined{ background:#fde8e6; color:var(--red); }
-  .status-pill.invoiced{ background:#e8eefc; color:#2451b8; }
-  .status-pill.paid{ background:#e6f4ee; color:#1a6b3a; }
-
-  .no-rows{ text-align:center; padding:50px; color:var(--muted); font-size:14px; background:var(--card); border:1px solid var(--border); border-radius:12px; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(13,27,62,0.6); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border: 1px solid var(--border); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; margin: 20px; }
+  .modal-head { background: var(--navy); border-bottom: 3px solid var(--red); padding: 14px 18px; color: var(--white); font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+  .modal-close { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 1.2rem; cursor: pointer; padding: 0 4px; line-height: 1; }
+  .modal-close:hover { color: var(--white); }
+  .modal-body { padding: 18px; }
+  .modal-footer { padding: 14px 18px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; background: var(--grey-light); }
+  .btn-save { background: var(--red); color: var(--white); border: none; padding: 8px 20px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: var(--font); transition: background 0.12s; }
+  .btn-save:hover { background: var(--red-hover); }
+  .btn-cancel { background: none; border: 1px solid var(--border); color: var(--grey-mid); padding: 8px 16px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: var(--font); transition: all 0.12s; }
+  .btn-cancel:hover { border-color: var(--navy); color: var(--navy); }
+  .btn-edit { background: none; border: 1px solid var(--border); color: var(--navy); padding: 3px 7px; font-size: 0.68rem; font-family: var(--font); cursor: pointer; border-radius: 2px; transition: all 0.1s; }
+  .btn-edit:hover { background: var(--navy); color: var(--white); border-color: var(--navy); }
 </style>
 </head>
 <body>
 
 <nav class="top-nav">
-  <button class="nav-tab active" id="tab-book" onclick="window.showPage('book', this)">Book a Judge</button>
-  <button class="nav-tab" id="tab-admin" onclick="window.showPage('admin', this)">Admin &#x1F512;</button>
+  <div class="brand">NGL <span>Competition Booking System</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="window.showPanel('public',this)">Book a Competition</button>
+    <button class="nav-tab" onclick="window.showPanel('mybookings',this)">My Bookings</button>
+    <button class="nav-tab" onclick="window.showPanel('admin',this)">Admin &#x1F512;</button>
+  </div>
 </nav>
 
-<div id="page-book" class="page-panel active">
-
-<header>
-  <div class="tag">NGL &middot; Remote Judge Service</div>
-  <h1>Book a Remote Judge for Your Competition</h1>
-  <p>Full Elevien-powered scoring, a qualified remote judge, live TV casting, spectator streaming and instant results &mdash; all in one booking.</p>
-</header>
-
-<div class="wrap">
-
-  <div class="package-card">
-    <h2>What's Included</h2>
-    <div class="price-lead">£300 per competition (up to 4 hours) &middot; £50 for every additional hour</div>
-    <div class="features">
-      <div class="feature">
-        <div class="icon">1</div>
-        <div class="label"><b>Elevien Scoring Technology</b>Full dynamic programme capability for live, accurate scoring.</div>
-      </div>
-      <div class="feature">
-        <div class="icon">2</div>
-        <div class="label"><b>TV Casting</b>Live scores and running order cast to a hall TV display.</div>
-      </div>
-      <div class="feature">
-        <div class="icon">3</div>
-        <div class="label"><b>Spectator App</b>Parents and spectators follow live scores from their phones.</div>
-      </div>
-      <div class="feature">
-        <div class="icon">4</div>
-        <div class="label"><b>NGL Qualified Judge</b>Regional level or above / British Gymnastics qualified.</div>
-      </div>
-      <div class="feature">
-        <div class="icon">5</div>
-        <div class="label"><b>Instant Results Page</b>Ready the moment competition ends &mdash; perfect for presenting medals.</div>
-      </div>
-      <div class="feature">
-        <div class="icon">6</div>
-        <div class="label"><b>Piece Video Recording</b>Every routine recorded on video for review and judge reference.</div>
-      </div>
-      <div class="feature">
-        <div class="icon">7</div>
-        <div class="label"><b>Video App Training</b>Your team gets instruction on how to use the recording app on the day.</div>
-      </div>
+<div id="panel-public" class="panel active">
+  <div class="hero">
+    <div class="hero-kicker">National Gymnastics League &middot; 2027 Season</div>
+    <h1>Book <em>Now.</em> Pay Later.<br>Guarantee Your Place.</h1>
+    <p>Secure your club's spot in next season's competitions with no upfront payment. Final commitment confirmed October 2026.</p>
+    <div class="hero-badges">
+      <div class="hero-badge">&#x1F4C5; No payment until October 2026</div>
+      <div class="hero-badge">&#x2705; Place guaranteed on booking</div>
+      <div class="hero-badge">&#x1F3C6; Full season visibility</div>
     </div>
-    <div class="pricing-note">
-      Rules must be <b>FIG based</b>. Please upload a copy of your competition rules so the remote judge can prepare in advance. Bookings are confirmed once the NGL team reviews your submission &mdash; payment is arranged after confirmation.
+    <div class="thermo-wrap" id="thermo-wrap" style="display:none">
+      <div class="thermo-label-row">
+        <span class="thermo-status" id="thermo-status">&#x1F331; Fresh</span>
+        <span class="thermo-pct" id="thermo-pct">0%</span>
+      </div>
+      <div class="thermo-track"><div class="thermo-fill" id="thermo-fill"></div></div>
+      <div class="thermo-scale">
+        <div class="thermo-scale-item" id="ts-0">&#x1F331; Fresh<span class="ts-range">0&ndash;20%</span></div>
+        <div class="thermo-scale-item" id="ts-1">&#x1F336;&#xFE0F; Warming Up<span class="ts-range">20&ndash;40%</span></div>
+        <div class="thermo-scale-item" id="ts-2">&#x1F336;&#xFE0F;&#x1F336;&#xFE0F; Toasty<span class="ts-range">40&ndash;65%</span></div>
+        <div class="thermo-scale-item" id="ts-3">&#x1F336;&#xFE0F;&#x1F336;&#xFE0F;&#x1F336;&#xFE0F; Spicy<span class="ts-range">65&ndash;85%</span></div>
+        <div class="thermo-scale-item" id="ts-4">&#x1F525; On Fire<span class="ts-range">85%+</span></div>
+      </div>
+      <div class="thermo-caption" id="thermo-caption">The 2027 season is just opening up &mdash; plenty of choice.</div>
     </div>
   </div>
 
-  <form class="card" id="bookingForm">
-
-    <div id="formScreen">
-      <p class="section-title">Club Details <span>*</span></p>
-      <div class="grid2">
-        <div class="field">
-          <label>Club Name *</label>
-          <input type="text" id="clubName" required>
-        </div>
-        <div class="field">
-          <label>Contact Name *</label>
-          <input type="text" id="contactName" required>
-        </div>
-        <div class="field">
-          <label>Contact Email *</label>
-          <input type="email" id="contactEmail" required>
-        </div>
-        <div class="field">
-          <label>Contact Phone *</label>
-          <input type="tel" id="contactPhone" required>
-        </div>
+  <div class="booking-section" id="booking-section">
+    <div>
+      <div class="eyebrow">2027 Season</div>
+      <div class="sec-title">Available Competitions</div>
+      <div class="sec-sub">Tick the competitions you want to enter and set how many spaces you need, then complete your details on the right.</div>
+      <div id="comp-list">
+        <div class="loading-bar"><div class="spinner"></div> Loading competition calendar&hellip;</div>
       </div>
-
-      <p class="section-title" style="margin-top:8px;">Competition Details <span>*</span></p>
-      <div class="grid2">
-        <div class="field">
-          <label>Competition Name *</label>
-          <input type="text" id="compName" required>
-        </div>
-        <div class="field">
-          <label>Venue / Location *</label>
-          <input type="text" id="compLocation" placeholder="Venue name, address" required>
-        </div>
-        <div class="field">
-          <label>Date *</label>
-          <input type="date" id="compDate" required>
-        </div>
-        <div class="field">
-          <label>Start Time *</label>
-          <input type="time" id="compTime" required>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Expected Duration (hours) *</label>
-        <input type="number" id="compDuration" min="0.5" step="0.5" placeholder="e.g. 4" required>
-        <div class="hint">Base package covers up to 4 hours. £50 is added for every hour beyond that.</div>
-      </div>
-
-      <div class="field">
-        <label>Upload Competition Rules (FIG based) *</label>
-        <div class="file-drop" id="fileDrop" onclick="document.getElementById('rulesFile').click()">
-          <div>📄 Click to upload rules document (PDF or Word)</div>
-          <div class="fname" id="fileName"></div>
-        </div>
-        <input type="file" id="rulesFile" accept=".pdf,.doc,.docx" style="display:none">
-      </div>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="figConfirm" required>
-        <label for="figConfirm">I confirm the uploaded rules are FIG based, and I understand this booking is confirmed by the NGL team before payment is arranged. *</label>
-      </div>
-
-      <div class="field" style="margin-top:8px;">
-        <label>Anything else the judge should know? (optional)</label>
-        <textarea id="notes" placeholder="Number of gymnasts, apparatus, levels, internet connection notes etc."></textarea>
-      </div>
-
-      <div class="price-box">
-        <div class="breakdown">
-          <div class="line"><span>Base package (up to 4 hrs)</span><span>£300</span></div>
-          <div class="line"><span id="extraLine">Additional hours</span><span id="extraAmount">£0</span></div>
-        </div>
-        <div class="total">
-          <div class="amount" id="totalAmount">£300</div>
-          <div class="label">Estimated Total</div>
-        </div>
-      </div>
-
-      <button type="submit" class="submit-btn" id="submitBtn">Submit Booking Request</button>
-      <div class="status-msg" id="statusMsg"></div>
     </div>
 
-    <div class="confirm-screen" id="confirmScreen">
-      <div class="tick">✓</div>
-      <h2>Booking Request Received</h2>
-      <p>Thanks &mdash; your remote judge booking request has been sent to the NGL team. We'll review your rules document and confirm availability by email.</p>
-      <div class="ref" id="refNumber"></div>
+    <div>
+      <div class="form-card">
+        <div class="fc-head">
+          <h2>Register Your Club</h2>
+          <p>Book now &mdash; no payment required until October 2026</p>
+        </div>
+        <div class="fc-body">
+          <div class="sel-summary" id="sel-summary">
+            <div class="sel-empty">&#8592; Tick competitions on the left to begin</div>
+          </div>
+          <div class="fg"><label>Club Name <span class="req">*</span></label><input type="text" id="f-club" placeholder="e.g. Northgate Gymnastics Club"></div>
+          <div class="fg">
+            <label>Region <span class="req">*</span></label>
+            <select id="f-region">
+              <option value="">&#8212; Select region &#8212;</option>
+              <option>East</option>
+              <option>East Midlands</option>
+              <option>London</option>
+              <option>North East</option>
+              <option>North West</option>
+              <option>Northern Ireland</option>
+              <option>Scotland</option>
+              <option>South</option>
+              <option>South East</option>
+              <option>South West</option>
+              <option>Wales</option>
+              <option>West Midlands</option>
+              <option>Yorkshire</option>
+            </select>
+          </div>
+          <div class="fg"><label>Contact Email <span class="req">*</span></label><input type="email" id="f-email" placeholder="club@example.com"></div>
+          <div class="fg"><label>Contact Phone <span class="req">*</span></label><input type="tel" id="f-phone" placeholder="07xxx xxxxxx"></div>
+          <button class="btn-book" id="btn-submit" onclick="window.submitBooking()">Reserve Our Places &#8594;</button>
+          <div class="submit-error" id="submit-error"></div>
+          <div class="guarantee-box">
+            <span>&#x1F512;</span>
+            <div><strong>Booking guarantee:</strong> Your places are reserved the moment you submit. No payment taken now &mdash; final confirmation and invoicing in October 2026.</div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-  </form>
-
+  <div class="success-screen" id="success-screen">
+    <div class="success-wrap">
+      <div class="s-icon">&#x1F3C5;</div>
+      <h2>You're on the list!</h2>
+      <p>Your club has been registered for: <strong id="success-comps"></strong></p>
+      <p style="margin-top:8px" id="success-note">We'll be in touch ahead of October 2026 to confirm entries and arrange payment. If you have joined a waiting list, you will be contacted if a place becomes available.</p>
+      <div class="success-ref" id="success-ref" style="margin-top:20px">NGL-XXXXXX</div>
+      <p style="font-size:0.77rem;margin-bottom:24px;margin-top:12px">Keep your reference number safe. If you need to make changes, contact your NGL administrator quoting this reference. You can also check your bookings any time on the "My Bookings" tab using this email address.</p>
+      <button class="btn-again" onclick="window.resetForm()">Make Another Booking</button>
+    </div>
+  </div>
 </div>
 
-</div><!-- /page-book -->
+<div id="panel-mybookings" class="panel">
+  <div class="hero" style="padding:28px 20px 24px">
+    <div class="hero-kicker">Check Your Club's Places</div>
+    <h1 style="font-size:clamp(1.3rem,4vw,2rem)">Your <em>Bookings.</em></h1>
+    <p>Enter the email you booked with to see everything your club is entered into, on a calendar.</p>
+  </div>
+  <div style="max-width:1080px;margin:0 auto;padding:32px 20px 48px">
+    <div class="lookup-card">
+      <div class="lookup-body">
+        <div class="fg"><label>Email Used to Book <span class="req">*</span></label><input type="email" id="mb-email" placeholder="club@example.com" onkeydown="if(event.key==='Enter')window.searchMyBookings()"></div>
+        <button class="btn-book" onclick="window.searchMyBookings()">Find My Bookings &#8594;</button>
+        <div class="submit-error" id="mb-error"></div>
+      </div>
+    </div>
+    <div id="mb-results"></div>
+  </div>
+</div>
 
-<div id="page-admin" class="page-panel">
+<div id="panel-admin" class="panel">
 
   <div class="admin-login-wrap" id="admin-login">
-    <div class="al-head">&#x1F510; Admin Login<p>NGL Remote Judge Bookings</p></div>
+    <div class="al-head">&#x1F510; Admin Login<p>NGL Booking System &mdash; Administrator Access</p></div>
     <div class="al-body">
-      <input type="password" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')window.adminLogin()">
-      <button class="btn-navy" onclick="window.adminLogin()">Sign In</button>
+      <div class="fg"><label>Password</label><input type="password" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')window.adminLogin()"></div>
+      <button class="btn-signin" onclick="window.adminLogin()">Sign In</button>
       <div class="al-err" id="al-err">Incorrect password. Please try again.</div>
     </div>
   </div>
 
-  <div id="admin-dash" style="display:none">
-    <div class="admin-header">
-      <div>
-        <h1>Remote Judge Bookings</h1>
-        <p>Review, confirm and manage incoming club bookings</p>
+  <div class="admin-dash" id="admin-dash" style="display:none">
+    <div class="dash-top">
+      <div><h2>NGL Booking Dashboard</h2><p>Live data from Firebase &mdash; updates in real time</p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-add" style="margin-top:0" onclick="window.emailAllClubs()">&#x2709; Email All Clubs</button>
+        <button class="btn-logout" onclick="window.copyAllEmails()">&#x1F4CB; Copy Emails</button>
+        <button class="btn-logout" onclick="window.adminLogout()">Sign Out</button>
       </div>
-      <button class="btn-ghost-admin btn-small-admin" onclick="window.adminLogout()">Sign Out</button>
     </div>
 
-    <div class="admin-wrap">
-      <div class="stats-row">
-        <div class="stat-tile"><div class="sv" id="stat-pending">&mdash;</div><div class="sl">Pending Review</div></div>
-        <div class="stat-tile"><div class="sv" id="stat-confirmed">&mdash;</div><div class="sl">Confirmed</div></div>
-        <div class="stat-tile"><div class="sv" id="stat-invoiced">&mdash;</div><div class="sl">Invoiced / Paid</div></div>
-        <div class="stat-tile"><div class="sv" id="stat-value">&mdash;</div><div class="sl">Total Booked Value</div></div>
+    <div class="stats-row" id="stats-row">
+      <div class="stat-tile"><div class="sv" id="stat-comps">&#x2014;</div><div class="sl">Competitions</div></div>
+      <div class="stat-tile"><div class="sv" id="stat-bookings">&#x2014;</div><div class="sl">Bookings</div></div>
+      <div class="stat-tile"><div class="sv" id="stat-clubs">&#x2014;</div><div class="sl">Clubs Registered</div></div>
+      <div class="stat-tile"><div class="sv red" id="stat-gymnasts">&#x2014;</div><div class="sl">Gymnasts Planned</div></div>
+    </div>
+
+    <div class="admin-grid">
+      <div class="panel-card">
+        <div class="pc-head">&#x2795; Add Competition Date</div>
+        <div class="pc-body">
+          <div class="fg"><label>Competition Name</label><input type="text" id="ac-name" placeholder="e.g. North East Regional Round 1"></div>
+          <div class="form-row2">
+            <div class="fg"><label>Date</label><input type="date" id="ac-date"></div>
+            <div class="fg"><label>Region</label><input type="text" id="ac-region" placeholder="e.g. North East"></div>
+          </div>
+          <div class="form-row2">
+            <div class="fg"><label>Venue</label><input type="text" id="ac-venue" placeholder="e.g. Newcastle Arena"></div>
+            <div class="fg"><label>Max Club Places</label><input type="number" id="ac-max" placeholder="e.g. 20" min="0"><div class="hint">Set to 0 to close this competition to new bookings (shows as Full).</div></div>
+          </div>
+          <div class="fg"><label>Level / Category</label><input type="text" id="ac-level" placeholder="e.g. Level A/B, Open, Finals"></div>
+          <div class="form-row2">
+            <div class="fg">
+              <label>Gender</label>
+              <select id="ac-gender">
+                <option value="">&#8212; Select &#8212;</option>
+                <option value="girls">Girls</option>
+                <option value="boys">Boys</option>
+                <option value="both">Boys &amp; Girls</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>Apparatus</label>
+              <select id="ac-apparatus">
+                <option value="">&#8212; Select &#8212;</option>
+                <option value="2piece">2 Piece</option>
+                <option value="4piece">4 Piece</option>
+                <option value="6piece">6 Piece</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg"><label>Full Address</label><input type="text" id="ac-address" placeholder="e.g. 1 Arena Way, Newcastle upon Tyne"></div>
+          <div class="fg"><label>Postcode</label><input type="text" id="ac-postcode" placeholder="e.g. NE4 7NA"></div>
+          <button class="btn-add" id="btn-add-comp" onclick="window.addCompetition()">+ Add to Calendar</button>
+        </div>
       </div>
 
-      <div class="admin-toolbar">
-        <input type="text" id="search" placeholder="Search club, competition or contact&hellip;" oninput="window.renderBookingList()">
-        <select id="filter" onchange="window.renderBookingList()">
-          <option value="pending_review">Pending Review</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="invoiced">Invoiced</option>
-          <option value="paid">Paid</option>
-          <option value="declined">Declined</option>
-          <option value="">All Bookings</option>
-        </select>
+      <div class="panel-card">
+        <div class="pc-head">&#x1F4C5; Competition Calendar <span class="pc-badge" id="comp-count">0</span></div>
+        <div class="pc-body">
+          <div id="admin-comp-list"><div class="loading-bar"><div class="spinner"></div> Loading&hellip;</div></div>
+        </div>
       </div>
+    </div>
 
-      <div id="booking-list"><div class="no-rows">Loading&hellip;</div></div>
+    <div class="table-wrap">
+      <div class="pc-head">
+        &#x1F4DD; Club Bookings
+        <span class="pc-badge" id="bk-count">0</span>
+        <button class="btn-export" style="margin-left:auto" onclick="window.exportCSV()">&#x2B07; Export CSV</button>
+      </div>
+      <div class="table-toolbar">
+        <input type="text" id="bk-search" placeholder="Search club name&hellip;" oninput="window.filterBookings()">
+        <select id="bk-filter" onchange="window.filterBookings()"><option value="">All competitions</option></select>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="bk-table">
+          <thead><tr>
+            <th>Ref</th><th>Club</th><th>Region</th><th>Competition</th>
+            <th>Comp Date</th><th>Est. Gymnasts</th><th>Email</th><th>Phone</th><th>Booked On</th>
+          </tr></thead>
+          <tbody id="bk-tbody"><tr><td colspan="10" class="no-rows">Loading&hellip;</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
+</div>
 
-</div><!-- /page-admin -->
+<div class="modal-overlay" id="edit-booking-modal">
+  <div class="modal">
+    <div class="modal-head">
+      &#x270F;&#xFE0F; Edit Booking
+      <button class="modal-close" onclick="window.closeBookingModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="eb-id">
+      <div class="fg"><label>Club Name</label><input type="text" id="eb-club"></div>
+      <div class="fg">
+        <label>Region</label>
+        <select id="eb-region">
+          <option value="">&#8212; Select region &#8212;</option>
+          <option>East</option><option>East Midlands</option><option>London</option>
+          <option>North East</option><option>North West</option><option>Northern Ireland</option>
+          <option>Scotland</option><option>South</option><option>South East</option><option>South West</option>
+          <option>Wales</option><option>West Midlands</option><option>Yorkshire</option>
+        </select>
+      </div>
+      <div class="fg"><label>Est. Gymnasts</label><input type="number" id="eb-spaces" min="1"></div>
+      <div class="fg"><label>Email</label><input type="email" id="eb-email"></div>
+      <div class="fg"><label>Phone</label><input type="tel" id="eb-phone"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="window.closeBookingModal()">Cancel</button>
+      <button class="btn-save" onclick="window.saveBookingEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
 
-<script>
-  // ---- Firebase config: reuse the saadi-rotation project config used across NGL tools ----
-  const firebaseConfig = {
-    apiKey:            "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
-    authDomain:        "saadi-rotation.firebaseapp.com",
-    databaseURL:       "https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId:         "saadi-rotation",
-    storageBucket:     "saadi-rotation.firebasestorage.app",
-    messagingSenderId: "1066734803675",
-    appId:             "1:1066734803675:web:0188fd601adea7db08cafe"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const storage = firebase.storage();
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-head">
+      &#x270F;&#xFE0F; Edit Competition
+      <button class="modal-close" onclick="window.closeEditModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="fg"><label>Competition Name</label><input type="text" id="edit-name"></div>
+      <div class="form-row2">
+        <div class="fg"><label>Date</label><input type="date" id="edit-date"></div>
+        <div class="fg"><label>Region</label><input type="text" id="edit-region"></div>
+      </div>
+      <div class="form-row2">
+        <div class="fg"><label>Venue</label><input type="text" id="edit-venue"></div>
+        <div class="fg"><label>Max Club Places</label><input type="number" id="edit-max" min="0"><div class="hint">Set to 0 to close this competition to new bookings (shows as Full).</div></div>
+      </div>
+      <div class="fg"><label>Level / Category</label><input type="text" id="edit-level"></div>
+      <div class="form-row2">
+        <div class="fg">
+          <label>Gender</label>
+          <select id="edit-gender">
+            <option value="">&#8212; Select &#8212;</option>
+            <option value="girls">Girls</option>
+            <option value="boys">Boys</option>
+            <option value="both">Boys &amp; Girls</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Apparatus</label>
+          <select id="edit-apparatus">
+            <option value="">&#8212; Select &#8212;</option>
+            <option value="2piece">2 Piece</option>
+            <option value="4piece">4 Piece</option>
+            <option value="6piece">6 Piece</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>Full Address</label><input type="text" id="edit-address"></div>
+      <div class="fg"><label>Postcode</label><input type="text" id="edit-postcode"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="window.closeEditModal()">Cancel</button>
+      <button class="btn-save" onclick="window.saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
 
-  const BASE_PRICE = 300;
-  const BASE_HOURS = 4;
-  const EXTRA_RATE = 50;
+<div class="footer">
+  <p><strong>National Gymnastics League</strong> &middot; Early Booking System 2027<br>
+  Book now &middot; Confirm October 2026 &middot; No upfront payment required</p>
+</div>
 
-  const durationInput = document.getElementById('compDuration');
-  const extraLine = document.getElementById('extraLine');
-  const extraAmount = document.getElementById('extraAmount');
-  const totalAmount = document.getElementById('totalAmount');
+<script type="module">
+import { initializeApp }                            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, addDoc, deleteDoc, updateDoc,
+         onSnapshot, query, orderBy, getDocs }      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-  function calcPrice(){
-    const hours = parseFloat(durationInput.value) || 0;
-    const extraHours = Math.max(0, hours - BASE_HOURS);
-    const extraCost = extraHours * EXTRA_RATE;
-    const total = BASE_PRICE + extraCost;
+const firebaseConfig = {
+  apiKey:            "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
+  authDomain:        "saadi-rotation.firebaseapp.com",
+  databaseURL:       "https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "saadi-rotation",
+  storageBucket:     "saadi-rotation.firebasestorage.app",
+  messagingSenderId: "1066734803675",
+  appId:             "1:1066734803675:web:0188fd601adea7db08cafe"
+};
 
-    if(extraHours > 0){
-      extraLine.textContent = `Additional ${extraHours % 1 === 0 ? extraHours : extraHours.toFixed(1)} hr${extraHours > 1 ? 's' : ''} @ £50/hr`;
-    } else {
-      extraLine.textContent = 'Additional hours';
-    }
-    extraAmount.textContent = `£${extraCost.toFixed(extraCost % 1 === 0 ? 0 : 2)}`;
-    totalAmount.textContent = `£${total.toFixed(total % 1 === 0 ? 0 : 2)}`;
-    return total;
-  }
-  durationInput.addEventListener('input', calcPrice);
-  calcPrice();
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const compsCol    = collection(db, 'ngl_competitions');
+const bookingsCol = collection(db, 'ngl_bookings');
 
-  // File upload UI
-  const fileDrop = document.getElementById('fileDrop');
-  const fileInput = document.getElementById('rulesFile');
-  const fileNameEl = document.getElementById('fileName');
-  let selectedFile = null;
+const ADMIN_PASSWORD = 'ngl2026';
+let allCompetitions = [];
+let allBookings     = [];
+let adminLoggedIn   = false;
 
-  fileInput.addEventListener('change', () => {
-    if(fileInput.files.length){
-      selectedFile = fileInput.files[0];
-      fileNameEl.textContent = selectedFile.name;
-      fileDrop.classList.add('has-file');
-    }
+window.showPanel = function(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+};
+
+onSnapshot(query(compsCol, orderBy('date')), snap => {
+  allCompetitions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderCalendar();
+  updateThermometer();
+  if (adminLoggedIn) renderAdminComps();
+  updateStats();
+  populateFilter();
+});
+
+onSnapshot(query(bookingsCol, orderBy('bookedAt', 'desc')), snap => {
+  allBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderCalendar();
+  updateThermometer();
+  if (adminLoggedIn) renderBookingsTable();
+  updateStats();
+});
+
+let selections = {};
+
+// maxPlaces of 0 is a deliberate "sold out / closed" setting, not "unset".
+// Using `c.maxPlaces || 20` breaks this because 0 is falsy in JS, so these
+// helpers check explicitly for a real number instead.
+function compMax(c) {
+  return typeof c.maxPlaces === 'number' && !isNaN(c.maxPlaces) ? c.maxPlaces : 20;
+}
+function parseMaxInput(elId) {
+  const raw = document.getElementById(elId).value;
+  if (raw === '' || raw === null || raw === undefined) return 20;
+  const n = parseInt(raw, 10);
+  return isNaN(n) ? 20 : n;
+}
+
+function updateThermometer() {
+  const wrap = document.getElementById('thermo-wrap');
+  const today = new Date(); today.setHours(0,0,0,0);
+  // Exclude recreational competitions from the season fill measure
+  const isRec = c => ((c.name||'') + ' ' + (c.level||'')).toLowerCase().includes('rec');
+  const upcoming = allCompetitions.filter(c => new Date(c.date + 'T00:00:00') >= today && !isRec(c));
+  if (!upcoming.length) { wrap.style.display = 'none'; return; }
+
+  let totalPlaces = 0, totalBooked = 0;
+  upcoming.forEach(c => {
+    const max = compMax(c);
+    const booked = allBookings.filter(b => b.compId === c.id && !b.waitlist).reduce((s,b) => s + (parseInt(b.spaces)||1), 0);
+    totalPlaces += max;
+    totalBooked += Math.min(booked, max);
   });
+  if (!totalPlaces) { wrap.style.display = 'none'; return; }
 
-  // Form submit
-  const form = document.getElementById('bookingForm');
-  const submitBtn = document.getElementById('submitBtn');
-  const statusMsg = document.getElementById('statusMsg');
+  const pct = Math.round((totalBooked / totalPlaces) * 100);
+  let status, caption, tier;
+  if (pct < 20)      { tier = 0; status = '\u{1F331} Fresh';                          caption = 'The 2027 season is just opening up \u2014 first pick of dates goes to early birds.'; }
+  else if (pct < 40) { tier = 1; status = '\u{1F336}\uFE0F Warming Up';               caption = 'Clubs are starting to claim their places \u2014 good availability across the season.'; }
+  else if (pct < 65) { tier = 2; status = '\u{1F336}\uFE0F\u{1F336}\uFE0F Toasty';    caption = 'Over a third of season places are gone \u2014 favourites are filling.'; }
+  else if (pct < 85) { tier = 3; status = '\u{1F336}\uFE0F\u{1F336}\uFE0F\u{1F336}\uFE0F Spicy'; caption = 'Booking fast \u2014 several competitions are close to capacity.'; }
+  else               { tier = 4; status = '\u{1F525} On Fire';                        caption = 'The 2027 season is almost full \u2014 last chance for remaining places!'; }
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    statusMsg.className = 'status-msg';
-    statusMsg.textContent = '';
+  wrap.style.display = 'block';
+  document.getElementById('thermo-status').innerHTML = status;
+  document.getElementById('thermo-pct').textContent = pct + '% booked';
+  document.getElementById('thermo-fill').style.width = Math.max(pct, 3) + '%';
+  document.getElementById('thermo-caption').textContent = caption;
+  for (let i = 0; i <= 4; i++) {
+    document.getElementById('ts-' + i).classList.toggle('active', i === tier);
+  }
+}
 
-    if(!selectedFile){
-      statusMsg.className = 'status-msg error';
-      statusMsg.textContent = 'Please upload a copy of your competition rules before submitting.';
+function renderCalendar() {
+  const el = document.getElementById('comp-list');
+  if (!allCompetitions.length) {
+    el.innerHTML = '<div class="no-comps">No competitions have been added yet. Check back soon for the 2027 season calendar.</div>';
+    return;
+  }
+  el.innerHTML = allCompetitions.map(c => {
+    const d      = new Date(c.date + 'T00:00:00');
+    const past   = d < new Date();
+    const booked = allBookings.filter(b => b.compId === c.id && !b.waitlist).reduce((sum, b) => sum + (parseInt(b.spaces) || 1), 0);
+    const compMaxVal = compMax(c);
+    const left   = compMaxVal - booked;
+    const pct    = compMaxVal === 0 ? 1 : booked / compMaxVal;
+    const isSel  = !!selections[c.id];
+    const spaces = selections[c.id] || 1;
+
+    let sc = 'open', st = 'Open', spotsHtml = left + ' places left';
+    if (past)          { sc='closed';  st='Closed';       spotsHtml = '&mdash;'; }
+    else if (pct>=1)   { sc='full';    st='Full';          spotsHtml = 'Full'; }
+    else if (pct>=0.75){ sc='filling'; st='Filling fast'; }
+
+    const isPast  = past;
+    const isFull  = !past && pct >= 1;
+    const isWait  = selections[c.id] && selections[c.id].waitlist;
+    const waitCount = allBookings.filter(b => b.compId === c.id && b.waitlist).length;
+    if (isFull && waitCount) spotsHtml = waitCount + ' waiting';
+
+    const mapLink = c.postcode
+      ? ' &middot; <a href="https://maps.google.com/?q=' + encodeURIComponent((c.address||c.venue) + ' ' + c.postcode) + '" target="_blank" style="color:var(--red);font-weight:700;text-decoration:none">&#x1F5FA; Map</a>'
+      : '';
+
+    return '<div class="comp-card' + ((isSel||isWait)?' selected':'') + (isPast?' unavailable':'') + '" id="cc-' + c.id + '">' +
+      '<div class="comp-card-header">' +
+      '<div class="date-badge"><div class="dbday">' + d.getDate() + '</div><div class="dbmon">' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase() + '</div></div>' +
+      '<div><div class="ci-name">' + c.name + '</div>' +
+      '<div class="ci-meta"><span>&#x1F4CD; ' + (c.venue||'TBC') + '</span><span>&#x1F3C5; ' + (c.level||'') + '</span>' + mapLink + '</div>' +
+      buildIcons(c) +
+      '</div>' +
+      '<div class="comp-right"><div class="spots' + (left<=3&&!isPast&&!isFull?' low':'') + '">' + spotsHtml + '</div><span class="pill ' + sc + '">' + st + '</span></div>' +
+      '</div>' +
+      (!isPast && !isFull ?
+        '<div class="comp-check-row">' +
+        '<label><input type="checkbox" class="comp-checkbox" id="chk-' + c.id + '"' + (isSel?' checked':'') +
+        ' onchange="window.toggleComp(\'' + c.id + '\',this.checked,false)"> Enter this competition</label>' +
+        '<span class="spaces-label">Est. gymnasts:</span>' +
+        '<input type="number" class="spaces-input" id="spc-' + c.id + '" value="' + spaces + '" min="1" max="' + left + '"' +
+        (isSel?'':' disabled') +
+        ' oninput="window.updateSpaces(\'' + c.id + '\',this.value)">' +
+        '</div>'
+      : !isPast && isFull ?
+        '<div class="comp-check-row" style="background:#fff8e6;border-top:1px solid #f5d87a">' +
+        '<label><input type="checkbox" class="comp-checkbox" id="chk-' + c.id + '"' + (isWait?' checked':'') +
+        ' onchange="window.toggleComp(\'' + c.id + '\',this.checked,true)" style="accent-color:#d4a017">' +
+        ' &#x23F3; Join the waiting list for this competition</label>' +
+        '</div>'
+      : '') +
+      '</div>';
+  }).join('');
+}
+
+window.toggleComp = function(id, checked, waitlist) {
+  if (checked) {
+    const spcEl = document.getElementById('spc-' + id);
+    const spaces = spcEl ? (parseInt(spcEl.value)||1) : 1;
+    selections[id] = waitlist ? { waitlist: true, spaces: 1 } : spaces;
+    if (spcEl) spcEl.disabled = false;
+  } else {
+    delete selections[id];
+    const spcEl = document.getElementById('spc-' + id);
+    if (spcEl) spcEl.disabled = true;
+  }
+  const card = document.getElementById('cc-' + id);
+  if (card) card.classList.toggle('selected', checked);
+  updateSummary();
+};
+
+window.updateSpaces = function(id, val) {
+  if (selections[id] !== undefined) {
+    selections[id] = parseInt(val) || 1;
+    updateSummary();
+  }
+};
+
+function updateSummary() {
+  const el = document.getElementById('sel-summary');
+  const ids = Object.keys(selections);
+  if (!ids.length) {
+    el.innerHTML = '<div class="sel-empty">&#8592; Tick competitions on the left to begin</div>';
+    return;
+  }
+  el.innerHTML = ids.map(id => {
+    const c = allCompetitions.find(x => x.id === id);
+    if (!c) return '';
+    const d = new Date(c.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    return '<div class="sel-summary-item"><span class="si-name">&#x2705; ' + c.name + '</span><span class="si-spaces">' + d + ' &middot; ' + selections[id] + ' space' + (selections[id]!==1?'s':'') + '</span></div>';
+  }).join('');
+}
+
+window.submitBooking = async function() {
+  const club   = document.getElementById('f-club').value.trim();
+  const region = document.getElementById('f-region').value;
+  const email  = document.getElementById('f-email').value.trim();
+  const phone  = document.getElementById('f-phone').value.trim();
+  const errBox = document.getElementById('submit-error');
+  errBox.style.display = 'none';
+
+  const selIds = Object.keys(selections);
+  if (!selIds.length)               return showErr('Please tick at least one competition.');
+  if (!club)                        return showErr('Please enter your club name.');
+  if (!region)                      return showErr('Please select your region.');
+  if (!email||!email.includes('@')) return showErr('Please enter a valid email address.');
+  if (!phone)                       return showErr('Please enter a contact phone number.');
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Saving\u2026';
+
+  const ref = 'NGL-' + Math.random().toString(36).substr(2,6).toUpperCase();
+  try {
+    const promises = selIds.map(compId => {
+      const comp    = allCompetitions.find(x => x.id === compId);
+      const sel     = selections[compId];
+      const isWait  = sel && sel.waitlist;
+      const spaces  = isWait ? 0 : (sel || 1);
+      return addDoc(bookingsCol, {
+        reference: ref,
+        compId,
+        compName:  comp.name,
+        compDate:  comp.date,
+        spaces,
+        waitlist:  isWait || false,
+        club, region, email, phone,
+        bookedAt:  new Date().toISOString()
+      });
+    });
+    await Promise.all(promises);
+
+    document.getElementById('booking-section').style.display = 'none';
+    document.getElementById('success-screen').classList.add('show');
+    document.getElementById('success-ref').textContent = ref;
+    const compList = selIds.map(id => {
+      const c = allCompetitions.find(x=>x.id===id);
+      const sel = selections[id];
+      const isWait = sel && sel.waitlist;
+      const spaces = isWait ? 0 : (sel||1);
+      return (c ? c.name : id) + (isWait ? ' (Waiting list)' : ' (' + spaces + ' gymnast' + (spaces!==1?'s':'') + ')');
+    }).join(', ');
+    document.getElementById('success-comps').textContent = compList;
+    window.scrollTo({top:0,behavior:'smooth'});
+  } catch(e) {
+    showErr('Something went wrong. Please try again. (' + e.message + ')');
+    btn.disabled = false;
+    btn.textContent = 'Reserve Our Places \u2192';
+  }
+};
+
+function showErr(msg) {
+  const e = document.getElementById('submit-error');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+
+window.resetForm = function() {
+  selections = {};
+  ['f-club','f-email','f-phone'].forEach(i => document.getElementById(i).value='');
+  document.getElementById('f-region').value='';
+  document.getElementById('submit-error').style.display='none';
+  updateSummary();
+  const btn = document.getElementById('btn-submit');
+  btn.disabled=false; btn.textContent='Reserve Our Places \u2192';
+  document.getElementById('success-screen').classList.remove('show');
+  document.getElementById('booking-section').style.display='';
+  renderCalendar();
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+window.adminLogin = function() {
+  if (document.getElementById('admin-pw').value === ADMIN_PASSWORD) {
+    adminLoggedIn = true;
+    document.getElementById('admin-login').style.display='none';
+    document.getElementById('admin-dash').style.display='block';
+    renderAdminComps();
+    renderBookingsTable();
+    updateStats();
+  } else {
+    document.getElementById('al-err').style.display='block';
+    document.getElementById('admin-pw').value='';
+  }
+};
+
+window.adminLogout = function() {
+  adminLoggedIn = false;
+  document.getElementById('admin-login').style.display='block';
+  document.getElementById('admin-dash').style.display='none';
+  document.getElementById('admin-pw').value='';
+  document.getElementById('al-err').style.display='none';
+};
+
+function buildIcons(c) {
+  let icons = '';
+  if (c.gender === 'girls')  icons += '<span class="comp-icon gender-girls">&#x2640; Girls</span>';
+  if (c.gender === 'boys')   icons += '<span class="comp-icon gender-boys">&#x2642; Boys</span>';
+  if (c.gender === 'both')   icons += '<span class="comp-icon gender-both">&#x2640;&#x2642; Mixed</span>';
+  if (c.apparatus === '2piece') icons += '<span class="comp-icon apparatus">&#x2756; 2 Piece</span>';
+  if (c.apparatus === '4piece') icons += '<span class="comp-icon apparatus">&#x2756; 4 Piece</span>';
+  if (c.apparatus === '6piece') icons += '<span class="comp-icon apparatus">&#x2756; 6 Piece</span>';
+  return icons ? '<div class="comp-icons">' + icons + '</div>' : '';
+}
+
+window.addCompetition = async function() {
+  const name      = document.getElementById('ac-name').value.trim();
+  const date      = document.getElementById('ac-date').value;
+  const region    = document.getElementById('ac-region').value.trim();
+  const venue     = document.getElementById('ac-venue').value.trim();
+  const max       = parseMaxInput('ac-max');
+  const level     = document.getElementById('ac-level').value.trim();
+  const gender    = document.getElementById('ac-gender').value;
+  const apparatus = document.getElementById('ac-apparatus').value;
+  const address   = document.getElementById('ac-address').value.trim();
+  const postcode  = document.getElementById('ac-postcode').value.trim();
+  if (!name||!date) return alert('Please enter at least a name and date.');
+  const btn = document.getElementById('btn-add-comp');
+  btn.disabled=true; btn.textContent='Saving\u2026';
+  try {
+    await addDoc(compsCol, { name, date, region, venue, maxPlaces:max, level, gender, apparatus, address, postcode, createdAt:new Date().toISOString() });
+    ['ac-name','ac-date','ac-region','ac-venue','ac-max','ac-level','ac-address','ac-postcode'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('ac-gender').value='';
+    document.getElementById('ac-apparatus').value='';
+  } catch(e) { alert('Error saving: ' + e.message); }
+  btn.disabled=false; btn.textContent='+ Add to Calendar';
+};
+
+window.duplicateComp = async function(id) {
+  const c = allCompetitions.find(x => x.id === id);
+  if (!c) return;
+  const copy = Object.assign({}, c);
+  delete copy.id;
+  copy.name = c.name + ' (Copy)';
+  copy.date = '';
+  document.getElementById('edit-id').value         = '__duplicate__';
+  document.getElementById('edit-name').value       = copy.name;
+  document.getElementById('edit-date').value       = '';
+  document.getElementById('edit-region').value     = copy.region    || '';
+  document.getElementById('edit-venue').value      = copy.venue     || '';
+  document.getElementById('edit-max').value        = compMax(copy);
+  document.getElementById('edit-level').value      = copy.level     || '';
+  document.getElementById('edit-gender').value     = copy.gender    || '';
+  document.getElementById('edit-apparatus').value  = copy.apparatus || '';
+  document.getElementById('edit-address').value    = copy.address   || '';
+  document.getElementById('edit-postcode').value   = copy.postcode  || '';
+  document.querySelector('#edit-modal .modal-head').childNodes[0].textContent = '\u2398 Duplicate Competition \u2014 set a new date';
+  document.getElementById('edit-modal').classList.add('open');
+};
+
+window.deleteComp = async function(id) {
+  if (!confirm('Remove this competition? Existing bookings will be kept.')) return;
+  await deleteDoc(doc(db,'ngl_competitions',id));
+};
+
+function renderAdminComps() {
+  document.getElementById('comp-count').textContent = allCompetitions.length;
+  const el = document.getElementById('admin-comp-list');
+  if (!allCompetitions.length) { el.innerHTML='<p style="font-size:0.79rem;color:#aaa;text-align:center;padding:24px 0">No competitions yet</p>'; return; }
+  el.innerHTML = allCompetitions.map(c => {
+    const d = new Date(c.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    const booked = allBookings.filter(b=>b.compId===c.id && !b.waitlist).reduce((sum,b)=>sum+(parseInt(b.spaces)||1),0);
+    return '<div class="acl-row">' +
+      '<span class="acl-date">' + d + '</span>' +
+      '<span class="acl-name">' + c.name + '</span>' +
+      '<span class="acl-reg">' + (c.region||'') + '</span>' +
+      '<span class="acl-spots">' + booked + '/' + compMax(c) + '</span>' +
+      '<button class="btn-edit" onclick="window.openEditModal(\'' + c.id + '\')">&#x270F; Edit</button>' +
+      '<button class="btn-edit" style="color:var(--navy)" onclick="window.duplicateComp(\'' + c.id + '\')">&#x2398; Copy</button>' +
+      '<button class="btn-del" onclick="window.deleteComp(\'' + c.id + '\')">&#x2715;</button>' +
+      '</div>';
+  }).join('');
+}
+
+function updateStats() {
+  if (!adminLoggedIn) return;
+  const gyms  = allBookings.reduce((s,b)=>s+(b.spaces||b.gymnasts||0),0);
+  const clubs = [...new Set(allBookings.map(b=>b.club))].length;
+  const waitCount = allBookings.filter(b=>b.waitlist).length;
+  document.getElementById('stat-comps').textContent    = allCompetitions.length;
+  document.getElementById('stat-bookings').textContent = (allBookings.length - waitCount) + (waitCount ? ' + ' + waitCount + ' wait' : '');
+  document.getElementById('stat-clubs').textContent    = clubs;
+  document.getElementById('stat-gymnasts').textContent = gyms;
+  document.getElementById('bk-count').textContent      = allBookings.length;
+}
+
+function populateFilter() {
+  const sel = document.getElementById('bk-filter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All competitions</option>' +
+    allCompetitions.map(c => '<option value="' + c.id + '"' + (c.id===cur?' selected':'') + '>' + c.name + '</option>').join('');
+}
+
+window.filterBookings = function() { renderBookingsTable(); };
+
+function renderBookingsTable() {
+  const srch  = document.getElementById('bk-search').value.toLowerCase();
+  const fcomp = document.getElementById('bk-filter').value;
+  const filtered = allBookings.filter(b =>
+    (!srch  || b.club.toLowerCase().includes(srch) || (b.email||'').toLowerCase().includes(srch)) &&
+    (!fcomp || b.compId === fcomp)
+  );
+  const tbody = document.getElementById('bk-tbody');
+  if (!filtered.length) { tbody.innerHTML='<tr><td colspan="10" class="no-rows">No bookings match the current filter</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(b => {
+    const compDate = b.compDate ? new Date(b.compDate+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '&mdash;';
+    const bookedOn = new Date(b.bookedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    return '<tr>' +
+      '<td class="td-ref">' + (b.reference||b.id) + '</td>' +
+      '<td class="td-club">' + b.club + (b.waitlist ? ' <span style="background:#fff3e0;border:1px solid #f5d87a;border-radius:2px;padding:1px 6px;font-size:0.65rem;font-weight:700;color:#b06000">WAITLIST</span>' : '') + '</td>' +
+      '<td>' + b.region + '</td>' +
+      '<td>' + (b.compName||'') + '</td>' +
+      '<td>' + compDate + '</td>' +
+      '<td class="td-num">' + (b.spaces||b.gymnasts||'&mdash;') + '</td>' +
+      '<td>' + b.email + '</td>' +
+      '<td>' + b.phone + '</td>' +
+      '<td>' + bookedOn + '</td>' +
+      '<td style="white-space:nowrap">' +
+        '<button class="btn-edit" onclick="window.editBooking(\'' + b.id + '\')">&#x270F; Edit</button> ' +
+        '<button class="btn-del" onclick="window.deleteBooking(\'' + b.id + '\')">&#x2715;</button>' +
+      '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+window.openEditModal = function(id) {
+  const c = allCompetitions.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('edit-id').value         = id;
+  document.getElementById('edit-name').value       = c.name      || '';
+  document.getElementById('edit-date').value       = c.date      || '';
+  document.getElementById('edit-region').value     = c.region    || '';
+  document.getElementById('edit-venue').value      = c.venue     || '';
+  document.getElementById('edit-max').value        = compMax(c);
+  document.getElementById('edit-level').value      = c.level     || '';
+  document.getElementById('edit-gender').value     = c.gender    || '';
+  document.getElementById('edit-apparatus').value  = c.apparatus || '';
+  document.getElementById('edit-address').value    = c.address   || '';
+  document.getElementById('edit-postcode').value   = c.postcode  || '';
+  document.getElementById('edit-modal').classList.add('open');
+};
+
+window.closeEditModal = function() {
+  document.getElementById('edit-modal').classList.remove('open');
+  document.querySelector('#edit-modal .modal-head').childNodes[0].textContent = '\u270F\uFE0F Edit Competition';
+};
+
+window.saveEdit = async function() {
+  const id = document.getElementById('edit-id').value;
+  if (!id) return;
+  const data = {
+    name:       document.getElementById('edit-name').value.trim(),
+    date:       document.getElementById('edit-date').value,
+    region:     document.getElementById('edit-region').value.trim(),
+    venue:      document.getElementById('edit-venue').value.trim(),
+    maxPlaces:  parseMaxInput('edit-max'),
+    level:      document.getElementById('edit-level').value.trim(),
+    gender:     document.getElementById('edit-gender').value,
+    apparatus:  document.getElementById('edit-apparatus').value,
+    address:    document.getElementById('edit-address').value.trim(),
+    postcode:   document.getElementById('edit-postcode').value.trim(),
+  };
+  if (!data.name || !data.date) return alert('Name and date are required.');
+  try {
+    if (id === '__duplicate__') {
+      data.createdAt = new Date().toISOString();
+      await addDoc(compsCol, data);
+    } else {
+      await updateDoc(doc(db,'ngl_competitions',id), data);
+    }
+    closeEditModal();
+    document.querySelector('#edit-modal .modal-head').childNodes[0].textContent = '\u270F\uFE0F Edit Competition';
+  } catch(e) { alert('Error saving: ' + e.message); }
+};
+
+document.getElementById('edit-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+
+window.editBooking = function(id) {
+  const b = allBookings.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('eb-id').value     = id;
+  document.getElementById('eb-club').value   = b.club   || '';
+  document.getElementById('eb-region').value = b.region || '';
+  document.getElementById('eb-spaces').value = b.spaces || b.gymnasts || '';
+  document.getElementById('eb-email').value  = b.email  || '';
+  document.getElementById('eb-phone').value  = b.phone  || '';
+  document.getElementById('edit-booking-modal').classList.add('open');
+};
+
+window.closeBookingModal = function() {
+  document.getElementById('edit-booking-modal').classList.remove('open');
+};
+
+window.saveBookingEdit = async function() {
+  const id = document.getElementById('eb-id').value;
+  if (!id) return;
+  const updated = {
+    club:    document.getElementById('eb-club').value.trim(),
+    region:  document.getElementById('eb-region').value,
+    spaces:  parseInt(document.getElementById('eb-spaces').value) || 0,
+    email:   document.getElementById('eb-email').value.trim(),
+    phone:   document.getElementById('eb-phone').value.trim(),
+  };
+  try {
+    await updateDoc(doc(db,'ngl_bookings',id), updated);
+    closeBookingModal();
+  } catch(e) { alert('Error saving: ' + e.message); }
+};
+
+window.deleteBooking = async function(id) {
+  const b = allBookings.find(x => x.id === id);
+  if (!b) return;
+  if (!confirm('Delete booking for ' + b.club + ' (' + (b.compName||'') + ')? This cannot be undone.')) return;
+  try {
+    await deleteDoc(doc(db,'ngl_bookings',id));
+  } catch(e) { alert('Error deleting: ' + e.message); }
+};
+
+document.getElementById('edit-booking-modal').addEventListener('click', function(e) {
+  if (e.target === this) window.closeBookingModal();
+});
+
+window.exportCSV = function() {
+  const hdr = ['Reference','Club','Region','Competition','Competition Date','Est. Gymnasts','Email','Phone','Booked On'];
+  const rows = allBookings.map(b => {
+    const compDate = b.compDate ? new Date(b.compDate+'T00:00:00').toLocaleDateString('en-GB') : '';
+    return [b.reference||b.id, b.club, b.region, b.compName||'', compDate, b.spaces||b.gymnasts||'', b.email, b.phone, new Date(b.bookedAt).toLocaleDateString('en-GB')]
+      .map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(',');
+  });
+  const csv = [hdr.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'NGL-Bookings-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+};
+
+function getUniqueClubEmails() {
+  const seen = new Set();
+  const emails = [];
+  allBookings.forEach(b => {
+    const e = (b.email || '').trim();
+    const key = e.toLowerCase();
+    if (e && !seen.has(key)) { seen.add(key); emails.push(e); }
+  });
+  return emails;
+}
+
+window.emailAllClubs = function() {
+  const emails = getUniqueClubEmails();
+  if (!emails.length) { alert('No club emails found yet.'); return; }
+  if (emails.length > 50) {
+    if (!confirm(emails.length + ' clubs found. Some email clients silently drop addresses from very long BCC lists (Outlook can struggle past ~50). Continue anyway, or click Cancel to copy the list instead and paste it manually.')) return;
+  }
+  const subject = encodeURIComponent('NGL 2027 Season Update');
+  const bcc = encodeURIComponent(emails.join(';'));
+  window.location.href = 'mailto:?bcc=' + bcc + '&subject=' + subject;
+};
+
+window.copyAllEmails = function() {
+  const emails = getUniqueClubEmails();
+  if (!emails.length) { alert('No club emails found yet.'); return; }
+  const text = emails.join('; ');
+  navigator.clipboard.writeText(text).then(() => {
+    alert(emails.length + ' email addresses copied to clipboard. Paste directly into the BCC field of a new email.');
+  }).catch(() => {
+    prompt('Copy failed automatically \u2014 select and copy manually:', text);
+  });
+};
+
+let lastMyBookings = [];
+
+window.searchMyBookings = async function() {
+  const emailInput = document.getElementById('mb-email').value.trim().toLowerCase();
+  const errEl = document.getElementById('mb-error');
+  const resultsEl = document.getElementById('mb-results');
+  errEl.style.display = 'none';
+  if (!emailInput || !emailInput.includes('@')) {
+    errEl.textContent = 'Please enter a valid email address.';
+    errEl.style.display = 'block';
+    return;
+  }
+  resultsEl.innerHTML = '<div class="loading-bar"><div class="spinner"></div> Looking up your bookings&hellip;</div>';
+
+  try {
+    const snap = await getDocs(bookingsCol);
+    const mine = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(b => (b.email || '').trim().toLowerCase() === emailInput)
+      .sort((a,b) => (a.compDate||'').localeCompare(b.compDate||''));
+
+    if (!mine.length) {
+      resultsEl.innerHTML = '<div class="no-comps">No bookings found for that email. Double-check the address you used when booking, or contact your NGL administrator.</div>';
       return;
     }
+    lastMyBookings = mine;
+    renderMyBookingsResults(mine);
+  } catch(e) {
+    resultsEl.innerHTML = '<div class="load-error">Something went wrong looking up your bookings: ' + e.message + '</div>';
+  }
+};
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting...';
+function renderMyBookingsResults(mine) {
+  const resultsEl = document.getElementById('mb-results');
 
-    try{
-      const total = calcPrice();
-      const hours = parseFloat(durationInput.value) || 0;
-
-      const bookingData = {
-        clubName: document.getElementById('clubName').value.trim(),
-        contactName: document.getElementById('contactName').value.trim(),
-        contactEmail: document.getElementById('contactEmail').value.trim(),
-        contactPhone: document.getElementById('contactPhone').value.trim(),
-        compName: document.getElementById('compName').value.trim(),
-        compLocation: document.getElementById('compLocation').value.trim(),
-        compDate: document.getElementById('compDate').value,
-        compTime: document.getElementById('compTime').value,
-        durationHours: hours,
-        estimatedTotal: total,
-        notes: document.getElementById('notes').value.trim(),
-        figConfirmed: true,
-        status: 'pending_review',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
-
-      // Create booking doc first to get an ID
-      const docRef = await db.collection('ngl_judge_bookings').add(bookingData);
-
-      // Upload rules file to Storage under this booking's ID
-      const storageRef = storage.ref(`judge_bookings/${docRef.id}/${selectedFile.name}`);
-      await storageRef.put(selectedFile);
-      const fileUrl = await storageRef.getDownloadURL();
-
-      // Attach file URL back to the booking doc
-      await docRef.update({ rulesFileUrl: fileUrl, rulesFileName: selectedFile.name });
-
-      // Show confirmation
-      document.getElementById('formScreen').style.display = 'none';
-      document.getElementById('confirmScreen').style.display = 'block';
-      document.getElementById('refNumber').textContent = `Booking Ref: ${docRef.id.slice(0,8).toUpperCase()}`;
-
-    }catch(err){
-      console.error(err);
-      statusMsg.className = 'status-msg error';
-      statusMsg.textContent = 'Something went wrong submitting your booking. Please try again or contact NGL directly.';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit Booking Request';
-    }
+  const monthsPresent = [...new Set(mine.map(b => (b.compDate||'').slice(0,7)))].filter(Boolean).sort();
+  const byDateKey = {};
+  mine.forEach(b => {
+    if (!b.compDate) return;
+    if (!byDateKey[b.compDate]) byDateKey[b.compDate] = [];
+    byDateKey[b.compDate].push(b);
   });
 
-  // ══ PAGE NAV ══
-  window.showPage = function(id, btn){
-    document.querySelectorAll('.page-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('page-' + id).classList.add('active');
-    if(btn) btn.classList.add('active');
-  };
+  const calsHtml = monthsPresent.map(monthKey => buildMiniCalendar(monthKey, byDateKey)).join('');
 
-  // ══ ADMIN ══
-  const ADMIN_PASSWORD = 'ngl2026';
-  const bookingsCol = db.collection('ngl_judge_bookings');
-  let allBookings = [];
-  let adminLoggedIn = false;
+  const rowsHtml = mine.map(b => {
+    const d = b.compDate ? new Date(b.compDate+'T00:00:00') : null;
+    const isWait = !!b.waitlist;
+    return '<div class="my-booking-row' + (isWait?' waitlist-row':'') + '">' +
+      '<div class="mb-date"><div class="mbday">' + (d?d.getDate():'-') + '</div><div class="mbmon">' + (d?d.toLocaleString('en-GB',{month:'short'}).toUpperCase():'') + '</div></div>' +
+      '<div style="flex:1">' +
+      '<div class="mb-name">' + (b.compName||'') + (isWait ? ' <span class="pill waitlist">Waitlist</span>' : '') + '</div>' +
+      '<div class="mb-meta">Ref ' + (b.reference||b.id) + ' &middot; ' + (isWait ? 'Waiting for a place' : (b.spaces||1) + ' gymnast' + ((b.spaces||1)!==1?'s':'')) + '</div>' +
+      '</div>' +
+      '<button class="btn-edit" onclick="window.downloadBookingICS(\'' + b.id + '\')">&#x1F4C5; Add to Calendar</button>' +
+      '</div>';
 
-  window.adminLogin = function(){
-    if(document.getElementById('admin-pw').value === ADMIN_PASSWORD){
-      adminLoggedIn = true;
-      document.getElementById('admin-login').style.display = 'none';
-      document.getElementById('admin-dash').style.display = 'block';
-    } else {
-      document.getElementById('al-err').style.display = 'block';
-      document.getElementById('admin-pw').value = '';
+  }).join('');
+
+  resultsEl.innerHTML =
+    '<div class="eyebrow" style="margin-top:8px">' + mine[0].club + '</div>' +
+    '<div class="sec-title">Your 2027 Calendar</div>' +
+    '<div class="sec-sub">Red = confirmed &middot; Gold = waiting list</div>' +
+    '<div class="cal-grid-wrap">' + calsHtml + '</div>' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">' +
+    '<div class="sec-title" style="margin-bottom:0">All Bookings</div>' +
+    '<button class="btn-add" onclick="window.downloadAllBookingsICS()">&#x1F4C5; Add All to Calendar</button>' +
+    '</div>' +
+    '<div class="guarantee-box" style="margin-top:0;margin-bottom:15px;align-items:flex-start">' +
+    '<span>&#x2139;&#xFE0F;</span>' +
+    '<div><strong>How to add these to your calendar:</strong> clicking "Add to Calendar" downloads a small file to your computer (usually into your Downloads folder) rather than adding the event automatically &mdash; that\'s standard for every website, not just this one. Find the downloaded file and double-click it, and it will open in your calendar app (Outlook, Google Calendar, Apple Calendar, etc.) with the event ready to confirm.</div>' +
+    '</div>' +
+    '<div style="margin-top:12px">' + rowsHtml + '</div>';
+}
+
+// Timezone-safe date helpers: all math happens in UTC so British Summer Time
+// (or any DST) never shifts a date-only calculation by a day.
+function parseDateStr(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+function formatICSDate(utcDate) {
+  const y = utcDate.getUTCFullYear();
+  const m = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(utcDate.getUTCDate()).padStart(2, '0');
+  return '' + y + m + d;
+}
+function addDaysUTC(utcDate, days) {
+  const copy = new Date(utcDate);
+  copy.setUTCDate(copy.getUTCDate() + days);
+  return copy;
+}
+function addMonthsUTC(utcDate, months) {
+  const copy = new Date(utcDate);
+  copy.setUTCMonth(copy.getUTCMonth() + months);
+  return copy;
+}
+
+function bookingToICSEvent(b) {
+  if (!b.compDate) return null;
+  const start = parseDateStr(b.compDate);
+  const end = addDaysUTC(start, 1);
+  const status = b.waitlist ? ' (Waiting List)' : '';
+  return [
+    'BEGIN:VEVENT',
+    'UID:' + (b.id || b.reference) + '@ngl-booking',
+    'DTSTART;VALUE=DATE:' + formatICSDate(start),
+    'DTEND;VALUE=DATE:' + formatICSDate(end),
+    'SUMMARY:' + (b.compName || 'NGL Competition') + status,
+    'DESCRIPTION:NGL 2027 Season. Reference ' + (b.reference || b.id) + '. ' + (b.waitlist ? 'You are on the waiting list for this competition.' : (b.spaces||1) + ' gymnast' + ((b.spaces||1)!==1?'s':'') + ' entered.'),
+    'END:VEVENT'
+  ].join('\r\n');
+}
+
+function bookingToPaymentReminderEvent(b) {
+  // Waitlisted spots aren't confirmed, so no payment is due for them yet
+  if (b.waitlist || !b.compDate) return null;
+  const compDate = parseDateStr(b.compDate);
+  const dueStart = addMonthsUTC(compDate, -4);
+  const dueEnd = addDaysUTC(dueStart, 1);
+  const compDateDisplay = compDate.getUTCDate().toString().padStart(2,'0') + '/' + (compDate.getUTCMonth()+1).toString().padStart(2,'0') + '/' + compDate.getUTCFullYear();
+  return [
+    'BEGIN:VEVENT',
+    'UID:' + (b.id || b.reference) + '-payment@ngl-booking',
+    'DTSTART;VALUE=DATE:' + formatICSDate(dueStart),
+    'DTEND;VALUE=DATE:' + formatICSDate(dueEnd),
+    'SUMMARY:Payment Due: ' + (b.compName || 'NGL Competition'),
+    'DESCRIPTION:Payment is now due for your reserved place at ' + (b.compName||'this competition') + ' on ' + compDateDisplay + '. Reference ' + (b.reference || b.id) + '. Contact your NGL administrator to arrange payment.',
+    'END:VEVENT'
+  ].join('\r\n');
+}
+
+function downloadICSFile(filename, veventsText, calName) {
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//NGL Booking System//EN',
+    'X-WR-CALNAME:' + (calName || 'NGL Bookings'),
+    veventsText,
+    'END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+
+window.downloadBookingICS = function(bookingId) {
+  const b = lastMyBookings.find(x => x.id === bookingId);
+  if (!b) return;
+  const event = bookingToICSEvent(b);
+  if (!event) { alert('This booking has no date to add to a calendar.'); return; }
+  const paymentEvent = bookingToPaymentReminderEvent(b);
+  const allEvents = paymentEvent ? [event, paymentEvent].join('\r\n') : event;
+  downloadICSFile('NGL-' + (b.compName||'Competition').replace(/\s+/g,'-') + '.ics', allEvents, b.compName || 'NGL Booking');
+};
+
+window.downloadAllBookingsICS = function() {
+  if (!lastMyBookings.length) return;
+  const compEvents = lastMyBookings.map(bookingToICSEvent).filter(Boolean);
+  const paymentEvents = lastMyBookings.map(bookingToPaymentReminderEvent).filter(Boolean);
+  const events = compEvents.concat(paymentEvents);
+  if (!events.length) { alert('No dated bookings to add.'); return; }
+  downloadICSFile('NGL-2027-My-Bookings.ics', events.join('\r\n'), (lastMyBookings[0].club || 'NGL') + ' - 2027 Bookings');
+};
+
+function buildMiniCalendar(monthKey, byDateKey) {
+  const [year, month] = monthKey.split('-').map(Number);
+  const monthName = new Date(year, month-1, 1).toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+  const firstDow = (new Date(year, month-1, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  let cells = '';
+  for (let i = 0; i < firstDow; i++) cells += '<div class="mini-cal-day blank"></div>';
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = year + '-' + String(month).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    const bookingsForDay = byDateKey[dateStr];
+    let cls = 'mini-cal-day';
+    let title = '';
+    if (bookingsForDay && bookingsForDay.length) {
+      const anyConfirmed = bookingsForDay.some(b => !b.waitlist);
+      cls += anyConfirmed ? ' booked' : ' waitlisted';
+      title = ' title="' + bookingsForDay.map(b=>b.compName).join(', ').replace(/"/g,'') + '"';
     }
-  };
-
-  window.adminLogout = function(){
-    adminLoggedIn = false;
-    document.getElementById('admin-login').style.display = 'block';
-    document.getElementById('admin-dash').style.display = 'none';
-    document.getElementById('admin-pw').value = '';
-    document.getElementById('al-err').style.display = 'none';
-  };
-
-  bookingsCol.orderBy('createdAt', 'desc').onSnapshot(snap => {
-    allBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderStats();
-    window.renderBookingList();
-  });
-
-  function renderStats(){
-    const pending = allBookings.filter(b => (b.status||'pending_review') === 'pending_review').length;
-    const confirmed = allBookings.filter(b => b.status === 'confirmed').length;
-    const invoiced = allBookings.filter(b => b.status === 'invoiced' || b.status === 'paid').length;
-    const totalValue = allBookings.reduce((sum, b) => sum + (b.estimatedTotal || 0), 0);
-    document.getElementById('stat-pending').textContent = pending;
-    document.getElementById('stat-confirmed').textContent = confirmed;
-    document.getElementById('stat-invoiced').textContent = invoiced;
-    document.getElementById('stat-value').textContent = '£' + totalValue.toLocaleString();
+    cells += '<div class="' + cls + '"' + title + '>' + day + '</div>';
   }
 
-  function fmtDate(d){
-    if(!d) return 'TBC';
-    const dt = new Date(d + 'T00:00:00');
-    return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-  }
-
-  function statusLabel(status){
-    const map = {
-      pending_review: { text: 'Pending Review', cls: 'pending' },
-      confirmed:       { text: 'Confirmed', cls: 'confirmed' },
-      declined:        { text: 'Declined', cls: 'declined' },
-      invoiced:        { text: 'Invoiced', cls: 'invoiced' },
-      paid:            { text: 'Paid', cls: 'paid' }
-    };
-    return map[status] || map.pending_review;
-  }
-
-  window.renderBookingList = function(){
-    const el = document.getElementById('booking-list');
-    const search = (document.getElementById('search').value || '').toLowerCase();
-    const filter = document.getElementById('filter').value;
-
-    let rows = [...allBookings];
-    if(filter) rows = rows.filter(b => (b.status || 'pending_review') === filter);
-    if(search) rows = rows.filter(b =>
-      (b.clubName||'').toLowerCase().includes(search) ||
-      (b.compName||'').toLowerCase().includes(search) ||
-      (b.contactName||'').toLowerCase().includes(search)
-    );
-
-    if(!rows.length){
-      el.innerHTML = '<div class="no-rows">No bookings match this filter.</div>';
-      return;
-    }
-
-    el.innerHTML = rows.map(b => {
-      const status = b.status || 'pending_review';
-      const sl = statusLabel(status);
-      const actions = [];
-      if(status === 'pending_review'){
-        actions.push('<button class="btn-navy btn-small-admin" style="width:auto" onclick="window.setBookingStatus(\'' + b.id + '\',\'confirmed\')">Confirm</button>');
-        actions.push('<button class="btn-ghost-admin btn-small-admin" onclick="window.setBookingStatus(\'' + b.id + '\',\'declined\')">Decline</button>');
-      }
-      if(status === 'confirmed'){
-        actions.push('<button class="btn-navy btn-small-admin" style="width:auto" onclick="window.setBookingStatus(\'' + b.id + '\',\'invoiced\')">Mark Invoiced</button>');
-      }
-      if(status === 'invoiced'){
-        actions.push('<button class="btn-navy btn-small-admin" style="width:auto" onclick="window.setBookingStatus(\'' + b.id + '\',\'paid\')">Mark Paid</button>');
-      }
-      actions.push('<button class="btn-ghost-admin btn-small-admin" onclick="window.deleteBooking(\'' + b.id + '\')">Delete</button>');
-
-      return '<div class="booking-card">' +
-        '<div class="bc-header">' +
-          '<div><div class="bc-title">' + (b.compName||'Untitled Competition') + '</div>' +
-          '<div class="bc-sub">' + (b.clubName||'') + '</div></div>' +
-          '<span class="status-pill ' + sl.cls + '">' + sl.text + '</span>' +
-        '</div>' +
-        '<div class="bc-grid">' +
-          '<div class="bc-field"><span class="bc-label">Date</span>' + fmtDate(b.compDate) + (b.compTime ? ' at ' + b.compTime : '') + '</div>' +
-          '<div class="bc-field"><span class="bc-label">Duration</span>' + (b.durationHours||'-') + ' hrs</div>' +
-          '<div class="bc-field"><span class="bc-label">Venue</span>' + (b.compLocation||'-') + '</div>' +
-          '<div class="bc-field"><span class="bc-label">Estimated Total</span><strong>£' + (b.estimatedTotal||0).toLocaleString() + '</strong></div>' +
-          '<div class="bc-field"><span class="bc-label">Contact</span>' + (b.contactName||'-') + '</div>' +
-          '<div class="bc-field"><span class="bc-label">Email</span><a href="mailto:' + (b.contactEmail||'') + '">' + (b.contactEmail||'-') + '</a></div>' +
-          '<div class="bc-field"><span class="bc-label">Phone</span>' + (b.contactPhone||'-') + '</div>' +
-          '<div class="bc-field"><span class="bc-label">Rules Document</span>' +
-            (b.rulesFileUrl ? '<a href="' + b.rulesFileUrl + '" target="_blank">' + (b.rulesFileName||'View file') + ' →</a>' : 'Not uploaded') +
-          '</div>' +
-        '</div>' +
-        (b.notes ? '<div class="bc-notes"><span class="bc-label">Notes</span>' + b.notes + '</div>' : '') +
-        '<div class="bc-actions">' + actions.join('') + '</div>' +
-        '</div>';
-    }).join('');
-  };
-
-  window.setBookingStatus = async function(id, status){
-    try{
-      await db.collection('ngl_judge_bookings').doc(id).update({ status, [status + 'At']: new Date().toISOString() });
-    }catch(e){
-      alert('Could not update booking: ' + e.message);
-    }
-  };
-
-  window.deleteBooking = async function(id){
-    if(!confirm('Delete this booking permanently? This cannot be undone.')) return;
-    try{
-      await db.collection('ngl_judge_bookings').doc(id).delete();
-    }catch(e){
-      alert('Could not delete booking: ' + e.message);
-    }
-  };
+  return '<div class="mini-cal">' +
+    '<div class="mini-cal-title">' + monthName + '</div>' +
+    '<div class="mini-cal-grid">' +
+    ['M','T','W','T','F','S','S'].map(d => '<div class="mini-cal-dow">' + d + '</div>').join('') +
+    cells +
+    '</div></div>';
+}
 </script>
-
 </body>
 </html>
