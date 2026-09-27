@@ -250,6 +250,7 @@
    check each number against the Firestore `licences` collection.
    ===================================================================== */
 const FIREBASE_CONFIG = null;
+const CLUB_HUB_URL = 'ngl-schools-club.html';
 
 /* ---------- Licence number format ----------
    8 characters from an alphabet with no look-alikes (no 0/O, 1/I/L),
@@ -391,6 +392,7 @@ function screenSignIn(prefill, error){
         <p class="error" id="err">${esc(error||'')}</p>
         <button class="btn" id="goBtn" type="submit">Open my Hub</button>
       </form>
+      <p class="hint" style="margin-top:22px">Are you a club? <a href="${CLUB_HUB_URL}">Club login</a></p>
     </div>
   `);
   const input = document.getElementById('lic');
