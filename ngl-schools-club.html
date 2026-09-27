@@ -117,20 +117,13 @@
   .foot{text-align:center;font-size:12px;color:var(--muted);margin-top:40px;}
   .mono{white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em;}
 
-  /* Printable slips */
-  #print-area{display:none;}
-  @media print{
-    @page{size:A4;margin:8mm;}
-    body{background:#fff;}
-    .app{display:none !important;}
-    #print-area{display:grid;grid-template-columns:repeat(2,1fr);gap:4mm;color:#0a1440;}
-    .slip{border:1px dashed #9aa3c7;border-radius:3mm;padding:4mm;display:flex;gap:4mm;align-items:center;break-inside:avoid;height:44mm;}
-    .slip svg{width:30mm;height:30mm;flex:0 0 auto;}
-    .slip .t1{font-size:8pt;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#4a5588;}
-    .slip .t2{font-size:15pt;font-weight:900;font-family:ui-monospace,Menlo,Consolas,monospace;margin:1mm 0;}
-    .slip .t3{font-size:8pt;line-height:1.35;}
-    .slip .t4{font-size:7.5pt;color:#4a5588;margin-top:1mm;}
-  }
+  /* Club code card */
+  .code-card{border-color:rgba(245,209,47,.45);}
+  .code-grid{display:grid;grid-template-columns:1fr;gap:18px;align-items:center;}
+  @media(min-width:700px){.code-grid{grid-template-columns:1fr 170px;}}
+  .club-code{font-size:clamp(30px,6vw,40px);font-weight:900;color:var(--schools);letter-spacing:.06em;}
+  .qr-box{background:#fff;border-radius:14px;padding:10px;width:170px;justify-self:center;text-align:center;color:var(--navy);font-size:12px;font-weight:800;}
+  .qr-box svg{width:150px;height:150px;display:block;}
 </style>
 </head>
 <body>
@@ -149,7 +142,6 @@
     <main id="view"></main>
   </div>
 </div>
-<div id="print-area"></div>
 
 <script>
 //---------------------------------------------------------------------
@@ -2495,71 +2487,65 @@ function currentSeason(d = new Date()){
 }
 function nextSeason(s){ const y = +s.slice(0,4) + 1; return y + '/' + String(y + 1).slice(2); }
 
-/* ---------- Licence numbers (must match ngl-schools-hub.html) ---------- */
-const LICENCE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
-function newLicenceNumber(existing){
-  let n;
-  do{
-    const r = new Uint32Array(8); crypto.getRandomValues(r);
-    const c = Array.from(r, x => LICENCE_ALPHABET[x % LICENCE_ALPHABET.length]).join('');
-    n = 'NGL-' + c.slice(0,4) + '-' + c.slice(4);
-  }while(existing.has(n));
-  return n;
+/* ---------- Club Hub access codes (must match ngl-schools-hub.html) ----------
+   One code per club, shared with all its Schools families, e.g. SAADI-7K4P.
+   Prefix = first word of the club name (max 10 letters), then 4 characters with no look-alikes. */
+const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+function codePrefix(name){
+  const words = String(name).toUpperCase().replace(/[^A-Z ]/g,'').split(/\s+/)
+    .filter(w => w && !['GYMNASTICS','GYMNASTIC','GYM','CLUB','THE','ACADEMY','OF','AND'].includes(w));
+  return (words[0] || 'NGL').slice(0, 10).padEnd(2, 'X');
+}
+function newAccessCode(clubName){
+  const r = new Uint32Array(4); crypto.getRandomValues(r);
+  return codePrefix(clubName) + '-' + Array.from(r, x => CODE_ALPHABET[x % CODE_ALPHABET.length]).join('');
 }
 
 /* =====================================================================
    DATA LAYER — demo implementation. Same method names will be backed by
-   Firestore: clubs/{clubId}, clubs/{clubId}/schools/{schoolId},
-   licences/{number}  (fields: clubId, clubName, schoolId, schoolName,
-   season, status 'active' | 'awaiting-payment' | 'void', orderId),
-   orders/{orderId}.
+   Firebase Auth + Firestore:
+     clubs/{uid}                 name, bgNumber, contact, email, bands{season:price}
+     clubs/{uid}/schools/{id}    name
+     orders/{id}                 clubId, schoolId, qty, price, season, status
+     accessCodes/{code}          clubId, clubName, season, status 'active'|'inactive'
+   The parent Hub only ever reads accessCodes/{code}.
    ===================================================================== */
+function makeClub(name, contact, email){
+  return {name, contact, email, bands:{}, accessCode:newAccessCode(name)};
+}
 const demo = (() => {
   const season = currentSeason();
-  const all = new Set();
-  const club = {
-    id:'saadi', name:'SAADI Gymnastics', contact:'Dave Brooke', email:CONTACT_EMAIL, status:'approved',
-    bands: {}                        // season -> price, fixed for that school year
+  const state = {season, club:null, schools:[], orders:[]};
+  state.loadSample = () => {
+    state.club = makeClub('SAADI Gymnastics', 'Dave Brooke', CONTACT_EMAIL);
+    state.club.bands[season] = 20;   // demo: last year's total put SAADI in the £20 band
+    state.schools = []; state.orders = [];
+    [['Brookfield Primary',183],['St Mary’s C of E Primary',126],['Oakwood Junior School',207],['Hillside Infants',94]]
+      .forEach(([n,q],i) => { const s = state.addSchool(n); state.orders.push({id:'ORD-' + (1001 + i), schoolId:s.id, qty:q, price:20, status:'paid', season}); });
   };
-  club.bands[season] = 20;           // demo: last year's total put SAADI in the £20 band
-  const schools = [];
-  const licences = [];
-  const orders = [];
-  function addSchool(name){ const s = {id:'s' + (schools.length + 1), name}; schools.push(s); return s; }
-  function issue(school, qty, status, orderId){
-    for(let i = 0; i < qty; i++){
-      const number = newLicenceNumber(all); all.add(number);
-      licences.push({number, schoolId:school.id, schoolName:school.name, season, status, orderId});
-    }
-  }
-  [['Brookfield Primary',183],['St Mary’s C of E Primary',126],['Oakwood Junior School',207],['Hillside Infants',94]]
-    .forEach(([n,q],i) => { const s = addSchool(n); const o = {id:'ORD-' + (1001 + i), schoolId:s.id, qty:q, price:20, status:'paid', season, created:new Date()}; orders.push(o); issue(s, q, 'active', o.id); });
-  return {season, club, schools, licences, orders, addSchool, issue, all};
+  state.addSchool = name => { const s = {id:'s' + (state.schools.length + 1), name}; state.schools.push(s); return s; };
+  return state;
 })();
 
 const api = {
-  async signIn(email, password){ return {ok:true, club: demo.club}; },
-  async register(data){ return {ok:true}; },
-  async getClub(){ return demo.club; },
-  async listSchools(){ return demo.schools; },
+  async signIn(email, password){ demo.loadSample(); return {ok:true}; },
+  // Live: createUserWithEmailAndPassword, then write clubs/{uid} + accessCodes/{code}. No approval step.
+  async register(d){
+    demo.club = makeClub(d.name, d.contact, d.email);
+    demo.schools = []; demo.orders = [];
+    return {ok:true};
+  },
   async addSchool(name){ return demo.addSchool(name); },
-  async listLicences(){ return demo.licences; },
-  async listOrders(){ return demo.orders; },
   async orderLicences(schoolId, qty){
     const price = demo.club.bands[demo.season] ?? bandFor(qty).price;   // first order sets a new club's band
     if(demo.club.bands[demo.season] == null) demo.club.bands[demo.season] = price;
-    const school = demo.schools.find(s => s.id === schoolId);
-    const o = {id:'ORD-' + (1001 + demo.orders.length), schoolId, qty, price, status:'awaiting-payment', season:demo.season, created:new Date()};
+    const o = {id:'ORD-' + (1001 + demo.orders.length), schoolId, qty, price, status:'awaiting-payment', season:demo.season};
     demo.orders.push(o);
-    demo.issue(school, qty, 'awaiting-payment', o.id);
     return o;
   },
+  async newCode(){ demo.club.accessCode = newAccessCode(demo.club.name); return demo.club.accessCode; },
   // Admin only in the live version — in preview a club can simulate it.
-  async markPaid(orderId){
-    const o = demo.orders.find(x => x.id === orderId); if(!o) return;
-    o.status = 'paid';
-    demo.licences.forEach(l => { if(l.orderId === orderId) l.status = 'active'; });
-  }
+  async markPaid(orderId){ const o = demo.orders.find(x => x.id === orderId); if(o) o.status = 'paid'; }
 };
 
 /* ---------- App state + helpers ---------- */
@@ -2574,7 +2560,7 @@ function setTop(){
   if(signedIn){
     ta.innerHTML = `<span class="pill">${esc(demo.club.name)}</span><button class="btn ghost small" data-act="signout">Sign out</button>`;
     nav.hidden = false;
-    nav.innerHTML = [['dashboard','Dashboard'],['schools','Schools & licences'],['orders','Orders'],['programme','Programme & pricing']]
+    nav.innerHTML = [['dashboard','Dashboard'],['orders','Orders'],['programme','Programme & pricing']]
       .map(([k,l]) => `<button class="navtab ${tab===k?'active':''}" data-tab="${k}">${l}</button>`).join('');
   }else{
     ta.innerHTML = `<button class="btn ghost small" data-go="login">Club login</button>`;
@@ -2612,9 +2598,9 @@ function pitchHTML(signedInView){
   <div class="section">
     <h2>How it works</h2>
     <div class="grid3 steps">
-      <div class="card step"><h3>Tell us how many</h3><p class="muted">Add each school you work with and the number of gymnasts. No names needed.</p></div>
-      <div class="card step"><h3>Hand out licences</h3><p class="muted">Each gymnast gets an NGL licence number on a printable slip with a QR code.</p></div>
-      <div class="card step"><h3>Families join in</h3><p class="muted">Parents scan the QR code to watch the routines and follow the programme at home.</p></div>
+      <div class="card step"><h3>Tell us how many</h3><p class="muted">Add each school you work with and the number of gymnasts. No names or pupil details needed.</p></div>
+      <div class="card step"><h3>Get your club code</h3><p class="muted">Your club gets one NGL Schools Hub code to share with all your Schools families.</p></div>
+      <div class="card step"><h3>Families join in</h3><p class="muted">Parents enter your club code to watch the routines and follow the programme at home.</p></div>
     </div>
   </div>
 
@@ -2622,7 +2608,6 @@ function pitchHTML(signedInView){
     <div class="card">
       <h2>What every gymnast gets</h2>
       <ul class="ticks">
-        <li>Their own NGL licence number, the start of their NGL journey</li>
         <li>An NGL Schools Awards Book</li>
         <li>Bronze, Silver and Gold certificates</li>
         <li>A structured six-level programme across Floor, Bench and Vault</li>
@@ -2634,7 +2619,7 @@ function pitchHTML(signedInView){
       <h2>What your club gets</h2>
       <ul class="ticks">
         <li>A ready-made programme, awards and progression you don’t have to design</li>
-        <li>This Club Hub to manage schools and licences</li>
+        <li>This Club Hub to manage your schools, licences and club code</li>
         <li>Two branded NGL Schools Coach T-shirts in your launch pack</li>
         <li>A route to bring school families into your club: Graduation is hosted at your venue where available</li>
       </ul>
@@ -2645,7 +2630,7 @@ function pitchHTML(signedInView){
   <div class="section card">
     <h2>Simple per-gymnast licensing</h2>
     <p class="muted">Clubs pay one annual licence for each gymnast registered. Your price is fixed for the whole school year, and the more gymnasts your club registers, the lower it gets.</p>
-    <p class="muted">Full pricing is available in the Club Hub once your club is registered and approved.</p>
+    <p class="muted">Full pricing is in the Club Hub. Register your club and you’ll see it straight away.</p>
     <button class="btn" data-go="register">Register your club</button>
   </div>`}
   ${!signedInView ? '' : `
@@ -2669,7 +2654,7 @@ function pitchHTML(signedInView){
   <div class="section grid2">
     <div class="card">
       <h2>Year 2 and beyond</h2>
-      <p class="muted">Returning gymnasts keep their Awards Book and NGL licence number and carry on progressing. Renewing their licence includes their next set of certificates and continued Hub access.</p>
+      <p class="muted">Returning gymnasts keep their Awards Book and carry on progressing. Renewing their licence includes their next set of certificates and continued Hub access for their family.</p>
       ${signedInView ? `<h3 style="margin-top:14px">Extras and replacements</h3>
       <table><tbody>${EXTRAS.slice(0,3).map(e => `<tr><td>${e.item}</td><td class="num">${gbp(e.price)}</td></tr>`).join('')}</tbody></table>` : ''}
     </div>
@@ -2685,8 +2670,8 @@ function pitchHTML(signedInView){
   </div>
 
   <div class="section card">
-    <h2>One child. One NGL number. One journey.</h2>
-    <p class="muted">A child can discover gymnastics at school, progress through their awards, graduate, then move into recreational gymnastics at your club, with their NGL identity following them.</p>
+    <h2>From the school hall to your club</h2>
+    <p class="muted">A child can discover gymnastics at school, progress through their awards, graduate, then move into recreational gymnastics at your club and on through the NGL pathways.</p>
     <div class="journey">
       <span class="jstep">Pre-School</span><span class="jstep on">Schools</span><span class="jstep">Recreational</span><span class="jstep">General</span><span class="jstep">Performance</span><span class="jstep">University</span><span class="jstep">Masters</span>
     </div>
@@ -2696,7 +2681,7 @@ function pitchHTML(signedInView){
   ${signedInView ? '' : `
   <div class="section card" style="text-align:center">
     <h2>Ready to start?</h2>
-    <p class="muted">Register your club. Once NGL approves it, you can add schools and order licences straight away.</p>
+    <p class="muted">Register your club and you’ll go straight into your Club Hub to add schools and order licences.</p>
     <div class="btn-row" style="justify-content:center"><button class="btn" data-go="register">Register your club</button></div>
   </div>`}
   <div class="foot">Questions? <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></div>
@@ -2712,7 +2697,7 @@ function screenLogin(msg){
     <div class="auth card">
       ${FIREBASE_CONFIG ? '' : '<div class="demo-banner">Preview mode: any email and password opens a demo club</div>'}
       <h2>Club login</h2>
-      <p class="muted">For approved NGL clubs.</p>
+      <p class="muted">For NGL Schools clubs.</p>
       <form id="loginForm">
         <div class="field"><label for="em">Email</label><input class="input" id="em" type="email" autocomplete="email" required></div>
         <div class="field"><label for="pw">Password</label><input class="input" id="pw" type="password" autocomplete="current-password" required></div>
@@ -2735,7 +2720,7 @@ function screenRegister(){
   render(`
     <div class="auth card">
       <h2>Register your club</h2>
-      <p class="muted">NGL will check and approve your club, then email you when your Club Hub is ready.</p>
+      <p class="muted">Takes a minute. You’ll go straight into your Club Hub.</p>
       <form id="regForm">
         <div class="field"><label for="cn">Club name</label><input class="input" id="cn" required></div>
         <div class="field"><label for="bg">British Gymnastics club number</label><input class="input" id="bg" required></div>
@@ -2743,25 +2728,49 @@ function screenRegister(){
         <div class="field"><label for="re">Email</label><input class="input" id="re" type="email" autocomplete="email" required></div>
         <div class="field"><label for="rp">Choose a password</label><input class="input" id="rp" type="password" autocomplete="new-password" minlength="8" required></div>
         <label class="note" style="display:flex;gap:10px;align-items:flex-start;margin:4px 0 14px"><input type="checkbox" required style="margin-top:3px"> I confirm our club is affiliated to British Gymnastics and agree to the NGL Schools licence terms.</label>
-        <button class="btn block" type="submit">Submit registration</button>
+        <button class="btn block" type="submit">Register and open Club Hub</button>
       </form>
     </div>`);
   document.getElementById('regForm').addEventListener('submit', async e => {
     e.preventDefault();
-    await api.register({});
-    render(`<div class="auth card" style="text-align:center"><h2>Thanks, we’ve got it</h2>
-      <p class="muted">NGL will review your registration and email you once your club is approved.</p>
-      ${FIREBASE_CONFIG ? '' : '<p class="note">Preview mode: nothing was saved.</p>'}
-      <button class="btn ghost" data-go="landing">Back to NGL Schools</button></div>`);
+    const v = id => document.getElementById(id).value.trim();
+    const r = await api.register({name:v('cn'), bgNumber:v('bg'), contact:v('ct'), email:v('re'), password:document.getElementById('rp').value});
+    if(r.ok){ signedIn = true; tab = 'dashboard'; show(); }
   });
 }
 
 /* ---------- Signed-in screens ---------- */
+function seasonOrders(){ return demo.orders.filter(o => o.season === demo.season); }
 function counts(){
-  const L = demo.licences.filter(l => l.season === demo.season && l.status !== 'void');
-  const active = L.filter(l => l.status === 'active').length;
-  const pending = L.filter(l => l.status === 'awaiting-payment').length;
-  return {total:L.length, active, pending};
+  const O = seasonOrders();
+  const active = O.filter(o => o.status === 'paid').reduce((a,o) => a + o.qty, 0);
+  const pending = O.filter(o => o.status !== 'paid').reduce((a,o) => a + o.qty, 0);
+  return {total:active + pending, active, pending};
+}
+function schoolCount(id){ return seasonOrders().filter(o => o.schoolId === id).reduce((a,o) => a + o.qty, 0); }
+function codeLive(){ return counts().active > 0; }
+function hubLink(){ return PARENT_HUB_URL + '?code=' + encodeURIComponent(demo.club.accessCode); }
+
+function codeCardHTML(){
+  const live = codeLive();
+  return `
+    <div class="card code-card">
+      <div class="code-grid">
+        <div>
+          <p class="eyebrow">Your NGL Schools Hub code</p>
+          <div class="club-code mono">${esc(demo.club.accessCode)}</div>
+          <p style="margin:8px 0 0">${live ? '<span class="tag ok">Live</span>' : '<span class="tag wait">Goes live when your first licence payment is confirmed</span>'}</p>
+          <p class="muted" style="margin:12px 0 14px">Share this one code with all your Schools families, for example in your welcome letter, class WhatsApp or newsletter. Parents enter it at the Schools Hub to see the routines, videos and events.</p>
+          <div class="btn-row">
+            <button class="btn small" data-act="copy-msg">Copy message for parents</button>
+            <button class="btn ghost small" data-act="copy-link">Copy link</button>
+            <button class="btn ghost small" data-act="new-code">Change code</button>
+          </div>
+          <p class="note" id="copyNote" style="margin:10px 0 0;min-height:1em"></p>
+        </div>
+        <div class="qr-box" title="QR code for your club’s Hub link">${qrSVG(hubLink())}<span>Scan to open</span></div>
+      </div>
+    </div>`;
 }
 
 function screenDashboard(){
@@ -2770,36 +2779,45 @@ function screenDashboard(){
   const next = bandFor(c.total);
   let toNext = '';
   const nb = BANDS.find(b => b.min > c.total && b.price);
-  if(nb) toNext = `${(nb.min - c.total).toLocaleString('en-GB')} more licences this year puts you in the ${gbp(nb.price)} band from September.`;
+  if(nb && c.total) toNext = `${(nb.min - c.total).toLocaleString('en-GB')} more licences this year puts you in the ${gbp(nb.price)} band from September.`;
   const pct = nb ? Math.min(100, Math.round(c.total / nb.min * 100)) : 100;
-  const bySchool = demo.schools.map(s => ({s, n: demo.licences.filter(l => l.schoolId === s.id && l.season === demo.season && l.status !== 'void').length}));
+  const isNew = !demo.schools.length;
   render(`
+    ${isNew ? `<div class="card" style="border-color:var(--schools)">
+      <p class="eyebrow">Welcome, ${esc(demo.club.name)}</p>
+      <h2 style="margin:0 0 6px">Your Club Hub is ready</h2>
+      <p class="muted" style="margin:0 0 14px">Add the schools you work with, then order licences for each one. Your first order sets your price band for the ${esc(demo.season)} school year.</p>
+      <div class="btn-row"><button class="btn" data-act="add-school">+ Add your first school</button><button class="btn ghost" data-tab="programme">See programme &amp; pricing</button></div>
+    </div>` : ''}
+
     <div class="card band-card">
       <p class="eyebrow">${esc(demo.season)} school year</p>
       <h2 style="font-size:26px;margin:0">Your band: ${price ? gbp(price) + ' per gymnast' : 'set by your first order'}</h2>
-      <p class="muted" style="margin:6px 0 0">Fixed until the September review.</p>
-      <div class="bar"><span style="width:${pct}%"></span></div>
-      <p style="margin:0">${next.price ? `On track for <b>${gbp(next.price)}</b> in ${esc(nextSeason(demo.season))}.` : 'You’ve reached 1,000+ — we’ll agree commercial terms with you.'} <span class="muted">${esc(toNext)}</span></p>
+      <p class="muted" style="margin:6px 0 0">${price ? 'Fixed until the September review.' : 'Pricing: ' + BANDS.filter(b=>b.price).map(b => b.label + ' gymnasts ' + gbp(b.price)).join(' · ')}</p>
+      ${c.total ? `<div class="bar"><span style="width:${pct}%"></span></div>
+      <p style="margin:0">${next.price ? `On track for <b>${gbp(next.price)}</b> in ${esc(nextSeason(demo.season))}.` : 'You’ve reached 1,000+, so we’ll agree commercial terms with you.'} <span class="muted">${esc(toNext)}</span></p>` : ''}
       <div class="kpis">
         <div class="kpi"><div class="v">${c.total.toLocaleString('en-GB')}</div><div class="l">Licences this year</div></div>
         <div class="kpi"><div class="v">${demo.schools.length}</div><div class="l">Schools</div></div>
-        <div class="kpi"><div class="v">${c.active.toLocaleString('en-GB')}</div><div class="l">Active</div></div>
+        <div class="kpi"><div class="v">${c.active.toLocaleString('en-GB')}</div><div class="l">Paid</div></div>
         <div class="kpi"><div class="v">${c.pending.toLocaleString('en-GB')}</div><div class="l">Awaiting payment</div></div>
       </div>
     </div>
+
+    ${codeCardHTML()}
 
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
         <h2 style="margin:0">Your schools</h2>
         <div class="btn-row"><button class="btn ghost small" data-act="add-school">+ Add school</button><button class="btn small" data-act="order">+ Add licences</button></div>
       </div>
-      <div class="table-wrap"><table>
+      ${isNew ? '<p class="muted" style="margin:10px 0 0">No schools yet.</p>' : `<div class="table-wrap"><table>
         <thead><tr><th>School</th><th class="num">Licences</th><th></th></tr></thead>
         <tbody>
-          ${bySchool.map(({s,n}) => `<tr class="school-row" data-school="${s.id}"><td>${esc(s.name)}</td><td class="num">${n}</td><td class="num"><span class="muted">View ›</span></td></tr>`).join('')}
+          ${demo.schools.map(s => `<tr><td>${esc(s.name)}</td><td class="num">${schoolCount(s.id)}</td><td class="num"><button class="btn ghost small" data-act="order" data-school="${s.id}">+ Add</button></td></tr>`).join('')}
           <tr><td><b>Total registered</b></td><td class="num"><b>${c.total.toLocaleString('en-GB')}</b></td><td></td></tr>
         </tbody>
-      </table></div>
+      </table></div>`}
     </div>
 
     <div class="grid2">
@@ -2818,57 +2836,22 @@ function screenDashboard(){
   `);
 }
 
-function screenSchools(selectedId){
-  const sel = selectedId || (demo.schools[0] && demo.schools[0].id);
-  const school = demo.schools.find(s => s.id === sel);
-  const list = demo.licences.filter(l => l.schoolId === sel && l.season === demo.season && l.status !== 'void');
-  render(`
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-        <div class="field" style="margin:0;min-width:240px;flex:1">
-          <label for="schoolSel">School</label>
-          <select id="schoolSel" class="input">${demo.schools.map(s => `<option value="${s.id}" ${s.id===sel?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
-        </div>
-        <div class="btn-row" style="align-self:flex-end">
-          <button class="btn ghost small" data-act="add-school">+ Add school</button>
-          <button class="btn small" data-act="order" data-school="${sel||''}">+ Add licences</button>
-        </div>
-      </div>
-    </div>
-    ${school ? `
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-        <div><h2 style="margin:0">${esc(school.name)}</h2><p class="muted" style="margin:4px 0 0">${list.length} licences · ${esc(demo.season)}</p></div>
-        <div class="btn-row">
-          <button class="btn ghost small" data-act="csv" data-school="${sel}">Download list (CSV)</button>
-          <button class="btn small" data-act="print" data-school="${sel}">Print licence slips</button>
-        </div>
-      </div>
-      <p class="note">Hand one slip to each gymnast. Write the child’s name on your own copy of the list if you want to keep track; the Hub never needs it.</p>
-      <div class="table-wrap"><table>
-        <thead><tr><th>#</th><th>Licence number</th><th>Status</th></tr></thead>
-        <tbody>${list.map((l,i) => `<tr><td class="muted">${i+1}</td><td class="mono">${l.number}</td><td>${l.status==='active'?'<span class="tag ok">Active</span>':'<span class="tag wait">Awaiting payment</span>'}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">No licences yet for this school.</td></tr>'}</tbody>
-      </table></div>
-    </div>` : '<div class="card"><p class="muted">Add your first school to get started.</p></div>'}
-  `);
-  const ss = document.getElementById('schoolSel');
-  if(ss) ss.addEventListener('change', () => screenSchools(ss.value));
-}
-
 function screenOrders(){
   const orders = demo.orders.slice().reverse();
   render(`
     <div class="card">
-      <h2>Licence orders</h2>
-      <p class="muted">Licences are released as soon as NGL confirms your payment.</p>
-      <div class="table-wrap"><table>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div><h2 style="margin:0 0 4px">Licence orders</h2><p class="muted" style="margin:0">Pay through the NGL shop quoting your order number. NGL confirms payment in the Hub.</p></div>
+        <button class="btn small" data-act="order">+ Add licences</button>
+      </div>
+      <div class="table-wrap" style="margin-top:10px"><table>
         <thead><tr><th>Order</th><th>School</th><th class="num">Qty</th><th class="num">Total</th><th>Status</th><th></th></tr></thead>
         <tbody>${orders.map(o => {
           const s = demo.schools.find(x => x.id === o.schoolId);
           return `<tr><td class="mono">${o.id}</td><td>${esc(s ? s.name : '')}</td><td class="num">${o.qty}</td><td class="num">${gbp(o.qty*o.price)}</td>
             <td>${o.status==='paid'?'<span class="tag ok">Paid</span>':'<span class="tag wait">Awaiting payment</span>'}</td>
             <td class="num">${o.status==='paid' ? '' : `<div class="row-actions"><a class="btn small" href="${LICENCE_PRODUCT_URL[o.price]||SHOP_URL}" target="_blank" rel="noopener">Pay now</a>${FIREBASE_CONFIG?'':`<button class="btn ghost small" data-act="markpaid" data-order="${o.id}" title="Preview only: in the live Hub NGL confirms payment">Simulate paid</button>`}</div>`}</td></tr>`;
-        }).join('')}</tbody>
+        }).join('') || '<tr><td colspan="6" class="muted">No orders yet.</td></tr>'}</tbody>
       </table></div>
     </div>`);
 }
@@ -2878,7 +2861,7 @@ function screenProgramme(){ render(pitchHTML(true)); }
 function show(){
   setTop();
   if(!signedIn) return screenLanding();
-  ({dashboard:screenDashboard, schools:() => screenSchools(), orders:screenOrders, programme:screenProgramme})[tab]();
+  ({dashboard:screenDashboard, orders:screenOrders, programme:screenProgramme})[tab]();
   window.scrollTo(0,0);
 }
 
@@ -2897,7 +2880,7 @@ function addSchoolModal(){
   m.querySelector('#sn').focus();
   m.querySelector('#asf').addEventListener('submit', async e => {
     e.preventDefault(); const s = await api.addSchool(m.querySelector('#sn').value.trim()); m.remove();
-    tab = 'schools'; setTop(); screenSchools(s.id);
+    orderModal(s.id);
   });
 }
 
@@ -2909,8 +2892,7 @@ function orderModal(schoolId){
       <div class="field"><label for="os">School</label><select class="input" id="os">${demo.schools.map(s => `<option value="${s.id}" ${s.id===schoolId?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
       <div class="field"><label for="oq">How many gymnasts?</label><input class="input" id="oq" type="number" min="1" max="2000" value="30" required></div>
       <div id="osum"></div>
-      <p class="note">Your licence numbers are created straight away and become active once payment is confirmed.</p>
-      <div class="btn-row"><button class="btn" type="submit">Create licences</button><button class="btn ghost" type="button" data-close>Cancel</button></div>
+      <div class="btn-row" style="margin-top:14px"><button class="btn" type="submit">Place order</button><button class="btn ghost" type="button" data-close>Cancel</button></div>
     </form>`);
   const q = m.querySelector('#oq');
   const upd = () => {
@@ -2925,43 +2907,28 @@ function orderModal(schoolId){
     e.preventDefault();
     const n = parseInt(q.value, 10); if(!(n > 0)) return;
     const o = await api.orderLicences(m.querySelector('#os').value, n);
-    m.innerHTML = `<div class="modal"><h2>${n} licences created</h2>
-      <p class="muted">Order <span class="mono">${o.id}</span> · ${gbp(n*o.price)}. Pay through the NGL shop quoting your order number. Your licences activate as soon as payment is confirmed.</p>
+    m.innerHTML = `<div class="modal"><h2>Order ${o.id} placed</h2>
+      <p class="muted">${n} licences · ${gbp(n*o.price)}. Pay through the NGL shop quoting <b class="mono">${o.id}</b>. The licences count towards your total straight away.</p>
       <div class="btn-row"><a class="btn" href="${LICENCE_PRODUCT_URL[o.price]||SHOP_URL}" target="_blank" rel="noopener">Pay now</a>
       <button class="btn ghost" data-close>Done</button></div></div>`;
     m.querySelector('[data-close]').addEventListener('click', () => { m.remove(); show(); });
   });
 }
 
-/* ---------- CSV + printable slips ---------- */
-function schoolLicences(id){ return demo.licences.filter(l => l.schoolId === id && l.season === demo.season && l.status !== 'void'); }
-function downloadCSV(id){
-  const s = demo.schools.find(x => x.id === id);
-  const rows = [['Licence number','School','Season','Status','Hub link','Gymnast name (club use only)']]
-    .concat(schoolLicences(id).map(l => [l.number, s.name, l.season, l.status, PARENT_HUB_URL + '?l=' + l.number, '']));
-  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\r\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['﻿' + csv], {type:'text/csv'}));
-  a.download = `NGL-Schools-${s.name.replace(/[^A-Za-z0-9]+/g,'-')}-${demo.season.replace('/','-')}.csv`;
-  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-}
+/* ---------- Sharing the club code ---------- */
 function qrSVG(text){
   const qr = qrcode(0, 'M'); qr.addData(text); qr.make();
-  return qr.createSvgTag({cellSize:4, margin:0, scalable:true});
+  return qr.createSvgTag({cellSize:4, margin:2, scalable:true});
 }
-function printSlips(id){
-  const s = demo.schools.find(x => x.id === id);
-  document.getElementById('print-area').innerHTML = schoolLicences(id).map(l => `
-    <div class="slip">
-      ${qrSVG(PARENT_HUB_URL + '?l=' + l.number)}
-      <div>
-        <div class="t1">NGL Schools · Your licence number</div>
-        <div class="t2">${l.number}</div>
-        <div class="t3">Scan the QR code, or visit the NGL Schools Hub and enter this number, to watch the routines and practise at home.</div>
-        <div class="t4">${esc(s.name)} · ${esc(demo.club.name)} · ${esc(l.season)}</div>
-      </div>
-    </div>`).join('');
-  window.print();
+function parentMessage(){
+  return `Your child is taking part in NGL Schools gymnastics with ${demo.club.name}.\n\n`
+    + `Watch the routines they’re learning and practise together at home in the NGL Schools Hub:\n${hubLink()}\n\n`
+    + `Or go to the Schools Hub and enter our club code: ${demo.club.accessCode}`;
+}
+async function copyText(text, note){
+  try{ await navigator.clipboard.writeText(text); }
+  catch(e){ const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(_){} ta.remove(); }
+  const n = document.getElementById('copyNote'); if(n) n.textContent = note;
 }
 
 /* ---------- Events ---------- */
@@ -2971,16 +2938,18 @@ document.addEventListener('click', async e => {
   if(go){ e.preventDefault(); const g = go.dataset.go; if(g==='login') screenLogin(); else if(g==='register') screenRegister(); else screenLanding(); window.scrollTo(0,0); return; }
   const nt = t.closest('[data-tab]');
   if(nt){ tab = nt.dataset.tab; show(); return; }
-  const row = t.closest('.school-row');
-  if(row){ tab = 'schools'; setTop(); screenSchools(row.dataset.school); return; }
   const act = t.closest('[data-act]');
   if(!act) return;
   const a = act.dataset.act;
   if(a === 'signout'){ signedIn = false; screenLanding(); }
   else if(a === 'add-school') addSchoolModal();
   else if(a === 'order') orderModal(act.dataset.school);
-  else if(a === 'csv') downloadCSV(act.dataset.school);
-  else if(a === 'print') printSlips(act.dataset.school);
+  else if(a === 'copy-msg') copyText(parentMessage(), 'Message copied. Paste it into your letter, email or WhatsApp.');
+  else if(a === 'copy-link') copyText(hubLink(), 'Link copied.');
+  else if(a === 'new-code'){
+    if(act.dataset.armed){ await api.newCode(); show(); const n = document.getElementById('copyNote'); if(n) n.textContent = 'New code created. The old code no longer works, so share the new one with your families.'; }
+    else { act.dataset.armed = '1'; act.textContent = 'Tap again to confirm'; const n = document.getElementById('copyNote'); if(n) n.textContent = 'Changing your code stops the old one working for every family. Only do this if it has been shared outside your club.'; }
+  }
   else if(a === 'markpaid'){ await api.markPaid(act.dataset.order); screenOrders(); }
 });
 

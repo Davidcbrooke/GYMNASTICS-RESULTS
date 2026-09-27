@@ -91,13 +91,13 @@
   .signin .hero{text-align:center;margin-bottom:22px;}
   .signin .hero img{width:150px;height:auto;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.45);margin-bottom:18px;transform:rotate(-3deg);}
   .field label{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 8px;}
-  .licence-input{
+  .code-input{
     width:100%;padding:16px;border-radius:14px;border:2px solid var(--line);background:var(--navy-2);
     color:var(--white);font-size:22px;font-weight:800;letter-spacing:.12em;text-align:center;text-transform:uppercase;
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none;
   }
-  .licence-input:focus{border-color:var(--schools);}
-  .licence-input::placeholder{color:rgba(183,193,230,.45);}
+  .code-input:focus{border-color:var(--schools);}
+  .code-input::placeholder{color:rgba(183,193,230,.45);}
   .hint{font-size:13px;color:var(--muted);margin:10px 2px 16px;text-align:center;}
   .error{color:#ff8a95;font-size:14px;font-weight:700;text-align:center;margin:0 0 12px;min-height:1em;}
   .demo-banner{
@@ -113,6 +113,7 @@
     content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;
     background:radial-gradient(circle,rgba(245,209,47,.35),transparent 70%);
   }
+  .welcome .club-name{font-size:24px;font-weight:900;line-height:1.15;}
   .welcome .num{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:800;letter-spacing:.08em;color:var(--schools);font-size:15px;}
   .welcome .club{font-size:14px;color:var(--muted);margin-top:4px;}
   .journey{display:flex;gap:6px;margin-top:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
@@ -245,24 +246,23 @@
    NGL SCHOOLS HUB — parent/gymnast portal
    ---------------------------------------------------------------------
    DEMO MODE: while FIREBASE_CONFIG is null, any correctly formatted
-   licence number (NGL-XXXX-XXXX) opens the Hub. Once the ngl-schools
+   club code (e.g. SAADI-7K4P) opens the Hub. Once the ngl-schools
    Firebase project exists, paste its config below and the Hub will
-   check each number against the Firestore `licences` collection.
+   check the code against the Firestore `accessCodes` collection.
    ===================================================================== */
 const FIREBASE_CONFIG = null;
 const CLUB_HUB_URL = 'ngl-schools-club.html';
 
-/* ---------- Licence number format ----------
-   8 characters from an alphabet with no look-alikes (no 0/O, 1/I/L),
-   shown as NGL-XXXX-XXXX. Must match the generator in the club dashboard. */
-const LICENCE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
-const LICENCE_RE = new RegExp('^NGL-[' + LICENCE_ALPHABET + ']{4}-[' + LICENCE_ALPHABET + ']{4}$');
-function normaliseLicence(raw){
-  let s = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
-  if(s.startsWith('NGL')) s = s.slice(3);
-  s = s.slice(0,8);
-  if(s.length <= 4) return s ? 'NGL-' + s : '';
-  return 'NGL-' + s.slice(0,4) + '-' + s.slice(4);
+/* ---------- Club code format ----------
+   One code per club: 2–10 letters from the club name, a dash, then 4
+   characters with no look-alikes (no 0/O, 1/I/L). Must match the
+   generator in ngl-schools-club.html. */
+const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+const CODE_RE = new RegExp('^[A-Z]{2,10}-[' + CODE_ALPHABET + ']{4}$');
+function normaliseCode(raw){
+  let s = String(raw || '').toUpperCase().replace(/[^A-Z0-9-]/g,'');
+  if(!s.includes('-') && s.length > 6) s = s.slice(0,-4) + '-' + s.slice(-4);
+  return s.slice(0,15);
 }
 
 /* ---------- Programme content (from ngl-award-programmes.html) ---------- */
@@ -314,8 +314,9 @@ const APPARATUS = [
 ];
 
 /* ---------- State ---------- */
-const STORE_KEY = 'ngl-schools-licence';
-let session = null;   // {number, clubName, schoolName, season}
+const STORE_KEY = 'ngl-schools-club-code';
+let session = null;   // {code, clubName, season}
+let autoTried = false;
 
 function store(get, val){
   try{
@@ -325,7 +326,7 @@ function store(get, val){
   }catch(e){ return null; }
 }
 
-/* ---------- Licence check ---------- */
+/* ---------- Club code check ---------- */
 let db = null;
 async function initFirebase(){
   if(!FIREBASE_CONFIG || db) return;
@@ -334,23 +335,22 @@ async function initFirebase(){
   const app = appMod.initializeApp(FIREBASE_CONFIG);
   db = { mod: fsMod, fs: fsMod.getFirestore(app) };
 }
-async function checkLicence(number){
-  if(!LICENCE_RE.test(number)) return {ok:false, reason:'That doesn’t look like an NGL licence number. It should look like NGL-7K4P-2M9Q.'};
+async function checkCode(code){
+  if(!CODE_RE.test(code)) return {ok:false, reason:'That doesn’t look like an NGL Schools club code. It should look like SAADI-7K4P.'};
   if(!FIREBASE_CONFIG){
-    return {ok:true, data:{number, clubName:'Demo Club', schoolName:'Demo School', season:'2026/27'}};
+    return {ok:true, data:{code, clubName:'Demo Gymnastics Club', season:'2026/27'}};
   }
   try{
     await initFirebase();
-    const snap = await db.mod.getDoc(db.mod.doc(db.fs, 'licences', number));
-    if(!snap.exists()) return {ok:false, reason:'We couldn’t find that licence number. Please check it with your school or club.'};
+    const snap = await db.mod.getDoc(db.mod.doc(db.fs, 'accessCodes', code));
+    if(!snap.exists()) return {ok:false, reason:'We couldn’t find that club code. Please check it with your school or club.'};
     const d = snap.data();
-    if(d.status !== 'active') return {ok:false, reason:'This licence isn’t active for the current season. Please ask your club to renew it.'};
-    return {ok:true, data:{number, clubName:d.clubName||'', schoolName:d.schoolName||'', season:d.season||''}};
+    if(d.status !== 'active') return {ok:false, reason:'This club code isn’t active at the moment. Please check with your club.'};
+    return {ok:true, data:{code, clubName:d.clubName||'', season:d.season||''}};
   }catch(e){
     return {ok:false, reason:'We couldn’t reach the Hub just now. Please check your connection and try again.'};
   }
 }
-
 /* ---------- Helpers ---------- */
 const $view = document.getElementById('view');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -383,12 +383,12 @@ function screenSignIn(prefill, error){
         <h1>Your NGL Schools Hub</h1>
         <p class="muted">Watch the routines your gymnast is learning at school and practise them together at home.</p>
       </div>
-      ${FIREBASE_CONFIG ? '' : '<div class="demo-banner">Preview mode: any number in the right format will open the Hub</div>'}
+      ${FIREBASE_CONFIG ? '' : '<div class="demo-banner">Preview mode: any code in the right format, e.g. SAADI-7K4P, opens the Hub</div>'}
       <form id="signinForm" class="field" autocomplete="off">
-        <label for="lic">Enter your NGL licence number</label>
-        <input id="lic" class="licence-input" inputmode="text" autocapitalize="characters" spellcheck="false"
-               placeholder="NGL-XXXX-XXXX" maxlength="13" value="${esc(prefill||'')}">
-        <p class="hint">You’ll find it on the licence slip from your school or club.</p>
+        <label for="lic">Enter your club’s NGL Schools code</label>
+        <input id="lic" class="code-input" inputmode="text" autocapitalize="characters" spellcheck="false"
+               placeholder="e.g. SAADI-7K4P" maxlength="15" value="${esc(prefill||'')}">
+        <p class="hint">Your gymnastics club or school will give you this code.</p>
         <p class="error" id="err">${esc(error||'')}</p>
         <button class="btn" id="goBtn" type="submit">Open my Hub</button>
       </form>
@@ -397,15 +397,14 @@ function screenSignIn(prefill, error){
   `);
   const input = document.getElementById('lic');
   input.addEventListener('input', () => {
-    input.value = normaliseLicence(input.value);
+    input.value = normaliseCode(input.value);
     document.getElementById('err').textContent = '';
   });
   document.getElementById('signinForm').addEventListener('submit', async e => {
     e.preventDefault();
     const btn = document.getElementById('goBtn');
     btn.disabled = true; btn.textContent = 'Checking…';
-    const number = normaliseLicence(input.value);
-    const res = await checkLicence(number);
+    const res = await checkCode(normaliseCode(input.value));
     if(res.ok){
       session = res.data; store(false, session);
       location.hash = '#/home'; route();
@@ -418,12 +417,11 @@ function screenSignIn(prefill, error){
 
 function screenHome(){
   setChrome({title:'Schools Hub', active:'#/home'});
-  const where = [session.schoolName, session.clubName].filter(Boolean).map(esc).join(' · ');
   render(`
     <div class="welcome">
-      <p class="eyebrow">Welcome to your NGL journey</p>
-      <div class="num">${esc(session.number)}</div>
-      ${where ? `<div class="club">${where}</div>` : ''}
+      <p class="eyebrow">Welcome to NGL Schools</p>
+      <div class="club-name">${esc(session.clubName || 'Your club')}</div>
+      <div class="club">Learn the routines, practise at home, and see what’s coming up.</div>
       <div class="journey" aria-label="NGL pathways">
         <span class="jstep">Pre-School</span><span class="jstep on">Schools</span><span class="jstep">Recreational</span>
         <span class="jstep">General</span><span class="jstep">Performance</span><span class="jstep">University</span><span class="jstep">Masters</span>
@@ -562,8 +560,8 @@ async function loadEvents(){
 }
 
 function footHTML(){
-  return `<div class="foot">Licence ${esc(session.number)}${session.season ? ' · ' + esc(session.season) : ''}<br>
-    <button data-action="signout">Use a different licence number</button></div>`;
+  return `<div class="foot">Club code ${esc(session.code)}${session.season ? ' · ' + esc(session.season) : ''}<br>
+    <button data-action="signout">Use a different code</button></div>`;
 }
 
 /* ---------- Router ---------- */
@@ -571,8 +569,10 @@ function route(){
   const h = location.hash || '';
   const qp = new URLSearchParams(location.search);
   if(!session){
-    const fromQR = qp.get('l') || qp.get('licence');
-    return screenSignIn(fromQR ? normaliseLicence(fromQR) : '');
+    const fromLink = qp.get('code');
+    screenSignIn(fromLink ? normaliseCode(fromLink) : '');
+    if(fromLink && !autoTried){ autoTried = true; document.getElementById('signinForm').requestSubmit(); }
+    return;
   }
   let m;
   if((m = h.match(/^#\/level\/([1-6])\/(floor|bench|vault)$/))) return screenLevel(+m[1], m[2]);
@@ -607,12 +607,12 @@ window.addEventListener('hashchange', route);
 (async function start(){
   const saved = store(true);
   const qp = new URLSearchParams(location.search);
-  const fromQR = qp.get('l') || qp.get('licence');
-  if(saved && (!fromQR || normaliseLicence(fromQR) === saved.number)){
+  const fromLink = qp.get('code');
+  if(saved && saved.code && (!fromLink || normaliseCode(fromLink) === saved.code)){
     session = saved;
-    // Re-check quietly so expired licences stop working next season.
+    // Re-check quietly so a changed or expired code stops working.
     if(FIREBASE_CONFIG){
-      checkLicence(saved.number).then(r => { if(!r.ok){ session = null; store(false,null); screenSignIn(saved.number, r.reason); } });
+      checkCode(saved.code).then(r => { if(!r.ok){ session = null; store(false,null); screenSignIn(saved.code, r.reason); } });
     }
   }
   route();
