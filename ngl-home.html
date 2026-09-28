@@ -1180,27 +1180,18 @@
       '</div>';
   }
 
-  // Schools Graduation Event — the end-of-year performance for every school
-  // on the programme. Shown under Awards → Graduation Event and also as the
-  // Schools "Competitions" view, since that's the Schools event.
-  var SCHOOLS_GRADUATION = {
-    title: 'NGL Schools Graduation 2027',
-    date: 'Sunday 20 June 2027',
-    time: '3:00pm',
-    venue: 'SAADI Gymnastics, Hertfordshire'
-  };
-
+  // Schools Graduation Event — each club hosts its own Graduation, so dates live
+  // in the NGL Schools Hub (families see their own club's date after entering
+  // their club code). Shown under Awards → Graduation Event and as the Schools
+  // "Competitions" view.
   function schoolsEventHTML(){
-    var g = SCHOOLS_GRADUATION;
     return '<div class="card">' +
       '<div class="gallery-label">Graduation Event</div>' +
-      '<p class="lede" style="font-size:18px;font-weight:700;margin-bottom:14px;">' + g.title + '</p>' +
-      '<div class="event-details">' +
-        '<div class="event-row"><span class="event-icon">📅</span><span><strong>' + g.date + '</strong><br><span class="event-sub">' + g.time + '</span></span></div>' +
-        '<div class="event-row"><span class="event-icon">📍</span><span><strong>' + g.venue + '</strong></span></div>' +
-      '</div>' +
-      '<p class="lede" style="margin-top:16px;">The Graduation Performance brings every school on the programme together to show what they\'ve learned across the year, with Bronze, Silver and Gold certificates presented on the day.</p>' +
-      comingSoonButtonHTML() +
+      '<p class="lede"><strong>NGL Schools Graduations are hosted by your local club.</strong></p>' +
+      '<p class="lede">Once your gymnast has achieved Bronze, Silver and Gold, they can perform their routines for family and friends at an NGL Graduation and receive the exclusive NGL Schools Medal. Gymnasts £10 &middot; family spectators free.</p>' +
+      '<p class="lede">To find <strong>your</strong> Graduation date, venue and how to book, open the NGL Schools Hub with the code from your club or school.</p>' +
+      '<a class="buy-btn" href="https://nglschools.co.uk/" target="_top">Open the Schools Hub</a>' +
+      '<p class="lede" style="margin-top:18px;font-size:14px;"><strong>Running NGL Schools at your club?</strong> Add your Graduations in your <a href="https://nglschools.co.uk/club/" target="_top" style="color:inherit;text-decoration:underline;">NGL Schools Club Hub</a>.</p>' +
       '</div>';
   }
 

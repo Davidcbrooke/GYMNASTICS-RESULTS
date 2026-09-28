@@ -418,8 +418,27 @@ function recreationalPanelHTML(){
   `;
 }
 
+/* ---------- Schools: Graduations are run by each club, so dates live in the Schools Hub ---------- */
+const SCHOOLS_HUB_URL = 'https://nglschools.co.uk/';
+const SCHOOLS_CLUB_HUB_URL = 'https://nglschools.co.uk/club/';
+function schoolsPanelHTML(){
+  return `
+    <div class="card">
+      <p class="lede"><strong>NGL Schools Graduations are hosted by your local club.</strong></p>
+      <p class="lede">Once your gymnast has achieved Bronze, Silver and Gold, they can perform their routines for family and friends at an NGL Graduation and receive the exclusive NGL Schools Medal. Gymnasts £10 &middot; family spectators free.</p>
+      <p class="lede">To find <strong>your</strong> Graduation date, venue and how to book, open the NGL Schools Hub with the code from your club or school.</p>
+      <a class="buy-btn" href="${SCHOOLS_HUB_URL}" target="_top">Open the Schools Hub</a>
+    </div>
+    <div class="card">
+      <p class="lede" style="margin-bottom:12px"><strong>Running NGL Schools at your club?</strong> Add and manage your Graduations in your Club Hub.</p>
+      <a class="buy-btn" href="${SCHOOLS_CLUB_HUB_URL}" target="_top">NGL Schools Club Hub</a>
+    </div>
+  `;
+}
+
 function pathwayPanelHTML(p){
   if(p.id === 'recreational') return recreationalPanelHTML();
+  if(p.id === 'schools') return schoolsPanelHTML();
   const data = SEASON_DATA[p.id];
   if(!data){
     const actions = placeholderActionsFor(p);
