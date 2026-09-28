@@ -1760,5 +1760,30 @@ window.deleteResource = async function(id) {
 };
 
 </script>
+  <!-- Add to ngl-judging-pathway.html (the file on GitHub Pages), just before
+     the closing </body> tag. It tells the Squarespace page how tall this
+     page is, so the iframe can grow and shrink to fit instead of using a
+     fixed height with its own scrollbar. -->
+<script>
+(function () {
+  var lastHeight = 0;
+  function report() {
+    var h = document.documentElement.scrollHeight;
+    if (h !== lastHeight) {
+      lastHeight = h;
+      window.parent.postMessage({ type: 'ngl-judging-resize', height: h }, '*');
+    }
+  }
+  window.addEventListener('load', report);
+  window.addEventListener('resize', report);
+  if (window.ResizeObserver) {
+    new ResizeObserver(report).observe(document.body);
+  } else {
+    setInterval(report, 400);
+  }
+  report();
+})();
+</script>
+
 </body>
 </html>
