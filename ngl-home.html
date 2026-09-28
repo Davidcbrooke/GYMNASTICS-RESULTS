@@ -186,9 +186,19 @@
     -ms-hyphens:auto;
   }
   .stage-name .short{display:none; white-space:nowrap;}
+
+  /* Phones: the seven-across strip is too cramped to read, so switch to a
+     two-column grid (2-2-2, with Masters spanning the last row) and let the
+     text come up to a normal size. */
   @media (max-width:700px){
-    .stage-name .full{display:none;}
-    .stage-name .short{display:inline;}
+    .pathway-block.open{max-height:1600px;}
+    .pathway-row{display:grid; grid-template-columns:1fr 1fr; gap:2px; background:rgba(255,255,255,.12);}
+    .stage{padding:16px 10px 14px; border-right:none;}
+    .stage:last-child{grid-column:1 / -1;}
+    .stage-name{font-size:15px; margin-bottom:4px;}
+    .stage-age{font-size:13px;}
+    .stage-hours{font-size:12px; margin-top:2px;}
+    .stage-status{font-size:10px; margin-top:8px; padding:3px 9px;}
   }
   .stage-age{color:var(--white);font-size:clamp(7.5px,1.5vw,11px);white-space:nowrap;}
   .stage-hours{color:rgba(255,255,255,.75);font-size:clamp(6.5px,1.3vw,10px);white-space:nowrap;margin-top:1px;}
@@ -495,10 +505,10 @@
     <div class="pw-content" id="pw-content"></div>
   </div>
 
-  <a class="new-here" href="https://www.nationalgymnasticsleague.co.uk/club-support" target="_top">New to the NGL? See what membership includes →</a>
+  <a class="new-here" href="https://www.nationalgymnasticsleague.co.uk/club-support-" target="_top">New to the NGL? See what membership includes →</a>
   <div class="quick-links">
     <a class="quick-link" href="https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" target="_top">View the Live League Table</a>
-    <a class="quick-link" href="https://www.nationalgymnasticsleague.co.uk/club-support" target="_top">Club Support &amp; Group-Buying</a>
+    <a class="quick-link" href="https://www.nationalgymnasticsleague.co.uk/club-support-" target="_top">Club Support &amp; Group-Buying</a>
   </div>
 
   <div class="card">
@@ -1054,6 +1064,26 @@
       return;
     }
   });
+
+  // ============================================================
+  // Deep link: /?pathway=general (from the footer pathway strip, or any
+  // other link into the site) opens the steps with that pathway already
+  // selected. The Squarespace embed code forwards the query string onto
+  // this iframe's src, which is how it reaches us across origins.
+  // ============================================================
+  (function () {
+    var id = new URLSearchParams(window.location.search).get('pathway');
+    if (!id || !PATHWAY_META[id]) return;
+    var btn = document.querySelector('.stage[data-id="' + id + '"]');
+    if (!btn) return;
+    pathwayBlock.classList.add('open');
+    btn.click();
+    // Give the open transition a moment, then bring Step 2 into view
+    setTimeout(function () {
+      var target = document.getElementById('pathway-block');
+      if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 400);
+  })();
 
   // ============================================================
   // Report height to the parent Squarespace page, so the iframe can
