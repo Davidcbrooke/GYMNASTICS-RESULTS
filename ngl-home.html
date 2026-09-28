@@ -344,6 +344,30 @@
   .pw-content .video-link-row.video-pending{cursor:default;}
   .pw-content .video-link-row.video-pending:hover{background:rgba(255,255,255,0.07);}
 
+  /* Inline video tiles (thumbnail → embedded player on tap) */
+  .pw-content .video-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px 14px; padding:12px 4px 6px;}
+  @media (max-width:640px){.pw-content .video-grid{grid-template-columns:1fr;}}
+  .pw-content .vtile-label{font-weight:700; font-size:14px; margin:0 0 3px;}
+  .pw-content .vtile-caption{font-size:12px; color:var(--muted); line-height:1.35; margin:0 0 8px;}
+  .pw-content .video{
+    position:relative; width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden;
+    background:#000; cursor:pointer; border:1px solid var(--line-soft);
+  }
+  .pw-content .video img{width:100%; height:100%; object-fit:cover; display:block; opacity:.85; transition:opacity .2s ease;}
+  .pw-content .video:hover img{opacity:1;}
+  .pw-content .video .play{position:absolute; inset:0; display:grid; place-items:center;}
+  .pw-content .video .play span{
+    width:60px; height:60px; border-radius:50%; background:var(--pathway-color, var(--gold));
+    display:grid; place-items:center; box-shadow:0 8px 30px rgba(0,0,0,.5); transition:transform .15s ease;
+  }
+  .pw-content .video:hover .play span{transform:scale(1.06);}
+  .pw-content .video .play svg{width:26px; height:26px; margin-left:4px; color:var(--pathway-text, #0a1440);}
+  .pw-content .video iframe{position:absolute; inset:0; width:100%; height:100%; border:0;}
+  .pw-content .video.pending{
+    cursor:default; background:var(--navy-4); display:grid; place-items:center;
+    color:var(--muted); font-size:13px; font-style:italic;
+  }
+
   .pw-content .video-tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
   .pw-content .vtab{
     flex:1 1 auto; min-width:150px; text-align:center; padding:11px 10px; border-radius:10px;
@@ -681,25 +705,32 @@
   function recVideoLevelsHTML(){
     var rows = '';
     REC_LEVELS.forEach(function (level) {
+      // Each routine is a thumbnail tile that turns into an embedded player
+      // when tapped (same approach as the NGL Schools Hub), rather than a
+      // link out to YouTube.
       var inner = REC_PIECES.map(function (piece) {
         var vid = REC_VIDEO_IDS[level.id][piece];
         var label = REC_PIECE_LABELS[piece];
         var caption = REC_SKILLS[level.id][piece].join(', ');
+        var tile;
         if (vid) {
-          return '<a class="video-link-row" href="https://youtu.be/' + vid + '" target="_blank" rel="noopener">' +
-            '<span class="num">&#9654;</span>' +
-            '<span class="vrow-text"><span class="vrow-label">' + label + '</span><span class="vrow-caption">' + caption + '</span></span>' +
-            '</a>';
+          tile = '<div class="video" data-yt="' + vid + '" role="button" tabindex="0" aria-label="Play ' + level.name + ' ' + label + ' routine">' +
+            '<img src="https://i.ytimg.com/vi/' + vid + '/hqdefault.jpg" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' +
+            '<div class="play"><span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg></span></div>' +
+            '</div>';
+        } else {
+          tile = '<div class="video pending">Video coming soon</div>';
         }
-        return '<div class="video-link-row video-pending">' +
-          '<span class="num">&#9654;</span>' +
-          '<span class="vrow-text"><span class="vrow-label">' + label + '</span><span class="vrow-caption">' + caption + '</span><span class="vrow-status">Video coming soon</span></span>' +
+        return '<div class="vtile">' +
+          '<div class="vtile-label">' + label + '</div>' +
+          '<div class="vtile-caption">' + caption + '</div>' +
+          tile +
           '</div>';
       }).join('');
       rows += '<div class="level-block"><div class="level-row">' +
         '<span><span class="lvl-dot" style="background:' + level.color + '"></span>' + level.name + ' <span class="lvl-tag">' + level.tag + '</span></span>' +
         '<span class="ph"><span class="level-arrow">&#9654;</span></span></div>' +
-        '<div class="level-videos">' + inner + '</div></div>';
+        '<div class="level-videos"><div class="video-grid">' + inner + '</div></div></div>';
     });
     return rows;
   }
@@ -1063,6 +1094,26 @@
       reportHeight();
       return;
     }
+
+    // Video tile: swap the thumbnail for an embedded player, in place.
+    var video = e.target.closest('.video[data-yt]');
+    if (video && !video.querySelector('iframe')) {
+      playVideo(video);
+      return;
+    }
+  });
+
+  function playVideo(tile){
+    var id = tile.dataset.yt;
+    tile.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1&playsinline=1"' +
+      ' title="Routine video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+  }
+
+  // Keyboard: Enter/Space on a focused tile plays it too.
+  pwContent.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var video = e.target.closest && e.target.closest('.video[data-yt]');
+    if (video && !video.querySelector('iframe')) { e.preventDefault(); playVideo(video); }
   });
 
   // ============================================================
