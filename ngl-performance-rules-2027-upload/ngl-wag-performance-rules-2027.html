@@ -109,7 +109,7 @@
 
   <div class="eyebrow">NGL Performance Competition · Girls Artistic</div>
   <h1>Girls Performance Rules 2027</h1>
-  <p class="sub">Competition rules and common deductions for NGL Performance Levels D to I, each mapped to its British Gymnastics Classic Challenge equivalent. Pick a level to read it here, or download the full document.</p>
+  <p class="sub">Competition rules and common deductions for NGL Performance Levels D to I. Pick a level to read it here, or download the full document.</p>
 
   <div class="actions">
     <a class="btn btn-primary" href="NGL_WAG_Performance_Rules_2027.pdf" download="NGL_WAG_Performance_Rules_2027.pdf">
@@ -124,7 +124,6 @@
 
   <div class="level-title">
     <h2 id="level-heading"></h2>
-    <span class="eq" id="level-eq"></span>
   </div>
 
   <div class="pages">
@@ -153,12 +152,12 @@
   // One entry per level: two pages each (rules, then common deductions).
   // Images live in wag-performance/ next to this file; the PDF sits beside it.
   var LEVELS = [
-    { id:'D', bg:'Tin',    rules:'wag-performance/page-01.jpg', ded:'wag-performance/page-02.jpg' },
-    { id:'E', bg:'Zinc',   rules:'wag-performance/page-03.jpg', ded:'wag-performance/page-04.jpg' },
-    { id:'F', bg:'Copper', rules:'wag-performance/page-05.jpg', ded:'wag-performance/page-06.jpg' },
-    { id:'G', bg:'Bronze', rules:'wag-performance/page-07.jpg', ded:'wag-performance/page-08.jpg' },
-    { id:'H', bg:'Silver', rules:'wag-performance/page-09.jpg', ded:'wag-performance/page-10.jpg' },
-    { id:'I', bg:'Gold',   rules:'wag-performance/page-11.jpg', ded:'wag-performance/page-12.jpg' }
+    { id:'D', rules:'wag-performance/page-01.jpg', ded:'wag-performance/page-02.jpg' },
+    { id:'E', rules:'wag-performance/page-03.jpg', ded:'wag-performance/page-04.jpg' },
+    { id:'F', rules:'wag-performance/page-05.jpg', ded:'wag-performance/page-06.jpg' },
+    { id:'G', rules:'wag-performance/page-07.jpg', ded:'wag-performance/page-08.jpg' },
+    { id:'H', rules:'wag-performance/page-09.jpg', ded:'wag-performance/page-10.jpg' },
+    { id:'I', rules:'wag-performance/page-11.jpg', ded:'wag-performance/page-12.jpg' }
   ];
 
   var levelsEl = document.getElementById('levels');
@@ -168,7 +167,7 @@
     b.className = 'level';
     b.dataset.id = lv.id;
     b.setAttribute('aria-pressed', 'false');
-    b.innerHTML = '<span class="l">' + lv.id + '</span><span class="bg">' + lv.bg + '</span>';
+    b.innerHTML = '<span class="bg">Level</span><span class="l">' + lv.id + '</span>';
     b.addEventListener('click', function () { selectLevel(lv.id); });
     levelsEl.appendChild(b);
   });
@@ -178,7 +177,6 @@
     if (!lv) return;
     levelsEl.querySelectorAll('.level').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.id === id)); });
     document.getElementById('level-heading').textContent = 'Level ' + lv.id;
-    document.getElementById('level-eq').textContent = 'BG equivalent: Classic Challenge ' + lv.bg;
 
     var imgR = document.getElementById('img-rules');
     var imgD = document.getElementById('img-ded');

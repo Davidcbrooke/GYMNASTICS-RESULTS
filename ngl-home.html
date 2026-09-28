@@ -385,6 +385,46 @@
     border:1px solid var(--pathway-color, var(--line-soft)); color:var(--pathway-color, var(--muted)); font-size:13px; font-weight:700;
   }
 
+  /* Inline rules document (opens under the Rules card) */
+  .pw-content .action-card[data-rules]{width:100%; text-align:left; font-family:inherit; cursor:pointer;}
+  .pw-content .action-card[data-rules][aria-expanded="true"]{border-color:var(--pathway-color, var(--line-soft)); background:#243a94;}
+  .pw-content .rules-inline{margin-top:14px;}
+  .pw-content .rules-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;}
+  .pw-content .rules-title{font-size:20px; font-weight:700; line-height:1.2;}
+  .pw-content .rules-close{
+    flex:0 0 auto; background:none; border:1px solid var(--line); color:var(--muted); border-radius:999px;
+    padding:6px 12px; font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+  .pw-content .rules-close:hover{color:var(--white); border-color:var(--white);}
+  .pw-content .rules-actions{display:flex; align-items:center; flex-wrap:wrap; gap:14px;}
+  .pw-content .rules-link{font-size:13.5px; font-weight:700; color:var(--white); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:1px;}
+  .pw-content .rules-link:hover{border-bottom-color:var(--white);}
+  .pw-content .rlevels{display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:16px;}
+  @media (max-width:640px){.pw-content .rlevels{grid-template-columns:repeat(3,1fr);}}
+  .pw-content .rlevel{
+    display:flex; flex-direction:column; align-items:center; gap:2px; padding:12px 6px 10px; border-radius:12px;
+    background:var(--navy-4); border:1px solid var(--line-soft); color:var(--white); cursor:pointer;
+    transition:background .15s ease, transform .12s ease; -webkit-tap-highlight-color:transparent;
+  }
+  .pw-content .rlevel:hover{background:#243a94;}
+  .pw-content .rlevel:active{transform:scale(.98);}
+  .pw-content .rlevel .l{font-size:22px; font-weight:900; line-height:1;}
+  .pw-content .rlevel .bg{font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);}
+  .pw-content .rlevel[aria-pressed="true"]{background:var(--pathway-color, var(--gold)); border-color:var(--pathway-color, var(--gold)); color:var(--pathway-text, #0a1440);}
+  .pw-content .rlevel[aria-pressed="true"] .bg{color:rgba(10,20,64,.7);}
+  .pw-content .rlevel-title{font-size:17px; margin:0 0 12px 2px;}
+  .pw-content .rlevel-title .muted{color:var(--muted); font-size:14px; margin-left:8px;}
+  .pw-content .rpages{display:grid; grid-template-columns:1fr; gap:14px;}
+  .pw-content .rpage{background:var(--navy-4); border:1px solid var(--line-soft); border-radius:14px; padding:12px;}
+  .pw-content .rpage-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 8px 4px;}
+  .pw-content .rpage-head .name{font-weight:700; font-size:14px;}
+  .pw-content .rpage-head .zoom{font-size:12.5px; font-weight:700; color:var(--muted); text-decoration:none; border-bottom:1px solid var(--line); white-space:nowrap;}
+  .pw-content .rpage-head .zoom:hover{color:var(--white); border-bottom-color:var(--white);}
+  .pw-content .rsheet{display:block; width:100%; border-radius:8px; overflow:hidden; background:#fff;}
+  .pw-content .rsheet img{display:block; width:100%; height:100%; object-fit:contain;}
+  .pw-content .rules-note{color:var(--muted); font-size:12.5px; margin:12px 4px 0;}
+  @media (max-width:640px){.pw-content .rules-note::after{content:" On a phone, tap a page to open it full size and pinch to zoom.";}}
+
   .pw-content .event-details{display:flex; flex-direction:column; gap:12px;}
   .pw-content .event-row{display:flex; align-items:flex-start; gap:12px; font-size:15px; line-height:1.4;}
   .pw-content .event-icon{font-size:20px; line-height:1.2; flex:0 0 auto;}
@@ -792,19 +832,84 @@
       ]
     },
     performance: {
-      overview: "NGL Performance Competition — Levels D to I, following on from General Rules Level C and mapped to the British Gymnastics Classic Challenge pathway from Tin to Gold. Launching for the 2027 season.",
+      overview: "NGL Performance Competition — Levels D to I, following on from General Rules Level C. Launching for the 2027 season.",
       seasons: [
         {
           label: "2027 Season",
           actions: [
             { icon:"📅", title:"Season Schedule & Booking", sub:"Performance competition dates and booking." },
             { icon:"🏆", title:"League Table & Qualification", sub:"Performance results and rankings." },
-            { icon:"📖", title:"Rules", sub:"Girls Performance Rules 2027 — Levels D to I, view online or download.", url:"https://www.nationalgymnasticsleague.co.uk/handbook-1" }
+            { icon:"📖", title:"Rules", sub:"Girls Performance Rules 2027 — Levels D to I. Opens here.", inline:"wag-performance-2027" }
           ]
         }
       ]
     }
   };
+
+  // ---- Rules documents shown inline (files sit next to this page on GitHub Pages) ----
+  // To add another document (e.g. General Rules Girls/Boys): add an entry here,
+  // upload its PDF + page images, and reference it with inline:"<key>" on an action.
+  var RULES_DOCS = {
+    'wag-performance-2027': {
+      title: 'Girls Performance Rules 2027',
+      intro: 'Competition rules and common deductions for NGL Performance Levels D to I.',
+      pdf: 'NGL_WAG_Performance_Rules_2027.pdf',
+      pages: ['Competition rules', 'Common deductions'],
+      pageRatio: '1754/1241',
+      levels: [
+        { id:'D', files:['wag-performance/page-01.jpg','wag-performance/page-02.jpg'] },
+        { id:'E', files:['wag-performance/page-03.jpg','wag-performance/page-04.jpg'] },
+        { id:'F', files:['wag-performance/page-05.jpg','wag-performance/page-06.jpg'] },
+        { id:'G', files:['wag-performance/page-07.jpg','wag-performance/page-08.jpg'] },
+        { id:'H', files:['wag-performance/page-09.jpg','wag-performance/page-10.jpg'] },
+        { id:'I', files:['wag-performance/page-11.jpg','wag-performance/page-12.jpg'] }
+      ],
+      note: 'Based on the FIG Code of Points 2025–2028 (Cycle 16) except where NGL changes are noted.'
+    }
+  };
+
+  function rulesPanelHTML(key){
+    var d = RULES_DOCS[key];
+    if (!d) return '';
+    var levels = d.levels.map(function (lv, i) {
+      return '<button type="button" class="rlevel" data-level="' + i + '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '">' +
+        '<span class="bg">Level</span><span class="l">' + lv.id + '</span></button>';
+    }).join('');
+    var pages = d.pages.map(function (name, i) {
+      return '<div class="rpage"><div class="rpage-head"><span class="name">' + name + '</span>' +
+        '<a class="zoom" data-page="' + i + '" href="#" target="_blank" rel="noopener">Open full size ↗</a></div>' +
+        '<a class="rsheet" data-page="' + i + '" href="#" target="_blank" rel="noopener" style="aspect-ratio:' + d.pageRatio + '"><img data-page="' + i + '" alt="" loading="lazy"></a></div>';
+    }).join('');
+    return '<div class="rules-inline card" data-rules-doc="' + key + '">' +
+      '<div class="rules-head">' +
+        '<div><div class="gallery-label">Rules</div><div class="rules-title">' + d.title + '</div></div>' +
+        '<button type="button" class="rules-close" data-rules-close aria-label="Hide rules">Hide ×</button>' +
+      '</div>' +
+      '<p class="lede">' + d.intro + '</p>' +
+      '<div class="rules-actions">' +
+        '<a class="buy-btn" href="' + d.pdf + '" download>Download the PDF</a>' +
+        '<a class="rules-link" href="' + d.pdf + '" target="_blank" rel="noopener">Open PDF in a new tab</a>' +
+      '</div>' +
+      '<div class="gallery-label" style="margin-top:18px;">Choose a level</div>' +
+      '<div class="rlevels">' + levels + '</div>' +
+      '<div class="rlevel-title"><strong data-level-name></strong></div>' +
+      '<div class="rpages">' + pages + '</div>' +
+      (d.note ? '<p class="rules-note">' + d.note + '</p>' : '') +
+      '</div>';
+  }
+
+  function rulesSelectLevel(panel, index){
+    var d = RULES_DOCS[panel.dataset.rulesDoc];
+    var lv = d.levels[index];
+    if (!lv) return;
+    panel.querySelectorAll('.rlevel').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.level == index)); });
+    panel.querySelector('[data-level-name]').textContent = 'Level ' + lv.id;
+    lv.files.forEach(function (src, i) {
+      var img = panel.querySelector('img[data-page="' + i + '"]');
+      if (img) { img.src = src; img.alt = d.title + ' — Level ' + lv.id + ' ' + d.pages[i].toLowerCase(); }
+      panel.querySelectorAll('a[data-page="' + i + '"]').forEach(function (a) { a.href = src; });
+    });
+  }
 
   var PLACEHOLDER_ACTIONS = [
     { icon:"📅", title:"Season Schedule & Booking" },
@@ -817,6 +922,10 @@
   };
 
   function actionCardHTML(a){
+    if (a && a.inline) {
+      return '<button type="button" class="action-card" data-rules="' + a.inline + '" aria-expanded="false"><span class="action-icon">' + a.icon + '</span>' +
+        '<span class="action-title">' + a.title + '</span><span class="action-sub">' + (a.sub || '') + '</span></button>';
+    }
     if (!a || !a.url) {
       var sub = (a && a.subOverride) ? a.subOverride : 'Coming soon';
       return '<div class="action-card disabled"><span class="action-icon">' + (a ? a.icon : '') + '</span>' +
@@ -1142,6 +1251,41 @@
         tip.classList.add('show');
         tip._hideTimer = setTimeout(function () { tip.classList.remove('show'); }, 1800);
       }
+      return;
+    }
+
+    var rulesBtn = e.target.closest('[data-rules]');
+    if (rulesBtn) {
+      var key = rulesBtn.dataset.rules;
+      var grid = rulesBtn.closest('.action-grid');
+      var existing = grid.parentElement.querySelector('.rules-inline[data-rules-doc="' + key + '"]');
+      if (existing) {
+        existing.remove();
+        rulesBtn.setAttribute('aria-expanded', 'false');
+      } else {
+        grid.insertAdjacentHTML('afterend', rulesPanelHTML(key));
+        var panel = grid.parentElement.querySelector('.rules-inline[data-rules-doc="' + key + '"]');
+        rulesSelectLevel(panel, 0);
+        rulesBtn.setAttribute('aria-expanded', 'true');
+        setTimeout(function () { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
+      }
+      reportHeight();
+      return;
+    }
+    var rulesClose = e.target.closest('[data-rules-close]');
+    if (rulesClose) {
+      var pnl = rulesClose.closest('.rules-inline');
+      var key2 = pnl.dataset.rulesDoc;
+      var opener = pwContent.querySelector('[data-rules="' + key2 + '"]');
+      if (opener) { opener.setAttribute('aria-expanded', 'false'); opener.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      pnl.remove();
+      reportHeight();
+      return;
+    }
+    var rlevel = e.target.closest('.rlevel');
+    if (rlevel) {
+      rulesSelectLevel(rlevel.closest('.rules-inline'), parseInt(rlevel.dataset.level, 10));
+      reportHeight();
       return;
     }
 
