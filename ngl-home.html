@@ -448,6 +448,29 @@
       choiceNote.textContent = '';
     });
   });
+
+  // ---- Report height to the parent Squarespace page, so the iframe can
+  // ---- resize itself instead of using a fixed height (this page's height
+  // ---- changes a lot as the steps above open up). See the matching
+  // ---- listener in the Squarespace embed code block.
+  (function () {
+    var lastHeight = 0;
+    function reportHeight() {
+      var h = document.body.scrollHeight;
+      if (h !== lastHeight) {
+        lastHeight = h;
+        window.parent.postMessage({ type: 'ngl-home-resize', height: h }, '*');
+      }
+    }
+    window.addEventListener('load', reportHeight);
+    window.addEventListener('resize', reportHeight);
+    if (window.ResizeObserver) {
+      new ResizeObserver(reportHeight).observe(document.body);
+    } else {
+      setInterval(reportHeight, 400); // fallback for older browsers
+    }
+    reportHeight();
+  })();
 </script>
 </body>
 </html>
