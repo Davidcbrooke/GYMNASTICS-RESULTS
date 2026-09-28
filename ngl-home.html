@@ -399,8 +399,16 @@
   .pw-content .rules-actions{display:flex; align-items:center; flex-wrap:wrap; gap:14px;}
   .pw-content .rules-link{font-size:13.5px; font-weight:700; color:var(--white); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:1px;}
   .pw-content .rules-link:hover{border-bottom-color:var(--white);}
+  .pw-content .rvariants{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 16px;}
+  .pw-content .rvariant{
+    flex:1 1 auto; min-width:120px; text-align:center; padding:12px 10px; border-radius:12px;
+    background:var(--navy-4); border:1px solid var(--line-soft); color:var(--white); font-size:14px; font-weight:700;
+    cursor:pointer; transition:background .18s ease; -webkit-tap-highlight-color:transparent;
+  }
+  .pw-content .rvariant:hover{background:#243a94;}
+  .pw-content .rvariant[aria-pressed="true"]{background:var(--pathway-color, var(--gold)); color:var(--pathway-text, #0a1440); border-color:var(--pathway-color, var(--gold));}
   .pw-content .rlevels{display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:16px;}
-  @media (max-width:640px){.pw-content .rlevels{grid-template-columns:repeat(3,1fr);}}
+  @media (max-width:640px){.pw-content .rlevels{grid-template-columns:repeat(3,1fr) !important;}}
   .pw-content .rlevel{
     display:flex; flex-direction:column; align-items:center; gap:2px; padding:12px 6px 10px; border-radius:12px;
     background:var(--navy-4); border:1px solid var(--line-soft); color:var(--white); cursor:pointer;
@@ -826,7 +834,7 @@
           actions: [
             { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve your club's place now, pay later.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
             { icon:"🏆", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
-            { icon:"📖", title:"Rules", sub:"Girls Rules and Boys Rules for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/handbook-1" }
+            { icon:"📖", title:"Rules", sub:"Girls and Boys General Rules 2027 — Levels A to C. Opens here.", inline:"general-2027" }
           ]
         }
       ]
@@ -865,11 +873,63 @@
         { id:'I', files:['wag-performance/page-11.jpg','wag-performance/page-12.jpg'] }
       ],
       note: 'Based on the FIG Code of Points 2025–2028 (Cycle 16) except where NGL changes are noted.'
+    },
+    'wag-general-2027': {
+      title: 'Girls General Rules 2027',
+      intro: 'Competition rules and common deductions for NGL General League Levels A to C — Women\'s Artistic.',
+      pdf: 'NGL_WAG_General_Rules_2027.pdf',
+      pages: ['Competition rules', 'Common deductions'],
+      pageRatio: '1754/1241',
+      levels: [
+        { id:'A', files:['wag-general/page-01.jpg','wag-general/page-02.jpg'] },
+        { id:'B', files:['wag-general/page-03.jpg','wag-general/page-04.jpg'] },
+        { id:'C', files:['wag-general/page-05.jpg','wag-general/page-06.jpg'] }
+      ],
+      note: 'Based on the FIG Code of Points except where NGL changes are noted.'
+    },
+    'mag-general-2027': {
+      title: 'Boys General Rules 2027',
+      intro: 'Competition rules and common deductions for NGL General League Levels A to C — Men\'s Artistic.',
+      pdf: 'NGL_MAG_General_Rules_2027.pdf',
+      pages: ['Competition rules', 'Common deductions'],
+      pageRatio: '1754/1241',
+      levels: [
+        { id:'A', files:['mag-general/page-01.jpg','mag-general/page-02.jpg'] },
+        { id:'B', files:['mag-general/page-03.jpg','mag-general/page-04.jpg'] },
+        { id:'C', files:['mag-general/page-05.jpg','mag-general/page-06.jpg'] }
+      ],
+      note: 'Based on the FIG Code of Points except where NGL changes are noted.'
     }
   };
 
-  function rulesPanelHTML(key){
-    var d = RULES_DOCS[key];
+  // A "group" is what a Rules card opens: one or more documents shown in a
+  // single panel. With more than one, a Girls / Boys style toggle appears.
+  var RULES_GROUPS = {
+    'wag-performance-2027': { heading: 'Girls Performance Rules 2027', variants: [ { label:'Girls', doc:'wag-performance-2027' } ] },
+    'general-2027':         { heading: 'General Rules 2027',            variants: [ { label:'Girls', doc:'wag-general-2027' }, { label:'Boys', doc:'mag-general-2027' } ] }
+  };
+
+  function rulesPanelHTML(groupKey){
+    var g = RULES_GROUPS[groupKey];
+    if (!g) return '';
+    var toggle = '';
+    if (g.variants.length > 1) {
+      toggle = '<div class="rvariants">' + g.variants.map(function (v, i) {
+        return '<button type="button" class="rvariant" data-doc="' + v.doc + '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '">' + v.label + '</button>';
+      }).join('') + '</div>';
+    }
+    return '<div class="rules-inline card" data-rules-group="' + groupKey + '" data-rules-doc="' + g.variants[0].doc + '">' +
+      '<div class="rules-head">' +
+        '<div><div class="gallery-label">Rules</div><div class="rules-title">' + g.heading + '</div></div>' +
+        '<button type="button" class="rules-close" data-rules-close aria-label="Hide rules">Hide ×</button>' +
+      '</div>' +
+      toggle +
+      '<div class="rules-doc">' + rulesDocHTML(g.variants[0].doc) + '</div>' +
+      '</div>';
+  }
+
+  function rulesDocHTML(docKey){
+    var d = RULES_DOCS[docKey];
     if (!d) return '';
     var levels = d.levels.map(function (lv, i) {
       return '<button type="button" class="rlevel" data-level="' + i + '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '">' +
@@ -880,22 +940,23 @@
         '<a class="zoom" data-page="' + i + '" href="#" target="_blank" rel="noopener">Open full size ↗</a></div>' +
         '<a class="rsheet" data-page="' + i + '" href="#" target="_blank" rel="noopener" style="aspect-ratio:' + d.pageRatio + '"><img data-page="' + i + '" alt="" loading="lazy"></a></div>';
     }).join('');
-    return '<div class="rules-inline card" data-rules-doc="' + key + '">' +
-      '<div class="rules-head">' +
-        '<div><div class="gallery-label">Rules</div><div class="rules-title">' + d.title + '</div></div>' +
-        '<button type="button" class="rules-close" data-rules-close aria-label="Hide rules">Hide ×</button>' +
-      '</div>' +
-      '<p class="lede">' + d.intro + '</p>' +
+    return '<p class="lede">' + d.intro + '</p>' +
       '<div class="rules-actions">' +
         '<a class="buy-btn" href="' + d.pdf + '" download>Download the PDF</a>' +
         '<a class="rules-link" href="' + d.pdf + '" target="_blank" rel="noopener">Open PDF in a new tab</a>' +
       '</div>' +
       '<div class="gallery-label" style="margin-top:18px;">Choose a level</div>' +
-      '<div class="rlevels">' + levels + '</div>' +
+      '<div class="rlevels" style="grid-template-columns:repeat(' + Math.min(d.levels.length, 6) + ',1fr);">' + levels + '</div>' +
       '<div class="rlevel-title"><strong data-level-name></strong></div>' +
       '<div class="rpages">' + pages + '</div>' +
-      (d.note ? '<p class="rules-note">' + d.note + '</p>' : '') +
-      '</div>';
+      (d.note ? '<p class="rules-note">' + d.note + '</p>' : '');
+  }
+
+  function rulesShowDoc(panel, docKey){
+    panel.dataset.rulesDoc = docKey;
+    panel.querySelectorAll('.rvariant').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.doc === docKey)); });
+    panel.querySelector('.rules-doc').innerHTML = rulesDocHTML(docKey);
+    rulesSelectLevel(panel, 0);
   }
 
   function rulesSelectLevel(panel, index){
@@ -1258,13 +1319,13 @@
     if (rulesBtn) {
       var key = rulesBtn.dataset.rules;
       var grid = rulesBtn.closest('.action-grid');
-      var existing = grid.parentElement.querySelector('.rules-inline[data-rules-doc="' + key + '"]');
+      var existing = grid.parentElement.querySelector('.rules-inline[data-rules-group="' + key + '"]');
       if (existing) {
         existing.remove();
         rulesBtn.setAttribute('aria-expanded', 'false');
       } else {
         grid.insertAdjacentHTML('afterend', rulesPanelHTML(key));
-        var panel = grid.parentElement.querySelector('.rules-inline[data-rules-doc="' + key + '"]');
+        var panel = grid.parentElement.querySelector('.rules-inline[data-rules-group="' + key + '"]');
         rulesSelectLevel(panel, 0);
         rulesBtn.setAttribute('aria-expanded', 'true');
         setTimeout(function () { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
@@ -1275,10 +1336,16 @@
     var rulesClose = e.target.closest('[data-rules-close]');
     if (rulesClose) {
       var pnl = rulesClose.closest('.rules-inline');
-      var key2 = pnl.dataset.rulesDoc;
+      var key2 = pnl.dataset.rulesGroup;
       var opener = pwContent.querySelector('[data-rules="' + key2 + '"]');
       if (opener) { opener.setAttribute('aria-expanded', 'false'); opener.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
       pnl.remove();
+      reportHeight();
+      return;
+    }
+    var rvariant = e.target.closest('.rvariant');
+    if (rvariant) {
+      rulesShowDoc(rvariant.closest('.rules-inline'), rvariant.dataset.doc);
       reportHeight();
       return;
     }
