@@ -1,0 +1,17 @@
+<!-- Girls Performance Rules 2027 — Squarespace code block.
+     Suggested home: the 2027 Handbook page (/handbook-1), in a new section
+     under the Girls Rules / Boys Rules accordion. Auto-sizes to the content. -->
+<iframe id="ngl-rules-frame" src="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-wag-performance-rules-2027.html" style="width:100%; height:1800px; border:none;" loading="lazy"></iframe>
+<script>
+(function () {
+  var frame = document.getElementById('ngl-rules-frame');
+  if (!frame) return;
+  var current = 0;
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'ngl-rules-resize' && typeof e.data.height === 'number') {
+      var h = Math.ceil(e.data.height);
+      if (Math.abs(h - current) > 2) { current = h; frame.style.height = h + 'px'; }
+    }
+  });
+})();
+</script>

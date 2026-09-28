@@ -790,6 +790,19 @@
           ]
         }
       ]
+    },
+    performance: {
+      overview: "NGL Performance Competition — Levels D to I, following on from General Rules Level C and mapped to the British Gymnastics Classic Challenge pathway from Tin to Gold. Launching for the 2027 season.",
+      seasons: [
+        {
+          label: "2027 Season",
+          actions: [
+            { icon:"📅", title:"Season Schedule & Booking", sub:"Performance competition dates and booking." },
+            { icon:"🏆", title:"League Table & Qualification", sub:"Performance results and rankings." },
+            { icon:"📖", title:"Rules", sub:"Girls Performance Rules 2027 — Levels D to I, view online or download.", url:"https://www.nationalgymnasticsleague.co.uk/handbook-1" }
+          ]
+        }
+      ]
     }
   };
 
@@ -1044,6 +1057,11 @@
     } else if (id === 'general') {
       awardsHTML = simpleAwardsHTML(p, id);
       eventHTML = generalEventHTML();
+      routinesHTML = simpleRoutinesHTML();
+    } else if (id === 'performance') {
+      awardsHTML = simpleAwardsHTML(p, id);
+      eventHTML = '<div class="card"><p class="lede">Performance League competitions — 2027 season rules for Levels D to I, with schedule and rankings to follow.</p>' +
+        '<button type="button" class="buy-btn" data-switch-type="competitions">View Competitions →</button></div>';
       routinesHTML = simpleRoutinesHTML();
     } else {
       awardsHTML = simpleAwardsHTML(p, id);

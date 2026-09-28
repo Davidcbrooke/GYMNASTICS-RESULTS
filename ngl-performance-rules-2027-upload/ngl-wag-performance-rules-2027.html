@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Girls Performance Rules 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0a1440;
+    --navy-3:#152463;
+    --navy-4:#1d2f7a;
+    --line:rgba(255,255,255,0.16);
+    --line-soft:rgba(255,255,255,0.14);
+    --white:#ffffff;
+    --muted:#b7c1e6;
+    --gold:#f2a900;
+    --red:#C6152E;
+    --perf:#38bcb9;      /* Performance League pathway colour */
+    --perf-text:#0a1440;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy);
+    color:var(--white);
+    font-family:"Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:clamp(20px,3vw,32px) clamp(16px,3vw,24px) clamp(40px,5vw,56px);}
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  /* ---------- Header ---------- */
+  .eyebrow{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 8px;
+  }
+  h1{
+    font-size:clamp(24px,3.4vw,34px);line-height:1.15;font-weight:500;letter-spacing:-0.02em;margin:0 0 6px;
+  }
+  .sub{color:var(--muted);font-size:15px;line-height:1.5;margin:0 0 18px;max-width:640px;}
+
+  .actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:12px 22px;border-radius:999px;border:none;cursor:pointer;
+    font-weight:700;font-size:14px;line-height:1.2;text-decoration:none;white-space:nowrap;
+    transition:transform .15s ease, filter .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn-primary{background:var(--perf);color:var(--perf-text);}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-secondary{background:var(--navy-3);color:var(--white);border:1px solid var(--line);}
+  .btn-secondary:hover{background:var(--navy-4);}
+  .btn svg{width:16px;height:16px;flex:0 0 auto;}
+
+  /* ---------- Level picker ---------- */
+  .picker-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px 2px;}
+  .levels{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:18px;}
+  @media (max-width:640px){.levels{grid-template-columns:repeat(3,1fr);}}
+  .level{
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:12px 6px 10px;border-radius:12px;
+    background:var(--navy-3);border:1px solid var(--line-soft);color:var(--white);
+    cursor:pointer;transition:background .15s ease, border-color .15s ease, transform .12s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .level:hover{background:var(--navy-4);}
+  .level:active{transform:scale(.98);}
+  .level .l{font-size:22px;font-weight:900;line-height:1;letter-spacing:-.01em;}
+  .level .bg{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+  .level[aria-pressed="true"]{background:var(--perf);border-color:var(--perf);color:var(--perf-text);}
+  .level[aria-pressed="true"] .bg{color:rgba(10,20,64,.7);}
+
+  /* ---------- Pages ---------- */
+  .level-title{
+    display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+    margin:0 0 12px 2px;
+  }
+  .level-title h2{margin:0;font-size:20px;font-weight:700;}
+  .level-title .eq{color:var(--muted);font-size:14px;}
+  .pages{display:grid;grid-template-columns:1fr;gap:16px;}
+  .page{
+    background:var(--navy-3);border:1px solid var(--line-soft);border-radius:16px;padding:14px;
+  }
+  .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px 4px;}
+  .page-head .name{font-weight:700;font-size:14px;}
+  .page-head .zoom{
+    font-size:12.5px;font-weight:700;color:var(--muted);text-decoration:none;
+    border-bottom:1px solid var(--line);padding-bottom:1px;white-space:nowrap;
+  }
+  .page-head .zoom:hover{color:var(--white);border-bottom-color:var(--white);}
+  .sheet{
+    display:block;width:100%;aspect-ratio:1754/1241;border-radius:8px;overflow:hidden;background:#fff;
+  }
+  .sheet img{display:block;width:100%;height:100%;object-fit:contain;}
+  .hint{color:var(--muted);font-size:12.5px;margin:10px 4px 0;}
+  @media (max-width:640px){
+    .hint::after{content:" On a phone, tap a page to open it full size and pinch to zoom.";}
+  }
+
+  .foot{margin-top:24px;color:var(--muted);font-size:12.5px;line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">NGL Performance Competition · Girls Artistic</div>
+  <h1>Girls Performance Rules 2027</h1>
+  <p class="sub">Competition rules and common deductions for NGL Performance Levels D to I, each mapped to its British Gymnastics Classic Challenge equivalent. Pick a level to read it here, or download the full document.</p>
+
+  <div class="actions">
+    <a class="btn btn-primary" href="NGL_WAG_Performance_Rules_2027.pdf" download="NGL_WAG_Performance_Rules_2027.pdf">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
+      Download the PDF
+    </a>
+    <a class="btn btn-secondary" href="NGL_WAG_Performance_Rules_2027.pdf" target="_blank" rel="noopener">Open PDF in a new tab</a>
+  </div>
+
+  <div class="picker-label">Choose a level</div>
+  <div class="levels" id="levels"></div>
+
+  <div class="level-title">
+    <h2 id="level-heading"></h2>
+    <span class="eq" id="level-eq"></span>
+  </div>
+
+  <div class="pages">
+    <div class="page">
+      <div class="page-head">
+        <span class="name">Competition rules</span>
+        <a class="zoom" id="zoom-rules" href="#" target="_blank" rel="noopener">Open full size ↗</a>
+      </div>
+      <a class="sheet" id="sheet-rules" href="#" target="_blank" rel="noopener"><img id="img-rules" alt="" loading="eager"></a>
+    </div>
+    <div class="page">
+      <div class="page-head">
+        <span class="name">Common deductions</span>
+        <a class="zoom" id="zoom-ded" href="#" target="_blank" rel="noopener">Open full size ↗</a>
+      </div>
+      <a class="sheet" id="sheet-ded" href="#" target="_blank" rel="noopener"><img id="img-ded" alt="" loading="eager"></a>
+    </div>
+  </div>
+  <p class="hint">Based on the FIG Code of Points 2025–2028 (Cycle 16) except where NGL changes are noted.</p>
+
+  <p class="foot">NGL WAG Performance Rules 2027 · 12 pages · Level D is the entry level to Performance competition, following on from NGL General Rules Level C.</p>
+
+</div>
+
+<script>
+  // One entry per level: two pages each (rules, then common deductions).
+  // Images live in wag-performance/ next to this file; the PDF sits beside it.
+  var LEVELS = [
+    { id:'D', bg:'Tin',    rules:'wag-performance/page-01.jpg', ded:'wag-performance/page-02.jpg' },
+    { id:'E', bg:'Zinc',   rules:'wag-performance/page-03.jpg', ded:'wag-performance/page-04.jpg' },
+    { id:'F', bg:'Copper', rules:'wag-performance/page-05.jpg', ded:'wag-performance/page-06.jpg' },
+    { id:'G', bg:'Bronze', rules:'wag-performance/page-07.jpg', ded:'wag-performance/page-08.jpg' },
+    { id:'H', bg:'Silver', rules:'wag-performance/page-09.jpg', ded:'wag-performance/page-10.jpg' },
+    { id:'I', bg:'Gold',   rules:'wag-performance/page-11.jpg', ded:'wag-performance/page-12.jpg' }
+  ];
+
+  var levelsEl = document.getElementById('levels');
+  LEVELS.forEach(function (lv) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'level';
+    b.dataset.id = lv.id;
+    b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = '<span class="l">' + lv.id + '</span><span class="bg">' + lv.bg + '</span>';
+    b.addEventListener('click', function () { selectLevel(lv.id); });
+    levelsEl.appendChild(b);
+  });
+
+  function selectLevel(id) {
+    var lv = LEVELS.filter(function (l) { return l.id === id; })[0];
+    if (!lv) return;
+    levelsEl.querySelectorAll('.level').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.id === id)); });
+    document.getElementById('level-heading').textContent = 'Level ' + lv.id;
+    document.getElementById('level-eq').textContent = 'BG equivalent: Classic Challenge ' + lv.bg;
+
+    var imgR = document.getElementById('img-rules');
+    var imgD = document.getElementById('img-ded');
+    imgR.src = lv.rules; imgR.alt = 'NGL Level ' + lv.id + ' competition rules';
+    imgD.src = lv.ded;   imgD.alt = 'NGL Level ' + lv.id + ' common deductions';
+    document.getElementById('sheet-rules').href = lv.rules;
+    document.getElementById('zoom-rules').href = lv.rules;
+    document.getElementById('sheet-ded').href = lv.ded;
+    document.getElementById('zoom-ded').href = lv.ded;
+
+    try { history.replaceState(null, '', '#' + lv.id); } catch (e) {}
+  }
+
+  // Deep link (#F or ?level=F), otherwise start at Level D.
+  var start = (new URLSearchParams(location.search).get('level') || location.hash.replace('#', '') || 'D').toUpperCase();
+  if (!LEVELS.some(function (l) { return l.id === start; })) start = 'D';
+  selectLevel(start);
+
+  // Warm the cache for the other levels once the first is showing.
+  window.addEventListener('load', function () {
+    LEVELS.forEach(function (lv) { [lv.rules, lv.ded].forEach(function (src) { var i = new Image(); i.src = src; }); });
+  });
+
+  // Report height to the Squarespace page so the iframe fits (same pattern
+  // as the homepage: measure the content block, ignore tiny changes).
+  (function () {
+    var last = 0, wrap = document.querySelector('.wrap'), pending = false;
+    function report() {
+      pending = false;
+      var h = Math.ceil(wrap.getBoundingClientRect().height);
+      if (Math.abs(h - last) > 2) { last = h; window.parent.postMessage({ type: 'ngl-rules-resize', height: h }, '*'); }
+    }
+    function schedule() { if (pending) return; pending = true; (window.requestAnimationFrame || setTimeout)(report); }
+    window.addEventListener('load', schedule);
+    window.addEventListener('resize', schedule);
+    if (window.ResizeObserver) { new ResizeObserver(schedule).observe(wrap); } else { setInterval(schedule, 400); }
+    schedule();
+  })();
+</script>
+</body>
+</html>
