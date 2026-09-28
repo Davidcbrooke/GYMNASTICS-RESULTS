@@ -1185,22 +1185,40 @@
   // ============================================================
   var reportHeight = (function () {
     var lastHeight = 0;
+    var wrap = document.querySelector('.wrap');
+    var pending = false;
+
+    // Measure the content block, NOT document.body.scrollHeight: the body
+    // is never shorter than the iframe it sits in, so measuring it feeds
+    // the iframe's own height straight back to the parent and the two
+    // chase each other by a pixel (the flicker seen in the Squarespace
+    // editor). The .wrap block only changes size when its content does.
+    function measure() {
+      return Math.ceil(wrap.getBoundingClientRect().height);
+    }
     function report() {
-      var h = document.body.scrollHeight;
-      if (h !== lastHeight) {
+      pending = false;
+      var h = measure();
+      if (Math.abs(h - lastHeight) > 2) {
         lastHeight = h;
         window.parent.postMessage({ type: 'ngl-home-resize', height: h }, '*');
       }
     }
-    window.addEventListener('load', report);
-    window.addEventListener('resize', report);
-    if (window.ResizeObserver) {
-      new ResizeObserver(report).observe(document.body);
-    } else {
-      setInterval(report, 400); // fallback for older browsers
+    // Coalesce bursts of layout changes into one message per frame.
+    function schedule() {
+      if (pending) return;
+      pending = true;
+      (window.requestAnimationFrame || setTimeout)(report);
     }
-    report();
-    return report;
+    window.addEventListener('load', schedule);
+    window.addEventListener('resize', schedule);
+    if (window.ResizeObserver) {
+      new ResizeObserver(schedule).observe(wrap);
+    } else {
+      setInterval(schedule, 400); // fallback for older browsers
+    }
+    schedule();
+    return schedule;
   })();
 </script>
 </body>
