@@ -87,6 +87,7 @@
     color:var(--white);
     font-size:11px;
     font-weight:700;
+    flex:0 0 auto;
   }
   .step-note{
     min-height:1.4em;
@@ -212,16 +213,153 @@
   .choice-card{
     flex:1 1 260px;
     display:block;
+    width:100%;
+    text-align:left;
     text-decoration:none;
     background:var(--navy-3);
     border:1px solid var(--line-soft);
     border-radius:16px;
     padding:22px 24px;
-    transition:transform .15s ease, box-shadow .15s ease;
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
   }
   .choice-card:hover{transform:translateY(-2px); box-shadow:0 14px 26px -16px rgba(0,0,0,.6);}
+  .choice-card[aria-pressed="true"]{background:var(--gold); border-color:var(--gold);}
+  .choice-card[aria-pressed="true"] .cc-title,
+  .choice-card[aria-pressed="true"] .cc-sub{color:var(--navy);}
   .choice-card .cc-title{display:block;font-size:18px;font-weight:700;color:var(--white);margin-bottom:6px;}
   .choice-card .cc-sub{display:block;font-size:13px;color:var(--muted);}
+
+  /* ---------- Step 4 wrapper ---------- */
+  #step4-wrap{display:none;}
+  #step4-title{color:var(--muted);}
+  #step4-title .hl{color:var(--white);}
+
+  /* ---------- Ported pathway-content styles (Awards / Competitions panels) ---------- */
+  .pw-content .card{
+    background:var(--navy-3);
+    border:1px solid var(--line-soft);
+    border-radius:16px;
+    padding:22px;
+    margin-bottom:16px;
+  }
+  .pw-content .lede{font-size:15px; line-height:1.55; color:var(--white); margin:0 0 20px;}
+  .pw-content .lede:last-child{margin-bottom:0;}
+  .pw-content .card ul{margin:0 0 18px; padding-left:20px;}
+  .pw-content .card li{margin-bottom:8px; line-height:1.5; font-size:14.5px;}
+  .pw-content .gallery-label{font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:0 0 12px; font-weight:700;}
+
+  .pw-content .section-tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;}
+  .pw-content .stab{
+    flex:1 1 auto; min-width:140px; text-align:center; padding:14px 10px; border-radius:12px;
+    background:var(--navy-3); border:1px solid var(--line-soft); color:var(--white);
+    font-size:14px; font-weight:700; cursor:pointer; transition:background .18s ease, transform .12s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .pw-content .stab:active{transform:scale(0.98);}
+  .pw-content .stab.active{background:var(--pathway-color, var(--gold)); color:var(--pathway-text, #0a1440); border-color:var(--pathway-color, var(--gold));}
+  .pw-content .section-panel{display:none;}
+  .pw-content .section-panel.active{display:block; animation:pwfadein .22s ease;}
+  @keyframes pwfadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .pw-content .action-grid{display:grid; grid-template-columns:1fr; gap:12px;}
+  @media (min-width:640px){.pw-content .action-grid{grid-template-columns:repeat(3,1fr);}}
+  .pw-content .action-card{
+    display:block; background:var(--navy-4); border:1px solid var(--line-soft); border-radius:14px;
+    padding:20px 18px; text-decoration:none; color:var(--white);
+    transition:background .15s ease, transform .12s ease, border-color .15s ease;
+  }
+  .pw-content .action-card:hover{background:#243a94; border-color:var(--pathway-color, var(--line-soft));}
+  .pw-content .action-card:active{transform:scale(0.98);}
+  .pw-content .action-icon{font-size:22px; display:block; margin-bottom:10px;}
+  .pw-content .action-title{display:block; font-weight:700; font-size:15px; margin-bottom:4px;}
+  .pw-content .action-sub{display:block; font-weight:400; font-size:12.5px; color:var(--muted); line-height:1.4;}
+  .pw-content .action-card.disabled{opacity:.55; cursor:default; pointer-events:none;}
+  .pw-content .action-card.secondary{background:transparent; border-style:dashed;}
+  .pw-content .coming-soon{color:var(--muted); font-size:13px; font-style:italic;}
+
+  .pw-content .buy-btn{
+    display:inline-block; background:var(--pathway-color, var(--gold)); color:var(--pathway-text, #0a1440);
+    font-weight:700; font-size:14px; padding:12px 26px; border-radius:999px; text-decoration:none;
+    border:none; cursor:pointer; transition:filter .15s ease, transform .12s ease;
+  }
+  .pw-content .buy-btn:hover{filter:brightness(1.1);}
+  .pw-content .buy-btn:active{transform:scale(0.97);}
+
+  .pw-content .soon-wrap{position:relative; display:inline-block;}
+  .pw-content .soon-tip{
+    position:absolute; left:50%; top:calc(100% + 9px); transform:translateX(-50%) translateY(-4px);
+    background:var(--navy-4); color:var(--white); font-size:12.5px; font-weight:700;
+    padding:7px 13px; border-radius:8px; white-space:nowrap;
+    opacity:0; pointer-events:none; transition:opacity .15s ease, transform .15s ease;
+    box-shadow:0 10px 22px -10px rgba(0,0,0,.7);
+    z-index:2;
+  }
+  .pw-content .soon-tip::after{
+    content:""; position:absolute; bottom:100%; left:50%; transform:translateX(-50%);
+    border:5px solid transparent; border-bottom-color:var(--navy-4);
+  }
+  .pw-content .soon-tip.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .pw-content .lvl-dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle;}
+  .pw-content .lvl-tag{font-size:11px; font-weight:600; color:var(--muted); margin-left:6px; text-transform:uppercase; letter-spacing:.03em;}
+  .pw-content .level-block{margin-bottom:8px;}
+  .pw-content .level-row{
+    display:flex; align-items:center; justify-content:space-between; padding:13px 14px; border-radius:10px;
+    background:var(--navy-4); font-size:14px; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent;
+    transition:background .15s ease;
+  }
+  .pw-content .level-row:active{background:#243a94;}
+  .pw-content .level-row .ph{display:flex; align-items:center; gap:8px; color:var(--muted); font-weight:500; font-size:12.5px;}
+  .pw-content .level-arrow{display:inline-block; transition:transform .2s ease; font-size:12px; color:var(--muted);}
+  .pw-content .level-block.open .level-arrow{transform:rotate(90deg);}
+  .pw-content .level-videos{display:none; padding:8px 6px 2px;}
+  .pw-content .level-block.open .level-videos{display:block;}
+  .pw-content .video-link-row{
+    display:flex; align-items:flex-start; gap:10px; padding:10px 12px; margin-bottom:6px; border-radius:8px;
+    background:rgba(255,255,255,0.07); color:var(--white); text-decoration:none; font-size:13.5px; font-weight:600;
+    transition:background .15s ease;
+  }
+  .pw-content .video-link-row:hover{background:rgba(255,255,255,0.14);}
+  .pw-content .video-link-row .num{color:var(--muted); font-weight:500; margin-top:2px;}
+  .pw-content .vrow-text{display:flex; flex-direction:column; gap:2px;}
+  .pw-content .vrow-label{font-weight:700;}
+  .pw-content .vrow-caption{font-weight:400; font-size:12px; color:var(--muted); line-height:1.35;}
+  .pw-content .vrow-status{display:block; font-size:11.5px; font-style:italic; color:var(--muted); margin-top:3px;}
+  .pw-content .video-link-row.video-pending{cursor:default;}
+  .pw-content .video-link-row.video-pending:hover{background:rgba(255,255,255,0.07);}
+
+  .pw-content .video-tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+  .pw-content .vtab{
+    flex:1 1 auto; min-width:150px; text-align:center; padding:11px 10px; border-radius:10px;
+    background:var(--navy-4); border:1px solid var(--line-soft); color:var(--white); font-size:13px; font-weight:700;
+    cursor:pointer; transition:background .18s ease, transform .12s ease; -webkit-tap-highlight-color:transparent;
+  }
+  .pw-content .vtab:active{transform:scale(0.98);}
+  .pw-content .vtab.active{background:var(--pathway-color, var(--gold)); color:var(--pathway-text, #0a1440); border-color:var(--pathway-color, var(--gold));}
+  .pw-content .video-panel{display:none;}
+  .pw-content .video-panel.active{display:block;}
+
+  .pw-content .book-layout{display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap;}
+  .pw-content .book-layout img{width:180px; max-width:40%; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.35); flex:0 0 auto;}
+  .pw-content .book-copy{flex:1 1 260px; min-width:240px;}
+  .pw-content .book-copy p{margin:0 0 14px; line-height:1.55; color:var(--white); font-size:15px;}
+  .pw-content .book-copy ul{margin:0 0 18px; padding-left:20px;}
+  .pw-content .book-copy li{margin-bottom:10px; line-height:1.5; color:var(--white); font-size:14.5px;}
+  .pw-content .coming-tag{
+    display:inline-block; margin-top:4px; padding:8px 16px; border-radius:999px; background:rgba(255,255,255,0.08);
+    border:1px solid var(--pathway-color, var(--line-soft)); color:var(--pathway-color, var(--muted)); font-size:13px; font-weight:700;
+  }
+
+  .pw-content .schools-cta{display:grid; grid-template-columns:1fr; gap:14px;}
+  @media(min-width:680px){.pw-content .schools-cta{grid-template-columns:1fr 1fr;}}
+  .pw-content .schools-cta .card{margin:0; display:flex; flex-direction:column; align-items:flex-start;}
+  .pw-content .schools-cta p{line-height:1.55; font-size:15px; margin:0 0 16px; flex:1;}
+  .pw-content .cta-tag{display:inline-block; padding:5px 12px; border-radius:999px; background:#f5d12f; color:#0a1440; font-weight:800; font-size:12px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px;}
+
+  @media (max-width:480px){
+    .pw-content .book-layout img{width:140px;}
+  }
 
   /* ---------- Quick links ---------- */
   .quick-links{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:clamp(28px,4vw,36px);}
@@ -346,6 +484,11 @@
     <div class="step-note" id="choice-note">Pick a pathway above to see its awards scheme and competitions.</div>
   </div>
 
+  <div class="step" id="step4-wrap">
+    <div class="step-label"><span class="num">4</span> <span id="step4-title"></span></div>
+    <div class="pw-content" id="pw-content"></div>
+  </div>
+
   <a class="new-here" href="https://www.nationalgymnasticsleague.co.uk/club-support" target="_top">New to the NGL? See what membership includes →</a>
   <div class="quick-links">
     <a class="quick-link" href="https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" target="_top">View the Live League Table</a>
@@ -405,7 +548,9 @@
 </div>
 
 <script>
-  // ---- Accordion ----
+  // ============================================================
+  // Accordion ("Who We Are")
+  // ============================================================
   document.querySelectorAll('.acc-trigger').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var expanded = btn.getAttribute('aria-expanded') === 'true';
@@ -415,7 +560,9 @@
     });
   });
 
-  // ---- Step 1: audience ----
+  // ============================================================
+  // Step 1: audience
+  // ============================================================
   var audienceNotes = {
     club: "Everything to run your pathway — awards scheme, competitions, judging and club support, in one place.",
     parent: "Follow your gymnast's pathway — their awards progress and upcoming competitions, at a glance."
@@ -432,52 +579,480 @@
     });
   });
 
-  // ---- Step 2: pathway ----
+  // ============================================================
+  // Shared pathway/brand data (colours + text contrast, ids match
+  // across every NGL page)
+  // ============================================================
+  var DARK_TEXT = '#0a1440';
+  var LIGHT_TEXT = '#ffffff';
+
+  var PATHWAY_META = {
+    preschool:   { name:'Pre-School',         color:'#ef2891', text:LIGHT_TEXT, desc:"Early movement skills and confidence-building for young children beginning their gymnastics journey.", eventLabel:'Graduation Event' },
+    schools:     { name:'Schools',            color:'#f5d12f', text:DARK_TEXT,  desc:"Structured, curriculum-aligned gymnastics that builds fundamental physical skills for all pupils.", eventLabel:'Graduation Event' },
+    recreational:{ name:'Recreational',       color:'#ea732c', text:DARK_TEXT,  desc:"Inclusive club-based gymnastics focused on enjoyment, progression and achievement at every level.", eventLabel:'Competitions' },
+    general:     { name:'General League',     color:'#0f6bac', text:LIGHT_TEXT, desc:"Local competitions captured live through a National League Table leading to qualification to represent your Region at National Finals.", eventLabel:'Competitions' },
+    performance: { name:'Performance League', color:'#38bcb9', text:DARK_TEXT,  desc:"Higher-level competition with structured routines, rankings and pathways to national recognition.", eventLabel:'Competitions' },
+    university:  { name:'University League',  color:'#59ac29', text:DARK_TEXT,  desc:"Gymnastics for students, keeping athletes engaged in the sport through university and adult life.", eventLabel:'Competitions' },
+    masters:     { name:'Masters',            color:'#851a6c', text:LIGHT_TEXT, desc:"Adult gymnastics for returners, late starters and those who want to stay active through the sport.", eventLabel:'Competitions' }
+  };
+
+  var COVER_IMAGE = {
+    preschool:'images/preschool-cover.jpg',
+    schools:'images/schools-cover.jpg',
+    recreational:'images/recreational-cover.jpg',
+    general:'images/general-cover.jpg',
+    performance:'images/performance-cover.jpg',
+    university:'images/university-cover.jpg',
+    masters:'images/masters-cover.jpg'
+  };
+
+  var COMING_TEXT = {
+    preschool: 'Awards Book coming April 2027',
+    recreational: 'Awards Book coming January 2027',
+    general: 'Awards Book coming soon',
+    performance: 'Awards Book coming soon',
+    university: 'Awards Book coming soon',
+    masters: 'Awards Book coming soon'
+  };
+
+  var SCHOOLS_CLUB_HUB_URL = 'https://nglschools.co.uk/club/';
+  var SCHOOLS_PARENT_HUB_URL = 'https://nglschools.co.uk/';
+
+  // ---- Recreational levels / skills / videos (shared by Awards + Competitions) ----
+  var REC_BOOK_URL = 'https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration';
+  var REC_LEVELS = [
+    {id:'ruby', name:'Ruby', tag:'Beginner', color:'#c90511'},
+    {id:'pink', name:'Pink', tag:'Beginner Plus', color:'#f65eb7'},
+    {id:'teal', name:'Teal', tag:'Intermediate', color:'#02a1c7'},
+    {id:'indigo', name:'Indigo', tag:'Advanced Club', color:'#603dac'}
+  ];
+  var REC_PIECES = ['floor','vault','beam','bars'];
+  var REC_PIECE_LABELS = { floor:'Floor', vault:'Vault', beam:'Beam', bars:'Bars' };
+  var REC_SKILLS = {
+    ruby: {
+      floor: ["Forward Roll","Star Jump","Bunny Hops","Half Turn Jump","Arabesque"],
+      vault: ["Squat on","Walk across block","Stretch jump off"],
+      beam: ["Mount","Walk Forwards","Straight Jump","Arabesque","Stretch Jump Dismount"],
+      bars: ["Front Support","Cast","Walk Around Bar","Underswing Dismount"]
+    },
+    pink: {
+      floor: ["Forward Roll","Stretch Jump","Cartwheel","Half Turn Jump","Lever Balance","Straight Jump"],
+      vault: ["Straddle on","Walk across block","Stretch jump off"],
+      beam: ["Mount","Forward Walk","Sideways Walk","Lever","Half Turn","Stretch Jump Dismount"],
+      bars: ["Front Support","Cast","Pullover Attempt","Underswing Dismount"]
+    },
+    teal: {
+      floor: ["Handstand Forward Roll","Tuck Jump","Full Turn","Cartwheel","Backward Roll","Cat Leap","Round Off"],
+      vault: ["Jump to Handstand Flatback"],
+      beam: ["Mount","Cat Leap","Full Turn","Tuck Jump","Cartwheel","Split Jump Dismount"],
+      bars: ["Pullover","Cast","Back Hip Circle","Tap Swings","Straddle Underswing"]
+    },
+    indigo: {
+      floor: ["Handstand Forward Roll","Split Jump","Full Turn","Round Off","Backward Walkover","Balance Hold","Jump Sequence"],
+      vault: ["Handstand Flatback OR Half-on to Feet"],
+      beam: ["Mount","Split Leap","Full Turn","Cartwheel","Balance Hold","Round Off Dismount"],
+      bars: ["Pullover","Cast Above Horizontal","Back Hip Circle","Squat On","Straight Jump Dismount"]
+    }
+  };
+  var REC_VIDEO_IDS = {
+    ruby: { floor:'QUmO-2VM4jQ', vault:'TKV4rRq4JoQ', beam:'6Xf6tzbyuI0', bars:'UqIItuGwqmg' },
+    pink: { floor:'cXcmczamdLs', vault:'8IE9zY81g_g', beam:'YyuTaVTMHto', bars:'Mm_Dnm3WXzw' },
+    teal: { floor:'AYcnuE1zZc8', vault:'4Lgkq3aaues', beam:'PwY_MOdLzKs', bars:'9n-AtEJIr_U' },
+    indigo: { floor:'Uu8si-DM_CI', vault:'w58EYcW2Loo', beam:'0GzVp2KSjbI', bars:'pv8VOObrh0Q' }
+  };
+
+  function recVideoLevelsHTML(){
+    var rows = '';
+    REC_LEVELS.forEach(function (level) {
+      var inner = REC_PIECES.map(function (piece) {
+        var vid = REC_VIDEO_IDS[level.id][piece];
+        var label = REC_PIECE_LABELS[piece];
+        var caption = REC_SKILLS[level.id][piece].join(', ');
+        if (vid) {
+          return '<a class="video-link-row" href="https://youtu.be/' + vid + '" target="_blank" rel="noopener">' +
+            '<span class="num">&#9654;</span>' +
+            '<span class="vrow-text"><span class="vrow-label">' + label + '</span><span class="vrow-caption">' + caption + '</span></span>' +
+            '</a>';
+        }
+        return '<div class="video-link-row video-pending">' +
+          '<span class="num">&#9654;</span>' +
+          '<span class="vrow-text"><span class="vrow-label">' + label + '</span><span class="vrow-caption">' + caption + '</span><span class="vrow-status">Video coming soon</span></span>' +
+          '</div>';
+      }).join('');
+      rows += '<div class="level-block"><div class="level-row">' +
+        '<span><span class="lvl-dot" style="background:' + level.color + '"></span>' + level.name + ' <span class="lvl-tag">' + level.tag + '</span></span>' +
+        '<span class="ph"><span class="level-arrow">&#9654;</span></span></div>' +
+        '<div class="level-videos">' + inner + '</div></div>';
+    });
+    return rows;
+  }
+
+  // ---- General League competition schedule (real data; everyone else is "coming soon") ----
+  var SEASON_DATA = {
+    general: {
+      overview: "The National Gymnastics League — local competitions captured live through a National League Table, leading to qualification to represent your Region at National Finals.",
+      seasons: [
+        {
+          label: "This Season (2026)",
+          actions: [
+            { icon:"📅", title:"Season Schedule & Booking", sub:"Find and book your club's place via JustGo.", url:"https://www.nationalgymnasticsleague.co.uk/league-schedule-4" },
+            { icon:"🏆", title:"League Table & Qualification", sub:"Live results, league table and National Qualifiers.", url:"https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" },
+            { icon:"📖", title:"Rules", sub:"Girls Rules, Girls Element Book and Boys Rules.", url:"https://www.nationalgymnasticsleague.co.uk/handbook" }
+          ],
+          extra: { title:"National Qualifiers", sub:"Regional qualification tracker for the 2026 season.", url:"https://davidcbrooke.github.io/GYMNASTICS-RESULTS/national-qualifier.html" }
+        },
+        {
+          label: "Next Season (2027)",
+          actions: [
+            { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve your club's place now, pay later.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
+            { icon:"🏆", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
+            { icon:"📖", title:"Rules", sub:"Girls Rules and Boys Rules for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/handbook-1" }
+          ]
+        }
+      ]
+    }
+  };
+
+  var PLACEHOLDER_ACTIONS = [
+    { icon:"📅", title:"Season Schedule & Booking" },
+    { icon:"🏆", title:"League Table & Qualification" },
+    { icon:"📖", title:"Rules" }
+  ];
+  var PLACEHOLDER_OVERRIDES = {
+    preschool: { "League Table & Qualification": "Not applicable", "Rules": "Not applicable" },
+    schools: { "League Table & Qualification": "Not applicable", "Rules": "Not applicable" }
+  };
+
+  function actionCardHTML(a){
+    if (!a || !a.url) {
+      var sub = (a && a.subOverride) ? a.subOverride : 'Coming soon';
+      return '<div class="action-card disabled"><span class="action-icon">' + (a ? a.icon : '') + '</span>' +
+        '<span class="action-title">' + (a ? a.title : '') + '</span><span class="action-sub">' + sub + '</span></div>';
+    }
+    return '<a class="action-card" href="' + a.url + '" target="_top"><span class="action-icon">' + a.icon + '</span>' +
+      '<span class="action-title">' + a.title + '</span><span class="action-sub">' + (a.sub || '') + '</span></a>';
+  }
+
+  function placeholderActionsFor(id){
+    var overrides = PLACEHOLDER_OVERRIDES[id] || {};
+    return PLACEHOLDER_ACTIONS.map(function (a) {
+      var copy = Object.assign({}, a);
+      copy.subOverride = overrides[a.title] || null;
+      return copy;
+    });
+  }
+
+  // ============================================================
+  // COMPETITIONS content (ported from ngl-competitions.html)
+  // ============================================================
+  function recreationalCompetitionPanelHTML(){
+    return '<div class="card"><p class="lede">A simple, positive-scoring club competition, exclusively for British Gymnastics clubs &mdash; every gymnast leaves with a medal.</p>' +
+      '<a class="buy-btn" href="' + REC_BOOK_URL + '" target="_top">Book Now</a></div>' +
+      '<div class="section-tabs"><div class="stab active" data-sec="rec-comp">Competition</div><div class="stab" data-sec="rec-videos">Routine Videos</div></div>' +
+      '<div class="section-panel active" data-sec="rec-comp"><div class="card">' +
+      '<div class="gallery-label">Levels</div><ul>' +
+      REC_LEVELS.map(function (l) { return '<li><span class="lvl-dot" style="background:' + l.color + '"></span><strong>' + l.name + '</strong> &mdash; ' + l.tag + '</li>'; }).join('') +
+      '</ul>' +
+      '<div class="gallery-label">Medals &mdash; every gymnast receives one</div><ul><li>Gold &mdash; 8.0+</li><li>Silver &mdash; 6.0&ndash;7.999</li><li>Bronze &mdash; 5.999 &amp; below</li></ul>' +
+      '<div class="gallery-label">Scoring &mdash; simple 10.0 positive scoring</div><ul><li>Skill Completion &mdash; 4.0</li><li>Shapes &amp; Technique &mdash; 3.0</li><li>Confidence &amp; Presentation &mdash; 2.0</li><li>Finish &amp; Salute &mdash; 1.0</li></ul>' +
+      '<p class="lede">2 Piece (Floor &amp; Vault) or 4 Piece (Floor, Vault, Beam &amp; Bars) competitions, 1.5&ndash;2.5 hours, with routines that are simple, age-appropriate and confidence-building.</p>' +
+      '<a class="buy-btn" href="' + REC_BOOK_URL + '" target="_top">Book Now</a></div></div>' +
+      '<div class="section-panel" data-sec="rec-videos"><div class="card"><p class="lede">Every competition routine, organised by Level &mdash; tap a Level to reveal its Floor, Vault, Beam and Bars videos.</p>' +
+      recVideoLevelsHTML() + '</div></div>';
+  }
+
+  function competitionsPanelHTML(id){
+    if (id === 'recreational') return recreationalCompetitionPanelHTML();
+    var data = SEASON_DATA[id];
+    var name = PATHWAY_META[id].name;
+    if (!data) {
+      var actions = placeholderActionsFor(id);
+      var actionsHTML = actions.map(actionCardHTML).join('');
+      return '<div class="card"><p class="lede">Competition details for ' + name + ' are coming soon.</p></div>' +
+        '<div class="section-tabs"><div class="stab active" data-sec="s0">This Season</div><div class="stab" data-sec="s1">Next Season</div></div>' +
+        '<div class="section-panel active" data-sec="s0"><div class="action-grid">' + actionsHTML + '</div></div>' +
+        '<div class="section-panel" data-sec="s1"><div class="action-grid">' + actionsHTML + '</div></div>';
+    }
+    var tabs = data.seasons.map(function (s, i) { return '<div class="stab' + (i === 0 ? ' active' : '') + '" data-sec="s' + i + '">' + s.label + '</div>'; }).join('');
+    var panels = data.seasons.map(function (s, i) {
+      var extraHTML = s.extra
+        ? '<div class="action-grid" style="margin-top:12px;"><a class="action-card secondary" href="' + s.extra.url + '" target="_top">' +
+          '<span class="action-title">' + s.extra.title + '</span><span class="action-sub">' + (s.extra.sub || '') + '</span></a></div>'
+        : '';
+      return '<div class="section-panel' + (i === 0 ? ' active' : '') + '" data-sec="s' + i + '"><div class="action-grid">' +
+        s.actions.map(actionCardHTML).join('') + '</div>' + extraHTML + '</div>';
+    }).join('');
+    return '<div class="card"><p class="lede">' + data.overview + '</p></div><div class="section-tabs">' + tabs + '</div>' + panels;
+  }
+
+  // ============================================================
+  // AWARDS content (ported from ngl-award-programmes.html)
+  // ============================================================
+  function pathwaySectionsHTML(opts){
+    return '<div class="section-tabs">' +
+      '<div class="stab active" data-sec="awards">Awards Programme</div>' +
+      '<div class="stab" data-sec="event">' + opts.eventLabel + '</div>' +
+      '<div class="stab" data-sec="videos">Videos</div>' +
+      '</div>' +
+      '<div class="section-panel active" data-sec="awards">' + opts.awardsHTML + '</div>' +
+      '<div class="section-panel" data-sec="event">' + opts.eventHTML + '</div>' +
+      '<div class="section-panel" data-sec="videos">' + (opts.videosHTML || videoTabsHTML(opts.routinesHTML)) + '</div>';
+  }
+
+  function videoTabsHTML(routinesHTML){
+    return '<div class="card"><div class="video-tabs">' +
+      '<div class="vtab active" data-vid="routines">Routines</div>' +
+      '<div class="vtab" data-vid="core">Core Skills Master Classes</div>' +
+      '<div class="vtab" data-vid="strength">Strength &amp; Conditioning</div>' +
+      '</div>' +
+      '<div class="video-panel active" data-vid="routines">' + routinesHTML + '</div>' +
+      '<div class="video-panel" data-vid="core"><p class="coming-soon">Core Skills Master Classes coming soon.</p></div>' +
+      '<div class="video-panel" data-vid="strength"><p class="coming-soon">Strength &amp; Conditioning videos coming soon.</p></div>' +
+      '</div>';
+  }
+
+  function preschoolAwardsHTML(p){
+    var coming = COMING_TEXT.preschool;
+    return '<div class="card"><p class="lede">' + p.desc + '</p></div>' +
+      '<div class="card"><div class="book-layout"><img src="' + COVER_IMAGE.preschool + '" alt="Pre-School Awards Book cover">' +
+      '<div class="book-copy"><p>' + p.desc + '</p><ul>' +
+      '<li><strong>Around the World with Somi &amp; Flic</strong> &mdash; every young gymnast follows the NGL mascots on a round-the-world adventure as they build their first movement skills.</li>' +
+      '<li>Each gymnast gets their own <strong>NGL Passport</strong>, stamped along the way &mdash; with <strong>20 countries</strong> to visit across the programme.</li>' +
+      '<li><strong>20 exclusive medals</strong> to collect, one for every country, plus a big Journey Tracker poster to chart progress as they go.</li>' +
+      '</ul><div class="coming-tag">' + coming + '</div></div></div></div>';
+  }
+
+  function preschoolEventHTML(){
+    return '<div class="card"><p class="lede">Graduation Event details for Pre-School are coming soon.</p>' +
+      comingSoonButtonHTML() + '</div>';
+  }
+
+  function simpleAwardsHTML(p, id){
+    var coming = COMING_TEXT[id] || 'Awards Book coming soon';
+    return '<div class="card"><p class="lede">' + p.desc + '</p></div>' +
+      '<div class="card"><div class="book-layout"><img src="' + COVER_IMAGE[id] + '" alt="' + p.name + ' Awards Book cover">' +
+      '<div class="book-copy"><p>' + p.desc + '</p><div class="coming-tag">' + coming + '</div></div></div></div>';
+  }
+
+  function simpleEventHTML(label){
+    return '<div class="card"><p class="lede">' + label + ' details are coming soon.</p>' +
+      comingSoonButtonHTML() + '</div>';
+  }
+
+  // A "Book Now" button with nowhere real to go yet: stays visually active
+  // (not greyed out), but doesn't navigate anywhere — clicking it just pops
+  // up a small "Coming soon" tag next to the button instead of looping the
+  // visitor back round to the homepage.
+  function comingSoonButtonHTML(){
+    return '<span class="soon-wrap">' +
+      '<button type="button" class="buy-btn" data-coming-soon>Book Now</button>' +
+      '<span class="soon-tip" role="status">Coming soon</span>' +
+      '</span>';
+  }
+
+  // General League's Awards→Competitions tab: we now have the real content
+  // on this same page (Step 3 → Competitions), so this switches the view
+  // in place instead of sending people to a "coming soon" stub.
+  function generalEventHTML(){
+    return '<div class="card"><p class="lede">General League competitions — season schedule, live league table and rules.</p>' +
+      '<button type="button" class="buy-btn" data-switch-type="competitions">View Competitions →</button></div>';
+  }
+
+  function simpleRoutinesHTML(){
+    return '<p class="coming-soon">Routine videos coming soon.</p>';
+  }
+
+  function recreationalAwardsHTML(p){
+    return '<div class="card"><p class="lede">' + p.desc + '</p></div>' +
+      '<div class="card"><div class="book-layout"><img src="' + COVER_IMAGE.recreational + '" alt="NGL Recreational Awards Book cover">' +
+      '<div class="book-copy"><p>The Recreational Awards Programme is made up of <strong>4 books, each with 4 levels</strong>, covering every stage of development in Recreational Gymnastics.</p>' +
+      '<div class="coming-tag">' + COMING_TEXT.recreational + '</div></div></div></div>';
+  }
+
+  // Recreational's Awards→Competitions tab: same in-place switch, since the
+  // full Recreational competition detail already lives on this page too.
+  function recreationalEventHTML(){
+    return '<div class="card"><p class="lede">Recreational Competitions — levels, medals, scoring and routine videos.</p>' +
+      '<button type="button" class="buy-btn" data-switch-type="competitions">View Competitions →</button></div>';
+  }
+
+  function recreationalRoutinesHTML(){
+    return '<p class="coming-soon">Recreational Programme videos coming soon.</p>';
+  }
+
+  function schoolsAwardsHTML(p){
+    return '<div class="card"><div class="book-layout"><img src="' + COVER_IMAGE.schools + '" alt="NGL Schools Awards Book cover">' +
+      '<div class="book-copy"><p>' + p.desc + '</p>' +
+      '<p>A six-level programme across Floor, Bench and Vault, delivered in schools by your local British Gymnastics club, with Bronze, Silver and Gold certificates and a Graduation Performance to finish the year.</p>' +
+      '</div></div></div>' +
+      '<div class="schools-cta">' +
+      '<div class="card"><div class="cta-tag">For clubs</div><p>Take NGL Schools into your local schools. See how the programme works, licence pricing, and register your club.</p>' +
+      '<a class="buy-btn" href="' + SCHOOLS_CLUB_HUB_URL + '" target="_blank" rel="noopener">NGL Schools Club Hub</a></div>' +
+      '<div class="card"><div class="cta-tag">For families</div><p>Got an NGL Schools code from your club or school? Watch the routines and practise at home.</p>' +
+      '<a class="buy-btn" href="' + SCHOOLS_PARENT_HUB_URL + '" target="_blank" rel="noopener">Open the Schools Hub</a></div>' +
+      '</div>';
+  }
+
+  function awardsPanelHTML(id){
+    var p = PATHWAY_META[id];
+    if (id === 'schools') return schoolsAwardsHTML(p);
+
+    var awardsHTML, eventHTML, routinesHTML;
+    if (id === 'recreational') {
+      awardsHTML = recreationalAwardsHTML(p);
+      eventHTML = recreationalEventHTML();
+      routinesHTML = recreationalRoutinesHTML();
+    } else if (id === 'preschool') {
+      awardsHTML = preschoolAwardsHTML(p);
+      eventHTML = preschoolEventHTML();
+      routinesHTML = simpleRoutinesHTML();
+    } else if (id === 'general') {
+      awardsHTML = simpleAwardsHTML(p, id);
+      eventHTML = generalEventHTML();
+      routinesHTML = simpleRoutinesHTML();
+    } else {
+      awardsHTML = simpleAwardsHTML(p, id);
+      eventHTML = simpleEventHTML(p.eventLabel);
+      routinesHTML = simpleRoutinesHTML();
+    }
+    return pathwaySectionsHTML({ awardsHTML: awardsHTML, eventLabel: p.eventLabel, eventHTML: eventHTML, routinesHTML: routinesHTML });
+  }
+
+  // ============================================================
+  // Step 2 → Step 3: pathway selection reveals the Awards/Competitions choice
+  // ============================================================
   var stageButtons = document.querySelectorAll('.stage');
   var choiceBlock = document.getElementById('choice-block');
   var choiceRow = document.getElementById('choice-row');
   var choiceNote = document.getElementById('choice-note');
+  var step4Wrap = document.getElementById('step4-wrap');
+  var step4Title = document.getElementById('step4-title');
+  var pwContent = document.getElementById('pw-content');
+
+  var selectedPathwayId = null;
 
   stageButtons.forEach(function (btn) {
     btn.addEventListener('click', function () {
       stageButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
-      var id = btn.dataset.id;
+      selectedPathwayId = btn.dataset.id;
       var name = btn.dataset.name;
+
       choiceRow.innerHTML =
-        '<a class="choice-card" href="https://www.nationalgymnasticsleague.co.uk/award-programmes?pathway=' + id + '" target="_top">' +
+        '<button type="button" class="choice-card" data-type="awards" aria-pressed="false">' +
           '<span class="cc-title">Awards Scheme</span>' +
           '<span class="cc-sub">' + name + ' award scheme &amp; progress tracking</span>' +
-        '</a>' +
-        '<a class="choice-card" href="https://www.nationalgymnasticsleague.co.uk/competitions-graduation-events?pathway=' + id + '" target="_top">' +
+        '</button>' +
+        '<button type="button" class="choice-card" data-type="competitions" aria-pressed="false">' +
           '<span class="cc-title">Competitions</span>' +
           '<span class="cc-sub">' + name + ' season dates, booking &amp; league table</span>' +
-        '</a>';
+        '</button>';
       choiceBlock.classList.add('open');
       choiceNote.textContent = '';
+
+      // Changing pathway hides whatever Step 4 content was showing until a
+      // new Awards/Competitions choice is made for the new pathway.
+      step4Wrap.style.display = 'none';
+      pwContent.innerHTML = '';
     });
   });
 
-  // ---- Report height to the parent Squarespace page, so the iframe can
-  // ---- resize itself instead of using a fixed height (this page's height
-  // ---- changes a lot as the steps above open up). See the matching
-  // ---- listener in the Squarespace embed code block.
-  (function () {
+  function showStep4(id, type){
+    var p = PATHWAY_META[id];
+    pwContent.innerHTML = (type === 'awards') ? awardsPanelHTML(id) : competitionsPanelHTML(id);
+    pwContent.style.setProperty('--pathway-color', p.color);
+    pwContent.style.setProperty('--pathway-text', p.text);
+    step4Title.innerHTML = '<span class="hl">' + p.name + '</span> — ' + (type === 'awards' ? 'Awards Scheme' : 'Competitions');
+    step4Wrap.style.display = 'block';
+    reportHeight();
+  }
+
+  // Step 3: Awards / Competitions choice (event delegation, since the
+  // buttons are rebuilt every time a pathway is picked)
+  choiceRow.addEventListener('click', function (e) {
+    var btn = e.target.closest('.choice-card');
+    if (!btn || !selectedPathwayId) return;
+    var type = btn.dataset.type;
+    choiceRow.querySelectorAll('.choice-card').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+    showStep4(selectedPathwayId, type);
+  });
+
+  // Step 4: sub-tabs (Awards Programme / Event / Videos, This Season / Next
+  // Season, Competition / Routine Videos, video-category tabs) and the
+  // Level accordions, all delegated from the single pw-content container —
+  // plus the in-place Awards→Competitions "switch" buttons.
+  pwContent.addEventListener('click', function (e) {
+    var soonBtn = e.target.closest('[data-coming-soon]');
+    if (soonBtn) {
+      var tip = soonBtn.parentElement.querySelector('.soon-tip');
+      if (tip) {
+        clearTimeout(tip._hideTimer);
+        tip.classList.add('show');
+        tip._hideTimer = setTimeout(function () { tip.classList.remove('show'); }, 1800);
+      }
+      return;
+    }
+
+    var switchBtn = e.target.closest('[data-switch-type]');
+    if (switchBtn && selectedPathwayId) {
+      var type = switchBtn.dataset.switchType;
+      choiceRow.querySelectorAll('.choice-card').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.type === type)); });
+      showStep4(selectedPathwayId, type);
+      return;
+    }
+
+    var stab = e.target.closest('.stab');
+    if (stab) {
+      var sec = stab.dataset.sec;
+      var scope = stab.closest('.section-tabs').parentElement;
+      scope.querySelectorAll(':scope > .section-tabs .stab').forEach(function (b) { b.classList.toggle('active', b === stab); });
+      scope.querySelectorAll(':scope > .section-panel').forEach(function (p) { p.classList.toggle('active', p.dataset.sec === sec); });
+      reportHeight();
+      return;
+    }
+
+    var vtab = e.target.closest('.vtab');
+    if (vtab) {
+      var vid = vtab.dataset.vid;
+      var vscope = vtab.closest('.card');
+      vscope.querySelectorAll('.vtab').forEach(function (b) { b.classList.toggle('active', b === vtab); });
+      vscope.querySelectorAll('.video-panel').forEach(function (p) { p.classList.toggle('active', p.dataset.vid === vid); });
+      reportHeight();
+      return;
+    }
+
+    var levelRow = e.target.closest('.level-row');
+    if (levelRow) {
+      var block = levelRow.closest('.level-block');
+      if (block) { block.classList.toggle('open'); }
+      reportHeight();
+      return;
+    }
+  });
+
+  // ============================================================
+  // Report height to the parent Squarespace page, so the iframe can
+  // resize itself instead of using a fixed height (this page's height
+  // changes a lot as the steps above open up). See the matching
+  // listener in the Squarespace embed code block.
+  // ============================================================
+  var reportHeight = (function () {
     var lastHeight = 0;
-    function reportHeight() {
+    function report() {
       var h = document.body.scrollHeight;
       if (h !== lastHeight) {
         lastHeight = h;
         window.parent.postMessage({ type: 'ngl-home-resize', height: h }, '*');
       }
     }
-    window.addEventListener('load', reportHeight);
-    window.addEventListener('resize', reportHeight);
+    window.addEventListener('load', report);
+    window.addEventListener('resize', report);
     if (window.ResizeObserver) {
-      new ResizeObserver(reportHeight).observe(document.body);
+      new ResizeObserver(report).observe(document.body);
     } else {
-      setInterval(reportHeight, 400); // fallback for older browsers
+      setInterval(report, 400); // fallback for older browsers
     }
-    reportHeight();
+    report();
+    return report;
   })();
 </script>
 </body>
