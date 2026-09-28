@@ -390,6 +390,11 @@
     border:1px solid var(--pathway-color, var(--line-soft)); color:var(--pathway-color, var(--muted)); font-size:13px; font-weight:700;
   }
 
+  .pw-content .event-details{display:flex; flex-direction:column; gap:12px;}
+  .pw-content .event-row{display:flex; align-items:flex-start; gap:12px; font-size:15px; line-height:1.4;}
+  .pw-content .event-icon{font-size:20px; line-height:1.2; flex:0 0 auto;}
+  .pw-content .event-sub{color:var(--muted); font-size:14px;}
+
   .pw-content .schools-cta{display:grid; grid-template-columns:1fr; gap:14px;}
   @media(min-width:680px){.pw-content .schools-cta{grid-template-columns:1fr 1fr;}}
   .pw-content .schools-cta .card{margin:0; display:flex; flex-direction:column; align-items:flex-start;}
@@ -811,6 +816,11 @@
 
   function competitionsPanelHTML(id){
     if (id === 'recreational') return recreationalCompetitionPanelHTML();
+    if (id === 'schools') {
+      // Schools doesn't compete — its event is the Graduation Performance.
+      return '<div class="card"><p class="lede">Schools don\'t compete in the league. The Schools event is the end-of-year Graduation Performance.</p></div>' +
+        schoolsEventHTML();
+    }
     var data = SEASON_DATA[id];
     var name = PATHWAY_META[id].name;
     if (!data) {
@@ -960,9 +970,40 @@
       '</div>';
   }
 
+  // Schools Graduation Event — the end-of-year performance for every school
+  // on the programme. Shown under Awards → Graduation Event and also as the
+  // Schools "Competitions" view, since that's the Schools event.
+  var SCHOOLS_GRADUATION = {
+    title: 'NGL Schools Graduation 2027',
+    date: 'Sunday 20 June 2027',
+    time: '3:00pm',
+    venue: 'SAADI Gymnastics, Hertfordshire'
+  };
+
+  function schoolsEventHTML(){
+    var g = SCHOOLS_GRADUATION;
+    return '<div class="card">' +
+      '<div class="gallery-label">Graduation Event</div>' +
+      '<p class="lede" style="font-size:18px;font-weight:700;margin-bottom:14px;">' + g.title + '</p>' +
+      '<div class="event-details">' +
+        '<div class="event-row"><span class="event-icon">📅</span><span><strong>' + g.date + '</strong><br><span class="event-sub">' + g.time + '</span></span></div>' +
+        '<div class="event-row"><span class="event-icon">📍</span><span><strong>' + g.venue + '</strong></span></div>' +
+      '</div>' +
+      '<p class="lede" style="margin-top:16px;">The Graduation Performance brings every school on the programme together to show what they\'ve learned across the year, with Bronze, Silver and Gold certificates presented on the day.</p>' +
+      comingSoonButtonHTML() +
+      '</div>';
+  }
+
+  function schoolsVideosHTML(){
+    return '<div class="card"><p class="lede">Routine videos for every Schools level are in the NGL Schools Hub — use the code from your club or school to open them.</p>' +
+      '<a class="buy-btn" href="' + SCHOOLS_PARENT_HUB_URL + '" target="_blank" rel="noopener">Open the Schools Hub</a></div>';
+  }
+
   function awardsPanelHTML(id){
     var p = PATHWAY_META[id];
-    if (id === 'schools') return schoolsAwardsHTML(p);
+    if (id === 'schools') {
+      return pathwaySectionsHTML({ awardsHTML: schoolsAwardsHTML(p), eventLabel: p.eventLabel, eventHTML: schoolsEventHTML(), videosHTML: schoolsVideosHTML() });
+    }
 
     var awardsHTML, eventHTML, routinesHTML;
     if (id === 'recreational') {
