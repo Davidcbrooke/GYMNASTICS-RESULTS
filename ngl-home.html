@@ -57,11 +57,16 @@
     border-radius:0 0 16px 16px;
   }
   .hero p{
-    max-width:640px;
+    max-width:720px;
     color:var(--muted);
     font-size:clamp(15px,1.6vw,18px);
     line-height:1.55;
     margin:0;
+  }
+  .hero .hero-lead{
+    color:var(--white);
+    font-weight:700;
+    margin-top:14px;
   }
 
   /* ---------- Step framework ---------- */
@@ -416,6 +421,7 @@
   <div class="hero">
     <h1>The National Gymnastics League</h1>
     <p>One connected framework for British Gymnastics clubs — training, awards, competitions and club support, across seven pathways spanning every age and ability.</p>
+    <p class="hero-lead">Let's get you to the right place as quickly as possible.</p>
   </div>
 
   <div class="step">
@@ -827,11 +833,30 @@
       comingSoonButtonHTML() + '</div>';
   }
 
+  // Awards-book copy for the performance-based pathways. The pathway's own
+  // one-line summary (p.desc) is about competition, which is the wrong thing
+  // to say about the book — at this level the book is a benchmarking tool.
+  var AWARDS_COPY = {
+    general: {
+      lede: "At League level the Awards Book goes beyond reward — it sets out the technical benchmarks a gymnast is expected to reach at each stage.",
+      body: "<p>The General League Awards Book still celebrates achievement, but alongside the rewards it lays out the technical benchmarks expected at this level.</p>" +
+            "<p>For coaches and parents it's a practical tool for tracking a child's progress against those expected standards — and it's this shift, from reward alone to reward plus expected benchmarks, that marks the step up from Recreational into the performance-based pathways.</p>"
+    },
+    performance: {
+      lede: "At Performance level the Awards Book is as much a technical benchmark as it is a reward scheme.",
+      body: "<p>The Performance League Awards Book rewards progress, but its core purpose is to set out the technical benchmarks expected of a performance gymnast at every stage.</p>" +
+            "<p>Coaches and parents can use it to track a child's development against those expected standards — the defining difference between the Recreational pathway and the performance-based pathways.</p>"
+    }
+  };
+
   function simpleAwardsHTML(p, id){
     var coming = COMING_TEXT[id] || 'Awards Book coming soon';
-    return '<div class="card"><p class="lede">' + p.desc + '</p></div>' +
+    var copy = AWARDS_COPY[id];
+    var lede = copy ? copy.lede : p.desc;
+    var body = copy ? copy.body : '<p>' + p.desc + '</p>';
+    return '<div class="card"><p class="lede">' + lede + '</p></div>' +
       '<div class="card"><div class="book-layout"><img src="' + COVER_IMAGE[id] + '" alt="' + p.name + ' Awards Book cover">' +
-      '<div class="book-copy"><p>' + p.desc + '</p><div class="coming-tag">' + coming + '</div></div></div></div>';
+      '<div class="book-copy">' + body + '<div class="coming-tag">' + coming + '</div></div></div></div>';
   }
 
   function simpleEventHTML(label){
