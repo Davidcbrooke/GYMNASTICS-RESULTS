@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The National Gymnastics League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
     --navy:#0a1440;
@@ -22,7 +25,7 @@
   body{
     background:var(--navy);
     color:var(--white);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:"Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
   }
 
@@ -37,8 +40,9 @@
     position:relative;
     display:inline-block;
     font-size:clamp(28px,4.2vw,42px);
-    line-height:1.15;
-    font-weight:800;
+    line-height:1.11;
+    font-weight:500;
+    letter-spacing:-0.02em;
     margin:0 0 0.5em 0;
     padding-bottom:0.35em;
   }
@@ -82,7 +86,7 @@
     background:var(--navy-4);
     color:var(--white);
     font-size:11px;
-    font-weight:800;
+    font-weight:700;
   }
   .step-note{
     min-height:1.4em;
@@ -134,7 +138,7 @@
   .title-banner{
     text-align:center;
     color:var(--white);
-    font-weight:800;
+    font-weight:700;
     font-size:clamp(14px,2.4vw,19px);
     line-height:1.3;
     padding:clamp(12px,2.6vw,18px) clamp(14px,3vw,26px);
@@ -166,7 +170,7 @@
   }
   .stage-name{
     color:var(--white);
-    font-weight:800;
+    font-weight:700;
     font-size:clamp(7px,1.6vw,10px);
     line-height:1.2;
     margin-bottom:3px;
@@ -181,6 +185,7 @@
     .stage-name .short{display:inline;}
   }
   .stage-age{color:var(--white);font-size:clamp(7.5px,1.5vw,11px);white-space:nowrap;}
+  .stage-hours{color:rgba(255,255,255,.75);font-size:clamp(6.5px,1.3vw,10px);white-space:nowrap;margin-top:1px;}
   .stage-status{
     display:inline-block;
     margin-top:6px;
@@ -189,7 +194,7 @@
     background:rgba(0,0,0,.28);
     color:var(--white);
     font-size:clamp(6.5px,1.3vw,9.5px);
-    font-weight:800;
+    font-weight:700;
     text-transform:uppercase;
     letter-spacing:.03em;
     line-height:1.3;
@@ -215,7 +220,7 @@
     transition:transform .15s ease, box-shadow .15s ease;
   }
   .choice-card:hover{transform:translateY(-2px); box-shadow:0 14px 26px -16px rgba(0,0,0,.6);}
-  .choice-card .cc-title{display:block;font-size:18px;font-weight:800;color:var(--white);margin-bottom:6px;}
+  .choice-card .cc-title{display:block;font-size:18px;font-weight:700;color:var(--white);margin-bottom:6px;}
   .choice-card .cc-sub{display:block;font-size:13px;color:var(--muted);}
 
   /* ---------- Quick links ---------- */
@@ -247,7 +252,7 @@
 
   /* ---------- Who We Are card ---------- */
   .card{background:var(--navy-3);border:1px solid var(--line-soft);border-radius:16px;padding:28px clamp(20px,4vw,36px);}
-  .card h2{margin:0 0 14px 0;font-size:clamp(20px,2.6vw,26px);font-weight:800;}
+  .card h2{margin:0 0 14px 0;font-size:clamp(20px,2.6vw,26px);font-weight:700;}
   .card p{color:var(--white);font-size:15px;line-height:1.65;margin:0 0 14px 0;}
   .card p:last-child{margin-bottom:0;}
   .acc{margin-top:18px;}
@@ -303,16 +308,19 @@
           <button class="stage" style="--stage-color:#ea732c;" data-id="recreational" data-name="Recreational" aria-pressed="false">
             <div class="stage-name"><span class="full">Recreational</span><span class="short">Rec</span></div>
             <div class="stage-age">Ages 4-16</div>
+            <div class="stage-hours">1-2 hrs/wk</div>
             <div class="stage-status">Live Jan 2027</div>
           </button>
           <button class="stage" style="--stage-color:#0f6bac;" data-id="general" data-name="General League" aria-pressed="false">
             <div class="stage-name">General League</div>
             <div class="stage-age">Ages 6-18</div>
+            <div class="stage-hours">2-10 hrs/wk</div>
             <div class="stage-status">Live</div>
           </button>
           <button class="stage" style="--stage-color:#38bcb9;" data-id="performance" data-name="Performance League" aria-pressed="false">
             <div class="stage-name"><span class="full">Performance League</span><span class="short">Perf</span></div>
             <div class="stage-age">Ages 6-18</div>
+            <div class="stage-hours">11+ hrs/wk</div>
             <div class="stage-status">Live 2027</div>
           </button>
           <button class="stage" style="--stage-color:#59ac29;" data-id="university" data-name="University League" aria-pressed="false">
@@ -338,10 +346,10 @@
     <div class="step-note" id="choice-note">Pick a pathway above to see its awards scheme and competitions.</div>
   </div>
 
-  <a class="new-here" href="/club-support" target="_top">New to the NGL? See what membership includes →</a>
+  <a class="new-here" href="https://www.nationalgymnasticsleague.co.uk/club-support" target="_top">New to the NGL? See what membership includes →</a>
   <div class="quick-links">
-    <a class="quick-link" href="/resultsandleaguetable" target="_top">View the Live League Table</a>
-    <a class="quick-link" href="/club-support" target="_top">Club Support &amp; Group-Buying</a>
+    <a class="quick-link" href="https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" target="_top">View the Live League Table</a>
+    <a class="quick-link" href="https://www.nationalgymnasticsleague.co.uk/club-support" target="_top">Club Support &amp; Group-Buying</a>
   </div>
 
   <div class="card">
@@ -436,11 +444,11 @@
       var id = btn.dataset.id;
       var name = btn.dataset.name;
       choiceRow.innerHTML =
-        '<a class="choice-card" href="/award-programmes?pathway=' + id + '" target="_top">' +
+        '<a class="choice-card" href="https://www.nationalgymnasticsleague.co.uk/award-programmes?pathway=' + id + '" target="_top">' +
           '<span class="cc-title">Awards Scheme</span>' +
           '<span class="cc-sub">' + name + ' award scheme &amp; progress tracking</span>' +
         '</a>' +
-        '<a class="choice-card" href="/competitions-graduation-events?pathway=' + id + '" target="_top">' +
+        '<a class="choice-card" href="https://www.nationalgymnasticsleague.co.uk/competitions-graduation-events?pathway=' + id + '" target="_top">' +
           '<span class="cc-title">Competitions</span>' +
           '<span class="cc-sub">' + name + ' season dates, booking &amp; league table</span>' +
         '</a>';
