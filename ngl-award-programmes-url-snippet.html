@@ -1,0 +1,17 @@
+<!--
+  Add this snippet to ngl-award-programmes.html itself (the file on GitHub Pages),
+  just before the closing </body> tag — after the existing PATHWAYS / selectPathway
+  code, so those are already defined when this runs.
+
+  Unlike ngl-competitions.html, this page doesn't currently look at its own URL at
+  all, so the Squarespace-side forwarder alone won't do anything here — this snippet
+  is the other half of that fix.
+-->
+<script>
+(function () {
+  var id = new URLSearchParams(window.location.search).get('pathway');
+  if (id && typeof selectPathway === 'function' && typeof PATHWAYS !== 'undefined' && PATHWAYS.some(function (p) { return p.id === id; })) {
+    selectPathway(id);
+  }
+})();
+</script>

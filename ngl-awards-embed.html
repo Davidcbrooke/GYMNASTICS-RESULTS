@@ -1,0 +1,12 @@
+<iframe id="ngl-awards-frame" src="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-award-programmes.html" style="width:100%; height:1400px; border:none;" loading="lazy"></iframe>
+<script>
+(function () {
+  var frame = document.getElementById('ngl-awards-frame');
+  if (!frame) return;
+  var baseSrc = frame.getAttribute('src').split('?')[0];
+  var params = window.location.search; // e.g. "?pathway=general", set by links from the homepage
+  if (params) {
+    frame.setAttribute('src', baseSrc + params);
+  }
+})();
+</script>
