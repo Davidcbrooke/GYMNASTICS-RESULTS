@@ -104,7 +104,7 @@
   .fc-right { display: flex; align-items: center; gap: 10px; }
   .fc-book { border: none; padding: 7px 14px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 2px; cursor: pointer; font-family: var(--font); background: var(--red); color: var(--white); }
   .comp-card.flash { box-shadow: 0 0 0 3px var(--red); transition: box-shadow 0.3s; }
-  .pnl-tiles { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 16px; }
+  .pnl-tiles { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; padding: 16px; }
   @media (max-width: 680px) { .pnl-tiles { grid-template-columns: 1fr 1fr; } }
   .pnl-tile { border: 1px solid var(--border); border-top: 3px solid var(--navy); padding: 12px 14px; }
   .pnl-tile .v { font-size: 1.45rem; font-weight: 700; color: var(--navy); line-height: 1.1; }
@@ -942,6 +942,7 @@ let selections = {};
 // maxPlaces of 0 is a deliberate "sold out / closed" setting, not "unset".
 // Using `c.maxPlaces || 20` breaks this because 0 is falsy in JS, so these
 // helpers check explicitly for a real number instead.
+function hasMax(c) { return typeof c.maxPlaces === 'number' && !isNaN(c.maxPlaces); }
 function compMax(c) {
   return typeof c.maxPlaces === 'number' && !isNaN(c.maxPlaces) ? c.maxPlaces : 20;
 }
@@ -970,13 +971,13 @@ function fillFor(filterFn) {
 const PNL_DEFAULTS = {
   rec2: 20, rec4: 30, genGirls: 40, genBoys: 50, perfGirls: 45, perfBoys: 55, schools: 0,
   specPerGym: 1.5, specPrice: 6,
-  venueHourly: 100, venueHours: 4, opsMgr: 200, camRate: 40, camCount: 2, elevien: 185, medals: 200,
+  venueHourly: 100, venueHours: 4, opsMgr: 200, camRate: 40, camCount: 2, judgeRate: 50, judgeCount: 2, elevien: 185, medals: 200,
   custom: []   // your own lines: {id, name, type:'income'|'cost', amount, basis:'comp'|'gymnast', path:''|pathway}
 };
 const PNL_FIELDS = [
   ['Entry fees (per gymnast)', [['rec2','Recreational 2 piece'],['rec4','Recreational 3+ piece'],['genGirls','General League girls'],['genBoys','General League boys'],['perfGirls','Performance girls'],['perfBoys','Performance boys'],['schools','Schools']]],
   ['Spectators', [['specPerGym','Spectators per gymnast'],['specPrice','Ticket price']]],
-  ['Costs per competition', [['venueHourly','Venue hire per hour (non-SAADI)'],['venueHours','Venue hours'],['opsMgr','National Ops Manager'],['camRate','Camera operator rate'],['camCount','Camera operators'],['elevien','Elevien'],['medals','Medals']]]
+  ['Costs per competition', [['venueHourly','Venue hire per hour (non-SAADI)'],['venueHours','Venue hours'],['opsMgr','National Ops Manager'],['camRate','Camera operator rate'],['camCount','Camera operators'],['judgeRate','Remote judge rate'],['judgeCount','Remote judges'],['elevien','Elevien'],['medals','Medals']]]
 ];
 function pnlFresh() { return JSON.parse(JSON.stringify(PNL_DEFAULTS)); }
 let pnlA = pnlFresh();
@@ -1008,16 +1009,20 @@ function pnlRow(c, gymnasts) {
   const spec = gymnasts * pnlA.specPerGym * pnlA.specPrice;
   const venue = /saadi/i.test(c.venue || '') ? 0 : pnlA.venueHourly * pnlA.venueHours;
   const staff = pnlA.opsMgr + pnlA.camRate * pnlA.camCount;
+  const judges = pnlA.judgeRate * pnlA.judgeCount;
   const elev = pnlA.elevien, med = pnlA.medals;
   let otherInc = 0, otherCost = 0; const lines = {};
   pnlA.custom.forEach(l => {
-    if (l.path && l.path !== compPathway(c)) return;
+    const saadi = /saadi/i.test(c.venue || '');
+    if (l.path === '__saadi' && !saadi) return;
+    if (l.path === '__away' && saadi) return;
+    if (l.path && l.path.indexOf('__') !== 0 && l.path !== compPathway(c)) return;
     const amt = (parseFloat(l.amount) || 0) * (l.basis === 'gymnast' ? gymnasts : 1);
     lines[l.id] = amt;
     if (l.type === 'income') otherInc += amt; else otherCost += amt;
   });
-  const income = entry + spec + otherInc, costs = venue + staff + elev + med + otherCost;
-  return { c, gymnasts, price, note, entry, spec, otherInc, income, venue, staff, elev, med, otherCost, costs, lines, profit: income - costs };
+  const income = entry + spec + otherInc, costs = venue + staff + judges + elev + med + otherCost;
+  return { c, gymnasts, price, note, entry, spec, otherInc, income, venue, staff, judges, elev, med, otherCost, costs, lines, profit: income - costs };
 }
 
 function pnlComps() {
@@ -1033,8 +1038,9 @@ function renderPnL() {
     return pnlRow(c, Math.min(booked, compMax(c)));
   });
   const full = comps.map(c => pnlRow(c, compMax(c)));
+  rows.forEach((r, i) => { r.unsoldPlaces = full[i].gymnasts - r.gymnasts; r.unsold = full[i].income - r.income; r.unsoldProfit = full[i].profit - r.profit; });
   const sum = (arr, k) => arr.reduce((s, r) => s + r[k], 0);
-  const T = {}; ['gymnasts','entry','spec','otherInc','income','venue','staff','elev','med','otherCost','costs','profit'].forEach(k => T[k] = sum(rows, k));
+  const T = {}; ['gymnasts','entry','spec','otherInc','income','venue','staff','judges','elev','med','otherCost','costs','profit','unsold','unsoldPlaces','unsoldProfit'].forEach(k => T[k] = sum(rows, k));
   const hasInc = pnlA.custom.some(l => l.type === 'income'), hasCost = pnlA.custom.some(l => l.type !== 'income');
   const lineTip = t => pnlA.custom.filter(l => (l.type === 'income') === (t === 'income')).map(l => l.name || 'Unnamed').join(', ');
   const F = { income: sum(full,'income'), profit: sum(full,'profit'), gymnasts: sum(full,'gymnasts') };
@@ -1044,35 +1050,40 @@ function renderPnL() {
     '<div class="pnl-tile"><div class="v">' + gbp(T.income) + '</div><div class="l">Income (booked)</div><div class="s">' + T.gymnasts + ' gymnasts across ' + comps.length + ' competitions</div></div>' +
     '<div class="pnl-tile"><div class="v">' + gbp(T.costs) + '</div><div class="l">Costs</div><div class="s">' + (T.income ? Math.round(T.costs / T.income * 100) + '% of income' : 'No income yet') + '</div></div>' +
     '<div class="pnl-tile"><div class="v ' + (T.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(T.profit) + '</div><div class="l">Profit (booked)</div><div class="s">' + margin + '% margin</div></div>' +
+    '<div class="pnl-tile" style="border-top-color:#e67e22"><div class="v" style="color:#b06000">' + gbp(T.unsold) + '</div><div class="l">Unrealised revenue</div><div class="s">' + T.unsoldPlaces + ' unsold places &middot; ' + gbp(T.unsoldProfit) + ' extra profit if sold</div></div>' +
     '<div class="pnl-tile" style="border-top-color:#27ae60"><div class="v ' + (F.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(F.profit) + '</div><div class="l">Profit if all full</div><div class="s">' + gbp(F.income) + ' income at ' + F.gymnasts + ' gymnasts</div></div>';
 
   if (!rows.length) { tbl.innerHTML = '<tr><td style="padding:24px;text-align:center;color:var(--grey-mid)">No 2027 competitions yet.</td></tr>'; return; }
   const flags = [];
-  tbl.innerHTML = '<thead><tr><th>Date</th><th>Competition</th><th>Gymnasts</th><th>Price</th><th>Entries</th><th>Spectators</th>' + (hasInc ? '<th title="' + lineTip('income') + '">Other income</th>' : '') + '<th>Venue</th><th>Staff</th><th>Elevien</th><th>Medals</th>' + (hasCost ? '<th title="' + lineTip('cost') + '">Other costs</th>' : '') + '<th>Profit</th></tr></thead><tbody>' +
+  tbl.innerHTML = '<thead><tr><th>Date</th><th>Competition</th><th>Gymnasts</th><th>Price</th><th>Entries</th><th>Spectators</th>' + (hasInc ? '<th title="' + lineTip('income') + '">Other income</th>' : '') + '<th>Venue</th><th>Staff</th><th>Judges</th><th>Elevien</th><th>Medals</th>' + (hasCost ? '<th title="' + lineTip('cost') + '">Other costs</th>' : '') + '<th>Profit</th><th title="Income still available from unsold places">Unsold value</th></tr></thead><tbody>' +
     rows.map(r => {
       const p = PATHWAYS[compPathway(r.c)];
       const d = new Date(r.c.date + 'T00:00:00').toLocaleDateString('en-GB', {day:'2-digit', month:'short'});
       if (r.note) flags.push(d + ' ' + r.c.name + ': ' + r.note);
+      if (!hasMax(r.c)) flags.push(d + ' ' + r.c.name + ': no Max Club Places set (20 assumed)');
       return '<tr><td>' + d + '</td>' +
         '<td>' + r.c.name + '<span class="pathway-tag" style="background:' + p.accent + ';color:' + p.ink + '">' + p.short + '</span></td>' +
-        '<td>' + r.gymnasts + '/' + compMax(r.c) + '</td>' +
+        '<td>' + r.gymnasts + '/' + compMax(r.c) + (hasMax(r.c) ? '' : ' <span class="pnl-flag" title="No Max Club Places set, so 20 is assumed">&#x26A0;</span>') + '</td>' +
         '<td>' + gbp(r.price) + (r.note ? ' <span class="pnl-flag" title="' + r.note + '">&#x26A0;</span>' : '') + '</td>' +
         '<td>' + gbp(r.entry) + '</td><td>' + gbp(r.spec) + '</td>' + (hasInc ? '<td>' + gbp(r.otherInc) + '</td>' : '') +
-        '<td>' + gbp(r.venue) + '</td><td>' + gbp(r.staff) + '</td><td>' + gbp(r.elev) + '</td><td>' + gbp(r.med) + '</td>' + (hasCost ? '<td>' + gbp(r.otherCost) + '</td>' : '') +
-        '<td class="' + (r.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '" style="font-weight:700">' + gbp(r.profit) + '</td></tr>';
+        '<td>' + gbp(r.venue) + '</td><td>' + gbp(r.staff) + '</td><td>' + gbp(r.judges) + '</td><td>' + gbp(r.elev) + '</td><td>' + gbp(r.med) + '</td>' + (hasCost ? '<td>' + gbp(r.otherCost) + '</td>' : '') +
+        '<td class="' + (r.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '" style="font-weight:700">' + gbp(r.profit) + '</td>' +
+        '<td style="color:#b06000">' + (r.unsold > 0 ? gbp(r.unsold) : '&mdash;') + '</td></tr>';
     }).join('') +
-    '<tr class="tot"><td colspan="2">Total 2027</td><td>' + T.gymnasts + '</td><td></td><td>' + gbp(T.entry) + '</td><td>' + gbp(T.spec) + '</td>' + (hasInc ? '<td>' + gbp(T.otherInc) + '</td>' : '') + '<td>' + gbp(T.venue) + '</td><td>' + gbp(T.staff) + '</td><td>' + gbp(T.elev) + '</td><td>' + gbp(T.med) + '</td>' + (hasCost ? '<td>' + gbp(T.otherCost) + '</td>' : '') + '<td class="' + (T.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(T.profit) + '</td></tr></tbody>';
+    '<tr class="tot"><td colspan="2">Total 2027</td><td>' + T.gymnasts + '</td><td></td><td>' + gbp(T.entry) + '</td><td>' + gbp(T.spec) + '</td>' + (hasInc ? '<td>' + gbp(T.otherInc) + '</td>' : '') + '<td>' + gbp(T.venue) + '</td><td>' + gbp(T.staff) + '</td><td>' + gbp(T.judges) + '</td><td>' + gbp(T.elev) + '</td><td>' + gbp(T.med) + '</td>' + (hasCost ? '<td>' + gbp(T.otherCost) + '</td>' : '') + '<td class="' + (T.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(T.profit) + '</td><td style="color:#b06000">' + gbp(T.unsold) + '</td></tr></tbody>';
 
   document.getElementById('pnl-notes').innerHTML =
-    'Based on confirmed bookings only (waiting lists excluded), capped at each competition\u2019s capacity. Venue cost applies to any venue not named SAADI. Assumptions are saved in this browser only.' +
-    (flags.length ? '<br><strong style="color:#b06000">&#x26A0; ' + flags.length + ' price estimate' + (flags.length !== 1 ? 's' : '') + ':</strong> ' + flags.join(' &middot; ') : '');
+    'Based on confirmed bookings only (waiting lists excluded), capped at each competition\u2019s capacity. Venue cost applies to any venue not named SAADI; SAADI-hosted means the venue name contains SAADI. Assumptions are saved in this browser only.' +
+    (flags.length ? '<br><strong style="color:#b06000">&#x26A0; ' + flags.length + ' item' + (flags.length !== 1 ? 's' : '') + ' to check:</strong> ' + flags.join(' &middot; ') : '');
   pnlLastRows = rows;
 }
 let pnlLastRows = [];
 
 function renderPnlAssump() {
   const el = document.getElementById('pnl-assump');
-  const pathOpts = sel => '<option value="">All competitions</option>' + PATHWAY_ORDER.map(k => '<option value="' + k + '"' + (sel === k ? ' selected' : '') + '>' + PATHWAYS[k].short + ' only</option>').join('');
+  const pathOpts = sel => '<option value="">All competitions</option>' +
+    '<option value="__saadi"' + (sel === '__saadi' ? ' selected' : '') + '>SAADI-hosted events only</option>' +
+    '<option value="__away"' + (sel === '__away' ? ' selected' : '') + '>Other venues only</option>' + PATHWAY_ORDER.map(k => '<option value="' + k + '"' + (sel === k ? ' selected' : '') + '>' + PATHWAYS[k].short + ' only</option>').join('');
   el.innerHTML = PNL_FIELDS.map(([title, fields]) => '<h4>' + title + '</h4>' +
       fields.map(([k, label]) => '<label>' + label + '<input type="number" step="0.5" min="0" value="' + pnlA[k] + '" oninput="window.setPnlAssump(\'' + k + '\', this.value)"></label>').join('')).join('') +
     '<h4>Your own income &amp; cost lines</h4>' +
@@ -1124,8 +1135,8 @@ window.resetPnlAssump = function() {
 };
 window.exportPnlCSV = function() {
   const inc = pnlA.custom.filter(l => l.type === 'income'), cst = pnlA.custom.filter(l => l.type !== 'income');
-  const hdr = ['Date','Competition','Pathway','Venue','Gymnasts','Capacity','Price per gymnast','Entry income','Spectator income', ...inc.map(l => l.name || 'Other income'), 'Total income','Venue','Staff','Elevien','Medals', ...cst.map(l => l.name || 'Other cost'), 'Total costs','Profit'];
-  const lines = pnlLastRows.map(r => [r.c.date, r.c.name, PATHWAYS[compPathway(r.c)].label, r.c.venue||'', r.gymnasts, compMax(r.c), r.price, r.entry, r.spec, ...inc.map(l => r.lines[l.id] || 0), r.income, r.venue, r.staff, r.elev, r.med, ...cst.map(l => r.lines[l.id] || 0), r.costs, r.profit]
+  const hdr = ['Date','Competition','Pathway','Venue','Gymnasts','Capacity','Price per gymnast','Entry income','Spectator income', ...inc.map(l => l.name || 'Other income'), 'Total income','Venue','Staff','Remote judges','Elevien','Medals', ...cst.map(l => l.name || 'Other cost'), 'Total costs','Profit','Unsold places','Unsold value'];
+  const lines = pnlLastRows.map(r => [r.c.date, r.c.name, PATHWAYS[compPathway(r.c)].label, r.c.venue||'', r.gymnasts, compMax(r.c), r.price, r.entry, r.spec, ...inc.map(l => r.lines[l.id] || 0), r.income, r.venue, r.staff, r.judges, r.elev, r.med, ...cst.map(l => r.lines[l.id] || 0), r.costs, r.profit, r.unsoldPlaces, r.unsold]
     .map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([[hdr.join(','), ...lines].join('\n')], {type:'text/csv'}));
@@ -1464,7 +1475,7 @@ function renderAdminComps() {
       '<span class="acl-date">' + d + '</span>' +
       '<span class="acl-name">' + c.name + '<span class="pathway-tag" style="background:' + p.accent + ';color:' + p.ink + '">' + p.short + '</span></span>' +
       '<span class="acl-reg">' + (c.region||'') + '</span>' +
-      '<span class="acl-spots">' + booked + '/' + compMax(c) + ' ' + TIER_EMOJI[tierFor(compMax(c) ? Math.round(Math.min(booked, compMax(c)) / compMax(c) * 100) : 100)] + '</span>' +
+      '<span class="acl-spots">' + booked + '/' + compMax(c) + (hasMax(c) ? '' : ' <span style="color:var(--red);font-weight:700" title="No Max Club Places set, so 20 is assumed. Click Edit to set it.">&#x26A0; no max</span>') + ' ' + TIER_EMOJI[tierFor(compMax(c) ? Math.round(Math.min(booked, compMax(c)) / compMax(c) * 100) : 100)] + '</span>' +
       '<button class="btn-edit" onclick="window.openEditModal(\'' + c.id + '\')">&#x270F; Edit</button>' +
       '<button class="btn-edit" style="color:var(--navy)" onclick="window.duplicateComp(\'' + c.id + '\')">&#x2398; Copy</button>' +
       '<button class="btn-del" onclick="window.deleteComp(\'' + c.id + '\')">&#x2715;</button>' +
