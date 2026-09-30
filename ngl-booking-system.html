@@ -129,6 +129,7 @@
   .pnl-table td { padding: 8px 9px; border-bottom: 1px solid var(--grey-light); text-align: right; white-space: nowrap; }
   .pnl-table tr.tot td { background: var(--grey-light); font-weight: 800; color: var(--navy); border-top: 2px solid var(--navy); }
   .pnl-table tr.ovh td { background: #fdf6f5; color: var(--text); }
+  .pnl-table tr.ovh.ainc td { background: #eef8f2; }
   .pnl-table tr.net td { background: var(--navy); color: var(--white); border-top: none; }
   .pnl-table tr.net td.pnl-pos { color: #6ee7a0 !important; } .pnl-table tr.net td.pnl-neg { color: #ffb3aa !important; }
   .pnl-table .pathway-tag { margin-left: 6px; }
@@ -987,7 +988,8 @@ function pnlFresh() { return JSON.parse(JSON.stringify(PNL_DEFAULTS)); }
 let pnlA = pnlFresh();
 try { const saved = JSON.parse(localStorage.getItem('ngl_pnl_assumptions') || 'null'); if (saved) { pnlA = Object.assign(pnlFresh(), saved); if (!Array.isArray(pnlA.custom)) pnlA.custom = []; if (!Array.isArray(pnlA.annual)) pnlA.annual = pnlFresh().annual; } } catch(e) {}
 function annualAmt(l) { return (parseFloat(l.amount) || 0) * (l.basis === 'month' ? 12 : 1); }
-function annualTotal() { return pnlA.annual.reduce((s, l) => s + annualAmt(l), 0); }
+function annualTotal() { return pnlA.annual.filter(l => l.type !== 'income').reduce((s, l) => s + annualAmt(l), 0); }
+function annualIncTotal() { return pnlA.annual.filter(l => l.type === 'income').reduce((s, l) => s + annualAmt(l), 0); }
 function savePnl() { try { localStorage.setItem('ngl_pnl_assumptions', JSON.stringify(pnlA)); } catch(e) {} }
 
 function gbp(n) { return (n < 0 ? '-' : '') + '\u00a3' + Math.round(Math.abs(n)).toLocaleString('en-GB'); }
@@ -1051,15 +1053,16 @@ function renderPnL() {
   const lineTip = t => pnlA.custom.filter(l => (l.type === 'income') === (t === 'income')).map(l => l.name || 'Unnamed').join(', ');
   const F = { income: sum(full,'income'), profit: sum(full,'profit'), gymnasts: sum(full,'gymnasts') };
   const OVH = annualTotal();
-  const NET = T.profit - OVH, NETF = F.profit - OVH;
-  const margin = T.income ? Math.round(NET / T.income * 100) : 0;
+  const AINC = annualIncTotal();
+  const NET = T.profit + AINC - OVH, NETF = F.profit + AINC - OVH;
+  const margin = (T.income + AINC) ? Math.round(NET / (T.income + AINC) * 100) : 0;
 
   document.getElementById('pnl-tiles').innerHTML =
-    '<div class="pnl-tile"><div class="v">' + gbp(T.income) + '</div><div class="l">Income (booked)</div><div class="s">' + T.gymnasts + ' gymnasts across ' + comps.length + ' competitions</div></div>' +
+    '<div class="pnl-tile"><div class="v">' + gbp(T.income + AINC) + '</div><div class="l">Income (booked)</div><div class="s">' + (AINC ? gbp(T.income) + ' competitions + ' + gbp(AINC) + ' annual' : T.gymnasts + ' gymnasts across ' + comps.length + ' competitions') + '</div></div>' +
     '<div class="pnl-tile"><div class="v">' + gbp(T.costs + OVH) + '</div><div class="l">Costs</div><div class="s">' + gbp(T.costs) + ' competitions + ' + gbp(OVH) + ' annual</div></div>' +
     '<div class="pnl-tile"><div class="v ' + (NET >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(NET) + '</div><div class="l">Net profit (booked)</div><div class="s">' + margin + '% margin</div></div>' +
     '<div class="pnl-tile" style="border-top-color:#e67e22"><div class="v" style="color:#b06000">' + gbp(T.unsold) + '</div><div class="l">Unrealised revenue</div><div class="s">' + T.unsoldPlaces + ' unsold places &middot; ' + gbp(T.unsoldProfit) + ' extra profit if sold</div></div>' +
-    '<div class="pnl-tile" style="border-top-color:#27ae60"><div class="v ' + (NETF >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(NETF) + '</div><div class="l">Net profit if all full</div><div class="s">' + gbp(F.income) + ' income at ' + F.gymnasts + ' gymnasts</div></div>';
+    '<div class="pnl-tile" style="border-top-color:#27ae60"><div class="v ' + (NETF >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(NETF) + '</div><div class="l">Net profit if all full</div><div class="s">' + gbp(F.income + AINC) + ' income at ' + F.gymnasts + ' gymnasts</div></div>';
 
   if (!rows.length) { tbl.innerHTML = '<tr><td style="padding:24px;text-align:center;color:var(--grey-mid)">No 2027 competitions yet.</td></tr>'; return; }
   const flags = [];
@@ -1079,7 +1082,8 @@ function renderPnL() {
         '<td style="color:#b06000">' + (r.unsold > 0 ? gbp(r.unsold) : '&mdash;') + '</td></tr>';
     }).join('') +
     '<tr class="tot"><td colspan="2">Competitions total</td><td>' + T.gymnasts + '</td><td></td><td>' + gbp(T.entry) + '</td><td>' + gbp(T.spec) + '</td>' + (hasInc ? '<td>' + gbp(T.otherInc) + '</td>' : '') + '<td>' + gbp(T.venue) + '</td><td>' + gbp(T.staff) + '</td><td>' + gbp(T.judges) + '</td><td>' + gbp(T.elev) + '</td><td>' + gbp(T.med) + '</td>' + (hasCost ? '<td>' + gbp(T.otherCost) + '</td>' : '') + '<td class="' + (T.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(T.profit) + '</td><td style="color:#b06000">' + gbp(T.unsold) + '</td></tr>' +
-    pnlA.annual.map(l => '<tr class="ovh"><td colspan="' + (11 + (hasInc?1:0) + (hasCost?1:0)) + '">Less annual: ' + (l.name || 'Unnamed') + (l.basis === 'month' ? ' (' + gbp(parseFloat(l.amount)||0) + '/month)' : '') + '</td><td class="pnl-neg">' + gbp(-annualAmt(l)) + '</td><td></td></tr>').join('') +
+    pnlA.annual.filter(l => l.type === 'income').concat(pnlA.annual.filter(l => l.type !== 'income')).map(l => { const inc = l.type === 'income';
+      return '<tr class="ovh' + (inc ? ' ainc' : '') + '"><td colspan="' + (11 + (hasInc?1:0) + (hasCost?1:0)) + '">' + (inc ? 'Plus' : 'Less') + ' annual: ' + (l.name || 'Unnamed') + (l.basis === 'month' ? ' (' + gbp(parseFloat(l.amount)||0) + '/month)' : '') + '</td><td class="' + (inc ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(inc ? annualAmt(l) : -annualAmt(l)) + '</td><td></td></tr>'; }).join('') +
     '<tr class="tot net"><td colspan="' + (11 + (hasInc?1:0) + (hasCost?1:0)) + '">Net profit 2027</td><td class="' + (NET >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(NET) + '</td><td></td></tr></tbody>';
 
   document.getElementById('pnl-notes').innerHTML =
@@ -1096,16 +1100,16 @@ function renderPnlAssump() {
     '<option value="__away"' + (sel === '__away' ? ' selected' : '') + '>Other venues only</option>' + PATHWAY_ORDER.map(k => '<option value="' + k + '"' + (sel === k ? ' selected' : '') + '>' + PATHWAYS[k].short + ' only</option>').join('');
   el.innerHTML = PNL_FIELDS.map(([title, fields]) => '<h4>' + title + '</h4>' +
       fields.map(([k, label]) => '<label>' + label + '<input type="number" step="0.5" min="0" value="' + pnlA[k] + '" oninput="window.setPnlAssump(\'' + k + '\', this.value)"></label>').join('')).join('') +
-    '<h4>Annual overheads (salaries etc.)</h4>' +
+    '<h4>Annual income &amp; overheads (salaries, sponsorship etc.)</h4>' +
     pnlA.annual.map(l =>
       '<div class="pnl-custom">' +
-      '<span class="pnl-ctype cost">Annual</span>' +
-      '<input type="text" class="pnl-cname" placeholder="e.g. Admin assistant salary" value="' + (l.name || '').replace(/"/g,'&quot;') + '" oninput="window.setPnlAnnual(\'' + l.id + '\',\'name\',this.value)">' +
+      '<span class="pnl-ctype ' + (l.type === 'income' ? 'inc' : 'cost') + '">' + (l.type === 'income' ? 'Income' : 'Cost') + '</span>' +
+      '<input type="text" class="pnl-cname" placeholder="' + (l.type === 'income' ? 'e.g. Sponsorship' : 'e.g. Admin assistant salary') + '" value="' + (l.name || '').replace(/"/g,'&quot;') + '" oninput="window.setPnlAnnual(\'' + l.id + '\',\'name\',this.value)">' +
       '<span class="pnl-cgbp">&pound;</span><input type="number" step="1" min="0" value="' + l.amount + '" oninput="window.setPnlAnnual(\'' + l.id + '\',\'amount\',this.value)">' +
       '<select onchange="window.setPnlAnnual(\'' + l.id + '\',\'basis\',this.value)"><option value="month"' + (l.basis === 'month' ? ' selected' : '') + '>per month</option><option value="year"' + (l.basis !== 'month' ? ' selected' : '') + '>per year</option></select>' +
       '<button class="btn-del" title="Remove" onclick="window.removePnlAnnual(\'' + l.id + '\')">&#x2715;</button>' +
       '</div>').join('') +
-    '<div style="grid-column:1/-1"><button class="btn-export" style="margin-left:0;background:var(--red)" onclick="window.addPnlAnnual()">+ Add annual cost</button></div>' +
+    '<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap"><button class="btn-export" style="margin-left:0;background:#1a7a43" onclick="window.addPnlAnnual(\'income\')">+ Add annual income</button><button class="btn-export" style="margin-left:0;background:var(--red)" onclick="window.addPnlAnnual(\'cost\')">+ Add annual cost</button></div>' +
     '<h4>Your own income &amp; cost lines</h4>' +
     (pnlA.custom.length ? pnlA.custom.map(l =>
       '<div class="pnl-custom">' +
@@ -1122,8 +1126,8 @@ function renderPnlAssump() {
     '<button class="btn-export" style="margin-left:0;background:var(--red)" onclick="window.addPnlCustom(\'cost\')">+ Add cost line</button>' +
     '<button class="btn-logout" style="margin-left:auto" onclick="window.resetPnlAssump()">Reset all to defaults</button></div>';
 }
-window.addPnlAnnual = function() {
-  pnlA.annual.push({ id: 'a' + Date.now().toString(36), name: '', amount: 0, basis: 'month' });
+window.addPnlAnnual = function(type) {
+  pnlA.annual.push({ id: 'a' + Date.now().toString(36), name: '', type: type === 'income' ? 'income' : 'cost', amount: 0, basis: 'month' });
   savePnl(); renderPnlAssump(); renderPnL();
 };
 window.setPnlAnnual = function(id, field, v) {
@@ -1175,8 +1179,8 @@ window.exportPnlCSV = function() {
     .map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
   const compProfit = pnlLastRows.reduce((s, r) => s + r.profit, 0);
   lines.push('', '"Competitions profit",' + compProfit);
-  pnlA.annual.forEach(l => lines.push('"Less annual: ' + String(l.name || 'Unnamed').replace(/"/g,'""') + '",' + (-annualAmt(l))));
-  lines.push('"Net profit 2027",' + (compProfit - annualTotal()));
+  pnlA.annual.forEach(l => { const inc = l.type === 'income'; lines.push('"' + (inc ? 'Plus' : 'Less') + ' annual: ' + String(l.name || 'Unnamed').replace(/"/g,'""') + '",' + (inc ? annualAmt(l) : -annualAmt(l))); });
+  lines.push('"Net profit 2027",' + (compProfit + annualIncTotal() - annualTotal()));
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([[hdr.join(','), ...lines].join('\n')], {type:'text/csv'}));
   a.download = 'NGL-2027-PnL-' + new Date().toISOString().slice(0,10) + '.csv';
