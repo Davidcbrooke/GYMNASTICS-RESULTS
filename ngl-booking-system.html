@@ -806,14 +806,15 @@ function renderFullCalendar() {
     const max = compMax(c);
     const booked = allBookings.filter(b => b.compId === c.id && !b.waitlist).reduce((s,b) => s + (parseInt(b.spaces)||1), 0);
     const left = max - booked, pct = max === 0 ? 1 : booked / max;
-    let pill = '<span class="pill open">' + left + ' places left</span>', btn = 'Book';
-    if (pct >= 1) { pill = '<span class="pill full">Full</span>'; btn = 'Waiting List'; }
-    else if (pct >= 0.75) pill = '<span class="pill filling">' + left + ' left</span>';
+    // Green = plenty of space, orange = 75%+ booked (matches "Filling fast"), red = full (waiting list)
+    let pill = '<span class="pill open">' + left + ' places left</span>', btn = 'Book Now', btnCol = '#27ae60';
+    if (pct >= 1)      { pill = '<span class="pill full">Full</span>'; btn = 'Waiting List'; btnCol = 'var(--red)'; }
+    else if (pct >= 0.75) { pill = '<span class="pill filling">Only ' + left + ' left</span>'; btnCol = '#e67e22'; }
     html += '<div class="fc-row">' +
       '<div class="fc-date"><div class="d">' + d.getDate() + '</div><div class="m">' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase() + '</div></div>' +
       '<div class="fc-info"><div class="fc-name">' + c.name + '<span class="pathway-tag" style="background:' + p.accent + ';color:' + p.ink + '">' + p.short + '</span></div>' +
-      '<div class="fc-meta">&#x1F4CD; ' + (c.venue || 'TBC') + (c.level ? ' &middot; ' + c.level : '') + '</div></div>' +
-      '<div class="fc-right">' + pill + '<button class="fc-book" onclick="window.bookFromCalendar(\'' + c.id + '\')">' + btn + ' &#8594;</button></div>' +
+      '<div class="fc-meta">&#x1F4CD; ' + (c.venue || 'TBC') + (c.level ? ' &middot; ' + c.level : '') + '</div>' + buildIcons(c) + '</div>' +
+      '<div class="fc-right">' + pill + '<button class="fc-book" style="background:' + btnCol + '" onclick="window.bookFromCalendar(\'' + c.id + '\')">' + btn + ' &#8594;</button></div>' +
       '</div>';
   });
   el.innerHTML = html;
