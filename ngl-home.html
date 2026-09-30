@@ -400,6 +400,8 @@
   .pw-content .rules-link{font-size:13.5px; font-weight:700; color:var(--white); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:1px;}
   .pw-content .rules-link:hover{border-bottom-color:var(--white);}
   .pw-content .rvariants{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 16px;}
+  .pw-content .rules-links{grid-template-columns:1fr 1fr; margin-top:14px;}
+  @media (max-width:640px){.pw-content .rules-links{grid-template-columns:1fr;}}
   .pw-content .rvariant{
     flex:1 1 auto; min-width:120px; text-align:center; padding:12px 10px; border-radius:12px;
     background:var(--navy-4); border:1px solid var(--line-soft); color:var(--white); font-size:14px; font-weight:700;
@@ -847,7 +849,7 @@
           actions: [
             { icon:"📅", title:"Season Schedule & Booking", sub:"Performance competition dates and booking." },
             { icon:"🏆", title:"League Table & Qualification", sub:"Performance results and rankings." },
-            { icon:"📖", title:"Rules", sub:"Girls Performance League Rules 2027 — Levels 1 to 6. Opens here.", inline:"performance-2027" }
+            { icon:"📖", title:"Rules", sub:"Classic Challenge Preparation (NGL Levels 1–6) and Grades Preparation (BG NDP and Excel Grades). Opens here.", inline:"performance-2027" }
           ]
         }
       ]
@@ -874,7 +876,8 @@
         { id:'5', files:['ngl-rules-2027-numbered-update/performance-wag/page-09.jpg', 'ngl-rules-2027-numbered-update/performance-wag/page-10.jpg'] },
         { id:'6', files:['ngl-rules-2027-numbered-update/performance-wag/page-11.jpg', 'ngl-rules-2027-numbered-update/performance-wag/page-12.jpg'] }
       ],
-      note: 'Based on the FIG Code of Points except where NGL changes are noted.'
+      note: 'Based on the FIG Code of Points except where NGL changes are noted.',
+      external: { label:'BG Classic Championships Rules 2026', url:'https://www.british-gymnastics.org/intergrationservices/website/resource/137111853709546', sub:'The British Gymnastics document these NGL levels prepare for.' }
     },
     'general-wag-2027': {
       title: 'Girls General League Rules 2027',
@@ -903,6 +906,15 @@
       ],
       note: 'Based on the FIG Code of Points except where NGL changes are noted.'
     },
+    'grades-prep-2027': {
+      title: 'Grades Preparation',
+      intro: 'NGL Grades Preparation competitions run to the British Gymnastics grade rules, so gymnasts can rehearse the exact grade they are working towards. The two BG documents are the rules for these competitions.',
+      links: [
+        { title:'NDP Grades 2024–2027', sub:'Women\'s Artistic National Development Plan — Preparation, Development and Performance Grades (revised 7 Nov 2024 for 2025 onwards).', url:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf' },
+        { title:'Excel Grades 2026', sub:'Women\'s Artistic S.T.E.P. Framework — Pre-Excel and Excel Grades 1 to 3, 2026 onwards.', url:'https://www.southwag.com/_files/ugd/05ec96_2f43ebedbb0248a9b6139c1b253e6555.pdf' }
+      ],
+      note: 'These are British Gymnastics documents, opened from their published copies. NGL does not alter them.'
+    },
     'recreational-2027': {
       title: 'Recreational Club Competition Rules 2027',
       intro: 'Everything for a Recreational club competition on one sheet — options, scoring, medals, format and the routines for Ruby, Pink, Teal and Indigo.',
@@ -917,7 +929,7 @@
   };
 
   var RULES_GROUPS = {
-    'performance-2027':  { heading: 'Performance League Rules 2027', variants: [ { label:'Girls', doc:'performance-wag-2027' } ] },
+    'performance-2027':  { heading: 'Performance League Rules 2027', variants: [ { label:'Classic Challenge Preparation', doc:'performance-wag-2027' }, { label:'Grades Preparation', doc:'grades-prep-2027' } ] },
     'general-2027':      { heading: 'General League Rules 2027',     variants: [ { label:'Girls', doc:'general-wag-2027' }, { label:'Boys', doc:'general-mag-2027' } ] },
     'recreational-2027': { heading: 'Recreational Club Competition Rules 2027', variants: [ { label:'Rules', doc:'recreational-2027' } ] }
   };
@@ -944,6 +956,15 @@
   function rulesDocHTML(docKey){
     var d = RULES_DOCS[docKey];
     if (!d) return '';
+    if (d.links) {
+      return '<p class="lede">' + d.intro + '</p>' +
+        '<div class="action-grid rules-links">' + d.links.map(function (l) {
+          return '<a class="action-card" href="' + l.url + '" target="_blank" rel="noopener">' +
+            '<span class="action-icon">📄</span><span class="action-title">' + l.title + ' ↗</span>' +
+            '<span class="action-sub">' + l.sub + '</span></a>';
+        }).join('') + '</div>' +
+        (d.note ? '<p class="rules-note">' + d.note + '</p>' : '');
+    }
     var levels = d.levels.map(function (lv, i) {
       return '<button type="button" class="rlevel" data-level="' + i + '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '">' +
         '<span class="bg">Level</span><span class="l">' + lv.id + '</span></button>';
@@ -958,6 +979,7 @@
       '<div class="rules-actions">' +
         '<a class="buy-btn" href="' + d.pdf + '" download>Download the PDF</a>' +
         '<a class="rules-link" href="' + d.pdf + '" target="_blank" rel="noopener">Open PDF in a new tab</a>' +
+        (d.external ? '<a class="rules-link" href="' + d.external.url + '" target="_blank" rel="noopener" title="' + (d.external.sub || '') + '">' + d.external.label + ' ↗</a>' : '') +
       '</div>' +
       (single ? '<div style="height:18px"></div>' :
         '<div class="gallery-label" style="margin-top:18px;">Choose a level</div>' +
@@ -976,6 +998,7 @@
 
   function rulesSelectLevel(panel, index){
     var d = RULES_DOCS[panel.dataset.rulesDoc];
+    if (!d || !d.levels) return; // links-only document, nothing to select
     var lv = d.levels[index];
     if (!lv) return;
     panel.querySelectorAll('.rlevel').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.level == index)); });
@@ -1037,7 +1060,7 @@
       '<div class="gallery-label">Medals &mdash; every gymnast receives one</div><ul><li>Gold &mdash; 8.0+</li><li>Silver &mdash; 6.0&ndash;7.99</li><li>Bronze &mdash; below 6.0</li></ul>' +
       '<div class="gallery-label">Scoring &mdash; positive 10.0</div><ul><li>Skill completion &mdash; 4.0</li><li>Shapes and technique &mdash; 4.0</li><li>Confidence and effort &mdash; 2.0</li></ul>' +
       '<p class="lede">Gymnasts build their score &mdash; points are awarded, not taken away. Gymnasts training over 1 hour a week may only enter Teal and Indigo.</p>' +
-      '<p class="lede">2 Piece (Floor &amp; Vault) or 4 Piece (Floor, Vault, Beam &amp; Bars) competitions, 1.5&ndash;2.5 hours, with routines that are simple, age-appropriate and confidence-building.</p>' +
+      '<p class="lede">2 Piece (Floor &amp; Vault) or 4 Piece (Floor, Vault, Beam &amp; Bars) competitions for gymnasts training less than 2 hours a week, with routines that are simple, age-appropriate and confidence-building.</p>' +
       '<a class="buy-btn" href="' + REC_BOOK_URL + '" target="_top">Book Now</a></div></div>' +
       '<div class="section-panel" data-sec="rec-videos"><div class="card"><p class="lede">Every competition routine, organised by Level &mdash; tap a Level to reveal its Floor, Vault, Beam and Bars videos.</p>' +
       recVideoLevelsHTML() + '</div></div>';
