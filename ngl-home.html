@@ -849,7 +849,7 @@
           actions: [
             { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve your club's place for the 2027 Performance League season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
             { icon:"🏆", title:"League Table & Qualification", sub:"Performance results and rankings." },
-            { icon:"📖", title:"Rules", sub:"Classic Challenge Preparation (NGL Levels 1–6) and Grades Preparation (BG NDP and Excel Grades). Opens here.", inline:"performance-2027" }
+            { icon:"📖", title:"Rules", sub:"Girls: Classic Challenge Preparation (Levels 1–6) and Grades Preparation. Boys: Level 1. Opens here.", inline:"performance-2027" }
           ]
         }
       ]
@@ -906,6 +906,17 @@
       ],
       note: 'Based on the FIG Code of Points except where NGL changes are noted.'
     },
+    'performance-mag-2027': {
+      title: 'Boys Performance League Rules 2027',
+      intro: 'Competition rules and common deductions for NGL Performance League Level 1 — Men\'s Artistic. Set routines on Mushroom, Rings, Parallel Bars and High Bar; Floor and Vault from the FIG Code of Points.',
+      pdf: 'ngl-rules-2027-numbered-update/NGL_Performance_League_MAG_Rules_2027.pdf',
+      pages: ['Competition rules', 'Common deductions'],
+      pageRatio: '1754/1241',
+      levels: [
+        { id:'1', files:['ngl-rules-2027-numbered-update/performance-mag/page-01.jpg','ngl-rules-2027-numbered-update/performance-mag/page-02.jpg'] }
+      ],
+      note: 'Based on the FIG Code of Points except where NGL changes are noted.'
+    },
     'grades-prep-2027': {
       title: 'Grades Preparation',
       intro: 'NGL Grades Preparation competitions run to the British Gymnastics grade rules, so gymnasts can rehearse the exact grade they are working towards. The two BG documents are the rules for these competitions.',
@@ -929,7 +940,7 @@
   };
 
   var RULES_GROUPS = {
-    'performance-2027':  { heading: 'Performance League Rules 2027', variants: [ { label:'Classic Challenge Preparation', doc:'performance-wag-2027' }, { label:'Grades Preparation', doc:'grades-prep-2027' } ] },
+    'performance-2027':  { heading: 'Performance League Rules 2027', variants: [ { label:'Girls · Classic Challenge Preparation', doc:'performance-wag-2027' }, { label:'Girls · Grades Preparation', doc:'grades-prep-2027' }, { label:'Boys', doc:'performance-mag-2027' } ] },
     'general-2027':      { heading: 'General League Rules 2027',     variants: [ { label:'Girls', doc:'general-wag-2027' }, { label:'Boys', doc:'general-mag-2027' } ] },
     'recreational-2027': { heading: 'Recreational Club Competition Rules 2027', variants: [ { label:'Rules', doc:'recreational-2027' } ] }
   };
@@ -981,7 +992,7 @@
         '<a class="rules-link" href="' + d.pdf + '" target="_blank" rel="noopener">Open PDF in a new tab</a>' +
         (d.external ? '<a class="rules-link" href="' + d.external.url + '" target="_blank" rel="noopener" title="' + (d.external.sub || '') + '">' + d.external.label + ' ↗</a>' : '') +
       '</div>' +
-      (single ? '<div style="height:18px"></div>' :
+      (single ? (d.levels[0].id ? '<div class="rlevel-title" style="margin-top:18px;"><strong>Level ' + d.levels[0].id + '</strong></div>' : '<div style="height:18px"></div>') :
         '<div class="gallery-label" style="margin-top:18px;">Choose a level</div>' +
         '<div class="rlevels" style="grid-template-columns:repeat(' + Math.min(d.levels.length, 6) + ',1fr);">' + levels + '</div>' +
         '<div class="rlevel-title"><strong data-level-name></strong></div>') +
