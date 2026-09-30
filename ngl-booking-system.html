@@ -104,6 +104,33 @@
   .fc-right { display: flex; align-items: center; gap: 10px; }
   .fc-book { border: none; padding: 7px 14px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 2px; cursor: pointer; font-family: var(--font); background: var(--red); color: var(--white); }
   .comp-card.flash { box-shadow: 0 0 0 3px var(--red); transition: box-shadow 0.3s; }
+  .pnl-tiles { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 16px; }
+  @media (max-width: 680px) { .pnl-tiles { grid-template-columns: 1fr 1fr; } }
+  .pnl-tile { border: 1px solid var(--border); border-top: 3px solid var(--navy); padding: 12px 14px; }
+  .pnl-tile .v { font-size: 1.45rem; font-weight: 700; color: var(--navy); line-height: 1.1; }
+  .pnl-tile .l { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--grey-mid); margin-top: 5px; }
+  .pnl-tile .s { font-size: 0.7rem; color: var(--grey-mid); margin-top: 3px; }
+  .pnl-pos { color: #1a7a43 !important; } .pnl-neg { color: var(--red) !important; }
+  .pnl-toolbar { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 12px; }
+  .pnl-assump { display: none; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 10px 14px; padding: 14px 16px; margin: 0 16px 14px; background: var(--grey-light); border: 1px solid var(--border); }
+  .pnl-assump.open { display: grid; }
+  .pnl-assump h4 { grid-column: 1 / -1; font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); margin-top: 4px; }
+  .pnl-assump label { font-size: 0.7rem; color: var(--text); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .pnl-assump input { width: 72px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 2px; font-size: 0.78rem; font-family: var(--font); text-align: right; }
+  .pnl-custom { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--white); border: 1px solid var(--border); padding: 7px 9px; }
+  .pnl-custom input.pnl-cname { width: 190px; text-align: left; }
+  .pnl-custom select { padding: 4px 6px; border: 1px solid var(--border); border-radius: 2px; font-size: 0.74rem; font-family: var(--font); background: var(--white); }
+  .pnl-ctype { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--white); padding: 3px 8px; border-radius: 2px; min-width: 52px; text-align: center; }
+  .pnl-ctype.inc { background: #1a7a43; } .pnl-ctype.cost { background: var(--red); }
+  .pnl-cgbp { font-size: 0.78rem; color: var(--grey-mid); margin-right: -5px; }
+  .pnl-table { width: 100%; border-collapse: collapse; font-size: 0.74rem; }
+  .pnl-table th { background: var(--navy); color: rgba(255,255,255,0.75); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 9px; text-align: right; white-space: nowrap; }
+  .pnl-table th:nth-child(-n+2), .pnl-table td:nth-child(-n+2) { text-align: left; }
+  .pnl-table td { padding: 8px 9px; border-bottom: 1px solid var(--grey-light); text-align: right; white-space: nowrap; }
+  .pnl-table tr.tot td { background: var(--grey-light); font-weight: 800; color: var(--navy); border-top: 2px solid var(--navy); }
+  .pnl-table .pathway-tag { margin-left: 6px; }
+  .pnl-flag { color: #b06000; cursor: help; }
+  .pnl-notes { font-size: 0.7rem; color: var(--grey-mid); padding: 10px 16px 14px; line-height: 1.6; }
   .pathway-tag { display: inline-block; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; color: var(--white); margin-left: 8px; vertical-align: middle; }
   .thermo-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .thermo-status { color: var(--white); font-size: 0.95rem; font-weight: 800; letter-spacing: 0.04em; }
@@ -527,6 +554,18 @@
       </div>
     </div>
 
+    <div class="panel-card" style="margin-bottom:22px">
+      <div class="pc-head">&#x1F4B7; 2027 Live P&amp;L <span style="margin-left:auto;font-weight:500;text-transform:none;letter-spacing:0;opacity:0.7">Updates as bookings come in</span></div>
+      <div class="pnl-tiles" id="pnl-tiles"></div>
+      <div class="pnl-toolbar">
+        <button class="btn-export" style="margin-left:0" onclick="window.togglePnlAssump()">&#x2699; Edit Assumptions</button>
+        <button class="btn-export" style="margin-left:0" onclick="window.exportPnlCSV()">&#x2B07; Export P&amp;L CSV</button>
+      </div>
+      <div class="pnl-assump" id="pnl-assump"></div>
+      <div style="overflow-x:auto"><table class="pnl-table" id="pnl-table"></table></div>
+      <div class="pnl-notes" id="pnl-notes"></div>
+    </div>
+
     <div class="admin-grid">
       <div class="panel-card">
         <div class="pc-head">&#x2795; Add Competition Date</div>
@@ -926,6 +965,174 @@ function fillFor(filterFn) {
   return places ? Math.round(booked / places * 100) : null;
 }
 
+// ══ 2027 LIVE P&L ══
+// All figures editable in Admin > Edit Assumptions; saved in this browser only.
+const PNL_DEFAULTS = {
+  rec2: 20, rec4: 30, genGirls: 40, genBoys: 50, perfGirls: 45, perfBoys: 55, schools: 0,
+  specPerGym: 1.5, specPrice: 6,
+  venueHourly: 100, venueHours: 4, opsMgr: 200, camRate: 40, camCount: 2, elevien: 185, medals: 200,
+  custom: []   // your own lines: {id, name, type:'income'|'cost', amount, basis:'comp'|'gymnast', path:''|pathway}
+};
+const PNL_FIELDS = [
+  ['Entry fees (per gymnast)', [['rec2','Recreational 2 piece'],['rec4','Recreational 3+ piece'],['genGirls','General League girls'],['genBoys','General League boys'],['perfGirls','Performance girls'],['perfBoys','Performance boys'],['schools','Schools']]],
+  ['Spectators', [['specPerGym','Spectators per gymnast'],['specPrice','Ticket price']]],
+  ['Costs per competition', [['venueHourly','Venue hire per hour (non-SAADI)'],['venueHours','Venue hours'],['opsMgr','National Ops Manager'],['camRate','Camera operator rate'],['camCount','Camera operators'],['elevien','Elevien'],['medals','Medals']]]
+];
+function pnlFresh() { return JSON.parse(JSON.stringify(PNL_DEFAULTS)); }
+let pnlA = pnlFresh();
+try { const saved = JSON.parse(localStorage.getItem('ngl_pnl_assumptions') || 'null'); if (saved) { pnlA = Object.assign(pnlFresh(), saved); if (!Array.isArray(pnlA.custom)) pnlA.custom = []; } } catch(e) {}
+function savePnl() { try { localStorage.setItem('ngl_pnl_assumptions', JSON.stringify(pnlA)); } catch(e) {} }
+
+function gbp(n) { return (n < 0 ? '-' : '') + '\u00a3' + Math.round(Math.abs(n)).toLocaleString('en-GB'); }
+
+// Entry price per gymnast for a competition, plus a note if it had to be estimated
+function pnlPrice(c) {
+  const path = compPathway(c);
+  const pieces = parseInt((/^(\d)piece$/.exec(c.apparatus || '') || [])[1] || '0', 10);
+  const g = c.gender;
+  if (path === 'recreational') return pieces && pieces <= 2 ? [pnlA.rec2, ''] : [pnlA.rec4, pieces ? '' : 'Apparatus not set \u2014 priced as 3+ piece'];
+  if (path === 'general' || path === 'performance') {
+    const girls = path === 'general' ? pnlA.genGirls : pnlA.perfGirls;
+    const boys  = path === 'general' ? pnlA.genBoys  : pnlA.perfBoys;
+    if (g === 'girls') return [girls, ''];
+    if (g === 'boys')  return [boys, ''];
+    return [(girls + boys) / 2, g === 'both' ? 'Mixed \u2014 average of girls and boys price' : 'Gender not set \u2014 average price used'];
+  }
+  if (path === 'schools') return [pnlA.schools, pnlA.schools ? '' : 'No Schools price set'];
+  return [0, 'Pathway not yet priced'];
+}
+
+function pnlRow(c, gymnasts) {
+  const [price, note] = pnlPrice(c);
+  const entry = gymnasts * price;
+  const spec = gymnasts * pnlA.specPerGym * pnlA.specPrice;
+  const venue = /saadi/i.test(c.venue || '') ? 0 : pnlA.venueHourly * pnlA.venueHours;
+  const staff = pnlA.opsMgr + pnlA.camRate * pnlA.camCount;
+  const elev = pnlA.elevien, med = pnlA.medals;
+  let otherInc = 0, otherCost = 0; const lines = {};
+  pnlA.custom.forEach(l => {
+    if (l.path && l.path !== compPathway(c)) return;
+    const amt = (parseFloat(l.amount) || 0) * (l.basis === 'gymnast' ? gymnasts : 1);
+    lines[l.id] = amt;
+    if (l.type === 'income') otherInc += amt; else otherCost += amt;
+  });
+  const income = entry + spec + otherInc, costs = venue + staff + elev + med + otherCost;
+  return { c, gymnasts, price, note, entry, spec, otherInc, income, venue, staff, elev, med, otherCost, costs, lines, profit: income - costs };
+}
+
+function pnlComps() {
+  return allCompetitions.filter(c => (c.date || '').startsWith('2027')).sort((a,b) => a.date.localeCompare(b.date));
+}
+
+function renderPnL() {
+  const tbl = document.getElementById('pnl-table');
+  if (!tbl) return;
+  const comps = pnlComps();
+  const rows = comps.map(c => {
+    const booked = allBookings.filter(b => b.compId === c.id && !b.waitlist).reduce((s,b) => s + (parseInt(b.spaces)||1), 0);
+    return pnlRow(c, Math.min(booked, compMax(c)));
+  });
+  const full = comps.map(c => pnlRow(c, compMax(c)));
+  const sum = (arr, k) => arr.reduce((s, r) => s + r[k], 0);
+  const T = {}; ['gymnasts','entry','spec','otherInc','income','venue','staff','elev','med','otherCost','costs','profit'].forEach(k => T[k] = sum(rows, k));
+  const hasInc = pnlA.custom.some(l => l.type === 'income'), hasCost = pnlA.custom.some(l => l.type !== 'income');
+  const lineTip = t => pnlA.custom.filter(l => (l.type === 'income') === (t === 'income')).map(l => l.name || 'Unnamed').join(', ');
+  const F = { income: sum(full,'income'), profit: sum(full,'profit'), gymnasts: sum(full,'gymnasts') };
+  const margin = T.income ? Math.round(T.profit / T.income * 100) : 0;
+
+  document.getElementById('pnl-tiles').innerHTML =
+    '<div class="pnl-tile"><div class="v">' + gbp(T.income) + '</div><div class="l">Income (booked)</div><div class="s">' + T.gymnasts + ' gymnasts across ' + comps.length + ' competitions</div></div>' +
+    '<div class="pnl-tile"><div class="v">' + gbp(T.costs) + '</div><div class="l">Costs</div><div class="s">' + (T.income ? Math.round(T.costs / T.income * 100) + '% of income' : 'No income yet') + '</div></div>' +
+    '<div class="pnl-tile"><div class="v ' + (T.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(T.profit) + '</div><div class="l">Profit (booked)</div><div class="s">' + margin + '% margin</div></div>' +
+    '<div class="pnl-tile" style="border-top-color:#27ae60"><div class="v ' + (F.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(F.profit) + '</div><div class="l">Profit if all full</div><div class="s">' + gbp(F.income) + ' income at ' + F.gymnasts + ' gymnasts</div></div>';
+
+  if (!rows.length) { tbl.innerHTML = '<tr><td style="padding:24px;text-align:center;color:var(--grey-mid)">No 2027 competitions yet.</td></tr>'; return; }
+  const flags = [];
+  tbl.innerHTML = '<thead><tr><th>Date</th><th>Competition</th><th>Gymnasts</th><th>Price</th><th>Entries</th><th>Spectators</th>' + (hasInc ? '<th title="' + lineTip('income') + '">Other income</th>' : '') + '<th>Venue</th><th>Staff</th><th>Elevien</th><th>Medals</th>' + (hasCost ? '<th title="' + lineTip('cost') + '">Other costs</th>' : '') + '<th>Profit</th></tr></thead><tbody>' +
+    rows.map(r => {
+      const p = PATHWAYS[compPathway(r.c)];
+      const d = new Date(r.c.date + 'T00:00:00').toLocaleDateString('en-GB', {day:'2-digit', month:'short'});
+      if (r.note) flags.push(d + ' ' + r.c.name + ': ' + r.note);
+      return '<tr><td>' + d + '</td>' +
+        '<td>' + r.c.name + '<span class="pathway-tag" style="background:' + p.accent + ';color:' + p.ink + '">' + p.short + '</span></td>' +
+        '<td>' + r.gymnasts + '/' + compMax(r.c) + '</td>' +
+        '<td>' + gbp(r.price) + (r.note ? ' <span class="pnl-flag" title="' + r.note + '">&#x26A0;</span>' : '') + '</td>' +
+        '<td>' + gbp(r.entry) + '</td><td>' + gbp(r.spec) + '</td>' + (hasInc ? '<td>' + gbp(r.otherInc) + '</td>' : '') +
+        '<td>' + gbp(r.venue) + '</td><td>' + gbp(r.staff) + '</td><td>' + gbp(r.elev) + '</td><td>' + gbp(r.med) + '</td>' + (hasCost ? '<td>' + gbp(r.otherCost) + '</td>' : '') +
+        '<td class="' + (r.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '" style="font-weight:700">' + gbp(r.profit) + '</td></tr>';
+    }).join('') +
+    '<tr class="tot"><td colspan="2">Total 2027</td><td>' + T.gymnasts + '</td><td></td><td>' + gbp(T.entry) + '</td><td>' + gbp(T.spec) + '</td>' + (hasInc ? '<td>' + gbp(T.otherInc) + '</td>' : '') + '<td>' + gbp(T.venue) + '</td><td>' + gbp(T.staff) + '</td><td>' + gbp(T.elev) + '</td><td>' + gbp(T.med) + '</td>' + (hasCost ? '<td>' + gbp(T.otherCost) + '</td>' : '') + '<td class="' + (T.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + gbp(T.profit) + '</td></tr></tbody>';
+
+  document.getElementById('pnl-notes').innerHTML =
+    'Based on confirmed bookings only (waiting lists excluded), capped at each competition\u2019s capacity. Venue cost applies to any venue not named SAADI. Assumptions are saved in this browser only.' +
+    (flags.length ? '<br><strong style="color:#b06000">&#x26A0; ' + flags.length + ' price estimate' + (flags.length !== 1 ? 's' : '') + ':</strong> ' + flags.join(' &middot; ') : '');
+  pnlLastRows = rows;
+}
+let pnlLastRows = [];
+
+function renderPnlAssump() {
+  const el = document.getElementById('pnl-assump');
+  const pathOpts = sel => '<option value="">All competitions</option>' + PATHWAY_ORDER.map(k => '<option value="' + k + '"' + (sel === k ? ' selected' : '') + '>' + PATHWAYS[k].short + ' only</option>').join('');
+  el.innerHTML = PNL_FIELDS.map(([title, fields]) => '<h4>' + title + '</h4>' +
+      fields.map(([k, label]) => '<label>' + label + '<input type="number" step="0.5" min="0" value="' + pnlA[k] + '" oninput="window.setPnlAssump(\'' + k + '\', this.value)"></label>').join('')).join('') +
+    '<h4>Your own income &amp; cost lines</h4>' +
+    (pnlA.custom.length ? pnlA.custom.map(l =>
+      '<div class="pnl-custom">' +
+      '<span class="pnl-ctype ' + (l.type === 'income' ? 'inc' : 'cost') + '">' + (l.type === 'income' ? 'Income' : 'Cost') + '</span>' +
+      '<input type="text" class="pnl-cname" placeholder="e.g. Programme sales" value="' + (l.name || '').replace(/"/g,'&quot;') + '" oninput="window.setPnlCustom(\'' + l.id + '\',\'name\',this.value)">' +
+      '<span class="pnl-cgbp">&pound;</span><input type="number" step="0.5" min="0" value="' + l.amount + '" oninput="window.setPnlCustom(\'' + l.id + '\',\'amount\',this.value)">' +
+      '<select onchange="window.setPnlCustom(\'' + l.id + '\',\'basis\',this.value)"><option value="comp"' + (l.basis !== 'gymnast' ? ' selected' : '') + '>per competition</option><option value="gymnast"' + (l.basis === 'gymnast' ? ' selected' : '') + '>per gymnast</option></select>' +
+      '<select onchange="window.setPnlCustom(\'' + l.id + '\',\'path\',this.value)">' + pathOpts(l.path) + '</select>' +
+      '<button class="btn-del" title="Remove this line" onclick="window.removePnlCustom(\'' + l.id + '\')">&#x2715;</button>' +
+      '</div>').join('')
+      : '<div style="grid-column:1/-1;font-size:0.72rem;color:var(--grey-mid)">None yet. Add a line for anything not listed above.</div>') +
+    '<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">' +
+    '<button class="btn-export" style="margin-left:0;background:#1a7a43" onclick="window.addPnlCustom(\'income\')">+ Add income line</button>' +
+    '<button class="btn-export" style="margin-left:0;background:var(--red)" onclick="window.addPnlCustom(\'cost\')">+ Add cost line</button>' +
+    '<button class="btn-logout" style="margin-left:auto" onclick="window.resetPnlAssump()">Reset all to defaults</button></div>';
+}
+window.togglePnlAssump = function() {
+  const el = document.getElementById('pnl-assump');
+  if (!el.classList.contains('open')) renderPnlAssump();
+  el.classList.toggle('open');
+};
+window.setPnlAssump = function(k, v) {
+  const n = parseFloat(v); pnlA[k] = isNaN(n) ? 0 : n;
+  savePnl(); renderPnL();
+};
+window.addPnlCustom = function(type) {
+  pnlA.custom.push({ id: 'l' + Date.now().toString(36), name: '', type, amount: 0, basis: 'comp', path: '' });
+  savePnl(); renderPnlAssump(); renderPnL();
+  const names = document.querySelectorAll('.pnl-cname'); if (names.length) names[names.length - 1].focus();
+};
+window.setPnlCustom = function(id, field, v) {
+  const l = pnlA.custom.find(x => x.id === id); if (!l) return;
+  l[field] = field === 'amount' ? (parseFloat(v) || 0) : v;
+  savePnl(); renderPnL();
+};
+window.removePnlCustom = function(id) {
+  const l = pnlA.custom.find(x => x.id === id);
+  if (!confirm('Remove the line "' + ((l && l.name) || 'Unnamed') + '"?')) return;
+  pnlA.custom = pnlA.custom.filter(x => x.id !== id);
+  savePnl(); renderPnlAssump(); renderPnL();
+};
+window.resetPnlAssump = function() {
+  if (!confirm('Reset every P&L figure to the original defaults and remove your own lines?')) return;
+  pnlA = pnlFresh();
+  try { localStorage.removeItem('ngl_pnl_assumptions'); } catch(e) {}
+  renderPnlAssump(); renderPnL();
+};
+window.exportPnlCSV = function() {
+  const inc = pnlA.custom.filter(l => l.type === 'income'), cst = pnlA.custom.filter(l => l.type !== 'income');
+  const hdr = ['Date','Competition','Pathway','Venue','Gymnasts','Capacity','Price per gymnast','Entry income','Spectator income', ...inc.map(l => l.name || 'Other income'), 'Total income','Venue','Staff','Elevien','Medals', ...cst.map(l => l.name || 'Other cost'), 'Total costs','Profit'];
+  const lines = pnlLastRows.map(r => [r.c.date, r.c.name, PATHWAYS[compPathway(r.c)].label, r.c.venue||'', r.gymnasts, compMax(r.c), r.price, r.entry, r.spec, ...inc.map(l => r.lines[l.id] || 0), r.income, r.venue, r.staff, r.elev, r.med, ...cst.map(l => r.lines[l.id] || 0), r.costs, r.profit]
+    .map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([[hdr.join(','), ...lines].join('\n')], {type:'text/csv'}));
+  a.download = 'NGL-2027-PnL-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+};
+
 function renderAdminSeason() {
   updateThermometer('admin', c => PATHWAYS[compPathway(c)].countsInSeason);
   const cap = document.getElementById('admin-thermo-caption');
@@ -1268,6 +1475,7 @@ function renderAdminComps() {
 function updateStats() {
   if (!adminLoggedIn) return;
   renderAdminSeason();
+  renderPnL();
   const gyms  = allBookings.reduce((s,b)=>s+(b.spaces||b.gymnasts||0),0);
   const clubs = [...new Set(allBookings.map(b=>b.club))].length;
   const waitCount = allBookings.filter(b=>b.waitlist).length;
