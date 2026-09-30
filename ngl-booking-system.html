@@ -561,8 +561,11 @@
               <select id="ac-apparatus">
                 <option value="">&#8212; Select &#8212;</option>
                 <option value="2piece">2 Piece</option>
+                <option value="3piece">3 Piece</option>
                 <option value="4piece">4 Piece</option>
+                <option value="5piece">5 Piece</option>
                 <option value="6piece">6 Piece</option>
+                <option value="7piece">7 Piece</option>
               </select>
             </div>
           </div>
@@ -669,10 +672,13 @@
         <div class="fg">
           <label>Apparatus</label>
           <select id="edit-apparatus">
-            <option value="">&#8212; Select &#8212;</option>
-            <option value="2piece">2 Piece</option>
-            <option value="4piece">4 Piece</option>
-            <option value="6piece">6 Piece</option>
+                <option value="">&#8212; Select &#8212;</option>
+                <option value="2piece">2 Piece</option>
+                <option value="3piece">3 Piece</option>
+                <option value="4piece">4 Piece</option>
+                <option value="5piece">5 Piece</option>
+                <option value="6piece">6 Piece</option>
+                <option value="7piece">7 Piece</option>
           </select>
         </div>
       </div>
@@ -1176,9 +1182,8 @@ function buildIcons(c) {
   if (c.gender === 'girls')  icons += '<span class="comp-icon gender-girls">&#x2640; Girls</span>';
   if (c.gender === 'boys')   icons += '<span class="comp-icon gender-boys">&#x2642; Boys</span>';
   if (c.gender === 'both')   icons += '<span class="comp-icon gender-both">&#x2640;&#x2642; Mixed</span>';
-  if (c.apparatus === '2piece') icons += '<span class="comp-icon apparatus">&#x2756; 2 Piece</span>';
-  if (c.apparatus === '4piece') icons += '<span class="comp-icon apparatus">&#x2756; 4 Piece</span>';
-  if (c.apparatus === '6piece') icons += '<span class="comp-icon apparatus">&#x2756; 6 Piece</span>';
+  const pieces = /^(\d)piece$/.exec(c.apparatus || '');
+  if (pieces) icons += '<span class="comp-icon apparatus">&#x2756; ' + pieces[1] + ' Piece</span>';
   return icons ? '<div class="comp-icons">' + icons + '</div>' : '';
 }
 
