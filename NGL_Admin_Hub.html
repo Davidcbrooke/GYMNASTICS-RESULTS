@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Admin</title>
+<link rel="apple-touch-icon" href="ngl-admin-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="ngl-admin-icon-192.png">
+<meta name="apple-mobile-web-app-title" content="NGL Admin">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#29235c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --navy:#14254a; --navy-2:#223a70; --red:#c8202f; --gold:#d9a521; --gold-soft:#fbf1d6;
+  --paper:#f4f5f8; --ink:#16213a; --muted:#5d6782; --line:#d6dbe6; --ok:#1f7a4d;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --cond:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0;font-family:var(--body);color:var(--ink);background:var(--paper);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hidden{display:none!important}
+
+/* Sign in */
+#signin{min-height:100%;display:grid;place-items:center;background:var(--navy);padding:24px}
+.card{background:#fff;border-radius:6px;padding:28px;width:min(380px,100%);border-top:6px solid var(--red)}
+.card h1{font-family:var(--cond);font-size:30px;margin:0;color:var(--navy);line-height:1.1}
+.card p{color:var(--muted);margin:4px 0 16px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:4px;background:#fff}
+.err{color:var(--red);font-size:14px;min-height:20px;margin-top:8px}
+.btn{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:4px;padding:9px 14px;font-weight:600;font-size:14px}
+.btn.primary{background:var(--navy);color:#fff}
+.btn.ghost{border-color:var(--line);color:var(--ink)}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn.small{padding:5px 10px;font-size:13px}
+.link{background:none;border:none;color:var(--navy);text-decoration:underline;padding:0;font-size:14px}
+.demo-note{margin-top:14px;font-size:13px;background:var(--gold-soft);padding:8px 10px;border-radius:4px}
+
+/* Top bar */
+header.top{background:var(--navy);color:#fff;border-bottom:4px solid var(--red)}
+.top-inner{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--cond);font-size:22px;margin-right:auto;line-height:1.1}
+.brand small{display:block;font-family:var(--body);font-size:12px;opacity:.75;font-weight:500}
+.who{font-size:13px;opacity:.9}
+.top .btn{border-color:#3a5290;background:var(--navy-2);color:#fff}
+
+main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+.hello{font-family:var(--cond);font-size:34px;color:var(--navy);margin:4px 0 2px;line-height:1.05}
+.sub{color:var(--muted);margin:0 0 20px}
+
+/* Section board: one wide row per section, colour bar = area */
+.sections{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.sec{display:grid;grid-template-columns:8px 1fr;background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;text-align:left;padding:0;width:100%}
+.sec .bar{background:var(--c,var(--navy))}
+.sec .in{padding:14px 16px}
+.sec h2{font-family:var(--cond);font-size:24px;margin:0;color:var(--navy);line-height:1.1}
+.sec p{margin:3px 0 0;color:var(--muted);font-size:14px}
+.sec .state{margin-top:8px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.sec:hover h2{text-decoration:underline}
+.sec[disabled]{cursor:default;opacity:.65}
+.sec[disabled]:hover h2{text-decoration:none}
+
+/* Viewer */
+#viewer{position:fixed;inset:0;background:var(--paper);display:flex;flex-direction:column;z-index:40;padding-top:env(safe-area-inset-top,0px)}
+#viewer .vbar{background:var(--navy);color:#fff;display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:3px solid var(--red)}
+#viewer .vbar strong{font-family:var(--cond);font-size:20px;margin-right:auto}
+#viewer .vbar .btn{border-color:#3a5290;background:var(--navy-2);color:#fff}
+#viewer iframe{flex:1;border:0;width:100%;background:#fff}
+
+/* Team access */
+.panel{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px;margin-top:28px}
+.panel h3{font-family:var(--cond);font-size:22px;margin:0;color:var(--navy)}
+.panel > p{color:var(--muted);margin:2px 0 14px;font-size:14px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:12.5px;color:var(--muted);font-weight:600}
+td.c,th.c{text-align:center}
+td input[type=checkbox]{width:18px;height:18px}
+.owner-tag{font-size:11px;background:var(--gold-soft);color:#7a5a07;padding:1px 6px;border-radius:3px;font-weight:600;margin-left:4px}
+.add{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-top:14px}
+@media (max-width:620px){.add{grid-template-columns:1fr}}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:4px;font-size:14px;z-index:60}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<section id="signin">
+  <form class="card" id="signinForm">
+    <h1>NGL admin</h1>
+    <p>Sign in with your NGL team account.</p>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" required>
+    <label for="pw">Password</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <div class="err" id="err" role="alert"></div>
+    <button class="btn primary" style="width:100%">Sign in</button>
+    <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap"><button type="button" class="link" id="forgot">Forgotten your password?</button><button type="button" class="link hidden" id="setupOwner">First time? Set up the NGL admin account</button></div>
+    <div class="demo-note hidden" id="demoNote">Demo mode: sign in as <b>admin@nationalgymnasticsleague.co.uk</b> (sees everything) or <b>sam@ngl.test</b> (judging and staffing only). Any password works.</div>
+  </form>
+</section>
+
+<div id="hub" class="hidden">
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand">National Gymnastics League<small>Admin</small></div>
+      <span class="who" id="who"></span>
+      <button class="btn small" id="signout">Sign out</button>
+    </div>
+  </header>
+  <main>
+    <div class="hello" id="hello"></div>
+    <p class="sub" id="helloSub"></p>
+    <div class="sections" id="sections"></div>
+
+    <section class="panel hidden" id="team">
+      <h3>Team access</h3>
+      <p>Tick the areas each person can open. Changes apply the next time they load a page.</p>
+      <div class="tablewrap"><table id="teamTable"></table></div>
+      <form class="add" id="addForm">
+        <div><label for="nName">Name</label><input id="nName" required></div>
+        <div><label for="nEmail">Email</label><input id="nEmail" type="email" required></div>
+        <button class="btn primary">Invite</button>
+      </form>
+      <p style="font-size:13px;color:var(--muted);margin:10px 0 0">Invited people get an email to set their own password. Then tick their areas above.</p>
+    </section>
+  </main>
+</div>
+
+<div id="viewer" class="hidden">
+  <div class="vbar">
+    <button class="btn small" id="back">All admin</button>
+    <strong id="vTitle"></strong>
+    <button class="btn small" id="newTab">Open in new tab</button>
+  </div>
+  <iframe id="frame" title="Admin section"></iframe>
+</div>
+
+<script>
+/* ============ CONFIG ============ */
+const CONFIG = {
+  firebase: {
+    apiKey: "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
+    authDomain: "saadi-rotation.firebaseapp.com",
+    databaseURL: "https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "saadi-rotation",
+    storageBucket: "saadi-rotation.firebasestorage.app",
+    messagingSenderId: "1066734803675",
+    appId: "1:1066734803675:web:0188fd601adea7db08cafe",
+    measurementId: "G-K3V2BRCVF6"
+  },
+  ownerEmail: "admin@nationalgymnasticsleague.co.uk",   // the account that owns the hub and manages Team access
+  usersCollection: "ngl_admin_users",   // doc id = lower-case email
+  // Fill in each url with the existing admin page (same GitHub Pages site).
+  // Blank url = shown as "Not linked yet".
+  sections: [
+    {id:"competitions", name:"Competitions",   desc:"2027 competitions, club bookings and the season calendar", colour:"#14254a", url:""},
+    {id:"staffing",     name:"Staffing",       desc:"Who's working each competition, judge requests and staffing sheets", colour:"#c8202f", url:"NGL_Staffing_Admin.html"},
+    {id:"judging",      name:"Judging",        desc:"Judging Pathway registrations, tiers and approvals", colour:"#2c6e9b", url:""},
+    {id:"licensing",    name:"Awards licences",desc:"Awards book licences and club accounts", colour:"#d9a521", url:""},
+    {id:"finance",      name:"Finance",        desc:"Invoices, payments and licence income", colour:"#1f7a4d", url:""}
+  ]
+};
+/* ================================ */
+
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(m){ const t=document.createElement("div"); t.className="toast"; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),2800); }
+
+let LIVE = false, auth = null, db = null, ME = null, TEAM = [];
+const DEMO_USERS = {
+  "admin@nationalgymnasticsleague.co.uk": {name:"Dave Brooke", owner:true, sections:[]},
+  "sam@ngl.test":  {name:"Sam Taylor", owner:false, sections:["judging","staffing"]}
+};
+
+if(CONFIG.firebase.apiKey && window.firebase){
+  firebase.initializeApp(CONFIG.firebase);
+  auth = firebase.auth(); db = firebase.firestore(); LIVE = true;
+  $("#setupOwner").classList.remove("hidden");
+  auth.onAuthStateChanged(u => u ? loadMe(u.email) : showSignin());
+} else {
+  $("#demoNote").classList.remove("hidden");
+  let saved = null; try{ saved = sessionStorage.getItem("ngl_demo_user"); }catch(_){}
+  saved ? loadMe(saved) : showSignin();
+}
+
+function showSignin(){ $("#hub").classList.add("hidden"); $("#viewer").classList.add("hidden"); $("#signin").classList.remove("hidden"); }
+
+$("#signinForm").addEventListener("submit", async e=>{
+  e.preventDefault(); $("#err").textContent = "";
+  const email = $("#email").value.trim().toLowerCase(), pw = $("#pw").value;
+  if(!LIVE){
+    if(!DEMO_USERS[email]){ $("#err").textContent = "That email doesn't have NGL admin access."; return; }
+    try{ sessionStorage.setItem("ngl_demo_user", email); }catch(_){}
+    return loadMe(email);
+  }
+  try{ await auth.signInWithEmailAndPassword(email, pw); }
+  catch(err){ $("#err").textContent = /wrong-password|invalid-credential|user-not-found/.test(err.code) ? "Email or password isn't right." : "Couldn't sign in. Check your connection and try again."; }
+});
+/* First-run: create the owner sign-in. Owner rights only switch on once the
+   address is verified from the admin inbox, so no one else can claim it. */
+$("#setupOwner").addEventListener("click", async ()=>{
+  const email = $("#email").value.trim().toLowerCase(), pw = $("#pw").value;
+  $("#err").textContent = "";
+  if(email !== CONFIG.ownerEmail){ $("#err").textContent = `Enter ${CONFIG.ownerEmail} above to set up the owner account.`; return; }
+  if(pw.length < 8){ $("#err").textContent = "Choose a password of at least 8 characters, then tap this again."; return; }
+  try{
+    const cred = await auth.createUserWithEmailAndPassword(email, pw);
+    await cred.user.sendEmailVerification();
+    toast("Account created. Check the admin inbox for a verification email.");
+  }catch(err){
+    $("#err").textContent = err.code==="auth/email-already-in-use" ? "The owner account already exists. Sign in instead, or use Forgotten your password." : "Couldn't create the account. Try again.";
+  }
+});
+
+$("#forgot").addEventListener("click", async ()=>{
+  const email = $("#email").value.trim();
+  if(!email){ $("#err").textContent = "Enter your email first, then tap this again."; return; }
+  if(!LIVE){ toast("Demo mode: no email sent."); return; }
+  try{ await auth.sendPasswordResetEmail(email); toast("Password reset email sent."); }catch(_){ $("#err").textContent = "Couldn't send a reset email to that address."; }
+});
+$("#signout").addEventListener("click", ()=>{
+  if(LIVE) auth.signOut(); else { try{ sessionStorage.removeItem("ngl_demo_user"); }catch(_){} showSignin(); }
+});
+
+async function loadMe(email){
+  email = email.toLowerCase();
+  let rec = null;
+  if(LIVE){ const d = await db.collection(CONFIG.usersCollection).doc(email).get(); rec = d.exists ? d.data() : null; }
+  else rec = DEMO_USERS[email];
+  if(!rec && LIVE && email === CONFIG.ownerEmail){
+    const u = auth.currentUser; await u.reload();
+    if(!u.emailVerified){
+      $("#err").innerHTML = 'Verify the owner email first: open the link sent to the admin inbox, then sign in again. <button type="button" class="link" id="resend">Resend it</button>';
+      $("#resend").onclick = async ()=>{ try{ await u.sendEmailVerification(); toast("Verification email sent."); }catch(_){ toast("Wait a minute, then try again."); } };
+      showSignin(); return;
+    }
+    rec = {name:"Dave Brooke", owner:true, sections:[]};
+    await db.collection(CONFIG.usersCollection).doc(email).set(rec);
+    toast("Owner account ready");
+  }
+  if(!rec){
+    $("#err").textContent = "Your account is signed in but hasn't been given admin access. Ask Dave to add you.";
+    if(LIVE) auth.signOut(); return showSignin();
+  }
+  ME = {email, ...rec};
+  $("#signin").classList.add("hidden"); $("#hub").classList.remove("hidden");
+  $("#who").textContent = ME.name || email;
+  const hr = new Date().getHours();
+  $("#hello").textContent = `${hr<12?"Morning":hr<18?"Afternoon":"Evening"}, ${(ME.name||"").split(" ")[0] || "there"}`;
+  renderSections();
+  if(ME.owner){ $("#team").classList.remove("hidden"); loadTeam(); } else $("#team").classList.add("hidden");
+  const next = new URLSearchParams(location.search).get("section");
+  if(next && can(next)) openSection(next);
+}
+
+const can = id => ME && (ME.owner || (ME.sections||[]).includes(id));
+
+function renderSections(){
+  const mine = CONFIG.sections.filter(s=>can(s.id));
+  $("#helloSub").textContent = mine.length ? "Choose an area to manage." : "You don't have access to any areas yet. Ask Dave to add you.";
+  $("#sections").innerHTML = mine.map(s=>`
+    <button class="sec" data-sec="${s.id}" style="--c:${s.colour}" ${s.url?"":"disabled"}>
+      <span class="bar"></span>
+      <span class="in"><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p>${s.url?"":'<div class="state">Not linked yet</div>'}</span>
+    </button>`).join("");
+}
+$("#sections").addEventListener("click", e=>{ const b=e.target.closest("[data-sec]"); if(b && !b.disabled) openSection(b.dataset.sec); });
+
+function openSection(id){
+  const s = CONFIG.sections.find(x=>x.id===id); if(!s?.url) return;
+  $("#vTitle").textContent = s.name; $("#frame").src = s.url; $("#viewer").classList.remove("hidden");
+  history.replaceState(null,"","?section="+id);
+}
+$("#back").addEventListener("click", ()=>{ $("#viewer").classList.add("hidden"); $("#frame").src="about:blank"; history.replaceState(null,"",location.pathname); });
+$("#newTab").addEventListener("click", ()=>window.open($("#frame").src,"_blank"));
+
+/* ---------- Team access (owners only) ---------- */
+async function loadTeam(){
+  if(LIVE){ const snap = await db.collection(CONFIG.usersCollection).get(); TEAM = snap.docs.map(d=>({email:d.id,...d.data()})); }
+  else TEAM = Object.entries(DEMO_USERS).map(([email,v])=>({email,...v}));
+  TEAM.sort((a,b)=>(b.owner-a.owner)||String(a.name).localeCompare(b.name));
+  renderTeam();
+}
+function renderTeam(){
+  const secs = CONFIG.sections;
+  $("#teamTable").innerHTML = `<thead><tr><th>Person</th>${secs.map(s=>`<th class="c">${esc(s.name)}</th>`).join("")}<th></th></tr></thead><tbody>` +
+    TEAM.map(u=>`<tr><td><b>${esc(u.name||u.email)}</b>${u.owner?'<span class="owner-tag">Owner</span>':""}<br><span style="font-size:12.5px;color:var(--muted)">${esc(u.email)}</span></td>` +
+      secs.map(s=>`<td class="c"><input type="checkbox" aria-label="${esc((u.name||u.email)+" – "+s.name)}" data-u="${esc(u.email)}" data-s="${s.id}" ${u.owner||(u.sections||[]).includes(s.id)?"checked":""} ${u.owner?"disabled":""}></td>`).join("") +
+      `<td>${u.owner?"":`<button class="btn small danger" data-remove="${esc(u.email)}">Remove</button>`}</td></tr>`).join("") + "</tbody>";
+}
+$("#teamTable").addEventListener("change", async e=>{
+  const cb = e.target; if(!cb.dataset.u) return;
+  const u = TEAM.find(x=>x.email===cb.dataset.u);
+  const set = new Set(u.sections||[]); cb.checked ? set.add(cb.dataset.s) : set.delete(cb.dataset.s);
+  u.sections = [...set];
+  try{ if(LIVE) await db.collection(CONFIG.usersCollection).doc(u.email).update({sections:u.sections}); else DEMO_USERS[u.email].sections = u.sections; toast("Access updated"); }
+  catch(_){ toast("Couldn't save. Try again."); cb.checked = !cb.checked; }
+});
+$("#teamTable").addEventListener("click", async e=>{
+  const email = e.target.dataset?.remove; if(!email) return;
+  if(!confirm(`Remove all admin access for ${email}?`)) return;
+  if(LIVE) await db.collection(CONFIG.usersCollection).doc(email).delete(); else delete DEMO_USERS[email];
+  toast("Access removed"); loadTeam();
+});
+$("#addForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const name = $("#nName").value.trim(), email = $("#nEmail").value.trim().toLowerCase();
+  if(TEAM.some(u=>u.email===email)){ toast("That person is already on the list."); return; }
+  try{
+    if(LIVE){
+      // Create their sign-in on a second app instance so Dave stays signed in, then email a set-password link.
+      const sec = firebase.apps.find(a=>a.name==="invite") || firebase.initializeApp(CONFIG.firebase,"invite");
+      try{ await sec.auth().createUserWithEmailAndPassword(email, crypto.randomUUID()+"Aa1!"); }
+      catch(err){ if(err.code!=="auth/email-already-in-use") throw err; }
+      await sec.auth().signOut();
+      await auth.sendPasswordResetEmail(email);
+      await db.collection(CONFIG.usersCollection).doc(email).set({name, owner:false, sections:[]});
+    } else DEMO_USERS[email] = {name, owner:false, sections:[]};
+    $("#addForm").reset(); toast(`Invite sent to ${name}`); loadTeam();
+  }catch(err){ console.error(err); toast("Couldn't invite them. Check the email address."); }
+});
+</script>
+</body>
+</html>

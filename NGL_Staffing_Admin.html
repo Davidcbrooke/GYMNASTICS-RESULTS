@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Competition Staffing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#14254a; --navy-2:#223a70; --red:#c8202f; --gold:#d9a521; --gold-soft:#fbf1d6;
+  --paper:#f4f5f8; --ink:#16213a; --muted:#5d6782; --line:#d6dbe6; --white:#fff; --ok:#1f7a4d; --ok-soft:#e3f3ea;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --cond:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;font-family:var(--body);color:var(--ink);background:var(--paper);font-size:15px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hidden{display:none!important}
+
+/* Login */
+#login{min-height:100vh;display:grid;place-items:center;background:var(--navy);padding:24px}
+#login form{background:var(--white);padding:28px;border-radius:6px;width:min(360px,100%);border-top:6px solid var(--red)}
+#login h1{font-family:var(--cond);font-size:28px;margin:0 0 4px;color:var(--navy)}
+#login p{margin:0 0 18px;color:var(--muted)}
+#loginErr{color:var(--red);font-size:14px;min-height:20px;margin-top:8px}
+
+/* Header */
+header.top{background:var(--navy);color:var(--white);border-bottom:4px solid var(--red);position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+.top-inner{max-width:1240px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{font-family:var(--cond);font-size:22px;letter-spacing:.3px;margin-right:auto;line-height:1.1}
+.brand small{display:block;font-family:var(--body);font-size:12px;opacity:.75;font-weight:500}
+#compSelect{background:var(--navy-2);color:var(--white);border:1px solid #3a5290;border-radius:4px;padding:8px 10px;max-width:100%;min-width:220px}
+.mode{font-size:12px;padding:3px 8px;border-radius:3px;background:var(--gold);color:var(--navy);font-weight:600}
+.mode.live{background:#2d8a5b;color:#fff}
+#saveState{font-size:12px;opacity:.8;min-width:60px}
+
+main{max-width:1240px;margin:0 auto;padding:16px}
+
+/* Competition strip */
+.comp-strip{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;margin-bottom:14px}
+.comp-strip h2{font-family:var(--cond);font-size:30px;margin:0;line-height:1.05;color:var(--navy)}
+.comp-strip .meta{color:var(--muted);font-size:14px}
+.tally{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+.tally div{background:var(--white);border:1px solid var(--line);border-radius:4px;padding:6px 12px;min-width:96px}
+.tally b{font-family:var(--cond);font-size:22px;display:block;line-height:1}
+.tally span{font-size:12px;color:var(--muted)}
+.tally .ngl{border-left:5px solid var(--navy)}
+.tally .host{border-left:5px solid var(--gold)}
+.tally .req{border-left:5px solid var(--red)}
+
+/* Tabs and toolbar */
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs button{background:none;border:none;padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--navy);border-bottom-color:var(--red)}
+.badge{display:inline-block;background:var(--red);color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;margin-left:4px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:var(--white);border-radius:16px;padding:5px 12px;font-size:13px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.spacer{flex:1}
+.btn{border:1px solid var(--navy);background:var(--white);color:var(--navy);border-radius:4px;padding:8px 14px;font-weight:600;font-size:14px}
+.btn.primary{background:var(--navy);color:#fff}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.ghost{border-color:var(--line);color:var(--ink)}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn.small{padding:5px 10px;font-size:13px}
+
+/* Board */
+.group{margin-bottom:22px}
+.group h3{font-family:var(--cond);font-size:20px;color:var(--navy);margin:0 0 8px}
+.row{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.stations{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.station{background:var(--white);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.station header{background:var(--navy);color:#fff;padding:8px 12px;display:flex;align-items:center;gap:8px}
+.station header strong{font-family:var(--cond);font-size:19px;letter-spacing:.3px}
+.station header span{margin-left:auto;font-size:12px;opacity:.8}
+.station .list{padding:8px;display:grid;gap:6px}
+.station .addj{background:none;border:1px dashed var(--line);border-radius:4px;padding:6px;color:var(--muted);font-size:13px}
+
+.slot{display:block;width:100%;text-align:left;background:var(--white);border:1px solid var(--line);border-left:6px solid var(--navy);border-radius:4px;padding:8px 10px}
+.slot.owner-Host{border-left-color:var(--gold)}
+.slot.st-vacant{border-style:dashed;border-left-style:solid;background:#fafbfd}
+.slot .role{font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.slot .who{font-weight:600;font-size:15px;margin-top:1px}
+.slot.st-vacant .who{color:#98a0b5;font-weight:500}
+.slot .sub{font-size:12.5px;color:var(--muted)}
+.own{font-size:11px;font-weight:600;padding:0 6px;border-radius:3px;background:#e6eaf3;color:var(--navy)}
+.owner-Host .own{background:var(--gold-soft);color:#7a5a07}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-left:auto}
+.st-pending .dot{background:var(--gold)}
+.st-confirmed .dot{background:var(--ok)}
+.src{font-size:11px;color:var(--red);font-weight:600}
+
+/* Requests */
+.req-card{background:var(--white);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:10px;display:grid;gap:6px}
+.req-card .top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.req-card .name{font-weight:600;font-size:16px}
+.req-card .tier{font-size:12px;background:#e6eaf3;color:var(--navy);padding:1px 7px;border-radius:3px;font-weight:600}
+.pill{font-size:12px;padding:1px 8px;border-radius:10px;font-weight:600;margin-left:auto}
+.pill.pending{background:var(--gold-soft);color:#7a5a07}
+.pill.assigned{background:var(--ok-soft);color:var(--ok)}
+.pill.declined{background:#f8e1e3;color:var(--red)}
+.req-card .apps{display:flex;gap:4px;flex-wrap:wrap}
+.req-card .apps span{font-size:12px;border:1px solid var(--line);border-radius:3px;padding:0 6px}
+.req-card .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.empty{background:var(--white);border:1px dashed var(--line);border-radius:6px;padding:28px;text-align:center;color:var(--muted)}
+
+/* Settings */
+.panel{background:var(--white);border:1px solid var(--line);border-radius:6px;padding:16px;margin-bottom:14px;max-width:640px}
+.panel h3{font-family:var(--cond);font-size:20px;margin:0 0 6px;color:var(--navy)}
+.panel p{margin:0 0 12px;color:var(--muted);font-size:14px}
+
+/* Forms */
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:4px;background:#fff}
+textarea{min-height:70px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.two{grid-template-columns:1fr}}
+
+dialog{border:none;border-radius:8px;padding:0;width:min(520px,calc(100% - 24px));max-height:calc(100% - 40px);box-shadow:0 20px 60px rgba(10,20,50,.35)}
+dialog::backdrop{background:rgba(12,22,48,.55)}
+.dlg-head{background:var(--navy);color:#fff;padding:12px 16px;font-family:var(--cond);font-size:20px;border-bottom:3px solid var(--red)}
+.dlg-body{padding:6px 16px 16px;overflow:auto}
+.dlg-foot{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
+.dlg-foot .left{margin-right:auto;display:flex;gap:8px}
+
+.menu{position:relative}
+.menu-list{position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 30px rgba(10,20,50,.15);min-width:210px;z-index:30;padding:4px}
+.menu-list button{display:block;width:100%;text-align:left;border:none;background:none;padding:9px 12px;border-radius:4px}
+.menu-list button:hover{background:var(--paper)}
+.menu-list small{display:block;color:var(--muted);font-size:12px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:4px;font-size:14px;z-index:50}
+
+/* Print sheet */
+#printSheet{display:none}
+@media print{
+  body{background:#fff}
+  #app,#login,dialog,.toast{display:none!important}
+  #printSheet{display:block;font-size:11px;color:#000}
+  #printSheet h1{font-family:var(--cond);font-size:22px;margin:0}
+  #printSheet .pmeta{margin:2px 0 10px}
+  #printSheet table{width:100%;border-collapse:collapse}
+  #printSheet th,#printSheet td{border:1px solid #888;padding:4px 6px;text-align:left;vertical-align:top}
+  #printSheet th{background:#14254a;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printSheet tr.grp td{background:#e6eaf3;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printSheet .sig{width:90px}
+  @page{size:A4 landscape;margin:12mm}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<section id="login">
+  <form id="loginForm">
+    <h1>Competition Staffing</h1>
+    <p>National Gymnastics League admin</p>
+    <label for="pw">Admin password</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <div id="loginErr" role="alert"></div>
+    <button class="btn primary" style="width:100%;margin-top:6px">Sign in</button>
+  </form>
+</section>
+
+<div id="app" class="hidden">
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand">NGL Competition Staffing<small>Who's working each competition</small></div>
+      <select id="compSelect" aria-label="Competition"></select>
+      <span id="mode" class="mode">Demo</span>
+      <span id="saveState" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <main>
+    <div class="comp-strip">
+      <div>
+        <h2 id="compName">Choose a competition</h2>
+        <div class="meta" id="compMeta"></div>
+      </div>
+      <div class="tally">
+        <div class="ngl"><b id="tNgl">0/0</b><span>NGL roles filled</span></div>
+        <div class="host"><b id="tHost">0/0</b><span>Host club roles filled</span></div>
+        <div class="req"><b id="tReq">0</b><span>Judge requests waiting</span></div>
+      </div>
+    </div>
+
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="board">Staffing board</button>
+      <button role="tab" aria-selected="false" data-tab="requests">Judge requests <span class="badge hidden" id="reqBadge"></span></button>
+      <button role="tab" aria-selected="false" data-tab="settings">Set-up</button>
+    </nav>
+
+    <section id="tab-board">
+      <div class="toolbar">
+        <button class="chip" aria-pressed="true" data-filter="all">All</button>
+        <button class="chip" aria-pressed="false" data-filter="NGL">NGL</button>
+        <button class="chip" aria-pressed="false" data-filter="Host">Host club</button>
+        <button class="chip" aria-pressed="false" data-filter="vacant">Vacant</button>
+        <span class="spacer"></span>
+        <button class="btn ghost" id="addRoleBtn">Add role</button>
+        <div class="menu">
+          <button class="btn primary" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export</button>
+          <div class="menu-list hidden" id="exportMenu">
+            <button data-export="xlsx">Excel staffing sheet<small>.xlsx with contacts</small></button>
+            <button data-export="csv">CSV<small>For Sheets or mail merge</small></button>
+            <button data-export="print">Print or save as PDF<small>A4 sign-in sheet for the day</small></button>
+            <button data-export="hostEmail">Copy host club request<small>Lists the roles they still need to fill</small></button>
+          </div>
+        </div>
+      </div>
+      <div id="board"></div>
+    </section>
+
+    <section id="tab-requests" class="hidden">
+      <div class="toolbar">
+        <button class="chip" aria-pressed="true" data-rfilter="open">Waiting</button>
+        <button class="chip" aria-pressed="false" data-rfilter="assigned">Assigned</button>
+        <button class="chip" aria-pressed="false" data-rfilter="declined">Declined</button>
+        <button class="chip" aria-pressed="false" data-rfilter="all">All</button>
+      </div>
+      <div id="requests"></div>
+    </section>
+
+    <section id="tab-settings" class="hidden">
+      <div class="panel">
+        <h3>Apparatus for this competition</h3>
+        <p>Sets which judge and camera stations appear on the board.</p>
+        <div class="two">
+          <div>
+            <label for="discSel">Discipline</label>
+            <select id="discSel">
+              <option value="WAG">Women's (Vault, Bars, Beam, Floor)</option>
+              <option value="MAG">Men's (six pieces)</option>
+              <option value="Both">Women's and men's</option>
+              <option value="Custom">Custom list</option>
+            </select>
+          </div>
+          <div>
+            <label for="jpp">Judges per piece</label>
+            <input id="jpp" type="number" min="1" max="6" value="1">
+          </div>
+        </div>
+        <div id="customWrap" class="hidden">
+          <label for="customApp">Custom apparatus (comma separated)</label>
+          <input id="customApp" placeholder="Floor, Vault, Tumble, Trampette">
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="applyTpl">Apply and add missing roles</button>
+        </div>
+        <p style="margin-top:10px">Applying never removes anyone already assigned. Remove unwanted stations from the board one role at a time.</p>
+      </div>
+      <div class="panel">
+        <h3>Start again</h3>
+        <p>Clears every role and assignment for this competition and rebuilds the standard template. Judge requests stay in the judging app.</p>
+        <button class="btn danger" id="resetBtn">Reset this competition's staffing</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="dlg"><form method="dialog" id="dlgForm"><div class="dlg-head" id="dlgTitle"></div><div class="dlg-body" id="dlgBody"></div><div class="dlg-foot" id="dlgFoot"></div></form></dialog>
+<div id="printSheet"></div>
+
+<script>
+/* ============ CONFIG — fill in from the existing saadi-rotation tools ============ */
+const CONFIG = {
+  firebase: {
+    apiKey: "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
+    authDomain: "saadi-rotation.firebaseapp.com",
+    databaseURL: "https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "saadi-rotation",
+    storageBucket: "saadi-rotation.firebasestorage.app",
+    messagingSenderId: "1066734803675",
+    appId: "1:1066734803675:web:0188fd601adea7db08cafe",
+    measurementId: "G-K3V2BRCVF6"
+  },
+  adminPassword: "ngl2026",
+  collections: {
+    competitions: "ngl_competitions",
+    staffing: "ngl_staffing",            // new: one doc per competition id
+    judgeSignups: "ngl_judge_signups"    // CHECK: the judging app's sign-up collection
+  },
+  // CHECK: field names the judging app uses on each sign-up document
+  signupFields: {
+    competitionId: "competitionId",
+    name: "name",
+    email: "email",
+    phone: "phone",
+    club: "club",
+    tier: "tier",
+    apparatus: "apparatus",
+    status: "status",
+    notes: "notes"
+  }
+};
+/* ================================================================================= */
+
+const APPARATUS = {
+  WAG: ["Vault","Bars","Beam","Floor"],
+  MAG: ["Floor","Pommel","Rings","Vault","Parallel Bars","High Bar"]
+};
+const GROUP_ORDER = {control:0, station:1, floor:2, other:3};
+const GROUP_NAME = {control:"Control desk", station:"Stations", floor:"Floor team", other:"Additional roles"};
+
+let db = null, LIVE = false;
+const S = { comps:[], compId:null, staffing:null, signups:[], filter:"all", rfilter:"open", unsub:null };
+
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Math.random().toString(36).slice(2,10);
+function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2600); }
+
+/* ---------- Demo data ---------- */
+const DEMO_COMPS = [
+  {id:"demo-r1", name:"NGL Round 1", date:"2027-02-07", venue:"Harpenden", discipline:"WAG"},
+  {id:"demo-r2", name:"NGL Round 2", date:"2027-03-14", venue:"Hemel Hempstead", discipline:"WAG"},
+  {id:"demo-mag", name:"NGL Boys League Round 1", date:"2027-03-21", venue:"Stevenage", discipline:"MAG"}
+];
+let DEMO_SIGNUPS = [
+  {id:"s1", competitionId:"demo-r1", name:"Priya Shah", email:"priya@example.com", phone:"07700 900111", club:"Luton Gym Club", tier:"Senior Judge", apparatus:["Beam","Floor"], status:"pending", notes:"Can stay all day"},
+  {id:"s2", competitionId:"demo-r1", name:"Tom Ellis", email:"tom@example.com", phone:"07700 900222", club:"Watford GC", tier:"Junior Judge", apparatus:["Vault"], status:"pending", notes:""},
+  {id:"s3", competitionId:"demo-r1", name:"Megan Hart", email:"megan@example.com", phone:"07700 900333", club:"SAADI", tier:"Apprentice Judge", apparatus:["Bars","Beam"], status:"pending", notes:"Shadowing only"},
+  {id:"s4", competitionId:"demo-r2", name:"Chloe Grant", email:"chloe@example.com", phone:"07700 900444", club:"Herts Academy", tier:"Senior Judge", apparatus:["Floor"], status:"pending", notes:""}
+];
+
+/* ---------- Templates ---------- */
+function mk(role, group, apparatus, owner){
+  return {id:uid(), role, group, apparatus:apparatus||"", owner, name:"", email:"", phone:"", club:"", status:"vacant", source:"", signupId:"", notes:""};
+}
+function apparatusFor(disc, custom){
+  if(disc==="WAG") return APPARATUS.WAG.slice();
+  if(disc==="MAG") return APPARATUS.MAG.slice();
+  if(disc==="Both") return [...APPARATUS.WAG.map(a=>"WAG "+a), ...APPARATUS.MAG.map(a=>"MAG "+a)];
+  return (custom||"").split(",").map(s=>s.trim()).filter(Boolean);
+}
+function templateSlots(st){
+  const out = [
+    mk("Competition Manager","control","","NGL"),
+    mk("Competition Scorer","control","","NGL"),
+    mk("Announcer","control","","Host")
+  ];
+  st.apparatus.forEach(a=>{
+    for(let i=1;i<=st.judgesPerPiece;i++) out.push(mk(st.judgesPerPiece>1?`Judge ${i}`:"Judge","station",a,"Host"));
+    out.push(mk("Camera Operator","station",a,"NGL"));
+  });
+  out.push(mk("Awards Presenter 1","floor","","Host"), mk("Awards Presenter 2","floor","","Host"),
+           mk("Event Runner 1","floor","","Host"), mk("Event Runner 2","floor","","Host"));
+  return out;
+}
+const slotKey = s => s.role+"|"+(s.apparatus||"");
+const slotLabel = s => s.apparatus ? `${s.role}, ${s.apparatus}` : s.role;
+const isJudge = s => /^judge/i.test(s.role);
+
+/* ---------- Signup normalising (judging app → panel) ---------- */
+function normSignup(id, d){
+  const F = CONFIG.signupFields;
+  let app = d[F.apparatus] ?? d.pieces ?? d.specialisms ?? [];
+  if(typeof app==="string") app = app.split(/\s*,\s*/).filter(Boolean);
+  const name = d[F.name] || d.judgeName || d.fullName || [d.firstName,d.lastName].filter(Boolean).join(" ") || "Name missing";
+  return {
+    id, name,
+    email: d[F.email] || "", phone: d[F.phone] || d.mobile || "",
+    club: d[F.club] || d.clubName || "", tier: d[F.tier] || d.level || "",
+    apparatus: app, status: (d[F.status] || "pending").toLowerCase(),
+    notes: d[F.notes] || d.message || "", adminNotes: d.adminNotes || "",
+    assignedRole: d.assignedRole || ""
+  };
+}
+async function updateSignup(id, patch){
+  const F = CONFIG.signupFields, out = {};
+  for(const [k,v] of Object.entries(patch)) out[F[k]||k] = v;
+  if(LIVE){ await db.collection(CONFIG.collections.judgeSignups).doc(id).update(out); }
+  else { const d = DEMO_SIGNUPS.find(x=>x.id===id); Object.assign(d,out); loadSignups(); }
+}
+
+/* ---------- Boot ---------- */
+$("#loginForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  if($("#pw").value !== CONFIG.adminPassword){ $("#loginErr").textContent="That password isn't right. Check with the NGL office."; return; }
+  try{ sessionStorage.setItem("ngl_staff_ok","1"); }catch(_){}
+  start();
+});
+try{ if(sessionStorage.getItem("ngl_staff_ok")==="1") start(); }catch(_){}
+
+async function start(){
+  $("#login").classList.add("hidden"); $("#app").classList.remove("hidden");
+  if(CONFIG.firebase.apiKey && window.firebase){
+    try{ firebase.initializeApp(CONFIG.firebase); db = firebase.firestore(); LIVE = true; }catch(err){ console.error(err); }
+  }
+  $("#mode").textContent = LIVE ? "Live" : "Demo";
+  $("#mode").classList.toggle("live", LIVE);
+  await loadComps();
+}
+
+async function loadComps(){
+  if(LIVE){
+    const snap = await db.collection(CONFIG.collections.competitions).get();
+    S.comps = snap.docs.map(d=>{ const x=d.data(); return {id:d.id, name:x.name||x.title||"Untitled competition", date:x.date||x.compDate||"", venue:x.venue||x.location||"", discipline:x.discipline||""}; })
+      .sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  } else S.comps = DEMO_COMPS;
+  $("#compSelect").innerHTML = S.comps.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.date?" ("+esc(fmtDate(c.date))+")":""}</option>`).join("");
+  if(S.comps.length){ await openComp(S.comps[0].id); }
+  else $("#board").innerHTML = `<div class="empty">No competitions found in ${esc(CONFIG.collections.competitions)}. Add one in the competition admin first.</div>`;
+}
+$("#compSelect").addEventListener("change", e=>openComp(e.target.value));
+
+function fmtDate(d){
+  const dt = d?.toDate ? d.toDate() : new Date(d);
+  return isNaN(dt) ? String(d) : dt.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+}
+const comp = () => S.comps.find(c=>c.id===S.compId) || {};
+
+async function openComp(id){
+  S.compId = id; $("#compSelect").value = id;
+  const c = comp();
+  $("#compName").textContent = c.name;
+  $("#compMeta").textContent = [c.date&&fmtDate(c.date), c.venue].filter(Boolean).join(", ");
+  let st = null;
+  if(LIVE){ const doc = await db.collection(CONFIG.collections.staffing).doc(id).get(); if(doc.exists) st = doc.data(); }
+  else st = DEMO_STAFF[id] || null;
+  if(!st){
+    const disc = /mag|boys|men/i.test(c.discipline||c.name) ? "MAG" : "WAG";
+    st = {compId:id, compName:c.name, discipline:disc, customApparatus:"", judgesPerPiece:1, apparatus:apparatusFor(disc)};
+    st.slots = templateSlots(st);
+    S.staffing = st; save(true);
+  }
+  S.staffing = st;
+  syncSettings();
+  loadSignups();
+  render();
+}
+const DEMO_STAFF = {};
+
+function loadSignups(){
+  if(S.unsub){ S.unsub(); S.unsub=null; }
+  const F = CONFIG.signupFields;
+  if(LIVE){
+    S.unsub = db.collection(CONFIG.collections.judgeSignups).where(F.competitionId,"==",S.compId)
+      .onSnapshot(snap=>{ S.signups = snap.docs.map(d=>normSignup(d.id,d.data())); render(); },
+                  err=>{ console.error(err); toast("Couldn't load judge requests. Check the collection name in CONFIG."); });
+  } else {
+    S.signups = DEMO_SIGNUPS.filter(d=>d.competitionId===S.compId).map(d=>normSignup(d.id,d));
+    render();
+  }
+}
+
+let saveTimer = null;
+function save(now){
+  S.staffing.updatedAt = new Date().toISOString();
+  $("#saveState").textContent = "Saving…";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    try{
+      if(LIVE) await db.collection(CONFIG.collections.staffing).doc(S.compId).set(S.staffing);
+      else DEMO_STAFF[S.compId] = S.staffing;
+      $("#saveState").textContent = "Saved";
+    }catch(err){ console.error(err); $("#saveState").textContent = "Not saved"; toast("Save failed. Check your connection and try again."); }
+  }, now?0:400);
+}
+
+/* ---------- Render ---------- */
+function render(){
+  if(!S.staffing) return;
+  const slots = S.staffing.slots;
+  const count = o => { const a=slots.filter(s=>s.owner===o); return `${a.filter(s=>s.status!=="vacant").length}/${a.length}`; };
+  $("#tNgl").textContent = count("NGL"); $("#tHost").textContent = count("Host");
+  const waiting = S.signups.filter(s=>s.status==="pending").length;
+  $("#tReq").textContent = waiting;
+  $("#reqBadge").textContent = waiting; $("#reqBadge").classList.toggle("hidden", !waiting);
+  renderBoard(); renderRequests();
+}
+
+function pass(s){
+  if(S.filter==="all") return true;
+  if(S.filter==="vacant") return s.status==="vacant";
+  return s.owner===S.filter;
+}
+function slotHTML(s){
+  const who = s.status==="vacant" ? "Vacant" : esc(s.name);
+  const sub = s.status==="vacant" ? "" : [s.club, s.status==="pending"?"Awaiting confirmation":""].filter(Boolean).map(esc).join(", ");
+  return `<button type="button" class="slot owner-${s.owner} st-${s.status}" data-slot="${s.id}">
+    <div class="role">${esc(s.role)} <span class="own">${s.owner==="NGL"?"NGL":"Host"}</span>${s.source==="judging-app"?'<span class="src">Judging app</span>':""}<span class="dot"></span></div>
+    <div class="who">${who}</div>${sub?`<div class="sub">${sub}</div>`:""}
+  </button>`;
+}
+function renderBoard(){
+  const slots = S.staffing.slots, vis = slots.filter(pass);
+  let html = "";
+  const simple = g => {
+    const a = vis.filter(s=>s.group===g);
+    if(!a.length) return "";
+    return `<div class="group"><h3>${GROUP_NAME[g]}</h3><div class="row">${a.map(slotHTML).join("")}</div></div>`;
+  };
+  html += simple("control");
+  const apps = [...new Set([...S.staffing.apparatus, ...slots.filter(s=>s.group==="station").map(s=>s.apparatus)])];
+  const stations = apps.map(a=>{
+    const all = slots.filter(s=>s.group==="station"&&s.apparatus===a);
+    const v = all.filter(pass).sort((x,y)=>(isJudge(y)-isJudge(x))||x.role.localeCompare(y.role));
+    if(!v.length && S.filter!=="all") return "";
+    const filled = all.filter(s=>s.status!=="vacant").length;
+    return `<div class="station"><header><strong>${esc(a)}</strong><span>${filled}/${all.length} filled</span></header>
+      <div class="list">${v.map(slotHTML).join("")}<button type="button" class="addj" data-addjudge="${esc(a)}">Add another judge</button></div></div>`;
+  }).join("");
+  if(stations) html += `<div class="group"><h3>${GROUP_NAME.station}</h3><div class="stations">${stations}</div></div>`;
+  html += simple("floor") + simple("other");
+  $("#board").innerHTML = html || `<div class="empty">Nothing matches this filter.</div>`;
+}
+
+function renderRequests(){
+  const f = S.rfilter;
+  const list = S.signups.filter(s => f==="all" || (f==="open" ? s.status==="pending" : s.status===f));
+  if(!S.signups.length){ $("#requests").innerHTML = `<div class="empty">No judges have applied for this competition through the judging app yet.</div>`; return; }
+  if(!list.length){ $("#requests").innerHTML = `<div class="empty">Nothing in this list.</div>`; return; }
+  $("#requests").innerHTML = list.map(s=>`
+    <div class="req-card">
+      <div class="top"><span class="name">${esc(s.name)}</span>${s.tier?`<span class="tier">${esc(s.tier)}</span>`:""}<span class="pill ${esc(s.status)}">${esc(cap(s.status))}</span></div>
+      <div class="sub" style="color:var(--muted);font-size:13px">${[s.club,s.email,s.phone].filter(Boolean).map(esc).join(", ")}</div>
+      ${s.apparatus.length?`<div class="apps">${s.apparatus.map(a=>`<span>${esc(a)}</span>`).join("")}</div>`:""}
+      ${s.notes?`<div style="font-size:14px">${esc(s.notes)}</div>`:""}
+      ${s.assignedRole?`<div style="font-size:13px;color:var(--ok);font-weight:600">Assigned: ${esc(s.assignedRole)}</div>`:""}
+      <div class="actions">
+        ${s.status!=="assigned"?`<button class="btn small primary" data-assign="${s.id}">Assign to a role</button>`:""}
+        <button class="btn small ghost" data-editreq="${s.id}">Edit</button>
+        ${s.status==="pending"?`<button class="btn small danger" data-decline="${s.id}">Decline</button>`:""}
+        ${s.status==="declined"?`<button class="btn small ghost" data-reopen="${s.id}">Move back to waiting</button>`:""}
+      </div>
+    </div>`).join("");
+}
+const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+
+/* ---------- Tabs & filters ---------- */
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected", x===b));
+  ["board","requests","settings"].forEach(t=>$("#tab-"+t).classList.toggle("hidden", t!==b.dataset.tab));
+}));
+document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{
+  S.filter=b.dataset.filter; document.querySelectorAll("[data-filter]").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderBoard();
+}));
+document.querySelectorAll("[data-rfilter]").forEach(b=>b.addEventListener("click",()=>{
+  S.rfilter=b.dataset.rfilter; document.querySelectorAll("[data-rfilter]").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderRequests();
+}));
+
+/* ---------- Dialog helper ---------- */
+function openDlg(title, body, buttons){
+  $("#dlgTitle").textContent = title; $("#dlgBody").innerHTML = body; $("#dlgFoot").innerHTML = "";
+  const left = document.createElement("div"); left.className="left"; $("#dlgFoot").appendChild(left);
+  buttons.forEach(b=>{
+    const el = document.createElement("button"); el.type="button"; el.className="btn "+(b.cls||"ghost"); el.textContent=b.label;
+    el.onclick = async ()=>{ const r = b.onClick ? await b.onClick() : true; if(r!==false) $("#dlg").close(); };
+    (b.left?left:$("#dlgFoot")).appendChild(el);
+  });
+  $("#dlg").showModal();
+}
+const val = id => document.getElementById(id)?.value.trim() ?? "";
+
+/* ---------- Slot editing ---------- */
+$("#board").addEventListener("click", e=>{
+  const sb = e.target.closest("[data-slot]"); if(sb) return editSlot(sb.dataset.slot);
+  const aj = e.target.closest("[data-addjudge]");
+  if(aj){
+    const a = aj.dataset.addjudge, n = S.staffing.slots.filter(s=>s.group==="station"&&s.apparatus===a&&isJudge(s)).length;
+    S.staffing.slots.filter(s=>s.group==="station"&&s.apparatus===a&&s.role==="Judge").forEach(s=>s.role="Judge 1");
+    S.staffing.slots.push(mk(`Judge ${n+1}`,"station",a,"Host")); save(); render();
+  }
+});
+
+function editSlot(id){
+  const s = S.staffing.slots.find(x=>x.id===id);
+  openDlg(slotLabel(s), `
+    <div class="two">
+      <div><label for="f_role">Role</label><input id="f_role" value="${esc(s.role)}"></div>
+      <div><label for="f_owner">Responsibility</label><select id="f_owner"><option value="NGL">NGL</option><option value="Host">Host club</option></select></div>
+    </div>
+    <label for="f_name">Name</label><input id="f_name" value="${esc(s.name)}" placeholder="Leave blank if vacant">
+    <div class="two">
+      <div><label for="f_phone">Mobile</label><input id="f_phone" type="tel" value="${esc(s.phone)}"></div>
+      <div><label for="f_email">Email</label><input id="f_email" type="email" value="${esc(s.email)}"></div>
+    </div>
+    <div class="two">
+      <div><label for="f_club">Club</label><input id="f_club" value="${esc(s.club)}"></div>
+      <div><label for="f_status">Status</label><select id="f_status"><option value="pending">Awaiting confirmation</option><option value="confirmed">Confirmed</option></select></div>
+    </div>
+    <label for="f_notes">Notes</label><textarea id="f_notes">${esc(s.notes)}</textarea>
+    ${s.source==="judging-app"?`<p style="font-size:13px;color:var(--muted);margin-top:8px">Filled from the judging app. Clearing this role sends the judge back to waiting.</p>`:""}`,
+  [
+    {label:"Remove role", cls:"danger", left:true, onClick:()=>{ if(!confirm(`Remove ${slotLabel(s)} from this competition?`)) return false; releaseSignup(s); S.staffing.slots = S.staffing.slots.filter(x=>x!==s); save(); render(); }},
+    {label:"Clear person", left:true, onClick:()=>{ releaseSignup(s); Object.assign(s,{name:"",email:"",phone:"",club:"",status:"vacant",source:"",signupId:""}); save(); render(); }},
+    {label:"Cancel"},
+    {label:"Save", cls:"primary", onClick:()=>{
+      const name = val("f_name");
+      Object.assign(s,{role:val("f_role")||s.role, owner:$("#f_owner").value, name, phone:val("f_phone"), email:val("f_email"), club:val("f_club"), notes:val("f_notes"),
+        status: name ? $("#f_status").value : "vacant"});
+      if(!name){ releaseSignup(s); s.source=""; s.signupId=""; }
+      save(); render(); toast("Saved");
+    }}
+  ]);
+  $("#f_owner").value = s.owner; $("#f_status").value = s.status==="vacant"?"confirmed":s.status;
+}
+function releaseSignup(s){
+  if(s.signupId && S.signups.some(x=>x.id===s.signupId)) updateSignup(s.signupId,{status:"pending",assignedRole:""}).catch(console.error);
+}
+
+$("#addRoleBtn").addEventListener("click", ()=>{
+  const apps = S.staffing.apparatus;
+  openDlg("Add a role", `
+    <label for="n_role">Role name</label><input id="n_role" placeholder="e.g. Floor Manager, First Aider, Music">
+    <div class="two">
+      <div><label for="n_group">Where it sits</label><select id="n_group">
+        <option value="other">Additional roles</option><option value="control">Control desk</option><option value="floor">Floor team</option><option value="station">At an apparatus</option></select></div>
+      <div><label for="n_owner">Responsibility</label><select id="n_owner"><option value="Host">Host club</option><option value="NGL">NGL</option></select></div>
+    </div>
+    <div id="n_appWrap" class="hidden"><label for="n_app">Apparatus</label><select id="n_app">${apps.map(a=>`<option>${esc(a)}</option>`).join("")}</select></div>
+    <label for="n_qty">How many</label><input id="n_qty" type="number" min="1" max="10" value="1">`,
+  [{label:"Cancel"},{label:"Add role", cls:"primary", onClick:()=>{
+    const role = val("n_role"); if(!role){ toast("Give the role a name first."); return false; }
+    const g = $("#n_group").value, q = Math.max(1, +$("#n_qty").value||1);
+    for(let i=1;i<=q;i++) S.staffing.slots.push(mk(q>1?`${role} ${i}`:role, g, g==="station"?$("#n_app").value:"", $("#n_owner").value));
+    save(); render(); toast(q>1?`Added ${q} roles`:"Role added");
+  }}]);
+  $("#n_group").addEventListener("change", e=>$("#n_appWrap").classList.toggle("hidden", e.target.value!=="station"));
+});
+
+/* ---------- Judge requests ---------- */
+$("#requests").addEventListener("click", async e=>{
+  const t = e.target.closest("button"); if(!t) return;
+  const id = t.dataset.assign||t.dataset.editreq||t.dataset.decline||t.dataset.reopen;
+  const r = S.signups.find(x=>x.id===id); if(!r) return;
+  if(t.dataset.assign) assignReq(r);
+  if(t.dataset.editreq) editReq(r);
+  if(t.dataset.decline){ if(confirm(`Decline ${r.name} for this competition?`)){ await updateSignup(r.id,{status:"declined"}); toast("Declined"); } }
+  if(t.dataset.reopen){ await updateSignup(r.id,{status:"pending"}); toast("Moved back to waiting"); }
+});
+
+function assignReq(r){
+  const judges = S.staffing.slots.filter(s=>isJudge(s));
+  const pref = s => r.apparatus.some(a=>s.apparatus.toLowerCase().includes(a.toLowerCase()));
+  judges.sort((a,b)=>((a.status!=="vacant")-(b.status!=="vacant")) || (pref(b)-pref(a)) || a.apparatus.localeCompare(b.apparatus));
+  const others = S.staffing.slots.filter(s=>!isJudge(s) && s.status==="vacant");
+  const opt = s => `<option value="${s.id}">${esc(slotLabel(s))}${s.status!=="vacant"?" (currently "+esc(s.name)+")":""}${pref(s)?" ★":""}</option>`;
+  openDlg(`Assign ${r.name}`, `
+    <p style="margin:10px 0 0;color:var(--muted);font-size:14px">${r.apparatus.length?"Asked for "+esc(r.apparatus.join(", "))+". Matching pieces are starred.":""}</p>
+    <label for="a_slot">Role</label>
+    <select id="a_slot"><optgroup label="Judging">${judges.map(opt).join("")}</optgroup>${others.length?`<optgroup label="Other vacant roles">${others.map(opt).join("")}</optgroup>`:""}</select>
+    <label for="a_status">Status</label><select id="a_status"><option value="confirmed">Confirmed</option><option value="pending">Awaiting confirmation</option></select>`,
+  [{label:"Cancel"},{label:"Assign", cls:"primary", onClick:async ()=>{
+    const s = S.staffing.slots.find(x=>x.id===$("#a_slot").value);
+    if(s.status!=="vacant" && !confirm(`${s.name} is already in ${slotLabel(s)}. Replace them?`)) return false;
+    releaseSignup(s);
+    Object.assign(s,{name:r.name,email:r.email,phone:r.phone,club:r.club,status:$("#a_status").value,source:"judging-app",signupId:r.id});
+    save(); await updateSignup(r.id,{status:"assigned",assignedRole:slotLabel(s)}).catch(err=>{console.error(err);toast("Role saved, but the judging app wasn't updated.");});
+    render(); toast(`${r.name} assigned`);
+  }}]);
+}
+
+function editReq(r){
+  openDlg(`Edit request`, `
+    <label for="r_name">Name</label><input id="r_name" value="${esc(r.name)}">
+    <div class="two">
+      <div><label for="r_phone">Mobile</label><input id="r_phone" value="${esc(r.phone)}"></div>
+      <div><label for="r_email">Email</label><input id="r_email" value="${esc(r.email)}"></div>
+    </div>
+    <div class="two">
+      <div><label for="r_club">Club</label><input id="r_club" value="${esc(r.club)}"></div>
+      <div><label for="r_status">Status</label><select id="r_status"><option value="pending">Waiting</option><option value="assigned">Assigned</option><option value="declined">Declined</option></select></div>
+    </div>
+    <label for="r_app">Apparatus (comma separated)</label><input id="r_app" value="${esc(r.apparatus.join(", "))}">
+    <label for="r_admin">Admin notes</label><textarea id="r_admin" placeholder="Only seen by the NGL team">${esc(r.adminNotes)}</textarea>
+    <p style="font-size:13px;color:var(--muted);margin-top:8px">Changes save back to the judging app. Tier${r.tier?" ("+esc(r.tier)+")":""} is managed there.</p>`,
+  [{label:"Cancel"},{label:"Save changes", cls:"primary", onClick:async ()=>{
+    const patch = {name:val("r_name"), phone:val("r_phone"), email:val("r_email"), club:val("r_club"), status:$("#r_status").value,
+      apparatus: val("r_app").split(",").map(x=>x.trim()).filter(Boolean), adminNotes: val("r_admin")};
+    try{ await updateSignup(r.id, patch); }catch(err){ console.error(err); toast("Couldn't save to the judging app."); return false; }
+    const s = S.staffing.slots.find(x=>x.signupId===r.id);
+    if(s){ Object.assign(s,{name:patch.name,phone:patch.phone,email:patch.email,club:patch.club}); save(); render(); }
+    toast("Saved");
+  }}]);
+  $("#r_status").value = ["pending","assigned","declined"].includes(r.status) ? r.status : "pending";
+}
+
+/* ---------- Set-up ---------- */
+function syncSettings(){
+  $("#discSel").value = S.staffing.discipline; $("#jpp").value = S.staffing.judgesPerPiece;
+  $("#customApp").value = S.staffing.customApparatus||""; $("#customWrap").classList.toggle("hidden", S.staffing.discipline!=="Custom");
+}
+$("#discSel").addEventListener("change", e=>$("#customWrap").classList.toggle("hidden", e.target.value!=="Custom"));
+$("#applyTpl").addEventListener("click", ()=>{
+  const st = S.staffing;
+  st.discipline = $("#discSel").value; st.customApparatus = val("customApp");
+  st.judgesPerPiece = Math.min(6, Math.max(1, +$("#jpp").value||1));
+  st.apparatus = apparatusFor(st.discipline, st.customApparatus);
+  if(!st.apparatus.length){ toast("Add at least one apparatus."); return; }
+  const have = new Set(st.slots.map(slotKey)); let added = 0;
+  templateSlots(st).forEach(s=>{
+    if(s.role==="Judge 1" && have.has("Judge|"+s.apparatus)) return;
+    if(!have.has(slotKey(s))){ st.slots.push(s); added++; }
+  });
+  save(); render(); toast(added ? `Added ${added} role${added>1?"s":""}` : "Nothing missing");
+});
+$("#resetBtn").addEventListener("click", ()=>{
+  if(!confirm("Clear every role and assignment for this competition?")) return;
+  S.staffing.slots.forEach(releaseSignup);
+  S.staffing.apparatus = apparatusFor(S.staffing.discipline, S.staffing.customApparatus);
+  S.staffing.slots = templateSlots(S.staffing); save(); render(); toast("Staffing reset");
+});
+
+/* ---------- Export ---------- */
+$("#exportBtn").addEventListener("click", e=>{
+  e.stopPropagation(); const m=$("#exportMenu"); m.classList.toggle("hidden"); $("#exportBtn").setAttribute("aria-expanded", !m.classList.contains("hidden"));
+});
+document.addEventListener("click", ()=>{ $("#exportMenu").classList.add("hidden"); $("#exportBtn").setAttribute("aria-expanded","false"); });
+$("#exportMenu").addEventListener("click", e=>{
+  const b = e.target.closest("[data-export]"); if(!b) return;
+  ({xlsx:exportXlsx, csv:exportCsv, print:exportPrint, hostEmail:copyHostRequest})[b.dataset.export]();
+});
+
+function sortedSlots(){
+  const ord = S.staffing.apparatus;
+  return S.staffing.slots.slice().sort((a,b)=>
+    (GROUP_ORDER[a.group]-GROUP_ORDER[b.group]) ||
+    ((ord.indexOf(a.apparatus)+99)%(99+ord.length) - (ord.indexOf(b.apparatus)+99)%(99+ord.length)) ||
+    (isJudge(b)-isJudge(a)) || a.role.localeCompare(b.role, undefined, {numeric:true}));
+}
+const HEAD = ["Area","Apparatus","Role","Responsibility","Name","Club","Mobile","Email","Status","Source","Notes"];
+function rows(){
+  return sortedSlots().map(s=>[GROUP_NAME[s.group], s.apparatus, s.role, s.owner==="NGL"?"NGL":"Host club", s.name, s.club, s.phone, s.email,
+    s.status==="vacant"?"Vacant":s.status==="pending"?"Awaiting confirmation":"Confirmed", s.source==="judging-app"?"Judging app":"", s.notes]);
+}
+const fileBase = () => `NGL_Staffing_${(comp().name||"Competition").replace(/[^\w]+/g,"_")}`;
+
+function download(blob, name){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+function exportCsv(){
+  const q = v => `"${String(v??"").replace(/"/g,'""')}"`;
+  const csv = [HEAD, ...rows()].map(r=>r.map(q).join(",")).join("\r\n");
+  download(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}), fileBase()+".csv"); toast("CSV downloaded");
+}
+function exportXlsx(){
+  if(!window.XLSX){ toast("Excel export didn't load. Use CSV instead."); return; }
+  const c = comp();
+  const aoa = [[c.name],[[c.date&&fmtDate(c.date), c.venue].filter(Boolean).join(", ")],[`Exported ${new Date().toLocaleString("en-GB")}`],[],HEAD,...rows()];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = [14,14,22,13,22,20,15,28,20,12,30].map(w=>({wch:w}));
+  ws["!autofilter"] = {ref:`A5:K${aoa.length}`};
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Staffing");
+  XLSX.writeFile(wb, fileBase()+".xlsx"); toast("Excel sheet downloaded");
+}
+function exportPrint(){
+  const c = comp(); let last = "";
+  const body = sortedSlots().map(s=>{
+    const area = s.group==="station" ? s.apparatus : GROUP_NAME[s.group];
+    const head = area!==last ? `<tr class="grp"><td colspan="7">${esc(area)}</td></tr>` : ""; last = area;
+    return head+`<tr><td>${esc(s.role)}</td><td>${s.owner==="NGL"?"NGL":"Host"}</td><td>${esc(s.name)||"<em>Vacant</em>"}</td><td>${esc(s.club)}</td><td>${esc(s.phone)}</td><td>${esc(s.notes)}</td><td class="sig"></td></tr>`;
+  }).join("");
+  $("#printSheet").innerHTML = `<h1>${esc(c.name)} staffing sheet</h1><div class="pmeta">${esc([c.date&&fmtDate(c.date), c.venue].filter(Boolean).join(", "))}</div>
+    <table><thead><tr><th>Role</th><th>By</th><th>Name</th><th>Club</th><th>Mobile</th><th>Notes</th><th>Signed in</th></tr></thead><tbody>${body}</tbody></table>`;
+  window.print();
+}
+async function copyHostRequest(){
+  const c = comp(), need = sortedSlots().filter(s=>s.owner==="Host" && s.status==="vacant");
+  if(!need.length){ toast("Every host club role is filled."); return; }
+  const text = `Hi,\n\nFor ${c.name}${c.date?" on "+fmtDate(c.date):""}${c.venue?" at "+c.venue:""}, could you send us names and mobile numbers for the following roles:\n\n` +
+    need.map(s=>"- "+slotLabel(s)).join("\n") + `\n\nThe NGL will provide the Competition Manager, Scorer and Camera Operators.\n\nThanks,\nNational Gymnastics League`;
+  try{ await navigator.clipboard.writeText(text); toast("Request copied. Paste it into an email."); }
+  catch(_){ openDlg("Host club request", `<textarea style="min-height:240px;margin-top:10px">${esc(text)}</textarea>`, [{label:"Close", cls:"primary"}]); }
+}
+</script>
+</body>
+</html>
