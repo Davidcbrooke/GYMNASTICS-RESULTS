@@ -56,7 +56,13 @@ header.top{background:var(--navy);color:var(--white);border-bottom:4px solid var
 .ov-comp .counts{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .ov-comp.all-clear > header{border-left:6px solid var(--ok)}
 .ov-comp.gaps > header{border-left:6px solid var(--red)}
-.ov-roles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:0 18px;padding:6px 14px 10px}
+.ov-body{padding:4px 14px 12px}
+.ov-group{margin-top:10px}
+.ov-group h4{font-family:var(--cond);font-size:17px;color:var(--navy);margin:0 0 2px;display:flex;align-items:baseline;gap:8px;border-bottom:2px solid var(--line);padding-bottom:3px}
+.ov-group h4 small{font-family:var(--body);font-size:12.5px;font-weight:600;color:var(--muted)}
+.ov-group h4 small.gap{color:var(--red)}
+.ov-roles{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0 18px}
+.ov-add{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
 .ov-row{display:flex;align-items:center;gap:10px;padding:7px 4px;border:none;border-bottom:1px solid #eef0f5;background:none;text-align:left;width:100%;font-size:14px}
 .ov-row:hover{background:var(--paper)}
 .ov-row .r{color:var(--muted);font-size:12.5px;display:block;line-height:1.2}
@@ -254,7 +260,7 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
         <button class="chip" aria-pressed="false" data-filter="Host">Host club</button>
         <button class="chip" aria-pressed="false" data-filter="vacant">Vacant</button>
         <span class="spacer"></span>
-        <button class="btn ghost" id="addRoleBtn">Add role</button>
+        <button class="btn ghost" id="addRoleBtn">Add staff</button>
         <div class="menu">
           <button class="btn primary" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export</button>
           <div class="menu-list hidden" id="exportMenu">
@@ -367,7 +373,30 @@ const APPARATUS = {
   MAG: ["Floor","Pommel","Rings","Vault","Parallel Bars","High Bar"]
 };
 const GROUP_ORDER = {control:0, station:1, floor:2, other:3};
-const GROUP_NAME = {control:"Control desk", station:"Stations", floor:"Floor team", other:"Additional roles"};
+const GROUP_NAME = {control:"Control desk", station:"Stations", floor:"Floor team", other:"Additional staff"};
+// How roles are grouped on the all-competitions overview
+const CATS = [
+  ["run",    "Running the competition"],
+  ["judge",  "Judges"],
+  ["camera", "Camera operators"],
+  ["app",    "Apparatus staff"],
+  ["floor",  "Awards and runners"],
+  ["other",  "Additional staff"]
+];
+function catOf(s){
+  if(s.group==="control") return "run";
+  if(s.group==="station") return isJudge(s) ? "judge" : /camera/i.test(s.role) ? "camera" : "app";
+  if(s.group==="floor") return "floor";
+  return "other";
+}
+// Inside the Judges and Camera groups the apparatus is the useful label
+function ovLabel(s){
+  const k = catOf(s);
+  if(k==="judge")  return s.role==="Judge" ? s.apparatus : `${s.apparatus} (${s.role})`;
+  if(k==="camera") return s.role==="Camera Operator" ? s.apparatus : `${s.apparatus} (${s.role})`;
+  return slotLabel(s);
+}
+const STAFF_PRESETS = ["First Aider","Floor Manager","Music Operator","Photographer","Warm-up Steward","Reception / Door","Results Runner","Volunteer"];
 
 let db = null, LIVE = false;
 const S = { comps:[], compId:null, staffing:null, signups:[], filter:"all", rfilter:"open", unsub:null, all:{}, ovFilter:"all", pendingByComp:{} };
@@ -513,15 +542,25 @@ function renderOverview(){
     const vac = slots.filter(s=>s.status==="vacant").length, pend = slots.filter(s=>s.status==="pending").length, na = slots.filter(s=>s.status==="na").length, conf = slots.length-vac-pend-na;
     const req = S.pendingByComp[c.id]||0;
     const show = slots.filter(s => f==="all" ? true : f==="gaps" ? (s.status==="vacant"||s.status==="pending") : s.owner===f);
-    const rows = show.map(s=>`<button type="button" class="ov-row ${s.status==="vacant"?"vac":s.status==="na"?"na":""}" data-comp="${esc(c.id)}" data-slot="${s.id}">
+    const rowHTML = s=>`<button type="button" class="ov-row ${s.status==="vacant"?"vac":s.status==="na"?"na":""}" data-comp="${esc(c.id)}" data-slot="${s.id}">
         <i class="fl ${flagOf(s)}" aria-label="${s.status}"></i>
-        <span><span class="r">${esc(slotLabel(s))}</span><span class="n">${s.status==="vacant"?"Vacant":s.status==="na"?"Not needed":esc(s.name)}</span></span>
-        <span class="o ${s.owner==="Host"?"h":""}">${s.owner==="NGL"?"NGL":"Host"}</span></button>`).join("");
+        <span><span class="r">${esc(ovLabel(s))}</span><span class="n">${s.status==="vacant"?"Vacant":s.status==="na"?"Not needed":esc(s.name)}</span></span>
+        <span class="o ${s.owner==="Host"?"h":""}">${s.owner==="NGL"?"NGL":"Host"}</span></button>`;
+    const rows = CATS.map(([k,title])=>{
+      const inCat = slots.filter(s=>catOf(s)===k), vis = show.filter(s=>catOf(s)===k);
+      if(!vis.length) return "";
+      const open = inCat.filter(s=>s.status==="vacant"||s.status==="pending").length;
+      const done = inCat.length - open;
+      return `<div class="ov-group"><h4>${title} <small class="${open?"gap":""}">${done}/${inCat.length} sorted</small></h4><div class="ov-roles">${vis.map(rowHTML).join("")}</div></div>`;
+    }).join("");
     return `<section class="ov-comp ${vac?"gaps":"all-clear"}">
       <header><div><h3>${esc(c.name)}</h3><div class="when">${esc([c.date&&fmtDate(c.date), c.venue].filter(Boolean).join(", "))}</div></div>
         <div class="counts">${vac?`<span class="flag red">${vac} vacant</span>`:""}${pend?`<span class="flag amber">${pend} awaiting</span>`:""}<span class="flag green">${conf} confirmed</span>${na?`<span class="flag green">${na} not needed</span>`:""}${req?`<span class="flag red">${req} judge request${req>1?"s":""}</span>`:""}</div>
         <button class="btn small primary" data-open="${esc(c.id)}">Open</button></header>
-      ${rows?`<div class="ov-roles">${rows}</div>`:`<div class="ov-empty">${f==="gaps"?"Fully staffed":"No roles match this filter"}</div>`}
+      <div class="ov-body">
+        ${rows || `<div class="ov-empty">${f==="gaps"?"Fully staffed":"No roles match this filter"}</div>`}
+        <div class="ov-add"><button type="button" class="btn small ghost" data-addstaff="${esc(c.id)}">Add staff</button></div>
+      </div>
     </section>`;
   }).join("");
 }
@@ -530,6 +569,7 @@ document.querySelectorAll("[data-ov]").forEach(b=>b.addEventListener("click",()=
 }));
 $("#ovList").addEventListener("click", e=>{
   const o = e.target.closest("[data-open]"); if(o) return openComp(o.dataset.open);
+  const a = e.target.closest("[data-addstaff]"); if(a){ useComp(a.dataset.addstaff); return addStaffDlg(); }
   const r = e.target.closest("[data-slot]");
   if(r){ useComp(r.dataset.comp); editSlot(r.dataset.slot); }
 });
@@ -737,25 +777,32 @@ function releaseSignup(s){
   if(s.signupId && S.signups.some(x=>x.id===s.signupId)) updateSignup(s.signupId,{status:"pending",assignedRole:""}).catch(console.error);
 }
 
-$("#addRoleBtn").addEventListener("click", ()=>{
+$("#addRoleBtn").addEventListener("click", ()=>addStaffDlg());
+function addStaffDlg(){
   const apps = S.staffing.apparatus;
-  openDlg("Add a role", `
-    <label for="n_role">Role name</label><input id="n_role" placeholder="e.g. Floor Manager, First Aider, Music">
+  openDlg(`Add staff: ${comp().name||""}`, `
+    <label for="n_role">Role</label><input id="n_role" list="n_presets" placeholder="Pick or type, e.g. First Aider">
+    <datalist id="n_presets">${STAFF_PRESETS.map(p=>`<option value="${esc(p)}">`).join("")}</datalist>
+    <label for="n_person">Name (optional)</label><input id="n_person" placeholder="Leave blank to add as vacant">
     <div class="two">
       <div><label for="n_group">Where it sits</label><select id="n_group">
-        <option value="other">Additional roles</option><option value="control">Control desk</option><option value="floor">Floor team</option><option value="station">At an apparatus</option></select></div>
+        <option value="other">Additional staff</option><option value="control">Running the competition</option><option value="floor">Awards and runners</option><option value="station">At an apparatus</option></select></div>
       <div><label for="n_owner">Responsibility</label><select id="n_owner"><option value="Host">Host club</option><option value="NGL">NGL</option></select></div>
     </div>
     <div id="n_appWrap" class="hidden"><label for="n_app">Apparatus</label><select id="n_app">${apps.map(a=>`<option>${esc(a)}</option>`).join("")}</select></div>
     <label for="n_qty">How many</label><input id="n_qty" type="number" min="1" max="10" value="1">`,
-  [{label:"Cancel"},{label:"Add role", cls:"primary", onClick:()=>{
-    const role = val("n_role"); if(!role){ toast("Give the role a name first."); return false; }
-    const g = $("#n_group").value, q = Math.max(1, +$("#n_qty").value||1);
-    for(let i=1;i<=q;i++) S.staffing.slots.push(mk(q>1?`${role} ${i}`:role, g, g==="station"?$("#n_app").value:"", $("#n_owner").value));
-    save(); render(); toast(q>1?`Added ${q} roles`:"Role added");
+  [{label:"Cancel"},{label:"Add", cls:"primary", onClick:()=>{
+    const role = val("n_role"); if(!role){ toast("Choose or type a role first."); return false; }
+    const g = $("#n_group").value, q = Math.max(1, +$("#n_qty").value||1), person = val("n_person");
+    for(let i=1;i<=q;i++){
+      const s = mk(q>1?`${role} ${i}`:role, g, g==="station"?$("#n_app").value:"", $("#n_owner").value);
+      if(person && i===1) Object.assign(s,{name:person, status:"confirmed"});
+      S.staffing.slots.push(s);
+    }
+    save(); render(); toast(q>1?`Added ${q} ${role} roles`:`${role} added`);
   }}]);
   $("#n_group").addEventListener("change", e=>$("#n_appWrap").classList.toggle("hidden", e.target.value!=="station"));
-});
+}
 
 /* ---------- Judge requests ---------- */
 $("#requests").addEventListener("click", async e=>{
@@ -850,13 +897,15 @@ $("#exportMenu").addEventListener("click", e=>{
   ({xlsx:exportXlsx, csv:exportCsv, print:exportPrint, hostEmail:copyHostRequest})[b.dataset.export]();
 });
 
+const ROLE_RANK = {"Competition Manager":0,"Competition Scorer":1,"Announcer":2};
+const roleRank = s => ROLE_RANK[s.role] ?? 9;
 function sortedSlots(st){
   st = st || S.staffing;
   const ord = st.apparatus;
   return st.slots.slice().sort((a,b)=>
     (GROUP_ORDER[a.group]-GROUP_ORDER[b.group]) ||
     ((ord.indexOf(a.apparatus)+99)%(99+ord.length) - (ord.indexOf(b.apparatus)+99)%(99+ord.length)) ||
-    (isJudge(b)-isJudge(a)) || a.role.localeCompare(b.role, undefined, {numeric:true}));
+    (isJudge(b)-isJudge(a)) || (roleRank(a)-roleRank(b)) || a.role.localeCompare(b.role, undefined, {numeric:true}));
 }
 const HEAD = ["Area","Apparatus","Role","Responsibility","Name","Club","Mobile","Email","Status","Source","Notes"];
 function rows(){
