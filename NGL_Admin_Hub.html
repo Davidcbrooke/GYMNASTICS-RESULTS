@@ -250,7 +250,7 @@ async function loadMeInner(email){
   if(LIVE){ const d = await db.collection(CONFIG.usersCollection).doc(email).get(); rec = d.exists ? d.data() : null; }
   else rec = DEMO_USERS[email];
   if(!rec && LIVE && email === CONFIG.ownerEmail){
-    const u = auth.currentUser; await u.reload();
+    const u = auth.currentUser; await u.reload(); await u.getIdToken(true);
     if(!u.emailVerified){
       $("#err").innerHTML = 'Verify the owner email first: open the link sent to the admin inbox, then sign in again. <button type="button" class="link" id="resend">Resend it</button>';
       $("#resend").onclick = async ()=>{ try{ await u.sendEmailVerification(); toast("Verification email sent."); }catch(_){ toast("Wait a minute, then try again."); } };
