@@ -197,7 +197,7 @@ details.bycomp summary{cursor:pointer;padding:12px 16px;font-weight:600;color:va
   <!-- LICENSING -->
   <section id="tab-licensing" class="hidden">
     <div class="panel-card">
-      <div class="pc-head">Licensing P&amp;L <span>NGL Awards Programme Licences, per gymnast per year</span></div>
+      <div class="pc-head">Licensing P&amp;L <span>Club Licences (yearly) and termly Gymnast Licences, per school year</span></div>
       <div class="pills" id="licPills"></div>
       <div class="stmt-bar">
         <span>Third column shows licences at</span>
@@ -291,24 +291,26 @@ const PNL_FIELDS = [
    Per gymnast: a monthly licence fee, plus a book fee for gymnasts who need a new book.
    Gymnast numbers are planning figures until the Club Account system is connected. */
 const LIC_PATHS = ["preschool","schools","recreational","general","performance"];
-const LIC_VERSION = 2;   // bump when the licensing model changes, so old saved figures are replaced
+const LIC_VERSION = 3;   // bump when the licensing model changes, so old saved figures are replaced
 const LIC_DEFAULTS = {
   v:LIC_VERSION, pct:80, feePct:1.5,
-  // clubFee = yearly club fee per club for the plans (founding price); medalPrice = what NGL sells medals to clubs for
+  // clubs = NEW clubs joining this season; clubFee = one-off Club Licence fee (founding price); medalPrice = what NGL sells medals to clubs for
+  // termly model: fee = Gymnast Licence per term, months = terms registered; clubFee = yearly Club Licence (founding price)
   paths:{
-    preschool:   {clubs:5, clubsActual:0, clubFee:200, extraThemes:1, themePrice:25, plan:100, actual:0, fee:1, months:12, bookFee:10, newBookPct:100, bookCost:2, medals:10, medalPrice:2,   medalCost:1,   certCost:0.4, postage:0},
-    schools:     {clubs:0, clubsActual:0, clubFee:0,   extraThemes:0, themePrice:0,  plan:100, actual:0, fee:1, months:12, bookFee:8,  newBookPct:100, bookCost:2, medals:0,  medalPrice:0,   medalCost:0,   certCost:0.4, postage:0},
-    recreational:{clubs:5, clubsActual:0, clubFee:500, extraThemes:0, themePrice:0,  plan:100, actual:0, fee:1, months:12, bookFee:5,  newBookPct:100, bookCost:2, medals:3,  medalPrice:2.5, medalCost:1.5, certCost:0.4, postage:0},
-    general:     {clubs:0, clubsActual:0, clubFee:0,   extraThemes:0, themePrice:0,  plan:100, actual:0, fee:1, months:12, bookFee:10, newBookPct:100, bookCost:2, medals:0,  medalPrice:0,   medalCost:0,   certCost:0.4, postage:0},
-    performance: {clubs:0, clubsActual:0, clubFee:0,   extraThemes:0, themePrice:0,  plan:100, actual:0, fee:1, months:12, bookFee:10, newBookPct:100, bookCost:2, medals:0,  medalPrice:0,   medalCost:0,   certCost:0.4, postage:0}
+    preschool:   {clubs:5, clubsActual:0, clubFee:200, extraThemes:1, themePrice:25, plan:100, actual:0, fee:4, months:3, bookFee:5, newBookPct:100, bookCost:2, medals:10, medalPrice:2,   medalCost:1,   certCost:0.4, postage:0},
+    schools:     {clubs:0, clubsActual:0, clubFee:0,   extraThemes:0, themePrice:0,  plan:100, actual:0, fee:4, months:3, bookFee:5, newBookPct:100, bookCost:2, medals:0,  medalPrice:0,   medalCost:0,   certCost:0.4, postage:0},
+    recreational:{clubs:5, clubsActual:0, clubFee:500, extraThemes:0, themePrice:0,  plan:100, actual:0, fee:4, months:3, bookFee:5, newBookPct:100, bookCost:2, medals:3,  medalPrice:2.5, medalCost:1.5, certCost:0.4, postage:0},
+    general:     {clubs:0, clubsActual:0, clubFee:0,   extraThemes:0, themePrice:0,  plan:100, actual:0, fee:4, months:3, bookFee:5, newBookPct:100, bookCost:2, medals:0,  medalPrice:0,   medalCost:0,   certCost:0.4, postage:0},
+    performance: {clubs:0, clubsActual:0, clubFee:0,   extraThemes:0, themePrice:0,  plan:100, actual:0, fee:4, months:3, bookFee:5, newBookPct:100, bookCost:2, medals:0,  medalPrice:0,   medalCost:0,   certCost:0.4, postage:0}
   },
+
   // yearly/monthly licensing costs: path "" = shared across all pathways
   fixed:[ {id:"lf_film", name:"Filming", type:"cost", amount:300, basis:"year", path:""} ]
 };
 const LIC_FIELDS = [
-  ["Clubs", [["clubs","Planned clubs",1],["clubsActual","Clubs licensed so far",1],["clubFee","Club fee per club per year (£)",50],["extraThemes","Extra themes per club",1],["themePrice","Extra theme price (£)",5]]],
-  ["Gymnasts", [["plan","Planned licensed gymnasts",1],["actual","Licensed so far",1],["newBookPct","% needing a new book",5],["months","Months licensed on average",1]]],
-  ["Per gymnast", [["fee","Licence fee per month (£)",0.5],["bookFee","Book fee (£)",0.5],["bookCost","Book cost to NGL (£)",0.1],["medals","Medals per year",1],["medalPrice","Medal price to club (£)",0.1],["medalCost","Medal cost to NGL (£)",0.1],["certCost","Certificates per year (£)",0.05],["postage","Postage per year (£)",0.1]]]
+  ["Clubs", [["clubs","Clubs licensed (plan)",1],["clubsActual","Clubs licensed so far",1],["clubFee","Club Licence per club per year (£)",50],["extraThemes","Extra themes per club",1],["themePrice","Extra theme price (£)",5]]],
+  ["Gymnasts", [["plan","Planned licensed gymnasts",1],["actual","Licensed so far",1],["newBookPct","% needing a new book",5],["months","Terms registered on average",1]]],
+  ["Per gymnast", [["fee","Gymnast Licence per term (£)",0.5],["bookFee","Book price to club (£)",0.5],["bookCost","Book cost to NGL (£)",0.1],["medals","Medals per year",1],["medalPrice","Medal price to club (£)",0.1],["medalCost","Medal cost to NGL (£)",0.1],["certCost","Certificates per year (£)",0.05],["postage","Postage per year (£)",0.1]]]
 ];
 function normaliseLic(x){
   const L0 = JSON.parse(JSON.stringify(LIC_DEFAULTS)), Lx = (x && x.v === LIC_VERSION) ? x : {};
@@ -664,7 +666,7 @@ function buildLicStatement(view){
   const val = fn => { const v=[0,0,0,0]; paths.forEach(k=>{ const n=cols(k), c=clubCols(k); [0,2,3].forEach(i=>{ v[i]+=fn(licRow(k,n[i],null,c[i]),k); }); }); v[1]=v[3]-v[0]; return v; };
   const fixed = A.lic.fixed.filter(l => view==="all" ? true : l.path===view);
   const lines = [
-    ["Licensed clubs", val(r=>r.clubs), "info"],
+    ["Clubs", val(r=>r.clubs), "info"],
     ["Licensed gymnasts", val(r=>r.n), "info"],
     ["New books", val(r=>Math.round(r.books)), "info"],
     ["Medals", val(r=>r.medalN), "info"]
@@ -672,16 +674,16 @@ function buildLicStatement(view){
   const inc = [];
   const P = view==="all" ? null : A.lic.paths[view];
   const has = f => paths.some(k=>num(A.lic.paths[k][f])>0);
-  if(has("clubFee")) inc.push(["Club fees (plans)", val(r=>r.clubInc), P?`${pTag(P.clubFee)} per club per year`:"per club per year"]);
+  if(has("clubFee")) inc.push(["Club Licences", val(r=>r.clubInc), P?`${pTag(P.clubFee)} per club per year`:"yearly, per club"]);
   if(has("themePrice")) inc.push(["Extra themes", val(r=>r.themeInc), P?`${P.extraThemes} per club at ${pTag(P.themePrice)}`:""]);
   if(view==="all"){
-    paths.forEach(k=>inc.push([`Licence fees: ${PATHWAYS[k].short}`, val((r,kk)=>kk===k?r.licInc:0), `${pTag(A.lic.paths[k].fee)} a month`]));
-    inc.push(["Book fees", val(r=>r.bookInc), "new books only"]);
+    paths.forEach(k=>inc.push([`Gymnast Licences: ${PATHWAYS[k].short}`, val((r,kk)=>kk===k?r.licInc:0), `${pTag(A.lic.paths[k].fee)} a term`]));
+    inc.push(["Books", val(r=>r.bookInc), "new books only"]);
   } else {
-    inc.push(["Licence fees", val(r=>r.licInc), `${pTag(P.fee)} a month × ${P.months} months`]);
-    inc.push(["Book fees", val(r=>r.bookInc), `${pTag(P.bookFee)} per new book`]);
+    inc.push(["Gymnast Licences", val(r=>r.licInc), `${pTag(P.fee)} a term × ${P.months} terms`]);
+    inc.push(["Books", val(r=>r.bookInc), `${pTag(P.bookFee)} each`]);
   }
-  if(has("medalPrice")) inc.push(["Medal sales to clubs", val(r=>r.medalInc), P?`${P.medals} a year at ${pTag(P.medalPrice)}`:""]);
+  if(has("medalPrice")) inc.push(["Medals", val(r=>r.medalInc), P?`${P.medals} a year at ${pTag(P.medalPrice)}`:""]);
   fixed.filter(l=>l.type==="income").forEach(l=>{ const a=fixedAmt(l); inc.push([l.name||"Other income", [a,0,a,a], l.basis==="month"?"monthly":"yearly"]); });
   const cost = [];
   cost.push(["Books", val(r=>r.bookCost), view==="all"?"":`${pTag(A.lic.paths[view].bookCost)} each`]);
@@ -742,7 +744,7 @@ function renderLicensing(){
   // per gymnast
   const pg = (k, nb) => licRow(k, 1, nb);
   const club = k => { const p=A.lic.paths[k]; return num(p.clubFee) + num(p.extraThemes)*num(p.themePrice); };
-  $("#licPerGym").innerHTML = `<thead><tr><th>Pathway</th><th>Licence</th><th>Book fee</th><th>Medal sales</th><th>Book</th><th>Medals</th><th>Certificates</th><th>Postage</th><th>Payment fees</th><th>Profit, new gymnast</th><th>Profit, no new book</th><th title="Club fee plus extra themes, per club per year">Plus per club</th></tr></thead><tbody>` +
+  $("#licPerGym").innerHTML = `<thead><tr><th>Pathway</th><th>Gymnast Licence</th><th>Book sale</th><th>Medal sales</th><th>Book</th><th>Medals</th><th>Certificates</th><th>Postage</th><th>Payment fees</th><th>Profit, new gymnast</th><th>Profit, no new book</th><th title="Yearly Club Licence plus extra themes, per club">Plus per club</th></tr></thead><tbody>` +
     LIC_PATHS.map(k=>{ const n=pg(k,100), r=pg(k,0);
       return `<tr${k===licView?' style="background:#fbf6e6"':""}><td><span class="pathway-tag" style="background:${PATHWAYS[k].accent};color:${PATHWAYS[k].ink}">${esc(PATHWAYS[k].short)}</span></td>
         <td>${gbp2(n.licInc)}</td><td>${gbp2(n.bookInc)}</td><td>${gbp2(n.medalInc)}</td><td>${gbp2(-n.bookCost)}</td><td>${gbp2(-n.med)}</td><td>${gbp2(-n.cert)}</td><td>${gbp2(-n.post)}</td><td>${gbp2(-n.pay)}</td>
@@ -750,7 +752,7 @@ function renderLicensing(){
         <td>${club(k) ? gbp(club(k)) : "&ndash;"}</td></tr>`; }).join("") + `</tbody>`;
   const flags = [];
   licActivePaths().forEach(k=>{ const p=A.lic.paths[k], r=pg(k,0); if(!num(p.postage)) flags.push(`${PATHWAYS[k].short}: postage not set`); if(r.profit < num(p.fee)*num(p.months)*0.25) flags.push(`${PATHWAYS[k].short}: a returning gymnast leaves ${gbp2(r.profit)} a year after costs`); if(num(p.medals) && num(p.medalPrice) < num(p.medalCost)) flags.push(`${PATHWAYS[k].short}: medals sold below cost`); });
-  $("#lic-notes").innerHTML = "One year per gymnast: the monthly licence fee, the book fee for gymnasts who need a new book (year one: everyone), and medals sold to clubs. Club fees and extra themes are per club per year at the founding price; for Recreational, set the club fee to the average across your expected club sizes (under 200 gymnasts £500, 200 to 499 £1,000, 500+ £1,500). \"Licensed so far\" is entered by hand until the Club Account system is connected. Shared costs such as filming appear in All licensing and the NGL P&amp;L, not in a single pathway." +
+  $("#lic-notes").innerHTML = "One school year per gymnast on the termly model: the Gymnast Licence each term registered, that term's medals, and a book for gymnasts who need one (year one: everyone). Club Licences are yearly per club at the founding price (for Recreational use the average across club sizes: under 200 gymnasts £500, 200 to 499 £1,000, 500+ £1,500); clubs joining mid-year pay pro-rata, which this plan does not reduce for. \"Licensed so far\" is entered by hand until the Club Account system is connected. Shared costs such as filming appear in All licensing and the NGL P&amp;L, not in a single pathway." +
     (flags.length ? `<br><strong style="color:#b06000">&#x26A0; ${flags.length} item${flags.length!==1?"s":""} to check:</strong> ${esc(flags.join(" · "))}` : "");
 }
 function gbp2(n){ const a=Math.abs(n); return (n<0?"-":"") + "\u00a3" + a.toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2}); }

@@ -28,6 +28,11 @@ service cloud.firestore {
       match /licences/{pathway} {
         allow read: if isMember(clubId) || isAdmin();
         allow write: if false;
+        // termly registrations and their bills
+        match /terms/{termId} {
+          allow read: if isMember(clubId) || isAdmin();
+          allow write: if false;
+        }
       }
       match /orders/{id} {
         allow read: if isMember(clubId) || isAdmin();
@@ -58,13 +63,13 @@ service cloud.firestore {
       allow list, write: if false;
     }
 
-    // Prices and holiday windows: any signed-in club reads, only NGL admin writes
+    // Prices and the term calendar: any signed-in club reads, only NGL admin writes
     match /settings/licensing {
       allow read: if signedIn();
       allow write: if isAdmin()
-        && request.resource.data.keys().hasOnly(['pathways', 'windows', 'season', 'foundingUntil', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['pathways', 'terms', 'summerTaster', 'season', 'foundingUntil', 'updatedAt'])
         && request.resource.data.pathways is map
-        && request.resource.data.windows is list;
+        && request.resource.data.terms is list;
     }
   }
 }

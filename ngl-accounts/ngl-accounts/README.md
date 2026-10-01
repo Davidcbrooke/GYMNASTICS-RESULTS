@@ -1,18 +1,18 @@
 # NGL Club Account — setup guide
 
-One account per club, one licence per pathway, paid per gymnast (weekly or monthly, by pathway) through Stripe.
+One account per club, one licence per pathway: a yearly Club Licence plus termly gymnast registration, paid through Stripe.
 
 ```
 ngl-club-account.html   The club portal (runs in preview mode until you add the Firebase config)
 functions/              Cloud Functions: registerClub, startLicence, changeGymnasts, billingPortal, stripeWebhook
-functions/licensing.js  The licence rules (holiday lock, book fees) — tested by `npm test`
+functions/licensing.js  The licence rules (terms, termly bills, Club Licence pro-rata) — tested by `npm test`
 firestore.rules         Security rules: clubs see only their own records; only functions write licences
 scripts/make-admin.js   Gives a login the NGL admin role
 ```
 
 ## 1. Try the preview
 
-Open `ngl-club-account.html` in a browser. Sign in with any email and password. Use **Pretend today is** to test the holiday lock.
+Open `ngl-club-account.html` in a browser. Sign in with any email and password. Use **Pretend today is** to move between terms and registration windows (e.g. 10 Dec 2026 opens Spring registration).
 
 ## 2. Firebase (about 20 minutes)
 
@@ -27,7 +27,7 @@ Open `ngl-club-account.html` in a browser. Sign in with any email and password. 
 
 1. No products or prices to create: each licence is created with its pathway's price from the NGL admin tab.
 2. **Settings → Payment methods:** turn on **Bacs Direct Debit** (card is on by default).
-3. **Settings → Billing → Customer portal:** allow updating payment methods and viewing invoices. **Turn off** "customers can update quantities" and "customers can cancel". Number changes must go through the Club Account so the holiday lock applies.
+3. **Settings → Billing → Customer portal:** allow updating payment methods and viewing invoices.
 4. Copy the **secret key** (`sk_test_…`) from Developers → API keys.
 
 ## 4. Deploy
@@ -63,16 +63,16 @@ gcloud auth application-default login
 node scripts/make-admin.js you@example.com
 ```
 
-Sign out and back in. The **NGL admin** tab appears. Enter this year's holiday windows and check the prices for each pathway.
+Sign out and back in. The **NGL admin** tab appears. Check this year's term calendar (registration dates and Pre-School countries) and the prices.
 
 ## 6. Test end to end (still test mode)
 
 - Register SAADI, start a Schools licence with test card `4242 4242 4242 4242`, or Direct Debit sort code `10-88-00` / account `00012345`.
 - Check the licence turns **Active** and the Schools club code is active.
-- Start a Pre-School licence: the first payment includes the £200 club fee. Order medals and an extra theme from the card.
-- Add gymnasts (say 3 of them need a book), and check the book fee for 3 appears on the next invoice in Stripe.
-- Try reducing numbers outside a window (blocked), then add a window covering today and try again (allowed).
-- Use test card `4000 0000 0000 0341` to see a failed payment move the licence to **Payment due**.
+- Start a Pre-School licence: the first bill includes the Club Licence (pro-rata if mid-year), the term's Gymnast Licences, country medals and passports. Then use the admin tab to open registration for the next term and register.
+- Add gymnasts mid-term and check a Stripe invoice is charged to the saved card.
+- Register 0 for next term and check the licence ends when the term starts (or run `termRollover` by hand from the Firebase console).
+- Save test card `4000 0000 0000 0341` as the payment method, register for a term, and check the licence moves to **Payment due**.
 
 ## 7. Go live
 
@@ -80,25 +80,25 @@ Repeat step 3 in Stripe live mode. Update both secrets with the live values. Red
 
 ## Starting prices (change in the NGL admin tab)
 
-| Pathway | Club fee per year (founding / full) | Licence | Book fee | Medals to club |
+| Pathway | Club Licence per year (founding / full) | Gymnast Licence | Medals to club | Book to club |
 |---|---|---|---|---|
-| Pre-School | £200 / £400 (10 themes; extra themes £25) | £1 a month | £10 | £2 (up to 10 a year) |
-| Schools | — | £1 a month | £8 | — |
-| Recreational | under 200: £500 / £1,000 · 200–499: £1,000 / £1,500 · 500+: £1,500 / £2,000 | £1 a month | £5 | £2.50 (up to 3 a year) |
-| General League | — | £1 a month | £10 | — |
-| Performance League | — | £1 a month | £10 | — |
-| University, Masters | — | £1 a month | — | Off sale until a book fee is set |
+| Pre-School | £200 / £400 (10 themes; extra £25) | £4 a term | £2 each, that term's countries (≈4/3/3) | £5 passport |
+| Schools | — | £4 a term | — | £5 |
+| Recreational | <200: £500 / £1,000 · 200–499: £1,000 / £1,500 · 500+: £1,500 / £2,000 | £4 a term | £2.50, 1 a term | £5 |
+| General League | — | £4 a term | — | £5 |
+| Performance League | — | £4 a term | — | £5 |
 
-Founding club prices apply to clubs that start by the date set in the admin tab (default 31 Aug 2027) and are kept at renewal.
-Club fees renew yearly: the `renewClubFees` function adds them to the next payment on each anniversary.
-The first time it runs, Firestore may log a link to create a collection-group index on `licences.clubFeeRenewsAt` — open the link once to create it.
+- Club Licence renews each September with the autumn bill; first year pro-rata by term (summer taster switch in admin).
+- Each term the club registers its gymnasts in the registration window; unregistered clubs roll over at their current number when the term starts (`termRollover`, daily 06:00). The first time it runs, Firestore may log a link to create a collection-group index on `licences.status` — open it once.
+- The term calendar (dates, registration opening, Pre-School countries) is set in the admin tab each year.
 
 ## Rules at a glance
 
 | | |
 |---|---|
-| Book fee | Only for gymnasts who need a new book: on the first payment, or added to the next payment when gymnasts are added |
-| Licence fee | Per gymnast, weekly or monthly depending on the pathway |
-| Add gymnasts | Any time; new amount from the next payment, no part-period charges |
-| Reduce or cancel | Only inside an NGL holiday window; takes effect from the next payment |
+| Club Licence | Yearly, renews in September; first year pro-rata by term |
+| Each term | Register gymnast numbers; bill = £4 Gymnast Licence + that term's medals + books for those who need one |
+| Add gymnasts | Any time; billed for the current term |
+| Reduce or end | Register a lower number (or 0) for the next term before it starts |
+| Not registered | Rolled over at the current number |
 | Failed payment | Stripe retries and emails the club; access continues as "Payment due" until Stripe gives up, then the licence lapses |

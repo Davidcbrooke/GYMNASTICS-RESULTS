@@ -163,8 +163,8 @@ const MAX_GYMNASTS = 5000;
 /* What each licence includes, per gymnast. Shown on the pathway cards and when starting a licence. */
 const INCLUDES = {
   preschool: [
-    '10-level Awards Book',
-    'A medal every 4 weeks (up to 10 a year), bought as you need them',
+    'Passport to collect 10 country medals',
+    'A country medal every 4 weeks, sent with each term\'s bill',
     'Exclusive use of the NGL Somi & Flic characters'
   ],
   schools: [
@@ -176,61 +176,59 @@ const INCLUDES = {
   ],
   recreational: [
     '3-level Awards Book (lasts 1 year, 1 level per term)',
-    'A medal for each level passed (up to 3 a year), bought as you need them',
+    'A medal each term for the level passed, sent with each term\'s bill',
     '4 attendance certificates',
     'Recreational Hub: routine, masterclass and conditioning videos'
   ],
-  general: [
-    'Gymnast Progress Book, Levels 1–4'
-  ],
-  performance: [
-    'Gymnast Routine Book, Levels 1–6'
-  ]
+  general: [ 'Gymnast Progress Book, Levels 1–4' ],
+  performance: [ 'Gymnast Routine Book, Levels 1–6' ]
 };
-/* What the yearly club fee buys (pathways with a club fee only) */
+/* What the yearly Club Licence covers (pathways with one) */
 const CLUB_FEE_VALUE = {
-  preschool: '10 themes for the year: themed training plans and ready-made social media posts. Extra themes £25 each.',
-  recreational: 'Weekly coaching plans for the full year, aligned to NGL competitions and illustrated throughout. Months of work for a club to write itself.'
+  preschool: '10 themes: themed training plans and ready-made social media posts. Extra themes £25 each.',
+  recreational: 'A full year of weekly coaching plans, aligned to NGL competitions and illustrated throughout. Months of work for a club to write itself.'
 };
-
-/* "How many need a new book?" box. Follows the gymnast count until the club edits it. */
-function booksField(bookPence){
-  return `<div class="field" style="margin:12px 0 0">
-    <label for="books">How many of these gymnasts need a new book? (${gbp(bookPence)} each)</label>
-    <input class="input" id="books" type="number" inputmode="numeric" min="0" step="1" style="max-width:140px">
-    <p class="note" style="margin:6px 0 0">Gymnasts who already have the book pay no book fee. Clubs usually charge families for the book.</p>
-  </div>`;
-}
-function wireBooks(m, maxFn, onChange){
-  const inp = m.querySelector('#books'); let touched = false;
-  inp.oninput = () => { touched = true; onChange(); };
-  return {
-    sync(){ const mx = maxFn(); inp.max = mx; if(!touched || +inp.value > mx) inp.value = mx; },
-    get(){ return parseInt(inp.value, 10); },
-    show(on){ inp.closest('.field').hidden = !on; }
-  };
-}
 const includesList = id => INCLUDES[id] ? `<ul class="incl">${INCLUDES[id].map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
 
-/* Starting prices in pence (same as functions/licensing.js). NGL admin can change them.
-   A pathway with no price shows "Coming soon" and cannot be started. */
+/* ---------- Prices and terms (display copy of functions/licensing.js, which is enforced) ---------- */
+const MAX_SPARE_PCT = 0.25;
 const DEFAULT_PRICING = {
-  preschool: {bookPence:1000, unitPence:100, interval:'month',
+  preschool: {termPence:400, bookPence:500, rrpPence:1000, bookName:'Passport',
     clubFee:{bands:[{max:null, fullPence:40000, foundingPence:20000}]},
-    themes:{included:10, extraPence:2500},
-    products:{medal:{name:'Medal', pricePence:200, rrpPence:400, perGymnastPerYear:10}}},
-  schools: {bookPence:800, unitPence:100, interval:'month'},
-  recreational: {bookPence:500, rrpPence:1000, unitPence:100, interval:'month',
+    medal:{pricePence:200, rrpPence:400, fromCalendar:true},
+    themes:{included:10, extraPence:2500}},
+  schools: {termPence:400, bookPence:500, rrpPence:1000},
+  recreational: {termPence:400, bookPence:500, rrpPence:1000,
     clubFee:{bands:[{max:199, fullPence:100000, foundingPence:50000}, {max:499, fullPence:150000, foundingPence:100000}, {max:null, fullPence:200000, foundingPence:150000}]},
-    products:{medal:{name:'Medal', pricePence:250, rrpPence:500, perGymnastPerYear:3},
-              book:{name:'Awards Book', pricePence:500, rrpPence:1000, perGymnastPerYear:1}}},
-  general: {bookPence:1000, unitPence:100, interval:'month'},
-  performance: {bookPence:1000, unitPence:100, interval:'month'}
+    medal:{pricePence:250, rrpPence:500, perTerm:1}},
+  general: {termPence:400, bookPence:500, rrpPence:1000},
+  performance: {termPence:400, bookPence:500, rrpPence:1000}
 };
 const DEFAULT_FOUNDING_UNTIL = '2027-08-31';
+const DEFAULT_TERMS = [
+  {id:'2026-aut', label:'Autumn 2026', start:'2026-09-01', end:'2026-12-18', regOpens:'2026-07-20', countries:['France','Japan','Brazil','Kenya']},
+  {id:'2027-spr', label:'Spring 2027', start:'2027-01-04', end:'2027-03-26', regOpens:'2026-12-01', countries:['Australia','Canada','India']},
+  {id:'2027-sum', label:'Summer 2027', start:'2027-04-12', end:'2027-07-21', regOpens:'2027-03-15', countries:['Egypt','Mexico','Norway']},
+  {id:'2027-aut', label:'Autumn 2027', start:'2027-09-01', end:'2027-12-17', regOpens:'2027-07-19', countries:['France','Japan','Brazil','Kenya']}
+];
+function pricingFor(settings, id){
+  const p = {...(DEFAULT_PRICING[id] || {}), ...(((settings || {}).pathways || {})[id] || {})};
+  return Number.isInteger(p.termPence) && p.termPence > 0 && Number.isInteger(p.bookPence) && p.bookPence >= 0 ? p : null;
+}
+const ukDate = (d = now()) => new Intl.DateTimeFormat('en-CA', {timeZone:'Europe/London'}).format(d);
+const givesAccess = s => s === 'active' || s === 'past_due';
+const termsFrom = settings => [...(((settings || {}).terms || []).length ? settings.terms : DEFAULT_TERMS)].sort((a, b) => a.start.localeCompare(b.start));
+const termById = id => termsFrom(state.settings).find(t => t.id === id) || null;
+function currentTerm(){ const d = ukDate(); let cur = null; termsFrom(state.settings).forEach(t => { if(t.start <= d) cur = t; }); return cur; }
+function nextTerm(){ const d = ukDate(); return termsFrom(state.settings).find(t => t.start > d) || null; }
+const registrationOpen = t => !!t && ukDate() >= t.regOpens && ukDate() < t.start;
+/* the term a new licence is billed for: next term while its registration is open, otherwise the current one */
+const billingTerm = () => { const n = nextTerm(); return n && registrationOpen(n) ? n : currentTerm(); };
+const termIndex = t => { const m = +t.start.slice(5, 7); return m >= 8 ? 0 : m <= 2 ? 1 : 2; };
+const yearEnd = t => { const y = +t.start.slice(0, 4), m = +t.start.slice(5, 7); return `${m >= 8 ? y + 1 : y}-08-31`; };
 const foundingUntil = () => (state.settings && state.settings.foundingUntil) || DEFAULT_FOUNDING_UNTIL;
-const foundingOpen = () => ukDate(now()) <= foundingUntil();
-/* Same as clubFeeFor in functions/licensing.js */
+const foundingOpen = () => ukDate() <= foundingUntil();
+
 function clubFeeFor(price, gymnasts, founding){
   const bands = price && price.clubFee && price.clubFee.bands;
   if(!Array.isArray(bands) || !bands.length) return null;
@@ -238,130 +236,132 @@ function clubFeeFor(price, gymnasts, founding){
   const i = bands.indexOf(band), lo = i === 0 ? 1 : bands[i - 1].max + 1;
   return {band: band.max == null ? `${lo}+ gymnasts` : `${lo}–${band.max} gymnasts`, fullPence:band.fullPence, foundingPence:band.foundingPence, pence: founding ? band.foundingPence : band.fullPence, founding};
 }
-const bandsText = price => (price.clubFee.bands).map((b, i, a) => { const lo = i === 0 ? 1 : a[i-1].max + 1; return `${b.max == null ? lo + '+' : lo + '–' + b.max}: ${gbp(b.foundingPence)}`; }).join(' · ');
-function pricingFor(settings, id){
-  const p = {...(DEFAULT_PRICING[id] || {}), ...((settings.pathways || {})[id] || {})};
-  return Number.isInteger(p.bookPence) && Number.isInteger(p.unitPence) && p.unitPence > 0 && (p.interval === 'week' || p.interval === 'month') ? p : null;
+function clubLicenceDue(price, term, gymnasts, {paidUntil = null, founding = false} = {}){
+  const fee = clubFeeFor(price, gymnasts, founding);
+  if(!fee || (paidUntil && paidUntil >= term.start)) return null;
+  const idx = termIndex(term), firstYear = !paidUntil;
+  let share = firstYear ? (3 - idx) / 3 : 1;
+  if(firstYear && idx === 2 && state.settings.summerTaster === true) share = 0;
+  const pence = share === 1 ? fee.pence : Math.round(fee.pence * share / 500) * 500;
+  return {...fee, pence, share, until: yearEnd(term), taster: share === 0,
+    label: share === 1 ? 'Club Licence, full year' : share === 0 ? 'Club Licence: summer taster, first payment in September' : `Club Licence, ${idx === 1 ? 'spring and summer' : 'summer'} (pro-rata)`};
 }
-/* A licence keeps the price it was started at; fall back to the pathway's current price */
-function licPrice(l, id){
-  const p = pricingFor(state.settings, id) || {bookPence:0, unitPence:0, interval:'month'};
-  return {bookPence:p.bookPence, unitPence: l && l.unitPence ? l.unitPence : p.unitPence, interval: l && l.interval ? l.interval : p.interval};
+function medalsPerTerm(price, term){
+  if(!price || !price.medal) return 0;
+  if(price.medal.fromCalendar) return term && term.countries ? term.countries.length : 0;
+  return price.medal.perTerm || 0;
 }
-const monthlyEq = (unit, interval, g) => interval === 'week' ? Math.round(unit * g * 52 / 12) : unit * g;
-const perWord = i => i === 'week' ? 'week' : 'month';
-const yearCost = p => p.unitPence * (p.interval === 'week' ? 52 : 12);   // licence fee only; book fee is separate
-
-/* ---------- Licensing rules (display copy; enforced again in functions/licensing.js) ---------- */
-const ukDate = (d = now()) => new Intl.DateTimeFormat('en-CA', {timeZone:'Europe/London'}).format(d);
-const currentWindow = (ws, d) => (ws || []).find(w => w.start <= ukDate(d) && ukDate(d) <= w.end) || null;
-const nextWindow = (ws, d) => (ws || []).filter(w => w.start > ukDate(d)).sort((a,b) => a.start.localeCompare(b.start))[0] || null;
-const givesAccess = s => s === 'active' || s === 'past_due';
+function termBill({price, pathway, term, gymnasts, books = 0, spares = 0, clubLicence = null}){
+  if(!Number.isInteger(gymnasts) || gymnasts < 0 || gymnasts > MAX_GYMNASTS) return {error:`Enter between 0 and ${MAX_GYMNASTS} gymnasts.`};
+  if(!Number.isInteger(books) || books < 0 || books > gymnasts) return {error:`Books must be between 0 and ${gymnasts}.`};
+  const maxSpare = Math.ceil(gymnasts * MAX_SPARE_PCT);
+  if(!Number.isInteger(spares) || spares < 0 || spares > maxSpare) return {error:`Spare medals must be between 0 and ${maxSpare}.`};
+  const per = medalsPerTerm(price, term), bookName = price.bookName || 'Awards Book';
+  const lines = [];
+  if(clubLicence && clubLicence.pence > 0) lines.push({id:'club', name:`${clubLicence.label}${clubLicence.founding ? ' (founding club price)' : ''}`, qty:1, unitPence:clubLicence.pence});
+  if(gymnasts) lines.push({id:'licence', name:`Gymnast Licence, ${term.label}`, qty:gymnasts, unitPence:price.termPence});
+  if(gymnasts && per) lines.push({id:'medal', name: price.medal.fromCalendar ? `Country medals: ${term.countries.join(', ')}` : `Medals, ${term.label}`, qty:gymnasts * per, unitPence:price.medal.pricePence});
+  if(spares && price.medal) lines.push({id:'spare', name:'Spare medals', qty:spares, unitPence:price.medal.pricePence});
+  if(books) lines.push({id:'book', name:`${bookName}s`, qty:books, unitPence:price.bookPence});
+  const live = lines.filter(l => l.qty > 0 && l.unitPence > 0);
+  return {lines: live, totalPence: live.reduce((a, l) => a + l.qty * l.unitPence, 0), per};
+}
+const billHTML = bill => bill.lines.map(l => `<div class="sum"><span>${esc(l.name)}${l.qty > 1 || l.id !== 'club' ? ` <span class="muted">${n0(l.qty)} × ${gbp(l.unitPence)}</span>` : ''}</span><span>${gbp(l.qty * l.unitPence)}</span></div>`).join('') +
+  `<div class="sum total"><span>Total</span><span>${gbp(bill.totalPence)}</span></div>`;
 
 /* ---------- Formatting ---------- */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const gbp = p => '£' + (p / 100).toLocaleString('en-GB', {minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2});
 const n0 = n => Number(n || 0).toLocaleString('en-GB');
 const fmtDate = iso => iso ? new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) : '';
-const fmtTs = ts => { if(!ts) return ''; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); };
 const pathwayById = id => PATHWAYS.find(p => p.id === id);
 
 /* =====================================================================
    DEMO DATA LAYER
    ===================================================================== */
-let demoToday = null;   // demo can pretend today is another date, to try the holiday lock
+let demoToday = null;   // demo can pretend today is another date, to try registration windows
 function now(){ return demoToday ? new Date(demoToday + 'T12:00:00Z') : new Date(); }
 
 const demo = {
-  settings: {
-    pathways: {}, season: '2026/27',
-    windows: [
-      {label:'October half term',  start:'2026-10-24', end:'2026-11-01'},
-      {label:'Christmas holidays', start:'2026-12-19', end:'2027-01-04'},
-      {label:'February half term', start:'2027-02-13', end:'2027-02-21'},
-      {label:'Easter holidays',    start:'2027-03-27', end:'2027-04-11'},
-      {label:'May half term',      start:'2027-05-29', end:'2027-06-06'},
-      {label:'Summer holidays',    start:'2027-07-22', end:'2027-09-05'}
-    ]
-  },
-  club: null, licences: {}, isAdmin: false,
+  settings: { pathways: {}, season: '2026/27', terms: DEFAULT_TERMS, summerTaster: false, foundingUntil: DEFAULT_FOUNDING_UNTIL },
+  club: null, licences: {}, regs: {}, isAdmin: false,
   others: [   // other clubs, for the admin overview
     {club:'Elite Gymnastics', bg:'BG-2231', pathway:'schools',      status:'active',   gymnasts:140},
     {club:'Salto Gymnastics', bg:'BG-4410', pathway:'recreational', status:'past_due', gymnasts:62},
-    {club:'React Gymnastics', bg:'BG-3108', pathway:'schools',      status:'lapsed',   gymnasts:35},
+    {club:'React Gymnastics', bg:'BG-3108', pathway:'preschool',    status:'lapsed',   gymnasts:15},
     {club:'NBC Gymnastics',   bg:'BG-1987', pathway:'general',      status:'active',   gymnasts:48}
   ],
-  nextPay(interval){ const d = now(); if(interval === 'week') d.setUTCDate(d.getUTCDate() + 7); else d.setUTCMonth(d.getUTCMonth() + 1); return d.toISOString().slice(0,10); },
   sample(){
-    this.club = {name:'SAADI Gymnastics', bgNumber:'BG-1234', contactName:'Dave Brooke', email:'bookingoffice@saadigymnastics.co.uk', accessCode:'SAADI-7K4P'};
+    this.club = {name:'SAADI Gymnastics', bgNumber:'BG-1234', contactName:'Dave Brooke', email:'bookingoffice@saadigymnastics.co.uk', accessCode:'SAADI-7K4P', defaultPaymentMethod:true};
     this.licences = {
-      schools:      {status:'active', gymnasts:120, unitPence:100, interval:'month', nextPaymentAt:this.nextPay(), cancelAtPeriodEnd:false},
-      recreational: {status:'active', gymnasts:45,  unitPence:100, interval:'month', nextPaymentAt:this.nextPay(), cancelAtPeriodEnd:false, clubFeePence:50000, clubFeeRenewsAt:'2027-09-01', foundingClub:true, ordered:{medal:45}}
+      recreational: {status:'active', gymnasts:45, currentTermId:'2026-aut', clubLicence:{paidUntil:'2027-08-31', lastPaidPence:50000}, foundingClub:true}
     };
+    this.regs = { recreational: { '2026-aut': {gymnasts:45, totalPence:50000 + 45 * 400 + 45 * 250 + 45 * 500, status:'paid'} } };
   }
 };
-
 const demoApi = {
   live: false,
   async signIn(email){ demo.sample(); demo.isAdmin = /saadi|nationalgymnasticsleague/i.test(email); return {ok:true}; },
   async register(d){
     demo.club = {name:d.name, bgNumber:d.bgNumber.toUpperCase(), contactName:d.contactName, email:d.email, accessCode:'NEW-2H8K'};
-    demo.licences = {}; demo.isAdmin = false; return {ok:true};
+    demo.licences = {}; demo.regs = {}; demo.isAdmin = false; return {ok:true};
   },
   async resetPassword(){ return {ok:true}; },
   async signOut(){ demo.club = null; },
-  async load(){ return {club:demo.club, licences:demo.licences, settings:demo.settings, isAdmin:demo.isAdmin}; },
-  async startLicence(pathway, gymnasts, books){
-    // Real version: redirect to Stripe Checkout, then Stripe's webhook activates the licence
-    const pr = pricingFor(demo.settings, pathway);
-    const prev = demo.licences[pathway], founding = foundingOpen() || !!(prev && prev.foundingClub);
-    const cf = clubFeeFor(pr, gymnasts, founding);
-    const renew = now(); renew.setUTCFullYear(renew.getUTCFullYear() + 1);
-    demo.licences[pathway] = {status:'active', gymnasts, unitPence:pr.unitPence, interval:pr.interval, nextPaymentAt:demo.nextPay(pr.interval), cancelAtPeriodEnd:false,
-      clubFeePence: cf ? cf.pence : 0, clubFeeRenewsAt: cf ? renew.toISOString().slice(0,10) : null, foundingClub: !!(cf && cf.founding), ordered:{}};
+  async load(){ return {club:demo.club, licences:demo.licences, regs:demo.regs, settings:demo.settings, isAdmin:demo.isAdmin}; },
+  async startLicence(pathway, gymnasts, books, spares){
+    // Real version: Stripe Checkout, then Stripe confirms and the licence goes live
+    const price = pricingFor(demo.settings, pathway), term = billingTerm(), prev = demo.licences[pathway] || {};
+    const cl = clubLicenceDue(price, term, gymnasts, {paidUntil: prev.clubLicence && prev.clubLicence.paidUntil, founding: foundingOpen() || prev.foundingClub});
+    const bill = termBill({price, pathway, term, gymnasts, books, spares, clubLicence: cl});
+    if(bill.error) throw new Error(bill.error);
+    demo.licences[pathway] = {status:'active', gymnasts, currentTermId: term.id,
+      clubLicence: cl ? {paidUntil: cl.until, lastPaidPence: cl.pence} : prev.clubLicence || null, foundingClub: !!(cl && cl.founding) || !!prev.foundingClub};
+    demo.club.defaultPaymentMethod = true;
+    (demo.regs[pathway] ||= {})[term.id] = {gymnasts, totalPence: bill.totalPence, status:'paid'};
     return {demo:true};
   },
-  async changeGymnasts(pathway, gymnasts, books){
-    const lic = demo.licences[pathway];
-    const plan = planChange(lic, gymnasts, licPrice(lic, pathway), books);
-    if(!plan.allowed) throw new Error(plan.reason);
-    if(plan.kind === 'cancel') lic.cancelAtPeriodEnd = true;
-    else { lic.gymnasts = gymnasts; lic.cancelAtPeriodEnd = false; }
-    return {ok:true, ...plan};
+  async registerTerm(pathway, gymnasts, books, spares){
+    const term = nextTerm(), lic = demo.licences[pathway], price = pricingFor(demo.settings, pathway);
+    if(!registrationOpen(term)) throw new Error('Registration for the next term is not open yet.');
+    if((demo.regs[pathway] || {})[term.id]) throw new Error(`You have already registered for ${term.label}.`);
+    if(gymnasts === 0){ (demo.regs[pathway] ||= {})[term.id] = {gymnasts:0, status:'ending'}; lic.endsAt = term.start; return {ending:true}; }
+    const cl = clubLicenceDue(price, term, gymnasts, {paidUntil: lic.clubLicence && lic.clubLicence.paidUntil, founding: lic.foundingClub});
+    const bill = termBill({price, pathway, term, gymnasts, books, spares, clubLicence: cl});
+    if(bill.error) throw new Error(bill.error);
+    (demo.regs[pathway] ||= {})[term.id] = {gymnasts, totalPence: bill.totalPence, status:'paid'};
+    if(cl) lic.clubLicence = {paidUntil: cl.until, lastPaidPence: cl.pence};
+    lic.endsAt = null;
+    return {totalPence: bill.totalPence};
   },
+  async addGymnasts(pathway, added, books){
+    const lic = demo.licences[pathway], term = termById(lic.currentTermId) || currentTerm();
+    const bill = termBill({price: pricingFor(demo.settings, pathway), pathway, term, gymnasts: added, books});
+    if(bill.error) throw new Error(bill.error);
+    lic.gymnasts += added;
+    const r = (demo.regs[pathway] ||= {})[lic.currentTermId] ||= {gymnasts:0, status:'paid', totalPence:0};
+    r.gymnasts += added; r.totalPence = (r.totalPence || 0) + bill.totalPence;
+    return {ok:true};
+  },
+  async orderProducts(){ return {demo:true}; },
   async billingPortal(){ return {demo:true}; },
-  async orderProducts(pathway, items){
-    const lic = demo.licences[pathway]; lic.ordered = lic.ordered || {};
-    items.forEach(it => { lic.ordered[it.id] = (lic.ordered[it.id] || 0) + it.qty; });
-    return {demo:true};
-  },
   async saveSettings(s){ demo.settings = {...demo.settings, ...s}; },
   async allLicences(){
-    const mine = Object.entries(demo.licences).map(([pathway, l]) => ({club:demo.club.name, bg:demo.club.bgNumber, pathway, status:l.status, gymnasts:l.gymnasts, cancelAtPeriodEnd:l.cancelAtPeriodEnd}));
+    const mine = Object.entries(demo.licences).map(([pathway, l]) => ({club:demo.club.name, bg:demo.club.bgNumber, pathway, status:l.status, gymnasts:l.gymnasts, endsAt:l.endsAt}));
     return [...mine, ...demo.others];
   }
 };
-
-/* Same rule as functions/licensing.js planChange, plus undoing a cancellation.
-   price = {bookPence, unitPence}; "period" = each weekly or monthly payment */
-function planChange(lic, requested, price, books){
-  const current = lic.gymnasts;
-  const out = {bookFeePence:0, periodFromPence: (lic.cancelAtPeriodEnd ? 0 : current) * price.unitPence, periodToPence: requested * price.unitPence};
-  if(lic.cancelAtPeriodEnd && requested === 0) return {...out, kind:'none', allowed:false, reason:'This licence is already set to end.'};
-  const withBooks = (kind, added) => {
-    const b = books == null ? added : books;
-    if(!Number.isInteger(b) || b < 0 || b > added) return {...out, kind, allowed:false, reason:`Books must be between 0 and ${added}.`};
-    return {...out, kind, allowed:true, books:b, bookFeePence: b * price.bookPence};
-  };
-  if(lic.cancelAtPeriodEnd && requested > 0) return withBooks('undo-cancel', Math.max(requested - current, 0));
-  if(requested === current) return {...out, kind:'none', allowed:false, reason:'That is the number you already have.'};
-  if(requested > current) return withBooks('increase', requested - current);
-  const kind = requested === 0 ? 'cancel' : 'decrease';
-  if(currentWindow(settings.windows, now())) return {...out, kind, allowed:true};
-  const nx = nextWindow(settings.windows, now());
-  return {...out, kind, allowed:false, nextWindow:nx,
-    reason: nx ? `Numbers can only go down during a holiday window. The next one is ${nx.label} (${fmtDate(nx.start)} to ${fmtDate(nx.end)}).`
-               : 'Numbers can only go down during a holiday window. NGL has not published the next window yet.'};
+/* In the demo, moving the date across a term start applies registrations and roll-overs (the daily job does this live). */
+function demoRollover(){
+  const cur = currentTerm(); if(!cur) return;
+  Object.entries(demo.licences).forEach(([p, l]) => {
+    if(!givesAccess(l.status) || l.currentTermId === cur.id) return;
+    const r = (demo.regs[p] || {})[cur.id];
+    if(r && r.status === 'ending'){ l.status = 'ended'; l.gymnasts = 0; return; }
+    if(!r){ (demo.regs[p] ||= {})[cur.id] = {gymnasts: l.gymnasts, status:'paid', rolled:true}; }
+    else l.gymnasts = r.gymnasts;
+    l.currentTermId = cur.id;
+  });
 }
 
 /* =====================================================================
@@ -398,30 +398,23 @@ const liveApi = {
     const token = await user.getIdTokenResult(true);
     const isAdmin = token.claims.admin === true;
     const settingsSnap = await getDoc(doc(f.db, 'settings/licensing'));
-    const settings = {pathways:{}, windows:[], ...(settingsSnap.exists() ? settingsSnap.data() : {})};
+    const settings = {pathways:{}, ...(settingsSnap.exists() ? settingsSnap.data() : {})};
     const u = await getDoc(doc(f.db, 'users', user.uid));
-    if(!u.exists()) return {club:null, licences:{}, settings, isAdmin};
+    if(!u.exists()) return {club:null, licences:{}, regs:{}, settings, isAdmin};
     const clubId = u.data().clubId;
     const club = (await getDoc(doc(f.db, 'clubs', clubId))).data();
-    const licences = {};
-    (await getDocs(collection(f.db, 'clubs', clubId, 'licences'))).forEach(s => {
-      const l = s.data();
-      licences[s.id] = {...l, ordered:{},
-        nextPaymentAt: l.nextPaymentAt ? l.nextPaymentAt.toDate().toISOString().slice(0,10) : null,
-        clubFeeRenewsAt: l.clubFeeRenewsAt ? l.clubFeeRenewsAt.toDate().toISOString().slice(0,10) : null};
-    });
-    // medals and books ordered in the last 12 months (shown against the per-gymnast limit)
-    const yearAgo = new Date(Date.now() - 365 * 864e5);
-    (await getDocs(collection(f.db, 'clubs', clubId, 'orders'))).forEach(o => {
-      const d = o.data(); if(d.status !== 'paid' || !d.paidAt || d.paidAt.toDate() < yearAgo || !licences[d.pathway]) return;
-      (d.lines || []).forEach(x => { licences[d.pathway].ordered[x.id] = (licences[d.pathway].ordered[x.id] || 0) + x.qty; });
-    });
-    return {club, licences, settings, isAdmin};
+    const licences = {}, regs = {};
+    for(const s of (await getDocs(collection(f.db, 'clubs', clubId, 'licences'))).docs){
+      licences[s.id] = s.data(); regs[s.id] = {};
+      (await getDocs(collection(f.db, 'clubs', clubId, 'licences', s.id, 'terms'))).forEach(t => { regs[s.id][t.id] = t.data(); });
+    }
+    return {club, licences, regs, settings, isAdmin};
   },
-  async startLicence(pathway, gymnasts, books){ const r = await call('startLicence', {pathway, gymnasts, books}); location.href = r.url; return r; },
-  async changeGymnasts(pathway, gymnasts, books){ return call('changeGymnasts', {pathway, gymnasts, books}); },
-  async billingPortal(){ const r = await call('billingPortal', {}); location.href = r.url; return r; },
+  async startLicence(pathway, gymnasts, books, spares){ const r = await call('startLicence', {pathway, gymnasts, books, spares}); location.href = r.url; return r; },
+  async registerTerm(pathway, gymnasts, books, spares){ return call('registerTerm', {pathway, gymnasts, books, spares}); },
+  async addGymnasts(pathway, added, books){ return call('addGymnasts', {pathway, added, books}); },
   async orderProducts(pathway, items){ const r = await call('orderProducts', {pathway, items}); location.href = r.url; return r; },
+  async billingPortal(){ const r = await call('billingPortal', {}); location.href = r.url; return r; },
   async saveSettings(s){
     const f = await firebase(); const {doc, setDoc, serverTimestamp} = f.fsM;
     await setDoc(doc(f.db, 'settings/licensing'), {...s, updatedAt: serverTimestamp()}, {merge:true});
@@ -429,13 +422,12 @@ const liveApi = {
   async allLicences(){
     const f = await firebase(); const {collectionGroup, getDocs, getDoc} = f.fsM;
     const snaps = await getDocs(collectionGroup(f.db, 'licences'));
-    const clubCache = {};
-    const rows = [];
+    const clubCache = {}, rows = [];
     for(const s of snaps.docs){
       const clubRef = s.ref.parent.parent;
       clubCache[clubRef.id] ||= (await getDoc(clubRef)).data() || {};
       const c = clubCache[clubRef.id], l = s.data();
-      rows.push({club:c.name, bg:c.bgNumber, pathway:s.id, status:l.status, gymnasts:l.gymnasts, unitPence:l.unitPence, interval:l.interval, cancelAtPeriodEnd:l.cancelAtPeriodEnd});
+      rows.push({club:c.name, bg:c.bgNumber, pathway:s.id, status:l.status, gymnasts:l.gymnasts, endsAt:l.endsAt});
     }
     return rows;
   }
@@ -446,7 +438,8 @@ const api = FIREBASE_CONFIG ? liveApi : demoApi;
 /* =====================================================================
    APP
    ===================================================================== */
-let state = {signedIn:false, club:null, licences:{}, settings:null, isAdmin:false};
+
+let state = {signedIn:false, club:null, licences:{}, regs:{}, settings:null, isAdmin:false};
 let tab = 'summary';
 const $view = document.getElementById('view');
 const render = html => { $view.innerHTML = '<div class="screen">' + html + '</div>'; };
@@ -475,7 +468,7 @@ function demoBanner(){
 }
 function wireDemoDate(){
   const el = document.getElementById('demoDate');
-  if(el) el.onchange = () => { demoToday = el.value || null; show(); };
+  if(el) el.onchange = () => { demoToday = el.value || null; if(!api.live) demoRollover(); show(); };
 }
 
 function setTop(){
@@ -572,52 +565,55 @@ function showRegister(finishing){
 /* ---------- Club summary ---------- */
 function statusTag(l){
   if(!l || l.status === 'none') return '<span class="tag none">Not started</span>';
-  if(l.status === 'active' && l.cancelAtPeriodEnd) return '<span class="tag wait">Ending</span>';
+  if(givesAccess(l.status) && l.endsAt) return '<span class="tag wait">Ending</span>';
   return ({
     active:'<span class="tag ok">Active</span>',
     past_due:'<span class="tag wait">Payment due</span>',
     pending:'<span class="tag wait">Awaiting payment</span>',
-    lapsed:'<span class="tag bad">Lapsed</span>'
+    lapsed:'<span class="tag bad">Lapsed</span>',
+    ended:'<span class="tag none">Ended</span>'
   })[l.status] || '<span class="tag none">Not started</span>';
 }
 
-function windowStrip(){
-  const ws = state.settings.windows, open = currentWindow(ws, now()), nx = nextWindow(ws, now());
-  if(open) return `<div class="window-strip open"><span>🔓</span><span><b>${esc(open.label)}:</b> you can reduce gymnast numbers or cancel a licence until ${fmtDate(open.end)}.</span></div>`;
-  return `<div class="window-strip closed"><span>🔒</span><span>You can add gymnasts at any time. Reducing numbers or cancelling opens in the holidays${nx ? `: next window <b>${esc(nx.label)}</b>, ${fmtDate(nx.start)} to ${fmtDate(nx.end)}` : ''}.</span></div>`;
+function termStrip(){
+  const cur = currentTerm(), nx = nextTerm();
+  const parts = [];
+  if(cur && ukDate() <= cur.end) parts.push(`<b>${esc(cur.label)}</b> runs until ${fmtDate(cur.end)}.`);
+  else if(cur) parts.push(`${esc(cur.label)} has finished.`);
+  if(nx && registrationOpen(nx)) return `<div class="window-strip open"><span>📝</span><span>${parts.join(' ')} <b>Registration for ${esc(nx.label)} is open</b> until ${fmtDate(nx.start)}. Confirm your gymnast numbers on each licence below; anything not registered rolls over at the current number.</span></div>`;
+  if(nx) parts.push(`Registration for ${esc(nx.label)} opens ${fmtDate(nx.regOpens)}.`);
+  return `<div class="window-strip closed"><span>📅</span><span>${parts.join(' ')} You can add gymnasts at any time; numbers go down by registering a lower number for the next term.</span></div>`;
 }
 
 function showSummary(){
-  const s = state.settings, L = state.licences;
-  const live = Object.values(L).filter(l => givesAccess(l.status));
-  const continuing = Object.entries(L).filter(([, l]) => givesAccess(l.status) && !l.cancelAtPeriodEnd);
-  const gymnasts = continuing.reduce((a, [, l]) => a + l.gymnasts, 0);
-  const monthly = continuing.reduce((a, [id, l]) => { const p = licPrice(l, id); return a + monthlyEq(p.unitPence, p.interval, l.gymnasts); }, 0);
-  const anyWeekly = continuing.some(([id, l]) => licPrice(l, id).interval === 'week');
-  const nextDates = live.map(l => l.nextPaymentAt).filter(Boolean).sort();
+  const L = state.licences;
+  const live = Object.entries(L).filter(([, l]) => givesAccess(l.status));
+  const gymnasts = live.reduce((a, [, l]) => a + (l.gymnasts || 0), 0);
+  const cur = currentTerm();
+  const termCost = live.reduce((a, [p, l]) => { const r = (state.regs[p] || {})[l.currentTermId]; return a + (r && r.totalPence || 0); }, 0);
   const params = new URLSearchParams(location.search);
 
   render(`
     ${demoBanner()}
-    ${params.get('licence') === 'started' ? `<div class="card" style="border-color:rgba(95,211,141,.5)"><b>Payment set up.</b> <span class="muted">Your ${esc(pathwayById(params.get('pathway'))?.name || '')} licence activates as soon as Stripe confirms it (usually within a minute; Direct Debit can take a few days).</span></div>` : ''}
+    ${params.get('licence') === 'started' ? `<div class="card" style="border-color:rgba(95,211,141,.5)"><b>Payment set up.</b> <span class="muted">Your ${esc(pathwayById(params.get('pathway'))?.name || '')} licence goes live as soon as Stripe confirms the payment (card: about a minute; Direct Debit: a few days).</span></div>` : ''}
     <div class="card">
       <p class="eyebrow">Club summary</p>
       <h1 style="margin-bottom:4px">${esc(state.club.name)}</h1>
       <p class="muted" style="margin:0">BG club number ${esc(state.club.bgNumber)} · ${esc(state.club.contactName)} · ${esc(state.club.email)}</p>
       <div class="kpis">
         <div class="kpi"><div class="v">${live.length}</div><div class="l">Active licences</div></div>
-        <div class="kpi"><div class="v">${n0(gymnasts)}</div><div class="l">Licensed gymnasts</div></div>
-        <div class="kpi"><div class="v">${gbp(monthly)}</div><div class="l">Per month, all pathways${anyWeekly ? ' (weekly fees averaged)' : ''}</div></div>
-        <div class="kpi"><div class="v">${nextDates[0] ? fmtDate(nextDates[0]) : '–'}</div><div class="l">Next payment</div></div>
+        <div class="kpi"><div class="v">${n0(gymnasts)}</div><div class="l">Registered gymnasts</div></div>
+        <div class="kpi"><div class="v">${cur ? esc(cur.label) : '–'}</div><div class="l">Current term</div></div>
+        <div class="kpi"><div class="v">${gbp(termCost)}</div><div class="l">Billed this term</div></div>
       </div>
-      ${windowStrip()}
+      ${termStrip()}
       <div class="btn-row" style="margin-top:14px">
-        <button class="btn ghost small" id="billing" ${live.length || Object.keys(L).length ? '' : 'disabled'}>Payment details &amp; invoices</button>
+        <button class="btn ghost small" id="billing" ${Object.keys(L).length ? '' : 'disabled'}>Payment details &amp; invoices</button>
       </div>
     </div>
 
     <h2 style="margin-top:26px">Pathways</h2>
-    <p class="muted">An NGL Awards Programme Licence lets your club deliver the NGL Awards® and present official NGL medals and certificates. Each pathway is licensed separately: £1 per gymnast per month, plus a book fee for each gymnast who needs a new book.</p>
+    <p class="muted">Your NGL Awards Programme Licence lets your club deliver the NGL Awards® and present official NGL medals and certificates. Each pathway has a yearly <b>Club Licence</b> (Pre-School and Recreational), then each term you register your gymnasts: a <b>Gymnast Licence</b> of £4 per gymnast, that term's medals, and a £5 book for each gymnast who needs one (families pay £10).</p>
     <div class="paths">${PATHWAYS.map(pathCard).join('')}</div>
     <p class="foot">Questions about your licence? <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p>
   `);
@@ -627,35 +623,45 @@ function showSummary(){
     catch(x){ toast(friendly(x), true); }
   };
   document.querySelectorAll('[data-start]').forEach(b => b.onclick = () => startModal(b.dataset.start));
-  document.querySelectorAll('[data-change]').forEach(b => b.onclick = () => changeModal(b.dataset.change));
+  document.querySelectorAll('[data-reg]').forEach(b => b.onclick = () => registerModal(b.dataset.reg));
+  document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => addModal(b.dataset.add));
   document.querySelectorAll('[data-order]').forEach(b => b.onclick = () => orderModal(b.dataset.order));
 }
 
 function pathCard(p){
   const l = state.licences[p.id], pr = pricingFor(state.settings, p.id);
-  const has = l && givesAccess(l.status), lp = licPrice(l, p.id);
-  const fee = pr && pr.clubFee ? pr.clubFee.bands : null;
-  const products = pr && pr.products ? Object.values(pr.products) : [];
-  const priceLine = pr ? `${fee ? clubFeeBox(pr, p.id) : ''}
-    <p class="note" style="margin:0">${gbp(pr.unitPence)} per gymnast per ${perWord(pr.interval)}, plus a ${gbp(pr.bookPence)} book fee for each gymnast who needs a book${pr.rrpPence ? ` (suggested price to families ${gbp(pr.rrpPence)})` : ''}.</p>
-    ${products.length ? `<p class="note" style="margin:0">${products.map(x => `${esc(x.name)}s ${gbp(x.pricePence)} each${x.rrpPence ? `, sell for ${gbp(x.rrpPence)}` : ''}`).join(' · ')}</p>` : ''}` : '';
-  const figs = has ? `<div class="figs">
-      <div class="fig"><div class="v">${n0(l.gymnasts)}</div><div class="l">Gymnasts</div></div>
-      <div class="fig"><div class="v">${l.cancelAtPeriodEnd ? '£0' : gbp(l.gymnasts * lp.unitPence)}</div><div class="l">Per ${perWord(lp.interval)}</div></div>
-    </div>
-    <p class="note" style="margin:0">${l.cancelAtPeriodEnd ? `Ends ${fmtDate(l.nextPaymentAt)}. No further payments.` : `Next payment ${fmtDate(l.nextPaymentAt)}`}</p>
-    ${l.clubFeePence ? `<p class="note" style="margin:0">Club fee ${gbp(l.clubFeePence)} a year${l.clubFeeRenewsAt ? `, renews ${fmtDate(l.clubFeeRenewsAt)}` : ''}${l.foundingClub ? '<span class="found">Founding club</span>' : ''}</p>` : ''}
-    ${l.status === 'past_due' ? '<p class="note" style="margin:0;color:var(--warn)">The last payment failed. Stripe will retry; please check your payment details.</p>' : ''}` : `
-    <p class="note" style="margin:0">${l && l.status === 'lapsed' ? 'This licence has lapsed. Restart it to regain access.' : l && l.status === 'pending' ? 'Waiting for Stripe to confirm your first payment.' : pr ? 'Not licensed yet.' : 'Licensing for this pathway is coming soon.'}</p>${priceLine}`;
-  const area = has && p.area ? `<a class="btn ghost small" href="${esc(p.area)}" target="_blank" rel="noopener">Open ${esc(p.name)} area</a>` : has ? '<span class="note" style="align-self:center">Pathway area coming soon</span>' : '';
+  const has = l && givesAccess(l.status);
+  const nx = nextTerm(), cur = currentTerm();
+  const regs = state.regs[p.id] || {};
+  let body;
+  if(has){
+    const curReg = regs[l.currentTermId], nxReg = nx ? regs[nx.id] : null, ct = termById(l.currentTermId);
+    const nxLine = !nx ? '' : nxReg ? (nxReg.status === 'ending' ? `<span class="muted">Ends when ${esc(nx.label)} starts (registered 0).</span>` : `<span class="muted">${esc(nx.label)}: ${n0(nxReg.gymnasts)} registered, ${gbp(nxReg.totalPence || 0)} billed.</span>`)
+      : registrationOpen(nx) ? `<b style="color:var(--gold)">${esc(nx.label)}: registration open until ${fmtDate(nx.start)}.</b>` : `<span class="muted">${esc(nx.label)} registration opens ${fmtDate(nx.regOpens)}.</span>`;
+    body = `<div class="figs">
+        <div class="fig"><div class="v">${n0(l.gymnasts)}</div><div class="l">Gymnasts${ct ? ', ' + esc(ct.label) : ''}</div></div>
+        <div class="fig"><div class="v">${curReg && curReg.totalPence ? gbp(curReg.totalPence) : '–'}</div><div class="l">This term's bill</div></div>
+      </div>
+      <p class="note" style="margin:0">${nxLine}</p>
+      ${l.clubLicence && l.clubLicence.paidUntil ? `<p class="note" style="margin:0">Club Licence paid to ${fmtDate(l.clubLicence.paidUntil)}, renews with the autumn bill${l.foundingClub ? '<span class="found">Founding club</span>' : ''}</p>` : ''}
+      ${l.status === 'past_due' ? '<p class="note" style="margin:0;color:var(--warn)">The last payment failed. Stripe will retry; please check your payment details.</p>' : ''}`;
+  } else {
+    body = `<p class="note" style="margin:0">${l && l.status === 'lapsed' ? 'This licence has lapsed. Restart it to regain access.' : l && l.status === 'ended' ? 'This licence has ended. You can restart it at any time.' : l && l.status === 'pending' ? 'Waiting for Stripe to confirm your first payment.' : pr ? 'Not licensed yet.' : 'Licensing for this pathway is coming soon.'}</p>
+      ${pr ? `${pr.clubFee ? clubFeeBox(pr, p.id) : ''}
+      <p class="note" style="margin:0">Each term: Gymnast Licence ${gbp(pr.termPence)} per gymnast${pr.medal ? `, plus ${pr.medal.fromCalendar ? 'that term\'s country medals' : `${pr.medal.perTerm} medal`} at ${gbp(pr.medal.pricePence)} each (families pay ${gbp(pr.medal.rrpPence)})` : ''}. ${esc(pr.bookName || 'Book')} ${gbp(pr.bookPence)} for gymnasts who need one${pr.rrpPence ? ` (families pay ${gbp(pr.rrpPence)})` : ''}.</p>` : ''}`;
+  }
+  const area = has && p.area ? `<a class="btn ghost small" href="${esc(p.area)}" target="_blank" rel="noopener">Open ${esc(p.name)} area</a>` : '';
+  const canReg = has && nx && registrationOpen(nx) && !regs[nx.id];
   const actions = has
-    ? `<button class="btn small" data-change="${p.id}">Change gymnasts</button>${pr && (pr.products || pr.themes) ? `<button class="btn ghost small" data-order="${p.id}">Order medals${pr.themes ? ' &amp; themes' : pr.products && pr.products.book ? ' &amp; books' : ''}</button>` : ''}${area}`
-    : (l && l.status === 'pending') || !pr ? '' : `<button class="btn small" data-start="${p.id}">${l && l.status === 'lapsed' ? 'Restart licence' : 'Start licence'}</button>`;
+    ? `${canReg ? `<button class="btn small" data-reg="${p.id}">Register for ${esc(nx.label)}</button>` : ''}
+       <button class="btn ${canReg ? 'ghost ' : ''}small" data-add="${p.id}">Add gymnasts</button>
+       ${pr && (pr.themes || pr.medal) ? `<button class="btn ghost small" data-order="${p.id}">Order extras</button>` : ''}${area}`
+    : (l && l.status === 'pending') || !pr ? '' : `<button class="btn small" data-start="${p.id}">${l && (l.status === 'lapsed' || l.status === 'ended') ? 'Restart licence' : 'Start licence'}</button>`;
   return `<div class="path" style="--pc:${p.color}">
     <div class="stripe"></div>
     <div class="body">
       <div class="head"><span class="name">${esc(p.name)}</span>${statusTag(l)}</div>
-      ${figs}
+      ${body}
       ${INCLUDES[p.id] ? (has
         ? `<details><summary>What's included</summary><div style="margin-top:6px">${includesList(p.id)}</div></details>`
         : `<div><p class="note" style="margin:0 0 4px;font-weight:800;color:var(--white)">What you get, per gymnast</p>${includesList(p.id)}</div>`) : ''}
@@ -664,22 +670,23 @@ function pathCard(p){
   </div>`;
 }
 
-/* Club fee box: founding price charged, full price struck through */
-function clubFeeBox(pr, id, gymnasts){
+/* Club Licence box: founding price charged, full price struck through */
+function clubFeeBox(pr, id, due){
   const bands = pr.clubFee.bands, f = foundingOpen();
   let priceHtml;
-  if(gymnasts){
-    const c = clubFeeFor(pr, gymnasts, f);
-    priceHtml = `${f && c.fullPence > c.pence ? `<s>${gbp(c.fullPence)}</s>` : ''}<b class="price">${gbp(c.pence)}</b> a year${bands.length > 1 ? ` <span class="muted">(${esc(c.band)})</span>` : ''}${f ? '<span class="found">Founding club price</span>' : ''}`;
+  if(due){
+    const struck = due.founding && due.fullPence > due.foundingPence && due.share === 1 ? `<s>${gbp(due.fullPence)}</s>` : '';
+    priceHtml = `${struck}<b class="price">${gbp(due.pence)}</b> ${due.share === 1 ? 'for the year' : due.taster ? '' : 'for the rest of this school year'}${bands.length > 1 ? ` <span class="muted">(${esc(due.band)})</span>` : ''}${due.founding ? '<span class="found">Founding club price</span>' : ''}
+      ${due.share < 1 ? `<div class="muted" style="margin-top:4px">${due.taster ? 'Summer taster: no Club Licence to pay until September.' : `Pro-rata for joining mid-year. Then ${gbp(due.founding ? due.foundingPence : due.fullPence)} a year, renewing each September.`}</div>` : '<div class="muted" style="margin-top:4px">Renews each September.</div>'}`;
   } else if(bands.length === 1){
     const b = bands[0];
     priceHtml = `${f && b.fullPence > b.foundingPence ? `<s>${gbp(b.fullPence)}</s>` : ''}<b class="price">${gbp(f ? b.foundingPence : b.fullPence)}</b> a year${f ? '<span class="found">Founding club price</span>' : ''}`;
   } else {
     priceHtml = `From ${f ? `<s>${gbp(bands[0].fullPence)}</s>` : ''}<b class="price">${gbp(f ? bands[0].foundingPence : bands[0].fullPence)}</b> a year${f ? '<span class="found">Founding club price</span>' : ''}<br><span class="muted">By number of gymnasts: ${esc(bands.map((b, i, a) => { const lo = i === 0 ? 1 : a[i-1].max + 1; return `${b.max == null ? lo + '+' : lo + '–' + b.max} ${gbp(f ? b.foundingPence : b.fullPence)}`; }).join(' · '))}</span>`;
   }
-  return `<div class="feebox"><div style="font-weight:800;margin-bottom:2px">Club fee: plans for the year</div>${priceHtml}
+  return `<div class="feebox"><div style="font-weight:800;margin-bottom:2px">Club Licence: the plans, yearly</div>${priceHtml}
     ${CLUB_FEE_VALUE[id] ? `<div class="muted" style="margin-top:4px">${esc(CLUB_FEE_VALUE[id])}</div>` : ''}
-    ${f ? `<div class="muted" style="margin-top:4px">Founding club prices for clubs that join by ${fmtDate(foundingUntil())}, and kept when you renew.</div>` : ''}</div>`;
+    ${!due && f ? `<div class="muted" style="margin-top:4px">Founding club prices for clubs that join by ${fmtDate(foundingUntil())}, kept when you renew. Joining mid-year is pro-rata by term.</div>` : ''}</div>`;
 }
 
 function stepper(id, value, min){
@@ -695,127 +702,157 @@ function wireStepper(m, id, onChange){
   inp.oninput = onChange;
   return () => parseInt(inp.value, 10);
 }
+/* number box that follows a maximum until the club edits it */
+function smallField(id, label, note){
+  return `<div class="field" style="margin:12px 0 0"><label for="${id}">${label}</label>
+    <input class="input" id="${id}" type="number" inputmode="numeric" min="0" step="1" style="max-width:140px">
+    ${note ? `<p class="note" style="margin:6px 0 0">${note}</p>` : ''}</div>`;
+}
+function follower(m, id, maxFn, dfltFn, onChange){
+  const inp = m.querySelector('#' + id); let touched = false;
+  inp.oninput = () => { touched = true; onChange(); };
+  return { sync(){ const mx = maxFn(); inp.max = mx; if(!touched) inp.value = dfltFn(); else if(+inp.value > mx) inp.value = mx; },
+           get(){ return parseInt(inp.value, 10); }, show(on){ inp.closest('.field').hidden = !on; } };
+}
 
+/* ---------- Start a licence ---------- */
 function startModal(pathway){
-  const p = pathwayById(pathway), s = pricingFor(state.settings, pathway), per = perWord(s.interval);
+  const p = pathwayById(pathway), s = pricingFor(state.settings, pathway), term = billingTerm();
+  if(!term){ toast('No term is set up yet. Please contact NGL.', true); return; }
+  const prev = state.licences[pathway] || {};
   const m = modal(`<p class="eyebrow"><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</p>
     <h2>Start ${esc(p.name)} licence</h2>
-    <p class="note">${gbp(s.unitPence)} per gymnast per ${per}, plus a ${gbp(s.bookPence)} book fee for each gymnast who needs a book.</p>
+    <p class="note">Your first bill covers <b>${esc(term.label)}</b>${s.medal && s.medal.fromCalendar ? ` (countries: ${esc(term.countries.join(', '))})` : ''}. After that you confirm numbers each term.</p>
     ${INCLUDES[pathway] ? `<div style="--pc:${p.color};margin:0 0 14px">${includesList(pathway)}</div>` : ''}
-    <p class="muted">How many gymnasts will take part? You can add more at any time.</p>
+    <p class="muted">How many gymnasts this term? You can add more at any time.</p>
     ${stepper('qty', 20, 1)}
-    ${booksField(s.bookPence)}
+    ${smallField('books', `How many need a new ${esc((s.bookName || 'book').toLowerCase())}? (${gbp(s.bookPence)} each)`, 'Gymnasts who already have one pay nothing for it.')}
+    ${s.medal ? smallField('spares', `Spare medals for mid-term joiners (${gbp(s.medal.pricePence)} each, optional)`, '') : ''}
     ${s.clubFee ? '<div id="feebox" style="margin-top:14px"></div>' : ''}
     <div id="calc" style="margin-top:14px"></div>
-    <label class="note" style="display:flex;gap:10px;align-items:flex-start;margin:14px 0"><input type="checkbox" id="ok" style="margin-top:3px"> I understand numbers can only be reduced, or the licence cancelled, during the holiday windows set by NGL.</label>
+    <label class="note" style="display:flex;gap:10px;align-items:flex-start;margin:14px 0"><input type="checkbox" id="ok" style="margin-top:3px"> I understand numbers can go up at any time, and go down only by registering a lower number before the next term starts.</label>
     <p class="error" id="err"></p>
     <div class="btn-row"><button class="btn" id="go">Continue to payment</button><button class="btn ghost" data-close>Cancel</button></div>
-    <p class="note" style="margin-top:12px">Pay by card or Direct Debit on the next screen (Stripe).</p>`);
+    <p class="note" style="margin-top:12px">Pay by card or Direct Debit on the next screen (Stripe). It is saved for your termly bills.</p>`);
   const calc = () => {
-    const q = get();
-    let valid = Number.isInteger(q) && q >= 1 && q <= MAX_GYMNASTS;
-    if(valid) bk.sync();
-    const b = bk.get();
-    if(valid && !(Number.isInteger(b) && b >= 0 && b <= q)){ m.querySelector('#calc').innerHTML = `<p class="error">Books must be between 0 and ${n0(q)}.</p>`; m.querySelector('#go').disabled = true; return; }
-    const cf = s.clubFee && valid ? clubFeeFor(s, q, foundingOpen() || !!(state.licences[pathway] && state.licences[pathway].foundingClub)) : null;
-    if(s.clubFee && valid) m.querySelector('#feebox').innerHTML = clubFeeBox(s, pathway, q);
-    m.querySelector('#calc').innerHTML = valid ? `
-      ${cf ? `<div class="sum"><span>Club fee, first year${s.clubFee.bands.length > 1 ? ` (${esc(cf.band)})` : ''}</span><span>${gbp(cf.pence)}</span></div>` : ''}
-      ${b ? `<div class="sum"><span>Book fee: ${n0(b)} × ${gbp(s.bookPence)}</span><span>${gbp(b * s.bookPence)}</span></div>` : ''}
-      <div class="sum"><span>First ${per}: ${n0(q)} × ${gbp(s.unitPence)}</span><span>${gbp(q * s.unitPence)}</span></div>
-      <div class="sum total"><span>First payment</span><span>${gbp((cf ? cf.pence : 0) + b * s.bookPence + q * s.unitPence)}</span></div>
-      <div class="sum"><span>Then each ${per}</span><span>${gbp(q * s.unitPence)}</span></div>
-      ${cf ? `<div class="sum"><span>Club fee each year after</span><span>${gbp(cf.pence)}</span></div>` : ''}
-      ${s.interval === 'week' ? `<div class="sum"><span>About per month</span><span>${gbp(monthlyEq(s.unitPence, 'week', q))}</span></div>` : ''}`
-      : `<p class="error">Enter between 1 and ${n0(MAX_GYMNASTS)} gymnasts.</p>`;
-    m.querySelector('#go').disabled = !valid;
+    const q = get(), err = m.querySelector('#err'); err.textContent = '';
+    const valid = Number.isInteger(q) && q >= 1 && q <= MAX_GYMNASTS;
+    if(!valid){ m.querySelector('#calc').innerHTML = `<p class="error">Enter between 1 and ${n0(MAX_GYMNASTS)} gymnasts.</p>`; m.querySelector('#go').disabled = true; return; }
+    bk.sync(); if(sp) sp.sync();
+    const cl = s.clubFee ? clubLicenceDue(s, term, q, {paidUntil: prev.clubLicence && prev.clubLicence.paidUntil, founding: foundingOpen() || prev.foundingClub}) : null;
+    if(s.clubFee) m.querySelector('#feebox').innerHTML = cl ? clubFeeBox(s, pathway, cl) : '<div class="feebox">Club Licence already paid for this school year.</div>';
+    const bill = termBill({price:s, pathway, term, gymnasts:q, books:bk.get(), spares: sp ? sp.get() : 0, clubLicence:cl});
+    if(bill.error){ m.querySelector('#calc').innerHTML = `<p class="error">${esc(bill.error)}</p>`; m.querySelector('#go').disabled = true; return; }
+    m.querySelector('#calc').innerHTML = `<p class="note" style="margin:0 0 4px;font-weight:800;color:var(--white)">First bill: ${esc(term.label)}</p>` + billHTML(bill) +
+      `<p class="note">Next term, ${n0(q)} gymnasts would be ${gbp(q * s.termPence)} licence${s.medal ? ' + that term\'s medals' : ''}.</p>`;
+    m.querySelector('#go').disabled = false;
   };
-  const bk = wireBooks(m, () => get(), () => calc());
+  const bk = follower(m, 'books', () => get() || 0, () => get() || 0, () => calc());
+  const sp = s.medal ? follower(m, 'spares', () => Math.ceil((get() || 0) * MAX_SPARE_PCT), () => 0, () => calc()) : null;
   const get = wireStepper(m, 'qty', calc); calc();
   m.querySelector('#go').onclick = async () => {
     const err = m.querySelector('#err'); err.textContent = '';
-    if(!m.querySelector('#ok').checked){ err.textContent = 'Please tick to confirm the holiday-window rule.'; return; }
+    if(!m.querySelector('#ok').checked){ err.textContent = 'Please tick to confirm how changes work.'; return; }
     const btn = m.querySelector('#go'); btn.disabled = true; btn.textContent = 'Opening payment…';
     try {
-      const r = await api.startLicence(pathway, get(), bk.get());
+      const r = await api.startLicence(pathway, get(), bk.get(), sp ? sp.get() : 0);
       if(r.demo){ m.close(); await refresh(); show(); toast(`${p.name} licence active (demo: Stripe payment skipped)`); }
     } catch(x){ err.textContent = friendly(x); btn.disabled = false; btn.textContent = 'Continue to payment'; }
   };
 }
 
-function changeModal(pathway){
-  const p = pathwayById(pathway), l = state.licences[pathway], s = licPrice(l, pathway), per = perWord(s.interval);
-  const start = l.gymnasts;
+/* ---------- Register for next term ---------- */
+function registerModal(pathway){
+  const p = pathwayById(pathway), s = pricingFor(state.settings, pathway), l = state.licences[pathway], term = nextTerm();
   const m = modal(`<p class="eyebrow"><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</p>
-    <h2>Change gymnasts</h2>
-    <p class="muted">${l.cancelAtPeriodEnd ? `This licence is set to end on ${fmtDate(l.nextPaymentAt)}. Choose a number to keep it going.` : `Currently <b>${n0(l.gymnasts)}</b> gymnasts.`}</p>
-    ${stepper('qty', start, 0)}
-    ${booksField(s.bookPence)}
+    <h2>Register for ${esc(term.label)}</h2>
+    <p class="note">Term starts ${fmtDate(term.start)}${s.medal && s.medal.fromCalendar ? `. Countries this term: ${esc(term.countries.join(', '))}` : ''}. This term you have <b>${n0(l.gymnasts)}</b> gymnasts.</p>
+    <p class="muted">How many gymnasts next term? Set 0 to end the licence when the term starts.</p>
+    ${stepper('qty', l.gymnasts, 0)}
+    ${smallField('books', `How many need a new ${esc((s.bookName || 'book').toLowerCase())}? (${gbp(s.bookPence)} each)`, 'New gymnasts usually do; returning gymnasts keep theirs unless the book is yearly.')}
+    ${s.medal ? smallField('spares', `Spare medals (${gbp(s.medal.pricePence)} each, optional)`, '') : ''}
     <div id="calc" style="margin-top:14px"></div>
     <p class="error" id="err"></p>
-    <div class="btn-row"><button class="btn" id="go">Confirm change</button><button class="btn ghost" data-close>Close</button></div>
-    ${l.cancelAtPeriodEnd ? '' : `<p class="note" style="margin-top:16px">To end this licence, set the number to 0 during a holiday window.</p>`}`);
+    <div class="btn-row"><button class="btn" id="go">Confirm registration</button><button class="btn ghost" data-close>Close</button></div>
+    <p class="note" style="margin-top:12px">Charged to your saved card or Direct Debit. Not registering keeps you at ${n0(l.gymnasts)} gymnasts.</p>`);
   const calc = () => {
-    const q = get(), box = m.querySelector('#calc'), go = m.querySelector('#go');
-    if(!Number.isInteger(q) || q < 0 || q > MAX_GYMNASTS){ box.innerHTML = `<p class="error">Enter between 0 and ${n0(MAX_GYMNASTS)}.</p>`; go.disabled = true; return; }
-    const added = l.cancelAtPeriodEnd ? Math.max(q - l.gymnasts, 0) : Math.max(q - l.gymnasts, 0);
-    bk.show(added > 0); if(added > 0) bk.sync();
-    const plan = planChange(l, q, s, added > 0 ? bk.get() : null);
-    if(!plan.allowed){
-      box.innerHTML = plan.kind === 'none' ? '' : (plan.kind === 'increase' || plan.kind === 'undo-cancel') ? `<p class="error">${esc(plan.reason)}</p>` : `<div class="lock"><span>🔒</span><span><b>Locked until the holidays.</b> ${esc(plan.reason)}</span></div>`;
-      go.disabled = true; go.textContent = 'Confirm change'; return;
-    }
-    go.disabled = false;
-    go.className = plan.kind === 'cancel' ? 'btn danger' : 'btn';
-    go.textContent = plan.kind === 'cancel' ? 'Cancel licence' : 'Confirm change';
-    box.innerHTML = plan.kind === 'cancel' ? `
-      <div class="sum"><span>Licence ends</span><span>${fmtDate(l.nextPaymentAt)}</span></div>
-      <div class="sum"><span>Further payments</span><span>None</span></div>
-      <p class="note">Access continues until then. Your Awards and pathway content lock when it ends.</p>` : `
-      ${plan.bookFeePence ? `<div class="sum"><span>Book fee: ${n0(plan.books)} × ${gbp(s.bookPence)}</span><span>${gbp(plan.bookFeePence)}</span></div>` : ''}
-      <div class="sum"><span>Each ${per} now</span><span>${gbp(plan.periodFromPence)}</span></div>
-      <div class="sum total"><span>Each ${per} from ${fmtDate(l.nextPaymentAt)}</span><span>${gbp(plan.periodToPence)}</span></div>
-      <p class="note">${plan.bookFeePence ? 'The book fee is added to your next payment. ' : ''}No part-${per} charges.</p>`;
+    const q = get(), go = m.querySelector('#go');
+    if(!Number.isInteger(q) || q < 0 || q > MAX_GYMNASTS){ m.querySelector('#calc').innerHTML = `<p class="error">Enter between 0 and ${n0(MAX_GYMNASTS)}.</p>`; go.disabled = true; return; }
+    bk.show(q > 0); if(sp) sp.show(q > 0);
+    if(q === 0){ m.querySelector('#calc').innerHTML = `<div class="lock"><span>⏹</span><span><b>Ending this licence.</b> Access continues until ${fmtDate(term.start)}. Nothing more is charged.</span></div>`; go.disabled = false; go.className = 'btn danger'; go.textContent = 'End licence'; return; }
+    bk.sync(); if(sp) sp.sync();
+    const cl = s.clubFee ? clubLicenceDue(s, term, q, {paidUntil: l.clubLicence && l.clubLicence.paidUntil, founding: l.foundingClub}) : null;
+    const bill = termBill({price:s, pathway, term, gymnasts:q, books:bk.get(), spares: sp ? sp.get() : 0, clubLicence:cl});
+    if(bill.error){ m.querySelector('#calc').innerHTML = `<p class="error">${esc(bill.error)}</p>`; go.disabled = true; return; }
+    m.querySelector('#calc').innerHTML = (cl ? `<p class="note" style="margin:0 0 6px">Your Club Licence renews with this bill${cl.band ? ` (${esc(cl.band)})` : ''}.</p>` : '') + billHTML(bill);
+    go.disabled = false; go.className = 'btn'; go.textContent = 'Confirm registration';
   };
-  const bk = wireBooks(m, () => Math.max(get() - l.gymnasts, 0), () => calc());
+  const bk = follower(m, 'books', () => get() || 0, () => Math.max((get() || 0) - l.gymnasts, 0), () => calc());
+  const sp = s.medal ? follower(m, 'spares', () => Math.ceil((get() || 0) * MAX_SPARE_PCT), () => 0, () => calc()) : null;
   const get = wireStepper(m, 'qty', calc); calc();
   m.querySelector('#go').onclick = async () => {
     const err = m.querySelector('#err'); err.textContent = '';
     const btn = m.querySelector('#go'); btn.disabled = true;
     try {
-      const added = Math.max(get() - l.gymnasts, 0);
-      const r = await api.changeGymnasts(pathway, get(), added > 0 ? bk.get() : undefined);
+      const r = await api.registerTerm(pathway, get(), get() ? bk.get() : 0, get() && sp ? sp.get() : 0);
       m.close(); await refresh(); show();
-      toast(r.kind === 'cancel' ? `${p.name} licence will end on ${fmtDate(l.nextPaymentAt)}` : `${p.name} updated to ${n0(get())} gymnasts`);
+      toast(r.ending ? `${p.name} licence ends when ${term.label} starts` : `${p.name} registered for ${term.label}`);
     } catch(x){ err.textContent = friendly(x); btn.disabled = false; }
   };
 }
 
-/* ---------- Orders: medals, books, extra themes ---------- */
+/* ---------- Add gymnasts during a term ---------- */
+function addModal(pathway){
+  const p = pathwayById(pathway), s = pricingFor(state.settings, pathway), l = state.licences[pathway];
+  const term = termById(l.currentTermId) || currentTerm();
+  const m = modal(`<p class="eyebrow"><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</p>
+    <h2>Add gymnasts</h2>
+    <p class="note">Added gymnasts are billed for <b>${esc(term.label)}</b>: Gymnast Licence${s.medal ? ' and this term\'s medals' : ''}. You have ${n0(l.gymnasts)} now.</p>
+    <p class="muted">How many are you adding?</p>
+    ${stepper('qty', 1, 1)}
+    ${smallField('books', `How many need a new ${esc((s.bookName || 'book').toLowerCase())}? (${gbp(s.bookPence)} each)`, '')}
+    <div id="calc" style="margin-top:14px"></div>
+    <p class="error" id="err"></p>
+    <div class="btn-row"><button class="btn" id="go">Add and pay</button><button class="btn ghost" data-close>Close</button></div>
+    <p class="note" style="margin-top:12px">To reduce numbers, register a lower number for the next term.</p>`);
+  const calc = () => {
+    const q = get(), go = m.querySelector('#go');
+    if(!Number.isInteger(q) || q < 1){ m.querySelector('#calc').innerHTML = '<p class="error">Add at least 1 gymnast.</p>'; go.disabled = true; return; }
+    bk.sync();
+    const bill = termBill({price:s, pathway, term, gymnasts:q, books:bk.get()});
+    if(bill.error){ m.querySelector('#calc').innerHTML = `<p class="error">${esc(bill.error)}</p>`; go.disabled = true; return; }
+    m.querySelector('#calc').innerHTML = billHTML(bill); go.disabled = false;
+  };
+  const bk = follower(m, 'books', () => get() || 0, () => get() || 0, () => calc());
+  const get = wireStepper(m, 'qty', calc); calc();
+  m.querySelector('#go').onclick = async () => {
+    const btn = m.querySelector('#go'); btn.disabled = true;
+    try { await api.addGymnasts(pathway, get(), bk.get()); m.close(); await refresh(); show(); toast(`${p.name}: ${get()} gymnasts added`); }
+    catch(x){ m.querySelector('#err').textContent = friendly(x); btn.disabled = false; }
+  };
+}
+
+/* ---------- Extras: spare medals, replacement books, extra themes ---------- */
 function orderModal(pathway){
   const p = pathwayById(pathway), pr = pricingFor(state.settings, pathway), l = state.licences[pathway];
-  const ordered = (l.ordered || {});
   const rows = [];
-  Object.entries(pr.products || {}).forEach(([id, x]) => {
-    const cap = Math.max(0, l.gymnasts * (x.perGymnastPerYear || 1) - (ordered[id] || 0));
-    rows.push({id, name: x.name, unit: x.pricePence, rrp: x.rrpPence, cap,
-      hint: `${id === 'book' ? 'For returning gymnasts (new gymnasts\' books are in the book fee). ' : ''}${gbp(x.pricePence)} each${x.rrpPence ? `, suggested price to families ${gbp(x.rrpPence)} (you make ${gbp(x.rrpPence - x.pricePence)} each)` : ''}. Up to ${n0(cap)} more this year for ${n0(l.gymnasts)} gymnasts.`});
-  });
-  if(pr.themes) rows.push({id:'theme', name:'Extra theme', unit: pr.themes.extraPence, cap: 20, hint: `${gbp(pr.themes.extraPence)} each, on top of the ${pr.themes.included} themes in your club fee.`});
+  if(pr.themes) rows.push({id:'theme', name:'Extra themes', unit:pr.themes.extraPence, cap:20, hint:`${gbp(pr.themes.extraPence)} each, on top of the ${pr.themes.included} themes in your Club Licence.`});
+  if(pr.medal) rows.push({id:'medal', name:'Spare medals', unit:pr.medal.pricePence, cap:Math.ceil(l.gymnasts * MAX_SPARE_PCT), hint:`${gbp(pr.medal.pricePence)} each, for gymnasts who join mid-term.`});
+  rows.push({id:'book', name:`Replacement ${(pr.bookName || 'book').toLowerCase()}s`, unit:pr.bookPence, cap:l.gymnasts, hint:`${gbp(pr.bookPence)} each.`});
   const m = modal(`<p class="eyebrow"><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</p>
-    <h2>Order</h2>
-    ${rows.map(r => `<div class="shop-row"><div><b>${esc(r.name)}s</b><div class="note">${r.hint}</div></div>
+    <h2>Order extras</h2>
+    <p class="note">Medals for your registered gymnasts come with each term's bill; this is for anything extra.</p>
+    ${rows.map(r => `<div class="shop-row"><div><b>${esc(r.name)}</b><div class="note">${r.hint}</div></div>
       <input class="input" type="number" min="0" max="${r.cap}" step="1" value="0" data-item="${r.id}" aria-label="${esc(r.name)} quantity"></div>`).join('')}
     <div id="calc" style="margin-top:14px"></div>
     <p class="error" id="err"></p>
-    <div class="btn-row"><button class="btn" id="go" disabled>Pay by card</button><button class="btn ghost" data-close>Close</button></div>
-    <p class="note" style="margin-top:12px">Medals and books are limited to your licensed gymnasts. Orders are posted to your club.</p>`);
+    <div class="btn-row"><button class="btn" id="go" disabled>Pay by card</button><button class="btn ghost" data-close>Close</button></div>`);
   const items = () => rows.map(r => ({id:r.id, qty: parseInt(m.querySelector(`[data-item="${r.id}"]`).value, 10) || 0}));
   const calc = () => {
     const its = items(), err = m.querySelector('#err'); err.textContent = '';
     let total = 0, bad = null;
-    its.forEach((it, i) => { if(it.qty < 0 || it.qty > rows[i].cap) bad = `You can order up to ${n0(rows[i].cap)} ${rows[i].name.toLowerCase()}s.`; total += it.qty * rows[i].unit; });
-    m.querySelector('#calc').innerHTML = its.filter(i => i.qty).map(it => { const r = rows.find(x => x.id === it.id); return `<div class="sum"><span>${n0(it.qty)} × ${esc(r.name)} at ${gbp(r.unit)}</span><span>${gbp(it.qty * r.unit)}</span></div>`; }).join('') +
+    its.forEach((it, i) => { if(it.qty < 0 || it.qty > rows[i].cap) bad = `Up to ${n0(rows[i].cap)} ${rows[i].name.toLowerCase()}.`; total += it.qty * rows[i].unit; });
+    m.querySelector('#calc').innerHTML = its.filter(i => i.qty).map(it => { const r = rows.find(x => x.id === it.id); return `<div class="sum"><span>${n0(it.qty)} × ${esc(r.name)}</span><span>${gbp(it.qty * r.unit)}</span></div>`; }).join('') +
       (total ? `<div class="sum total"><span>Total</span><span>${gbp(total)}</span></div>` : '');
     if(bad) err.textContent = bad;
     m.querySelector('#go').disabled = !!bad || !total;
@@ -823,56 +860,48 @@ function orderModal(pathway){
   m.querySelectorAll('[data-item]').forEach(i => i.oninput = calc);
   m.querySelector('#go').onclick = async () => {
     const btn = m.querySelector('#go'); btn.disabled = true; btn.textContent = 'Opening payment…';
-    try {
-      const r = await api.orderProducts(pathway, items().filter(i => i.qty));
-      if(r.demo){ m.close(); await refresh(); show(); toast('Order placed (demo: payment skipped)'); }
-    } catch(x){ m.querySelector('#err').textContent = friendly(x); btn.disabled = false; btn.textContent = 'Pay by card'; }
+    try { const r = await api.orderProducts(pathway, items().filter(i => i.qty)); if(r.demo){ m.close(); toast('Order placed (demo: payment skipped)'); } }
+    catch(x){ m.querySelector('#err').textContent = friendly(x); btn.disabled = false; btn.textContent = 'Pay by card'; }
   };
 }
 
 /* ---------- NGL admin ---------- */
 async function showAdmin(){
-  const s = state.settings;
+  const s = state.settings, terms = termsFrom(s).map(t => ({...t, countries: [...(t.countries || [])]}));
   render(`${demoBanner()}
     <div class="card">
       <p class="eyebrow">NGL admin</p>
-      <h2>Holiday windows ${s.season ? '· ' + esc(s.season) : ''}</h2>
-      <p class="muted">Clubs can reduce gymnast numbers or cancel only between these dates (UK dates, first and last day included). Set them at the start of each school year.</p>
-      <div class="field" style="max-width:220px"><label for="season">School year</label><input class="input" id="season" value="${esc(s.season || '')}" placeholder="2026/27"></div>
-      <div id="wins"></div>
-      <div class="btn-row" style="margin-top:6px"><button class="btn ghost small" id="addWin">+ Add window</button></div>
-      <h2 style="margin-top:24px">Prices by pathway</h2>
-      <p class="note">Per gymnast. New licences use these prices; existing licences keep the fee they started on (book fees use the current price). Leave the fee blank to keep a pathway off sale.</p>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Pathway</th><th>Book fee (£)</th><th>Fee (£)</th><th>Charged every</th><th class="num">Fee per year</th></tr></thead>
-        <tbody>${PATHWAYS.map(p => { const pr = pricingFor(s, p.id) || {}; return `<tr data-price="${p.id}">
-          <td><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</td>
-          <td><input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.01" data-f="book" value="${pr.bookPence != null ? pr.bookPence / 100 : ''}"></td>
-          <td><input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.01" data-f="unit" value="${pr.unitPence != null ? pr.unitPence / 100 : ''}"></td>
-          <td><select class="input" style="width:110px;padding:8px" data-f="interval"><option value="month" ${pr.interval !== 'week' ? 'selected' : ''}>Month</option><option value="week" ${pr.interval === 'week' ? 'selected' : ''}>Week</option></select></td>
-          <td class="num" data-f="year">${pr.unitPence ? gbp(yearCost(pr)) : 'Off sale'}</td></tr>`; }).join('')}</tbody>
-      </table></div>
-      <h2 style="margin-top:24px">Club fees and products</h2>
-      <p class="note">The yearly club fee pays for the plans. While founding pricing is open, new clubs pay the founding price and keep it when they renew; after that, new clubs pay the full price. Clubs see the full price struck through.</p>
-      <div class="field" style="max-width:260px"><label for="foundUntil">Founding club prices open until</label><input class="input" id="foundUntil" type="date" value="${esc(s.foundingUntil || DEFAULT_FOUNDING_UNTIL)}"></div>
-      ${PATHWAYS.map(p => { const pr = pricingFor(s, p.id); if(!pr || !(pr.clubFee || pr.products || pr.themes)) return ''; return `<div class="card" style="background:var(--navy-2);padding:14px;margin-bottom:12px">
+      <h2>Term calendar</h2>
+      <p class="muted">Each term: registration opens on the first date and closes when the term starts. Pre-School countries are the medals for that term (one every 4 weeks), the same for every club.</p>
+      <div id="terms"></div>
+      <div class="btn-row" style="margin-top:6px"><button class="btn ghost small" id="addTerm">+ Add term</button></div>
+
+      <h2 style="margin-top:24px">Club Licence</h2>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+        <div class="field" style="max-width:260px"><label for="foundUntil">Founding club prices open until</label><input class="input" id="foundUntil" type="date" value="${esc(s.foundingUntil || DEFAULT_FOUNDING_UNTIL)}"></div>
+        <label class="note" style="display:flex;gap:8px;align-items:center;margin-bottom:22px"><input type="checkbox" id="taster" ${s.summerTaster ? 'checked' : ''}> Summer taster: clubs joining in the summer term pay no Club Licence until September</label>
+      </div>
+      <p class="note">First year is pro-rata by term: autumn full, spring two-thirds, summer one-third (or free with the taster). Renews each September at the band for the club's gymnast numbers.</p>
+      ${PATHWAYS.map(p => { const pr = pricingFor(s, p.id); if(!pr || !pr.clubFee) return ''; return `<div class="card" style="background:var(--navy-2);padding:14px;margin-bottom:12px">
         <h3><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</h3>
-        ${pr.clubFee ? `<div class="table-wrap"><table><thead><tr><th>Gymnasts in pathway</th><th>Up to (blank = no limit)</th><th>Full price (£)</th><th>Founding price (£)</th></tr></thead><tbody>
+        <div class="table-wrap"><table><thead><tr><th>Gymnasts</th><th>Up to (blank = no limit)</th><th>Full price (£/yr)</th><th>Founding price (£/yr)</th></tr></thead><tbody>
           ${pr.clubFee.bands.map((b, i, a) => `<tr><td>${i === 0 ? 1 : (a[i-1].max ?? 0) + 1}+</td>
             <td><input class="input" style="width:90px;padding:8px" type="number" min="1" step="1" data-cf="${p.id}|${i}|max" value="${b.max ?? ''}"></td>
             <td><input class="input" style="width:100px;padding:8px" type="number" min="0" step="1" data-cf="${p.id}|${i}|fullPence" value="${b.fullPence / 100}"></td>
             <td><input class="input" style="width:100px;padding:8px" type="number" min="0" step="1" data-cf="${p.id}|${i}|foundingPence" value="${b.foundingPence / 100}"></td></tr>`).join('')}
-          </tbody></table></div>` : ''}
-        ${pr.themes ? `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">
-          <div class="field"><label>Themes included</label><input class="input" style="width:100px" type="number" min="0" step="1" data-th="${p.id}|included" value="${pr.themes.included}"></div>
-          <div class="field"><label>Extra theme (£)</label><input class="input" style="width:100px" type="number" min="0" step="1" data-th="${p.id}|extraPence" value="${pr.themes.extraPence / 100}"></div></div>` : ''}
-        ${pr.products ? `<div class="table-wrap" style="margin-top:6px"><table><thead><tr><th>Product</th><th>Price to club (£)</th><th>Suggested to families (£)</th><th>Max per gymnast per year</th></tr></thead><tbody>
-          ${Object.entries(pr.products).map(([id, x]) => `<tr><td>${esc(x.name)}</td>
-            <td><input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.05" data-pd="${p.id}|${id}|pricePence" value="${x.pricePence / 100}"></td>
-            <td><input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.05" data-pd="${p.id}|${id}|rrpPence" value="${(x.rrpPence || 0) / 100}"></td>
-            <td><input class="input" style="width:90px;padding:8px" type="number" min="1" step="1" data-pd="${p.id}|${id}|perGymnastPerYear" value="${x.perGymnastPerYear}"></td></tr>`).join('')}
-          </tbody></table></div>` : ''}
-      </div>`; }).join('')}
+        </tbody></table></div></div>`; }).join('')}
+
+      <h2 style="margin-top:24px">Prices per gymnast</h2>
+      <p class="note">Leave the Gymnast Licence blank to keep a pathway off sale.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Pathway</th><th>Gymnast Licence (£/term)</th><th>Book to club (£)</th><th>Medal to club (£)</th><th>Medals per term</th></tr></thead>
+        <tbody>${PATHWAYS.map(p => { const pr = pricingFor(s, p.id) || {}; return `<tr data-price="${p.id}">
+          <td><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</td>
+          <td><input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.5" data-f="term" value="${pr.termPence ? pr.termPence / 100 : ''}"></td>
+          <td><input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.5" data-f="book" value="${pr.bookPence != null ? pr.bookPence / 100 : ''}"></td>
+          <td>${pr.medal ? `<input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.05" data-f="medal" value="${pr.medal.pricePence / 100}">` : '<span class="muted">–</span>'}</td>
+          <td>${pr.medal ? (pr.medal.fromCalendar ? '<span class="muted">From countries</span>' : `<input class="input" style="width:70px;padding:8px" type="number" min="0" step="1" data-f="perTerm" value="${pr.medal.perTerm}">`) : '<span class="muted">–</span>'}</td></tr>`; }).join('')}</tbody>
+      </table></div>
       <p class="error" id="err"></p>
       <button class="btn" id="save">Save settings</button>
     </div>
@@ -881,80 +910,66 @@ async function showAdmin(){
       <div id="all"><p class="muted">Loading…</p></div>
     </div>`);
   wireDemoDate();
-  let wins = (s.windows || []).map(w => ({...w}));
-  const drawWins = () => {
-    document.getElementById('wins').innerHTML = wins.map((w, i) => `<div class="win-row">
-      <div class="lbl"><label class="note">Name</label><input class="input" data-i="${i}" data-k="label" value="${esc(w.label)}"></div>
-      <div><label class="note">First day</label><input class="input" type="date" data-i="${i}" data-k="start" value="${esc(w.start)}"></div>
-      <div><label class="note">Last day</label><input class="input" type="date" data-i="${i}" data-k="end" value="${esc(w.end)}"></div>
-      <button class="btn danger small" data-del="${i}" aria-label="Remove">Remove</button>
-    </div>`).join('') || '<p class="muted">No windows yet. Clubs cannot reduce numbers until you add one.</p>';
-    document.querySelectorAll('#wins [data-k]').forEach(inp => inp.oninput = () => { wins[+inp.dataset.i][inp.dataset.k] = inp.value; });
-    document.querySelectorAll('#wins [data-del]').forEach(b => b.onclick = () => { wins.splice(+b.dataset.del, 1); drawWins(); });
+  const drawTerms = () => {
+    document.getElementById('terms').innerHTML = terms.map((t, i) => `<div class="card" style="background:var(--navy-2);padding:12px;margin-bottom:10px">
+      <div class="win-row" style="grid-template-columns:1.2fr 1fr 1fr 1fr auto">
+        <div class="lbl"><label class="note">Term</label><input class="input" data-i="${i}" data-k="label" value="${esc(t.label)}"></div>
+        <div><label class="note">Registration opens</label><input class="input" type="date" data-i="${i}" data-k="regOpens" value="${esc(t.regOpens)}"></div>
+        <div><label class="note">First day</label><input class="input" type="date" data-i="${i}" data-k="start" value="${esc(t.start)}"></div>
+        <div><label class="note">Last day</label><input class="input" type="date" data-i="${i}" data-k="end" value="${esc(t.end)}"></div>
+        <button class="btn danger small" data-del="${i}" aria-label="Remove term">Remove</button>
+      </div>
+      <div class="field" style="margin:8px 0 0"><label class="note">Pre-School countries this term (comma-separated, in order)</label><input class="input" data-i="${i}" data-k="countries" value="${esc(t.countries.join(', '))}"></div>
+    </div>`).join('') || '<p class="muted">No terms yet.</p>';
+    document.querySelectorAll('#terms [data-k]').forEach(inp => inp.oninput = () => { const t = terms[+inp.dataset.i]; t[inp.dataset.k] = inp.dataset.k === 'countries' ? inp.value.split(',').map(x => x.trim()).filter(Boolean) : inp.value; });
+    document.querySelectorAll('#terms [data-del]').forEach(b => b.onclick = () => { terms.splice(+b.dataset.del, 1); drawTerms(); });
   };
-  drawWins();
-  const readPrices = () => {
-    const out = {}; let bad = null;
-    document.querySelectorAll('[data-price]').forEach(tr => {
-      const j = tr.querySelector('[data-f=book]').value.trim(), u = tr.querySelector('[data-f=unit]').value.trim();
-      const interval = tr.querySelector('[data-f=interval]').value;
-      if(!u){ out[tr.dataset.price] = {unitPence:0, bookPence:0, interval}; return; }   // off sale
-      const jp = Math.round(parseFloat(j || '0') * 100), up = Math.round(parseFloat(u) * 100);
-      if(!(jp >= 0) || !(up > 0)) bad = pathwayById(tr.dataset.price).name;
-      out[tr.dataset.price] = {bookPence:jp, unitPence:up, interval};
-    });
-    // club fee bands, themes and products (edited in place on a copy of the current pricing)
-    PATHWAYS.forEach(p => {
-      const cur = pricingFor(s, p.id); if(!cur || !out[p.id]) return;
-      const copy = JSON.parse(JSON.stringify({clubFee: cur.clubFee, themes: cur.themes, products: cur.products}));
-      document.querySelectorAll(`[data-cf^="${p.id}|"]`).forEach(inp => { const [, i, f] = inp.dataset.cf.split('|'); const v = inp.value.trim();
-        copy.clubFee.bands[+i][f] = f === 'max' ? (v === '' ? null : parseInt(v, 10)) : Math.round(parseFloat(v || '0') * 100); });
-      document.querySelectorAll(`[data-th^="${p.id}|"]`).forEach(inp => { const [, f] = inp.dataset.th.split('|'); copy.themes[f] = f === 'extraPence' ? Math.round(parseFloat(inp.value || '0') * 100) : parseInt(inp.value || '0', 10); });
-      document.querySelectorAll(`[data-pd^="${p.id}|"]`).forEach(inp => { const [, id, f] = inp.dataset.pd.split('|'); copy.products[id][f] = f === 'perGymnastPerYear' ? parseInt(inp.value || '1', 10) : Math.round(parseFloat(inp.value || '0') * 100); });
-      if(copy.clubFee){ const b = copy.clubFee.bands; if(b.some((x, i) => (x.max != null && (i > 0 && b[i-1].max != null && x.max <= b[i-1].max)) || !(x.fullPence >= 0) || !(x.foundingPence >= 0)) || b[b.length - 1].max != null) bad = `${p.name} club fee bands (each limit must be higher than the one above, and the last one blank)`; }
-      Object.entries(copy).forEach(([k, v]) => { if(v) out[p.id][k] = v; });
-    });
-    return {out, bad};
-  };
-  document.querySelectorAll('[data-price] input, [data-price] select').forEach(el => el.oninput = () => {
-    const tr = el.closest('tr'), u = parseFloat(tr.querySelector('[data-f=unit]').value);
-    const pr = {bookPence: Math.round((parseFloat(tr.querySelector('[data-f=book]').value) || 0) * 100), unitPence: Math.round((u || 0) * 100), interval: tr.querySelector('[data-f=interval]').value};
-    tr.querySelector('[data-f=year]').textContent = pr.unitPence > 0 ? gbp(yearCost(pr)) : 'Off sale';
-  });
-  document.getElementById('addWin').onclick = () => { wins.push({label:'', start:'', end:''}); drawWins(); };
+  drawTerms();
+  document.getElementById('addTerm').onclick = () => { terms.push({id:'', label:'', regOpens:'', start:'', end:'', countries:[]}); drawTerms(); };
   document.getElementById('save').onclick = async () => {
     const err = document.getElementById('err'); err.textContent = '';
-    const bad = wins.find(w => !w.label.trim() || !w.start || !w.end || w.start > w.end);
-    if(bad){ err.textContent = 'Each window needs a name, a first day and a last day on or after the first.'; return; }
-    const {out: pathways, bad: badPrice} = readPrices();
-    if(badPrice){ err.textContent = `Check the prices for ${badPrice}.`; return; }
+    const badT = terms.find(t => !t.label.trim() || !t.start || !t.end || !t.regOpens || t.regOpens >= t.start || t.start > t.end);
+    if(badT){ err.textContent = 'Each term needs a name, a registration date before the first day, and a last day after the first.'; return; }
+    const pathways = {}; let bad = null;
+    PATHWAYS.forEach(p => {
+      const cur = pricingFor(s, p.id), tr = document.querySelector(`[data-price="${p.id}"]`);
+      const v = f => { const el = tr.querySelector(`[data-f=${f}]`); return el ? el.value.trim() : null; };
+      if(!v('term')){ pathways[p.id] = {termPence:0, bookPence:0}; return; }
+      const out = JSON.parse(JSON.stringify(cur || {}));
+      out.termPence = Math.round(parseFloat(v('term')) * 100); out.bookPence = Math.round(parseFloat(v('book') || '0') * 100);
+      if(!(out.termPence > 0) || !(out.bookPence >= 0)) bad = p.name;
+      if(out.medal && v('medal') != null) out.medal.pricePence = Math.round(parseFloat(v('medal') || '0') * 100);
+      if(out.medal && v('perTerm') != null) out.medal.perTerm = parseInt(v('perTerm') || '0', 10);
+      document.querySelectorAll(`[data-cf^="${p.id}|"]`).forEach(inp => { const [, i, f] = inp.dataset.cf.split('|'); const x = inp.value.trim();
+        out.clubFee.bands[+i][f] = f === 'max' ? (x === '' ? null : parseInt(x, 10)) : Math.round(parseFloat(x || '0') * 100); });
+      if(out.clubFee){ const b = out.clubFee.bands; if(b[b.length - 1].max != null || b.slice(0, -1).some((x, i) => x.max == null || (i > 0 && x.max <= b[i-1].max))) bad = `${p.name} Club Licence bands (each limit higher than the one above, the last one blank)`; }
+      pathways[p.id] = out;
+    });
+    if(bad){ err.textContent = `Check ${bad}.`; return; }
+    const cleanTerms = terms.map(t => ({id: t.id || `${t.start.slice(0, 4)}-${['aut','spr','sum'][termIndex(t)]}`, label: t.label.trim(), regOpens: t.regOpens, start: t.start, end: t.end, countries: t.countries}))
+      .sort((a, b) => a.start.localeCompare(b.start));
     try {
-      await api.saveSettings({season: val('season'), foundingUntil: document.getElementById('foundUntil').value || DEFAULT_FOUNDING_UNTIL, pathways,
-        windows: wins.map(w => ({label: w.label.trim(), start: w.start, end: w.end})).sort((a, b) => a.start.localeCompare(b.start))});
+      await api.saveSettings({pathways, terms: cleanTerms, summerTaster: document.getElementById('taster').checked, foundingUntil: document.getElementById('foundUntil').value || DEFAULT_FOUNDING_UNTIL});
       await refresh(); toast('Settings saved'); showAdmin();
     } catch(x){ err.textContent = friendly(x); }
   };
   try {
     const rows = (await api.allLicences()).sort((a, b) => (a.club || '').localeCompare(b.club || '') || a.pathway.localeCompare(b.pathway));
-    const activeRows = rows.filter(r => givesAccess(r.status));
-    const tot = activeRows.reduce((a, r) => a + (r.gymnasts || 0), 0);
-    const rowMonthly = r => { if(!givesAccess(r.status) || r.cancelAtPeriodEnd) return 0; const p = licPrice(r, r.pathway); return monthlyEq(p.unitPence, p.interval, r.gymnasts || 0); };
-    const income = rows.reduce((a, r) => a + rowMonthly(r), 0);
+    const live = rows.filter(r => givesAccess(r.status));
+    const tot = live.reduce((a, r) => a + (r.gymnasts || 0), 0);
+    const termIncome = live.reduce((a, r) => { const pr = pricingFor(state.settings, r.pathway); return a + (pr ? (r.gymnasts || 0) * pr.termPence : 0); }, 0);
     document.getElementById('all').innerHTML = `
       <div class="kpis" style="margin:0 0 14px">
-        <div class="kpi"><div class="v">${new Set(activeRows.map(r => r.bg)).size}</div><div class="l">Clubs with a live licence</div></div>
-        <div class="kpi"><div class="v">${n0(tot)}</div><div class="l">Licensed gymnasts</div></div>
-        <div class="kpi"><div class="v">${gbp(income)}</div><div class="l">Licence income per month</div></div>
+        <div class="kpi"><div class="v">${new Set(live.map(r => r.bg)).size}</div><div class="l">Clubs with a live licence</div></div>
+        <div class="kpi"><div class="v">${n0(tot)}</div><div class="l">Registered gymnasts</div></div>
+        <div class="kpi"><div class="v">${gbp(termIncome)}</div><div class="l">Gymnast Licences this term</div></div>
         <div class="kpi"><div class="v">${rows.filter(r => r.status === 'past_due').length}</div><div class="l">Payments due</div></div>
       </div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Club</th><th>BG number</th><th>Pathway</th><th>Status</th><th class="num">Gymnasts</th><th class="num">Fee</th><th class="num">Per month</th></tr></thead>
-        <tbody>${rows.map(r => `<tr>
-          <td>${esc(r.club)}</td><td>${esc(r.bg)}</td>
+        <thead><tr><th>Club</th><th>BG number</th><th>Pathway</th><th>Status</th><th class="num">Gymnasts</th></tr></thead>
+        <tbody>${rows.map(r => `<tr><td>${esc(r.club)}</td><td>${esc(r.bg)}</td>
           <td><span class="dot" style="--pc:${pathwayById(r.pathway)?.color}"></span>${esc(pathwayById(r.pathway)?.name || r.pathway)}</td>
-          <td>${statusTag(r)}</td><td class="num">${n0(r.gymnasts)}</td>
-          <td class="num">${(() => { const p = licPrice(r, r.pathway); return gbp(p.unitPence) + '/' + (p.interval === 'week' ? 'wk' : 'mo'); })()}</td>
-          <td class="num">${givesAccess(r.status) && !r.cancelAtPeriodEnd ? gbp(rowMonthly(r)) : '–'}</td></tr>`).join('')}</tbody>
+          <td>${statusTag(r)}</td><td class="num">${n0(r.gymnasts)}</td></tr>`).join('')}</tbody>
       </table></div>`;
   } catch(x){ document.getElementById('all').innerHTML = `<p class="error">${esc(friendly(x))}</p>`; }
 }

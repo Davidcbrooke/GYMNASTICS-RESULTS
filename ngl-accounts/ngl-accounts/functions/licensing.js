@@ -1,5 +1,16 @@
 /* Pure licensing rules - no Firebase or Stripe here, so they can be unit tested.
-   The Club Account page uses the same rules for display; these are the ones enforced. */
+   The Club Account page uses the same rules for display; these are the ones enforced.
+
+   THE TERMLY MODEL
+   - Club Licence: yearly, renews with the autumn term. First year is pro-rata by term
+     (autumn 3/3, spring 2/3, summer 1/3, or free if the summer taster is on).
+     Founding clubs keep the founding price at renewal.
+   - Each term the club registers its number of gymnasts. That term's bill is:
+       Gymnast Licence x gymnasts + that term's medals x gymnasts + books for gymnasts who need one
+       (+ spare medals, + the Club Licence when it is due).
+   - Numbers can go up at any time during a term (the added gymnasts are billed for the term).
+     Numbers can only go down, or the licence end, by registering a lower number for the next term
+     before it starts. A club that does not register is rolled over at its current number. */
 
 const PATHWAYS = {
   preschool:    'Pre-School',
@@ -12,58 +23,102 @@ const PATHWAYS = {
 };
 
 const MAX_GYMNASTS = 5000;
+const MAX_SPARE_PCT = 0.25;   // spare medals at registration: up to 25% of gymnasts
 
-/* Starting prices, pence. Admin can change them in settings/licensing.pathways.
-   unitPence/interval  licence fee per gymnast (the NGL Awards Programme Licence)
-   bookPence           book fee per gymnast who needs a new book (rrpPence = suggested price to families)
-   clubFee             yearly club fee for the plans: bands by number of gymnasts in the pathway,
-                       each with a full price (shown) and a founding club price (charged while
-                       founding pricing is open, and kept by founding clubs at renewal)
-   themes              Pre-School: themes included, price of each extra theme
-   products            things clubs buy: pricePence to the club, rrpPence suggested to families,
-                       perGymnastPerYear caps how many a club can order
-   A pathway with no licence fee or book fee is not yet on sale. */
+/* Prices in pence. Admin can change them in settings/licensing.pathways.
+   termPence      Gymnast Licence per gymnast per term
+   bookPence      book / passport per gymnast who needs one (rrpPence = suggested price to families)
+   clubFee        yearly Club Licence: bands by gymnasts, full price (shown) and founding price (charged
+                  while founding pricing is open, kept by founding clubs)
+   medal          medal price to the club; perTerm = medals per gymnast per term
+                  (Pre-School uses the national country calendar on each term instead)
+   themes         Pre-School extra themes
+   A pathway with no termPence is not on sale. */
 const DEFAULT_PRICING = {
   preschool: {
-    bookPence: 1000, unitPence: 100, interval: 'month',
+    termPence: 400, bookPence: 500, rrpPence: 1000, bookName: 'Passport',
     clubFee: { bands: [{ max: null, fullPence: 40000, foundingPence: 20000 }] },
-    themes: { included: 10, extraPence: 2500 },
-    products: { medal: { name: 'Medal', pricePence: 200, rrpPence: 400, perGymnastPerYear: 10 } }
+    medal: { pricePence: 200, rrpPence: 400, fromCalendar: true },
+    themes: { included: 10, extraPence: 2500 }
   },
-  schools: { bookPence: 800, unitPence: 100, interval: 'month' },
+  schools: { termPence: 400, bookPence: 500, rrpPence: 1000 },
   recreational: {
-    bookPence: 500, rrpPence: 1000, unitPence: 100, interval: 'month',
+    termPence: 400, bookPence: 500, rrpPence: 1000,
     clubFee: { bands: [
       { max: 199,  fullPence: 100000, foundingPence: 50000 },
       { max: 499,  fullPence: 150000, foundingPence: 100000 },
       { max: null, fullPence: 200000, foundingPence: 150000 }
     ] },
-    products: {
-      medal: { name: 'Medal', pricePence: 250, rrpPence: 500, perGymnastPerYear: 3 },
-      book:  { name: 'Awards Book', pricePence: 500, rrpPence: 1000, perGymnastPerYear: 1 }
-    }
+    medal: { pricePence: 250, rrpPence: 500, perTerm: 1 }
   },
-  general:     { bookPence: 1000, unitPence: 100, interval: 'month' },
-  performance: { bookPence: 1000, unitPence: 100, interval: 'month' }
-  // university, masters: on sale once a licence fee and book fee are set in the NGL admin tab
+  general:     { termPence: 400, bookPence: 500, rrpPence: 1000 },
+  performance: { termPence: 400, bookPence: 500, rrpPence: 1000 }
+  // university, masters: on sale once a Gymnast Licence price and book price are set in the admin tab
 };
 const DEFAULT_FOUNDING_UNTIL = '2027-08-31';
+
+/* Default term calendar (NGL admin edits this each year).
+   regOpens = registration for the term opens (the holiday before it); the term's start closes it.
+   countries = the Pre-School country medals for that term, in order (one per 4-week block). */
+const DEFAULT_TERMS = [
+  { id: '2026-aut', label: 'Autumn 2026', start: '2026-09-01', end: '2026-12-18', regOpens: '2026-07-20',
+    countries: ['France', 'Japan', 'Brazil', 'Kenya'] },
+  { id: '2027-spr', label: 'Spring 2027', start: '2027-01-04', end: '2027-03-26', regOpens: '2026-12-01',
+    countries: ['Australia', 'Canada', 'India'] },
+  { id: '2027-sum', label: 'Summer 2027', start: '2027-04-12', end: '2027-07-21', regOpens: '2027-03-15',
+    countries: ['Egypt', 'Mexico', 'Norway'] },
+  { id: '2027-aut', label: 'Autumn 2027', start: '2027-09-01', end: '2027-12-17', regOpens: '2027-07-19',
+    countries: ['France', 'Japan', 'Brazil', 'Kenya'] }
+];
 
 function pricingFor(settings, pathway) {
   const saved = (settings && settings.pathways && settings.pathways[pathway]) || {};
   const p = { ...(DEFAULT_PRICING[pathway] || {}), ...saved };
-  const ok = Number.isInteger(p.bookPence) && Number.isInteger(p.unitPence) && p.unitPence > 0 &&
-    (p.interval === 'week' || p.interval === 'month');
+  const ok = Number.isInteger(p.termPence) && p.termPence > 0 && Number.isInteger(p.bookPence) && p.bookPence >= 0;
   return ok ? p : null;
 }
 
-function foundingOpen(settings, now = new Date()) {
-  const until = (settings && settings.foundingUntil) || DEFAULT_FOUNDING_UNTIL;
-  return ukDate(now) <= until;
+/* ---------- dates and terms ---------- */
+function ukDate(now = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(now);
+}
+function termsFrom(settings) {
+  const t = (settings && Array.isArray(settings.terms) && settings.terms.length) ? settings.terms : DEFAULT_TERMS;
+  return [...t].sort((a, b) => a.start.localeCompare(b.start));
+}
+function termById(settings, id) { return termsFrom(settings).find(t => t.id === id) || null; }
+/* The term running today (from its start until the next term starts). */
+function currentTerm(settings, now = new Date()) {
+  const d = ukDate(now);
+  let cur = null;
+  termsFrom(settings).forEach(t => { if (t.start <= d) cur = t; });
+  return cur;
+}
+function nextTerm(settings, now = new Date()) {
+  const d = ukDate(now);
+  return termsFrom(settings).find(t => t.start > d) || null;
+}
+/* Registration for a term is open from regOpens until the day before it starts. */
+function registrationOpen(term, now = new Date()) {
+  const d = ukDate(now);
+  return !!term && d >= term.regOpens && d < term.start;
+}
+/* Position of a term in its school year (Sept–Aug): 0 autumn, 1 spring, 2 summer. */
+function termIndex(term) {
+  const m = Number(term.start.slice(5, 7));
+  return m >= 8 ? 0 : m <= 2 ? 1 : 2;
+}
+/* Last day of the school year a term belongs to. */
+function yearEnd(term) {
+  const y = Number(term.start.slice(0, 4)), m = Number(term.start.slice(5, 7));
+  return `${m >= 8 ? y + 1 : y}-08-31`;
 }
 
-/* Yearly club fee for a pathway and number of gymnasts.
-   founding = club already holds founding pricing (kept at renewal). Returns null if the pathway has none. */
+function foundingOpen(settings, now = new Date()) {
+  return ukDate(now) <= ((settings && settings.foundingUntil) || DEFAULT_FOUNDING_UNTIL);
+}
+
+/* ---------- Club Licence ---------- */
 function clubFeeFor(price, gymnasts, { founding = false } = {}) {
   const bands = price && price.clubFee && price.clubFee.bands;
   if (!Array.isArray(bands) || !bands.length) return null;
@@ -72,75 +127,36 @@ function clubFeeFor(price, gymnasts, { founding = false } = {}) {
   const lo = i === 0 ? 1 : bands[i - 1].max + 1;
   return {
     band: band.max == null ? `${lo}+ gymnasts` : `${lo}–${band.max} gymnasts`,
-    fullPence: band.fullPence,
-    foundingPence: band.foundingPence,
-    pence: founding ? band.foundingPence : band.fullPence,
-    founding
+    fullPence: band.fullPence, foundingPence: band.foundingPence,
+    pence: founding ? band.foundingPence : band.fullPence, founding
   };
 }
 
-/* Check an order of products against the pathway's catalogue and the club's licensed gymnasts.
-   items: [{id, qty}] ; orderedThisYear: {id: qty already ordered in the last 12 months} */
-function checkOrder(price, items, gymnasts, orderedThisYear = {}) {
-  if (!Array.isArray(items) || !items.length) return { error: 'Choose something to order.' };
-  const lines = [];
-  for (const it of items) {
-    const qty = Number(it && it.qty);
-    if (!Number.isInteger(qty) || qty < 0) return { error: 'Quantities must be whole numbers.' };
-    if (qty === 0) continue;
-    if (it.id === 'theme') {
-      const t = price.themes;
-      if (!t || !t.extraPence) return { error: 'Extra themes are not available for this pathway.' };
-      if (qty > 20) return { error: 'Up to 20 extra themes per order.' };
-      lines.push({ id: 'theme', name: 'Extra theme', qty, unitPence: t.extraPence });
-      continue;
-    }
-    const prod = price.products && price.products[it.id];
-    if (!prod) return { error: 'Unknown product.' };
-    const cap = gymnasts * (prod.perGymnastPerYear || 1) - (orderedThisYear[it.id] || 0);
-    if (qty > cap) return { error: `You can order up to ${Math.max(cap, 0)} more ${prod.name.toLowerCase()}${cap === 1 ? '' : 's'} this year for ${gymnasts} licensed gymnasts.` };
-    lines.push({ id: it.id, name: prod.name, qty, unitPence: prod.pricePence });
-  }
-  if (!lines.length) return { error: 'Choose something to order.' };
-  return { lines, totalPence: lines.reduce((a, l) => a + l.qty * l.unitPence, 0) };
+/* Club Licence due on a term's bill, or null if already covered for this school year.
+   paidUntil = 'YYYY-MM-DD' the Club Licence currently covers (null if never paid).
+   First year is pro-rata by term, rounded to the nearest £5; renewals are the full year. */
+function clubLicenceDue(price, term, gymnasts, { paidUntil = null, founding = false, summerTaster = false } = {}) {
+  const fee = clubFeeFor(price, gymnasts, { founding });
+  if (!fee) return null;
+  if (paidUntil && paidUntil >= term.start) return null;
+  const firstYear = !paidUntil;
+  const idx = termIndex(term);
+  let share = firstYear ? (3 - idx) / 3 : 1;
+  if (firstYear && idx === 2 && summerTaster) share = 0;
+  const pence = share === 1 ? fee.pence : Math.round(fee.pence * share / 500) * 500;
+  return {
+    ...fee, pence, share, until: yearEnd(term), taster: share === 0,
+    label: share === 1 ? 'Club Licence, full year'
+      : share === 0 ? 'Club Licence: summer taster, first payment in September'
+      : `Club Licence, ${idx === 1 ? 'spring and summer' : 'summer'} (pro-rata)`
+  };
 }
 
-/* Monthly equivalent for totals: weekly x 52 / 12 */
-function monthlyEquivalentPence(unitPence, interval, gymnasts) {
-  const per = unitPence * gymnasts;
-  return interval === 'week' ? Math.round(per * 52 / 12) : per;
-}
-
-/* Today's date in the UK as 'YYYY-MM-DD' (holiday windows are UK dates). */
-function ukDate(now = new Date()) {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(now);
-}
-
-/* windows: [{label, start:'YYYY-MM-DD', end:'YYYY-MM-DD'}], start and end inclusive. */
-function currentWindow(windows, now = new Date()) {
-  const today = ukDate(now);
-  return (windows || []).find(w => w.start <= today && today <= w.end) || null;
-}
-
-function nextWindow(windows, now = new Date()) {
-  const today = ukDate(now);
-  return (windows || [])
-    .filter(w => w.start > today)
-    .sort((a, b) => a.start.localeCompare(b.start))[0] || null;
-}
-
-function validWindows(windows) {
-  const iso = /^\d{4}-\d{2}-\d{2}$/;
-  return Array.isArray(windows) && windows.every(w =>
-    w && typeof w.label === 'string' && w.label.length <= 60 &&
-    iso.test(w.start) && iso.test(w.end) && w.start <= w.end);
-}
-
-/* Books ordered when starting a licence: 0..gymnasts, default all */
-function checkBooks(books, gymnasts) {
-  const b = books === undefined || books === null ? gymnasts : books;
-  if (!Number.isInteger(b) || b < 0 || b > gymnasts) return { error: `Books must be between 0 and ${gymnasts}.` };
-  return { books: b };
+/* ---------- termly bill ---------- */
+function medalsPerTerm(price, term) {
+  if (!price || !price.medal) return 0;
+  if (price.medal.fromCalendar) return (term && Array.isArray(term.countries)) ? term.countries.length : 0;
+  return price.medal.perTerm || 0;
 }
 
 function checkGymnasts(n, { allowZero = false } = {}) {
@@ -150,51 +166,50 @@ function checkGymnasts(n, { allowZero = false } = {}) {
   return null;
 }
 
-/* What a change of numbers means. Pence throughout.
-   Returns {kind, allowed, reason, books, bookFeePence, periodFromPence, periodToPence}
-   (period = each weekly or monthly payment, per the pathway's interval).
-   books = how many of the added gymnasts need a new book (default: all of them);
-   gymnasts who already have a book pay no book fee. */
-function planChange({ current, requested, bookPence, unitPence, windows, books, now = new Date() }) {
-  const base = {
-    bookFeePence: 0,
-    periodFromPence: current * unitPence,
-    periodToPence: requested * unitPence
-  };
-  if (requested === current) return { ...base, kind: 'none', allowed: false, reason: 'That is the number you already have.' };
-  if (requested > current) {
-    const added = requested - current;
-    const b = books === undefined || books === null ? added : books;
-    if (!Number.isInteger(b) || b < 0 || b > added) {
-      return { ...base, kind: 'increase', allowed: false, reason: `Books must be between 0 and ${added} (the number of gymnasts you are adding).` };
-    }
-    return { ...base, kind: 'increase', allowed: true, books: b, bookFeePence: b * bookPence };
-  }
-  const kind = requested === 0 ? 'cancel' : 'decrease';
-  const open = currentWindow(windows, now);
-  if (open) return { ...base, kind, allowed: true, window: open };
-  const next = nextWindow(windows, now);
-  return {
-    ...base, kind, allowed: false, nextWindow: next,
-    reason: next
-      ? `Numbers can only go down during a holiday window. The next one is ${next.label} (${next.start} to ${next.end}).`
-      : 'Numbers can only go down during a holiday window. NGL has not published the next window yet.'
-  };
+/* Lines for a term's bill. gymnasts = gymnasts billed on this bill (all of them for a registration,
+   just the added ones for a mid-term increase). books 0..gymnasts. spares 0..25% of gymnasts. */
+function termBill({ price, pathway, term, gymnasts, books = 0, spares = 0, clubLicence = null }) {
+  const err = checkGymnasts(gymnasts, { allowZero: true });
+  if (err) return { error: err };
+  if (!Number.isInteger(books) || books < 0 || books > gymnasts) return { error: `Books must be between 0 and ${gymnasts}.` };
+  const maxSpare = Math.ceil(gymnasts * MAX_SPARE_PCT);
+  if (!Number.isInteger(spares) || spares < 0 || spares > maxSpare) return { error: `Spare medals must be between 0 and ${maxSpare}.` };
+  const name = PATHWAYS[pathway], bookName = price.bookName || 'Awards Book';
+  const per = medalsPerTerm(price, term);
+  const lines = [];
+  if (clubLicence && clubLicence.pence > 0) lines.push({ id: 'club', name: `${name} ${clubLicence.label} (${clubLicence.band}${clubLicence.founding ? ', founding club price' : ''})`, qty: 1, unitPence: clubLicence.pence });
+  if (gymnasts) lines.push({ id: 'licence', name: `${name} Gymnast Licence, ${term.label}`, qty: gymnasts, unitPence: price.termPence });
+  if (gymnasts && per) lines.push({ id: 'medal', name: `${name} medals, ${term.label}${price.medal.fromCalendar ? ` (${term.countries.join(', ')})` : ''}`, qty: gymnasts * per, unitPence: price.medal.pricePence });
+  if (spares && price.medal) lines.push({ id: 'spare', name: `${name} spare medals`, qty: spares, unitPence: price.medal.pricePence });
+  if (books) lines.push({ id: 'book', name: `${name} ${bookName}s`, qty: books, unitPence: price.bookPence });
+  const live = lines.filter(l => l.qty > 0 && l.unitPence > 0);
+  return { lines: live, totalPence: live.reduce((a, l) => a + l.qty * l.unitPence, 0), medalsPerGymnast: per };
 }
 
-/* Stripe subscription status -> NGL licence status */
-function licenceStatus(stripeStatus) {
-  switch (stripeStatus) {
-    case 'active':
-    case 'trialing': return 'active';
-    case 'past_due':
-    case 'unpaid': return 'past_due';
-    case 'incomplete': return 'pending';
-    case 'canceled':
-    case 'incomplete_expired':
-    case 'paused': return 'lapsed';
-    default: return 'lapsed';
+/* Extra Pre-School themes, replacement books and spare medals, ordered any time. */
+function checkOrder(price, items, gymnasts) {
+  if (!Array.isArray(items) || !items.length) return { error: 'Choose something to order.' };
+  const lines = [];
+  for (const it of items) {
+    const qty = Number(it && it.qty);
+    if (!Number.isInteger(qty) || qty < 0) return { error: 'Quantities must be whole numbers.' };
+    if (!qty) continue;
+    if (it.id === 'theme') {
+      if (!price.themes || !price.themes.extraPence) return { error: 'Extra themes are not available for this pathway.' };
+      if (qty > 20) return { error: 'Up to 20 extra themes per order.' };
+      lines.push({ id: 'theme', name: 'Extra theme', qty, unitPence: price.themes.extraPence });
+    } else if (it.id === 'book') {
+      if (qty > gymnasts) return { error: `Up to ${gymnasts} books for ${gymnasts} licensed gymnasts.` };
+      lines.push({ id: 'book', name: price.bookName || 'Awards Book', qty, unitPence: price.bookPence });
+    } else if (it.id === 'medal') {
+      if (!price.medal) return { error: 'This pathway has no medals.' };
+      const cap = Math.ceil(gymnasts * MAX_SPARE_PCT);
+      if (qty > cap) return { error: `Up to ${cap} spare medals per order.` };
+      lines.push({ id: 'medal', name: 'Spare medal', qty, unitPence: price.medal.pricePence });
+    } else return { error: 'Unknown item.' };
   }
+  if (!lines.length) return { error: 'Choose something to order.' };
+  return { lines, totalPence: lines.reduce((a, l) => a + l.qty * l.unitPence, 0) };
 }
 
 /* An active or payment-due licence still gives access; Stripe is retrying a failed payment. */
@@ -203,6 +218,7 @@ function givesAccess(status) {
 }
 
 module.exports = {
-  PATHWAYS, MAX_GYMNASTS, DEFAULT_PRICING, DEFAULT_FOUNDING_UNTIL, pricingFor, foundingOpen, clubFeeFor, checkOrder, monthlyEquivalentPence, ukDate, currentWindow, nextWindow, validWindows,
-  checkGymnasts, checkBooks, planChange, licenceStatus, givesAccess
+  PATHWAYS, MAX_GYMNASTS, MAX_SPARE_PCT, DEFAULT_PRICING, DEFAULT_FOUNDING_UNTIL, DEFAULT_TERMS,
+  pricingFor, ukDate, termsFrom, termById, currentTerm, nextTerm, registrationOpen, termIndex, yearEnd,
+  foundingOpen, clubFeeFor, clubLicenceDue, medalsPerTerm, checkGymnasts, termBill, checkOrder, givesAccess
 };
