@@ -60,6 +60,27 @@ p.lead{color:var(--muted);margin:0 0 14px}
 .panel-card{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:18px}
 .pc-head{background:var(--navy);padding:11px 17px;color:#fff;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pc-head span{margin-left:auto;font-weight:500;opacity:.75;font-size:13px}
+.stmt-bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:14px 16px 4px;font-size:14px;color:var(--muted)}
+.stmt-bar input{width:64px;padding:5px 7px;border:1px solid var(--line);border-radius:3px;text-align:right}
+.stmt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14.5px;min-width:640px}
+.stmt th{text-align:right;padding:10px 14px 8px;color:var(--navy);border-bottom:2px solid var(--navy);vertical-align:bottom;white-space:nowrap}
+.stmt th b{display:block;font-family:var(--cond);font-size:18px;line-height:1.1}
+.stmt th small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.stmt th:first-child{text-align:left}
+.stmt th.cur,.stmt td.cur{background:#fbf6e6}
+.stmt td{padding:6px 14px;text-align:right;border-bottom:1px solid #eef0f5;white-space:nowrap}
+.stmt td:first-child{text-align:left;white-space:normal}
+.stmt tr.info td{color:var(--muted);font-size:13px}
+.stmt tr.sec td{font-weight:700;color:var(--navy);padding-top:16px;border-bottom:1px solid var(--line);font-size:15px}
+.stmt tr.item td:first-child{padding-left:28px}
+.stmt tr.tot td{font-weight:700;border-top:1px solid var(--ink)}
+.stmt tr.netrow td{font-weight:700;font-size:16px;border-top:2px solid var(--navy);border-bottom:4px double var(--navy)}
+.stmt tr.margin td{color:var(--muted);font-size:13px;border-bottom:none}
+.stmt td.dim{color:var(--muted)}
+.stmt .neg{color:var(--red)}
+.stmt .tag{font-size:11.5px;color:var(--muted);margin-left:6px}
+details.bycomp{border-top:1px solid var(--line)}
+details.bycomp summary{cursor:pointer;padding:12px 16px;font-weight:600;color:var(--navy)}
 .pnl-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px}
 @media (max-width:760px){.pnl-tiles{grid-template-columns:1fr 1fr}}
 .pnl-tile{border:1px solid var(--line);border-top:3px solid var(--navy);padding:12px 14px;border-radius:3px}
@@ -135,13 +156,21 @@ p.lead{color:var(--muted);margin:0 0 14px}
   <section id="tab-competitions" class="hidden">
     <div class="panel-card">
       <div class="pc-head">Competitions P&amp;L <span>Updates as bookings come in</span></div>
-      <div class="pnl-tiles" id="pnl-tiles"></div>
-      <div class="pnl-toolbar">
+      <div class="stmt-bar">
+        <span>Middle column shows the season at</span>
+        <label><input type="number" id="scenPct" min="1" max="100" step="5" value="80"> % capacity</label>
+      </div>
+      <div class="tablewrap"><table class="stmt" id="stmt"></table></div>
+      <div class="pnl-toolbar" style="padding-top:14px">
         <button class="btn primary" id="toggleAssump">Edit assumptions</button>
-        <button class="btn ghost" id="exportCsv">Export CSV</button>
+        <button class="btn ghost" id="exportStmt">Export P&amp;L</button>
+        <button class="btn ghost" id="exportCsv">Export by competition</button>
       </div>
       <div class="pnl-assump" id="pnl-assump"></div>
-      <div class="tablewrap"><table class="pnl-table" id="pnl-table"></table></div>
+      <details class="bycomp">
+        <summary>By competition</summary>
+        <div class="tablewrap"><table class="pnl-table" id="pnl-table"></table></div>
+      </details>
       <div class="pnl-notes" id="pnl-notes"></div>
     </div>
   </section>
@@ -269,7 +298,7 @@ function pnlRow(c, gymnasts){
     lines[l.id]=amt; if(l.type==="income") otherInc+=amt; else otherCost+=amt;
   });
   const income = entry+spec+otherInc, costs = venue+staff+judges+elev+med+otherCost;
-  return {c,gymnasts,price,note,entry,spec,otherInc,income,venue,staff,judges,elev,med,otherCost,costs,lines,profit:income-costs};
+  return {c,gymnasts,price,note,entry,spec,otherInc,income,venue,staff,ops:A.opsMgr,cams:A.camRate*A.camCount,judges,elev,med,otherCost,costs,lines,profit:income-costs};
 }
 const isFixed = l => l.basis==="month" || l.basis==="year";
 const fixedAmt = l => (parseFloat(l.amount)||0) * (l.basis==="month"?12:1);
@@ -294,14 +323,98 @@ function compTotals(){
   return {list, rows, T, F};
 }
 
+/* ===== Traditional P&L statement ===== */
+let lastStmt = null;
+function aggregate(rows){
+  const g = {gymnasts:0, entry:{}, spec:0, venue:0, ops:0, cams:0, judges:0, elev:0, med:0, line:{}};
+  rows.forEach(r=>{
+    const p = compPathway(r.c);
+    g.gymnasts += r.gymnasts; g.entry[p] = (g.entry[p]||0) + r.entry; g.spec += r.spec;
+    g.venue += r.venue; g.ops += r.ops; g.cams += r.cams; g.judges += r.judges; g.elev += r.elev; g.med += r.med;
+    Object.entries(r.lines).forEach(([id,v])=>{ g.line[id] = (g.line[id]||0) + v; });
+  });
+  return g;
+}
+function buildStatement(list){
+  const pct = Math.min(100, Math.max(1, parseFloat(A.scenarioPct)||80));
+  const booked = list.map(c=>pnlRow(c, Math.min(bookedFor(c), compMax(c))));
+  const scen   = list.map(c=>pnlRow(c, Math.round(compMax(c)*pct/100)));
+  const full   = list.map(c=>pnlRow(c, compMax(c)));
+  const B = aggregate(booked), P = aggregate(scen), F = aggregate(full);
+  const cols = [B, null, P, F]; // null = still to sell (full minus booked)
+  const paths = PATHWAY_ORDER.filter(k=>list.some(c=>compPathway(c)===k));
+  const perComp = A.custom.filter(l=>!isFixed(l)), fixed = fixedLines();
+  const lines = []; // [label, [booked, toSell, scen, full], cls]
+  const val = fn => { const v = [fn(B), 0, fn(P), fn(F)]; v[1] = v[3]-v[0]; return v; };
+  const sumRows = (rows) => rows.reduce((a,r)=>a.map((x,i)=>x+r[1][i]), [0,0,0,0]);
+
+  lines.push(["Competitions", [list.length, "", list.length, list.length], "info"]);
+  lines.push(["Gymnasts", [B.gymnasts, F.gymnasts-B.gymnasts, P.gymnasts, F.gymnasts], "info"]);
+
+  const inc = [];
+  paths.forEach(k=>inc.push([`Entry fees: ${PATHWAYS[k].short}`, val(g=>g.entry[k]||0)]));
+  inc.push(["Spectator tickets", val(g=>g.spec)]);
+  perComp.filter(l=>l.type==="income").forEach(l=>inc.push([l.name||"Other income", val(g=>g.line[l.id]||0), l.basis==="gymnast"?"per gymnast":"per competition"]));
+  fixed.filter(l=>l.type==="income").forEach(l=>{ const a=fixedAmt(l); inc.push([l.name||"Other income", [a,0,a,a], l.basis==="month"?"monthly":"yearly"]); });
+  const TI = sumRows(inc);
+
+  const cost = [];
+  cost.push(["Venue hire", val(g=>g.venue)]);
+  cost.push(["National Ops Manager", val(g=>g.ops)]);
+  cost.push(["Camera operators", val(g=>g.cams)]);
+  cost.push(["Remote judges", val(g=>g.judges)]);
+  cost.push(["Elevien", val(g=>g.elev)]);
+  cost.push(["Medals", val(g=>g.med)]);
+  perComp.filter(l=>l.type!=="income").forEach(l=>cost.push([l.name||"Other cost", val(g=>g.line[l.id]||0), l.basis==="gymnast"?"per gymnast":"per competition"]));
+  fixed.filter(l=>l.type!=="income").forEach(l=>{ const a=fixedAmt(l); cost.push([l.name||"Other cost", [a,0,a,a], l.basis==="month"?"monthly":"yearly"]); });
+  const TC = sumRows(cost);
+  const NET = TI.map((x,i)=>x-TC[i]);
+  const MARGIN = TI.map((x,i)=>x ? Math.round(NET[i]/x*100) : null);
+  return {pct, lines, inc, cost, TI, TC, NET, MARGIN, B, F};
+}
+const money = (n, dimZero) => n===""||n===null ? "" : (Math.round(n)===0 ? "&ndash;" : (n<0 ? `<span class="neg">(${gbp(-n)})</span>` : gbp(n)));
+function renderStatement(list){
+  const s = lastStmt = buildStatement(list);
+  $("#scenPct").value = s.pct;
+  const cls = i => i===0 ? "cur" : i===1 ? "dim" : "";
+  const tr = (label, vals, rowCls, tag, fmt) => `<tr class="${rowCls||""}"><td>${esc(label)}${tag?`<span class="tag">${esc(tag)}</span>`:""}</td>${vals.map((v,i)=>`<td class="${cls(i)}">${fmt?fmt(v,i):money(v)}</td>`).join("")}</tr>`;
+  const head = `<thead><tr><th>${esc(season)} competitions</th>
+      <th class="cur"><b>Booked to date</b><small>${s.B.gymnasts} gymnasts</small></th>
+      <th><b>Still to sell</b><small>${s.F.gymnasts-s.B.gymnasts} places</small></th>
+      <th><b>At ${s.pct}% capacity</b><small>if bookings reach ${s.pct}%</small></th>
+      <th><b>At 100% capacity</b><small>${s.F.gymnasts} gymnasts</small></th></tr></thead>`;
+  if(!list.length){ $("#stmt").innerHTML = head + `<tbody><tr><td colspan="5" style="padding:20px;color:var(--muted)">No ${esc(season)} competitions yet.</td></tr></tbody>`; return; }
+  $("#stmt").innerHTML = head + "<tbody>" +
+    s.lines.map(([l,v,c])=>tr(l, v, c, "", x=>x===""?"":x)).join("") +
+    `<tr class="sec"><td colspan="5">Income</td></tr>` +
+    s.inc.map(([l,v,tag])=>tr(l, v, "item", tag)).join("") +
+    tr("Total income", s.TI, "tot") +
+    `<tr class="sec"><td colspan="5">Costs</td></tr>` +
+    s.cost.map(([l,v,tag])=>tr(l, v, "item", tag)).join("") +
+    tr("Total costs", s.TC, "tot") +
+    tr("Net profit", s.NET, "netrow") +
+    tr("Margin", s.MARGIN, "margin", "", (v,i)=> i===1 || v===null ? "" : `<span class="${v<0?"neg":""}">${v}%</span>`) +
+    "</tbody>";
+}
+$("#scenPct").addEventListener("change", e=>{ A.scenarioPct = Math.min(100, Math.max(1, parseFloat(e.target.value)||80)); save(); renderAll(); });
+$("#exportStmt").addEventListener("click", ()=>{
+  const s = lastStmt; if(!s) return;
+  const q = v => '"'+String(v).replace(/"/g,'""')+'"', n = v => v===""||v===null ? "" : Math.round(v);
+  const out = [[`${season} competitions P&L`,"Booked to date","Still to sell",`At ${s.pct}% capacity`,"At 100% capacity"].map(q).join(",")];
+  s.lines.forEach(([l,v])=>out.push([q(l),...v.map(n)].join(",")));
+  out.push(q("Income")); s.inc.forEach(([l,v,t])=>out.push([q(l+(t?` (${t})`:"")),...v.map(n)].join(",")));
+  out.push([q("Total income"),...s.TI.map(n)].join(","));
+  out.push(q("Costs")); s.cost.forEach(([l,v,t])=>out.push([q(l+(t?` (${t})`:"")),...v.map(n)].join(",")));
+  out.push([q("Total costs"),...s.TC.map(n)].join(","));
+  out.push([q("Net profit"),...s.NET.map(n)].join(","));
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([out.join("\n")],{type:"text/csv"}));
+  a.download=`NGL-${season}-Competitions-PnL-statement-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+});
+
 function renderCompetitions(){
   const {list, rows, T, F} = compTotals(); lastRows = rows;
   const margin = T.income ? Math.round(T.profit/T.income*100) : 0;
-  $("#pnl-tiles").innerHTML =
-    `<div class="pnl-tile"><div class="v">${gbp(T.income)}</div><div class="l">Income (booked)</div><div class="s">${T.gymnasts} gymnasts across ${list.length} competitions</div></div>`+
-    `<div class="pnl-tile"><div class="v">${gbp(T.costs)}</div><div class="l">Costs</div><div class="s">Venue, staff, judges, Elevien, medals${T.otherCost?" and your own lines":""}${T.fixedCost?`, plus ${gbp(T.fixedCost)} monthly/yearly`:""}</div></div>`+
-    `<div class="pnl-tile"><div class="v ${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</div><div class="l">Competitions profit (booked)</div><div class="s">${margin}% margin</div></div>`+
-    `<div class="pnl-tile" style="border-top-color:#27ae60"><div class="v ${F.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(F.profit)}</div><div class="l">Profit if all full</div><div class="s">${gbp(T.unsold)} still to sell across ${T.unsoldPlaces} places</div></div>`;
+  renderStatement(list);
   const tbl = $("#pnl-table");
   if(!rows.length){ tbl.innerHTML = `<tr><td style="padding:24px;text-align:center;color:var(--muted)">No ${season} competitions yet.</td></tr>`; $("#pnl-notes").textContent=""; return; }
   const hasInc = A.custom.some(l=>!isFixed(l)&&l.type==="income"), hasCost = A.custom.some(l=>!isFixed(l)&&l.type!=="income");
