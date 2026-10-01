@@ -205,7 +205,7 @@ $("#signinForm").addEventListener("submit", async e=>{
     try{ sessionStorage.setItem("ngl_demo_user", email); }catch(_){}
     return loadMe(email);
   }
-  try{ await auth.signInWithEmailAndPassword(email, pw); }
+  try{ await auth.signInWithEmailAndPassword(email, pw); await loadMe(email); }
   catch(err){ $("#err").textContent = /wrong-password|invalid-credential|user-not-found/.test(err.code) ? "Email or password isn't right." : "Couldn't sign in. Check your connection and try again."; }
 });
 /* First-run: create the owner sign-in. Owner rights only switch on once the
@@ -235,6 +235,16 @@ $("#signout").addEventListener("click", ()=>{
 });
 
 async function loadMe(email){
+  try{ await loadMeInner(email); }
+  catch(err){
+    console.error(err);
+    $("#err").textContent = err.code==="permission-denied"
+      ? "Signed in, but the database blocked access to ngl_admin_users. The Firestore rules need updating."
+      : "Signed in, but couldn't load your access ("+(err.code||err.message)+").";
+    showSignin();
+  }
+}
+async function loadMeInner(email){
   email = email.toLowerCase();
   let rec = null;
   if(LIVE){ const d = await db.collection(CONFIG.usersCollection).doc(email).get(); rec = d.exists ? d.data() : null; }
