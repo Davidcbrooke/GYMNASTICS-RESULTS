@@ -1,0 +1,17 @@
+{
+  "name": "ngl-accounts-functions",
+  "description": "NGL Club Account - licence payments (Stripe) and licence status",
+  "private": true,
+  "main": "index.js",
+  "engines": { "node": "20" },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions,firestore,auth",
+    "deploy": "firebase deploy --only functions",
+    "test": "node test/licensing.test.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.0",
+    "firebase-functions": "^7.4.0",
+    "stripe": "^22.6.2"
+  }
+}

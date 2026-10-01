@@ -1,0 +1,70 @@
+rules_version = '2';
+// NGL Club Account - Firestore security rules
+// Clubs can read only their own records. Licences, status, history and
+// Schools access codes are written only by Cloud Functions (admin SDK).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin()  { return signedIn() && request.auth.token.admin == true; }
+    function userDoc()  { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function isMember(clubId) {
+      return signedIn() && exists(userDoc()) && get(userDoc()).data.clubId == clubId;
+    }
+
+    match /users/{uid} {
+      allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
+      allow write: if false;
+    }
+
+    match /clubs/{clubId} {
+      allow read: if isMember(clubId) || isAdmin();
+      // Clubs may update their contact name only; everything else is set by functions
+      allow update: if isMember(clubId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['contactName'])
+        && request.resource.data.contactName is string
+        && request.resource.data.contactName.size() <= 120;
+
+      match /licences/{pathway} {
+        allow read: if isMember(clubId) || isAdmin();
+        allow write: if false;
+      }
+      match /orders/{id} {
+        allow read: if isMember(clubId) || isAdmin();
+        allow write: if false;
+      }
+      match /history/{id} {
+        allow read: if isMember(clubId) || isAdmin();
+        allow write: if false;
+      }
+      match /schools/{id} {
+        allow read, delete: if isMember(clubId) || isAdmin();
+        allow create, update: if isMember(clubId)
+          && request.resource.data.keys().hasOnly(['name', 'createdAt'])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 120;
+      }
+    }
+
+    // NGL admin overview across all clubs
+    match /{path=**}/licences/{pathway} {
+      allow read: if isAdmin();
+    }
+
+    // Schools parent portal looks up one code at a time; codes cannot be listed
+    match /accessCodes/{code} {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
+    // Prices and holiday windows: any signed-in club reads, only NGL admin writes
+    match /settings/licensing {
+      allow read: if signedIn();
+      allow write: if isAdmin()
+        && request.resource.data.keys().hasOnly(['pathways', 'windows', 'season', 'foundingUntil', 'updatedAt'])
+        && request.resource.data.pathways is map
+        && request.resource.data.windows is list;
+    }
+  }
+}

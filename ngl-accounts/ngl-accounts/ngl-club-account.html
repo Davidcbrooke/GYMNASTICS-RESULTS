@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Club Account</title>
+<style>
+  :root{
+    --navy:#0a1440; --navy-2:#0d1a4f; --navy-3:#152463; --navy-4:#1d2f7a;
+    --line:rgba(255,255,255,0.14); --white:#fff; --muted:#b7c1e6;
+    --red:#d0021b; --gold:#f2a900; --ok:#5fd38d; --warn:#ffb454; --bad:#ff8a95;
+    --c-preschool:#ef2891; --c-schools:#f5d12f; --c-recreational:#ea732c; --c-general:#0f6bac;
+    --c-performance:#38bcb9; --c-university:#59ac29; --c-masters:#851a6c;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--navy);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+  button,input,select{font:inherit;color:inherit;}
+  a{color:var(--gold);}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 16px;}
+  .topbar{position:sticky;top:0;z-index:30;background:rgba(10,20,64,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .topbar .wrap{display:flex;align-items:center;gap:12px;min-height:60px;}
+  .brand{display:flex;flex-direction:column;line-height:1.15;min-width:0;}
+  .brand-top{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap;}
+  .brand-title{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .top-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
+  @media(max-width:600px){.brand-top{display:none;}}
+  .navtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:10px 0 12px;}
+  .navtabs::-webkit-scrollbar{display:none;}
+  .navtab{flex:0 0 auto;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--navy-3);font-weight:700;font-size:14px;cursor:pointer;}
+  .navtab.active{background:var(--gold);border-color:var(--gold);color:var(--navy);}
+  main{padding:20px 0 60px;}
+  .screen{animation:fadein .2s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  h1{font-size:clamp(26px,5vw,40px);line-height:1.1;margin:0 0 10px;font-weight:900;letter-spacing:-.015em;}
+  h2{font-size:21px;margin:0 0 10px;font-weight:850;}
+  h3{font-size:16px;margin:0 0 6px;font-weight:800;}
+  p{line-height:1.55;margin:0 0 10px;}
+  .muted{color:var(--muted);}
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:800;margin:0 0 8px;}
+  .card{background:var(--navy-3);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:12px;border:0;cursor:pointer;background:var(--gold);color:var(--navy);font-weight:900;font-size:15px;text-decoration:none;}
+  .btn:active{transform:scale(.98);}
+  .btn.ghost{background:transparent;color:var(--white);border:1px solid var(--line);font-weight:700;}
+  .btn.danger{background:transparent;color:var(--bad);border:1px solid rgba(255,138,149,.5);font-weight:700;}
+  .btn.small{padding:8px 12px;font-size:13px;border-radius:10px;}
+  .btn.block{width:100%;}
+  .btn[disabled]{opacity:.5;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 6px;}
+  .input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--navy-2);color:var(--white);font-size:16px;outline:none;}
+  .input:focus{border-color:var(--gold);}
+  .error{color:var(--bad);font-weight:700;font-size:14px;min-height:1em;margin:0 0 10px;}
+  .note{font-size:13px;color:var(--muted);line-height:1.5;}
+  .auth{max-width:460px;margin:10px auto 0;}
+  .demo-banner{font-size:13px;color:var(--navy);background:var(--gold);border-radius:10px;padding:10px 12px;margin:0 0 16px;font-weight:700;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .demo-banner input{background:#fff;color:var(--navy);border:0;border-radius:8px;padding:4px 8px;font-weight:700;}
+  .demo-banner label{display:flex;gap:6px;align-items:center;}
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px;}
+  @media(min-width:760px){.kpis{grid-template-columns:repeat(4,1fr);}}
+  .kpi{background:var(--navy-2);border:1px solid var(--line);border-radius:14px;padding:14px;}
+  .kpi .v{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;}
+  .kpi .l{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px;}
+  .window-strip{display:flex;gap:10px;align-items:center;border-radius:12px;padding:12px 14px;margin:14px 0 0;font-size:14px;line-height:1.45;}
+  .window-strip.open{background:rgba(95,211,141,.12);border:1px solid rgba(95,211,141,.4);}
+  .window-strip.closed{background:var(--navy-2);border:1px solid var(--line);}
+  .paths{display:grid;grid-template-columns:1fr;gap:14px;}
+  @media(min-width:700px){.paths{grid-template-columns:1fr 1fr;}}
+  @media(min-width:1000px){.paths{grid-template-columns:1fr 1fr 1fr;}}
+  .path{background:var(--navy-3);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;}
+  .path .stripe{height:6px;background:var(--pc);}
+  .path .body{padding:16px;display:flex;flex-direction:column;gap:10px;flex:1;}
+  .path .head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .path .name{font-weight:850;font-size:17px;}
+  .path .figs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .path .fig{background:var(--navy-2);border-radius:10px;padding:10px;}
+  .path .fig .v{font-weight:900;font-size:18px;font-variant-numeric:tabular-nums;}
+  .path .fig .l{font-size:11.5px;color:var(--muted);font-weight:700;}
+  .path .actions{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;}
+  .tag{display:inline-block;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+  .tag.ok{background:rgba(95,211,141,.18);color:var(--ok);}
+  .tag.wait{background:rgba(255,180,84,.18);color:var(--warn);}
+  .tag.bad{background:rgba(255,138,149,.16);color:var(--bad);}
+  .tag.none{background:rgba(255,255,255,.08);color:var(--muted);}
+  table{width:100%;border-collapse:collapse;}
+  th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);font-size:14px;}
+  th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800;}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .table-wrap{overflow-x:auto;}
+  .modal-bg{position:fixed;inset:0;background:rgba(3,8,30,.72);z-index:50;display:grid;place-items:center;padding:16px;}
+  .modal{background:var(--navy-3);border:1px solid var(--line);border-radius:18px;padding:22px;width:100%;max-width:480px;max-height:90vh;overflow:auto;}
+  .sum{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px;}
+  .sum span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .sum.total{font-weight:900;font-size:17px;border-bottom:0;}
+  .stepper{display:flex;align-items:center;gap:8px;}
+  .stepper .input{text-align:center;font-size:22px;font-weight:900;max-width:140px;}
+  .stepper button{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--navy-2);font-size:22px;font-weight:900;cursor:pointer;}
+  .stepper button[disabled]{opacity:.35;cursor:not-allowed;}
+  .lock{display:flex;gap:10px;align-items:flex-start;background:var(--navy-2);border:1px solid var(--line);border-radius:12px;padding:12px;margin:12px 0;font-size:14px;line-height:1.45;}
+  .lock b{color:var(--warn);}
+  .win-row{display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px;}
+  @media(max-width:640px){.win-row{grid-template-columns:1fr 1fr;}.win-row .lbl{grid-column:1 / -1;}}
+  .win-row .input{padding:9px 10px;font-size:14px;}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ok);color:var(--navy);font-weight:800;padding:12px 18px;border-radius:12px;z-index:60;max-width:calc(100% - 32px);box-shadow:0 10px 30px rgba(0,0,0,.4);}
+  .toast.err{background:var(--bad);}
+  .foot{text-align:center;font-size:12px;color:var(--muted);margin-top:40px;}
+  .incl{list-style:none;padding:0;margin:0;font-size:13.5px;line-height:1.4;}
+  .incl li{position:relative;padding:3px 0 3px 22px;}
+  .incl li::before{content:"✓";position:absolute;left:2px;top:3px;color:var(--pc, var(--gold));font-weight:900;}
+  .path details{border-top:1px solid var(--line);padding-top:8px;}
+  .path summary{cursor:pointer;font-size:13px;font-weight:800;color:var(--muted);}
+  .path summary:hover{color:var(--white);}
+  .feebox{background:var(--navy-2);border:1px solid rgba(242,169,0,.4);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;}
+  .feebox s{color:var(--muted);margin-right:6px;}
+  .feebox b.price{font-size:16px;}
+  .found{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--gold);color:var(--navy);margin-left:6px;vertical-align:middle;}
+  .shop-row{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
+  .shop-row .input{max-width:110px;text-align:center;padding:8px;}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--pc);margin-right:8px;vertical-align:middle;}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <span class="brand-top">National Gymnastics League</span>
+      <span class="brand-title" id="brandTitle">NGL Club Account</span>
+    </div>
+    <div class="top-actions" id="topActions"></div>
+  </div>
+  <div class="wrap"><nav class="navtabs" id="navtabs" hidden></nav></div>
+</header>
+<main><div class="wrap" id="view"></div></main>
+
+<script type="module">
+/* =====================================================================
+   NGL CLUB ACCOUNT
+   One account per club, one licence per pathway.
+   ---------------------------------------------------------------------
+   PREVIEW MODE: while FIREBASE_CONFIG is null the page runs on demo data
+   held in memory (nothing is saved, no payments). Paste the ngl-accounts
+   Firebase config below to switch to Firebase Auth + Firestore + the
+   Cloud Functions in /functions (which talk to Stripe).
+   ===================================================================== */
+const FIREBASE_CONFIG = null;
+const FUNCTIONS_REGION = 'europe-west2';
+const SDK = 'https://www.gstatic.com/firebasejs/10.12.0/';
+const CONTACT_EMAIL = 'admin@nationalgymnasticsleague.co.uk';
+
+/* Pathway areas: where each pathway's own hub lives once licensed */
+const PATHWAYS = [
+  {id:'preschool',    name:'Pre-School',         color:'var(--c-preschool)',    area:null},
+  {id:'schools',      name:'Schools',            color:'var(--c-schools)',      area:'https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-schools-club.html'},
+  {id:'recreational', name:'Recreational',       color:'var(--c-recreational)', area:null},
+  {id:'general',      name:'General League',     color:'var(--c-general)',      area:null},
+  {id:'performance',  name:'Performance League', color:'var(--c-performance)',  area:null},
+  {id:'university',   name:'University League',  color:'var(--c-university)',  area:null},
+  {id:'masters',      name:'Masters',            color:'var(--c-masters)',      area:null}
+];
+const MAX_GYMNASTS = 5000;
+
+/* What each licence includes, per gymnast. Shown on the pathway cards and when starting a licence. */
+const INCLUDES = {
+  preschool: [
+    '10-level Awards Book',
+    'A medal every 4 weeks (up to 10 a year), bought as you need them',
+    'Exclusive use of the NGL Somi & Flic characters'
+  ],
+  schools: [
+    '6-level Awards Book, lasting 6 years',
+    '3 certificates per gymnast per year',
+    'Access to the Schools Hub app',
+    'Tuition videos',
+    'Access to the Graduation Ceremony'
+  ],
+  recreational: [
+    '3-level Awards Book (lasts 1 year, 1 level per term)',
+    'A medal for each level passed (up to 3 a year), bought as you need them',
+    '4 attendance certificates',
+    'Recreational Hub: routine, masterclass and conditioning videos'
+  ],
+  general: [
+    'Gymnast Progress Book, Levels 1–4'
+  ],
+  performance: [
+    'Gymnast Routine Book, Levels 1–6'
+  ]
+};
+/* What the yearly club fee buys (pathways with a club fee only) */
+const CLUB_FEE_VALUE = {
+  preschool: '10 themes for the year: themed training plans and ready-made social media posts. Extra themes £25 each.',
+  recreational: 'Weekly coaching plans for the full year, aligned to NGL competitions and illustrated throughout. Months of work for a club to write itself.'
+};
+
+/* "How many need a new book?" box. Follows the gymnast count until the club edits it. */
+function booksField(bookPence){
+  return `<div class="field" style="margin:12px 0 0">
+    <label for="books">How many of these gymnasts need a new book? (${gbp(bookPence)} each)</label>
+    <input class="input" id="books" type="number" inputmode="numeric" min="0" step="1" style="max-width:140px">
+    <p class="note" style="margin:6px 0 0">Gymnasts who already have the book pay no book fee. Clubs usually charge families for the book.</p>
+  </div>`;
+}
+function wireBooks(m, maxFn, onChange){
+  const inp = m.querySelector('#books'); let touched = false;
+  inp.oninput = () => { touched = true; onChange(); };
+  return {
+    sync(){ const mx = maxFn(); inp.max = mx; if(!touched || +inp.value > mx) inp.value = mx; },
+    get(){ return parseInt(inp.value, 10); },
+    show(on){ inp.closest('.field').hidden = !on; }
+  };
+}
+const includesList = id => INCLUDES[id] ? `<ul class="incl">${INCLUDES[id].map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+
+/* Starting prices in pence (same as functions/licensing.js). NGL admin can change them.
+   A pathway with no price shows "Coming soon" and cannot be started. */
+const DEFAULT_PRICING = {
+  preschool: {bookPence:1000, unitPence:100, interval:'month',
+    clubFee:{bands:[{max:null, fullPence:40000, foundingPence:20000}]},
+    themes:{included:10, extraPence:2500},
+    products:{medal:{name:'Medal', pricePence:200, rrpPence:400, perGymnastPerYear:10}}},
+  schools: {bookPence:800, unitPence:100, interval:'month'},
+  recreational: {bookPence:500, rrpPence:1000, unitPence:100, interval:'month',
+    clubFee:{bands:[{max:199, fullPence:100000, foundingPence:50000}, {max:499, fullPence:150000, foundingPence:100000}, {max:null, fullPence:200000, foundingPence:150000}]},
+    products:{medal:{name:'Medal', pricePence:250, rrpPence:500, perGymnastPerYear:3},
+              book:{name:'Awards Book', pricePence:500, rrpPence:1000, perGymnastPerYear:1}}},
+  general: {bookPence:1000, unitPence:100, interval:'month'},
+  performance: {bookPence:1000, unitPence:100, interval:'month'}
+};
+const DEFAULT_FOUNDING_UNTIL = '2027-08-31';
+const foundingUntil = () => (state.settings && state.settings.foundingUntil) || DEFAULT_FOUNDING_UNTIL;
+const foundingOpen = () => ukDate(now()) <= foundingUntil();
+/* Same as clubFeeFor in functions/licensing.js */
+function clubFeeFor(price, gymnasts, founding){
+  const bands = price && price.clubFee && price.clubFee.bands;
+  if(!Array.isArray(bands) || !bands.length) return null;
+  const band = bands.find(b => b.max == null || gymnasts <= b.max) || bands[bands.length - 1];
+  const i = bands.indexOf(band), lo = i === 0 ? 1 : bands[i - 1].max + 1;
+  return {band: band.max == null ? `${lo}+ gymnasts` : `${lo}–${band.max} gymnasts`, fullPence:band.fullPence, foundingPence:band.foundingPence, pence: founding ? band.foundingPence : band.fullPence, founding};
+}
+const bandsText = price => (price.clubFee.bands).map((b, i, a) => { const lo = i === 0 ? 1 : a[i-1].max + 1; return `${b.max == null ? lo + '+' : lo + '–' + b.max}: ${gbp(b.foundingPence)}`; }).join(' · ');
+function pricingFor(settings, id){
+  const p = {...(DEFAULT_PRICING[id] || {}), ...((settings.pathways || {})[id] || {})};
+  return Number.isInteger(p.bookPence) && Number.isInteger(p.unitPence) && p.unitPence > 0 && (p.interval === 'week' || p.interval === 'month') ? p : null;
+}
+/* A licence keeps the price it was started at; fall back to the pathway's current price */
+function licPrice(l, id){
+  const p = pricingFor(state.settings, id) || {bookPence:0, unitPence:0, interval:'month'};
+  return {bookPence:p.bookPence, unitPence: l && l.unitPence ? l.unitPence : p.unitPence, interval: l && l.interval ? l.interval : p.interval};
+}
+const monthlyEq = (unit, interval, g) => interval === 'week' ? Math.round(unit * g * 52 / 12) : unit * g;
+const perWord = i => i === 'week' ? 'week' : 'month';
+const yearCost = p => p.unitPence * (p.interval === 'week' ? 52 : 12);   // licence fee only; book fee is separate
+
+/* ---------- Licensing rules (display copy; enforced again in functions/licensing.js) ---------- */
+const ukDate = (d = now()) => new Intl.DateTimeFormat('en-CA', {timeZone:'Europe/London'}).format(d);
+const currentWindow = (ws, d) => (ws || []).find(w => w.start <= ukDate(d) && ukDate(d) <= w.end) || null;
+const nextWindow = (ws, d) => (ws || []).filter(w => w.start > ukDate(d)).sort((a,b) => a.start.localeCompare(b.start))[0] || null;
+const givesAccess = s => s === 'active' || s === 'past_due';
+
+/* ---------- Formatting ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gbp = p => '£' + (p / 100).toLocaleString('en-GB', {minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2});
+const n0 = n => Number(n || 0).toLocaleString('en-GB');
+const fmtDate = iso => iso ? new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) : '';
+const fmtTs = ts => { if(!ts) return ''; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); };
+const pathwayById = id => PATHWAYS.find(p => p.id === id);
+
+/* =====================================================================
+   DEMO DATA LAYER
+   ===================================================================== */
+let demoToday = null;   // demo can pretend today is another date, to try the holiday lock
+function now(){ return demoToday ? new Date(demoToday + 'T12:00:00Z') : new Date(); }
+
+const demo = {
+  settings: {
+    pathways: {}, season: '2026/27',
+    windows: [
+      {label:'October half term',  start:'2026-10-24', end:'2026-11-01'},
+      {label:'Christmas holidays', start:'2026-12-19', end:'2027-01-04'},
+      {label:'February half term', start:'2027-02-13', end:'2027-02-21'},
+      {label:'Easter holidays',    start:'2027-03-27', end:'2027-04-11'},
+      {label:'May half term',      start:'2027-05-29', end:'2027-06-06'},
+      {label:'Summer holidays',    start:'2027-07-22', end:'2027-09-05'}
+    ]
+  },
+  club: null, licences: {}, isAdmin: false,
+  others: [   // other clubs, for the admin overview
+    {club:'Elite Gymnastics', bg:'BG-2231', pathway:'schools',      status:'active',   gymnasts:140},
+    {club:'Salto Gymnastics', bg:'BG-4410', pathway:'recreational', status:'past_due', gymnasts:62},
+    {club:'React Gymnastics', bg:'BG-3108', pathway:'schools',      status:'lapsed',   gymnasts:35},
+    {club:'NBC Gymnastics',   bg:'BG-1987', pathway:'general',      status:'active',   gymnasts:48}
+  ],
+  nextPay(interval){ const d = now(); if(interval === 'week') d.setUTCDate(d.getUTCDate() + 7); else d.setUTCMonth(d.getUTCMonth() + 1); return d.toISOString().slice(0,10); },
+  sample(){
+    this.club = {name:'SAADI Gymnastics', bgNumber:'BG-1234', contactName:'Dave Brooke', email:'bookingoffice@saadigymnastics.co.uk', accessCode:'SAADI-7K4P'};
+    this.licences = {
+      schools:      {status:'active', gymnasts:120, unitPence:100, interval:'month', nextPaymentAt:this.nextPay(), cancelAtPeriodEnd:false},
+      recreational: {status:'active', gymnasts:45,  unitPence:100, interval:'month', nextPaymentAt:this.nextPay(), cancelAtPeriodEnd:false, clubFeePence:50000, clubFeeRenewsAt:'2027-09-01', foundingClub:true, ordered:{medal:45}}
+    };
+  }
+};
+
+const demoApi = {
+  live: false,
+  async signIn(email){ demo.sample(); demo.isAdmin = /saadi|nationalgymnasticsleague/i.test(email); return {ok:true}; },
+  async register(d){
+    demo.club = {name:d.name, bgNumber:d.bgNumber.toUpperCase(), contactName:d.contactName, email:d.email, accessCode:'NEW-2H8K'};
+    demo.licences = {}; demo.isAdmin = false; return {ok:true};
+  },
+  async resetPassword(){ return {ok:true}; },
+  async signOut(){ demo.club = null; },
+  async load(){ return {club:demo.club, licences:demo.licences, settings:demo.settings, isAdmin:demo.isAdmin}; },
+  async startLicence(pathway, gymnasts, books){
+    // Real version: redirect to Stripe Checkout, then Stripe's webhook activates the licence
+    const pr = pricingFor(demo.settings, pathway);
+    const prev = demo.licences[pathway], founding = foundingOpen() || !!(prev && prev.foundingClub);
+    const cf = clubFeeFor(pr, gymnasts, founding);
+    const renew = now(); renew.setUTCFullYear(renew.getUTCFullYear() + 1);
+    demo.licences[pathway] = {status:'active', gymnasts, unitPence:pr.unitPence, interval:pr.interval, nextPaymentAt:demo.nextPay(pr.interval), cancelAtPeriodEnd:false,
+      clubFeePence: cf ? cf.pence : 0, clubFeeRenewsAt: cf ? renew.toISOString().slice(0,10) : null, foundingClub: !!(cf && cf.founding), ordered:{}};
+    return {demo:true};
+  },
+  async changeGymnasts(pathway, gymnasts, books){
+    const lic = demo.licences[pathway];
+    const plan = planChange(lic, gymnasts, licPrice(lic, pathway), books);
+    if(!plan.allowed) throw new Error(plan.reason);
+    if(plan.kind === 'cancel') lic.cancelAtPeriodEnd = true;
+    else { lic.gymnasts = gymnasts; lic.cancelAtPeriodEnd = false; }
+    return {ok:true, ...plan};
+  },
+  async billingPortal(){ return {demo:true}; },
+  async orderProducts(pathway, items){
+    const lic = demo.licences[pathway]; lic.ordered = lic.ordered || {};
+    items.forEach(it => { lic.ordered[it.id] = (lic.ordered[it.id] || 0) + it.qty; });
+    return {demo:true};
+  },
+  async saveSettings(s){ demo.settings = {...demo.settings, ...s}; },
+  async allLicences(){
+    const mine = Object.entries(demo.licences).map(([pathway, l]) => ({club:demo.club.name, bg:demo.club.bgNumber, pathway, status:l.status, gymnasts:l.gymnasts, cancelAtPeriodEnd:l.cancelAtPeriodEnd}));
+    return [...mine, ...demo.others];
+  }
+};
+
+/* Same rule as functions/licensing.js planChange, plus undoing a cancellation.
+   price = {bookPence, unitPence}; "period" = each weekly or monthly payment */
+function planChange(lic, requested, price, books){
+  const current = lic.gymnasts;
+  const out = {bookFeePence:0, periodFromPence: (lic.cancelAtPeriodEnd ? 0 : current) * price.unitPence, periodToPence: requested * price.unitPence};
+  if(lic.cancelAtPeriodEnd && requested === 0) return {...out, kind:'none', allowed:false, reason:'This licence is already set to end.'};
+  const withBooks = (kind, added) => {
+    const b = books == null ? added : books;
+    if(!Number.isInteger(b) || b < 0 || b > added) return {...out, kind, allowed:false, reason:`Books must be between 0 and ${added}.`};
+    return {...out, kind, allowed:true, books:b, bookFeePence: b * price.bookPence};
+  };
+  if(lic.cancelAtPeriodEnd && requested > 0) return withBooks('undo-cancel', Math.max(requested - current, 0));
+  if(requested === current) return {...out, kind:'none', allowed:false, reason:'That is the number you already have.'};
+  if(requested > current) return withBooks('increase', requested - current);
+  const kind = requested === 0 ? 'cancel' : 'decrease';
+  if(currentWindow(settings.windows, now())) return {...out, kind, allowed:true};
+  const nx = nextWindow(settings.windows, now());
+  return {...out, kind, allowed:false, nextWindow:nx,
+    reason: nx ? `Numbers can only go down during a holiday window. The next one is ${nx.label} (${fmtDate(nx.start)} to ${fmtDate(nx.end)}).`
+               : 'Numbers can only go down during a holiday window. NGL has not published the next window yet.'};
+}
+
+/* =====================================================================
+   LIVE DATA LAYER (Firebase Auth + Firestore + Cloud Functions)
+   ===================================================================== */
+let fb = null;
+async function firebase(){
+  if(fb) return fb;
+  const [appM, authM, fsM, fnM] = await Promise.all([
+    import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'),
+    import(SDK + 'firebase-firestore.js'), import(SDK + 'firebase-functions.js')
+  ]);
+  const app = appM.initializeApp(FIREBASE_CONFIG);
+  fb = {authM, fsM, auth: authM.getAuth(app), db: fsM.getFirestore(app), fns: fnM.getFunctions(app, FUNCTIONS_REGION), fnM};
+  return fb;
+}
+const call = async (name, data) => { const f = await firebase(); return (await f.fnM.httpsCallable(f.fns, name)(data)).data; };
+const friendly = e => (e && e.message || String(e)).replace(/^Firebase: /, '').replace(/\s*\(auth\/[a-z-]+\)\.?/, '');
+
+const liveApi = {
+  live: true,
+  async signIn(email, password){ const f = await firebase(); await f.authM.signInWithEmailAndPassword(f.auth, email, password); return {ok:true}; },
+  async register(d){
+    const f = await firebase();
+    await f.authM.createUserWithEmailAndPassword(f.auth, d.email, d.password);
+    await call('registerClub', {name:d.name, bgNumber:d.bgNumber, contactName:d.contactName, acceptedTerms:true});
+    return {ok:true};
+  },
+  async resetPassword(email){ const f = await firebase(); await f.authM.sendPasswordResetEmail(f.auth, email); return {ok:true}; },
+  async signOut(){ const f = await firebase(); await f.authM.signOut(f.auth); },
+  async load(){
+    const f = await firebase(); const {doc, getDoc, collection, getDocs} = f.fsM;
+    const user = f.auth.currentUser;
+    const token = await user.getIdTokenResult(true);
+    const isAdmin = token.claims.admin === true;
+    const settingsSnap = await getDoc(doc(f.db, 'settings/licensing'));
+    const settings = {pathways:{}, windows:[], ...(settingsSnap.exists() ? settingsSnap.data() : {})};
+    const u = await getDoc(doc(f.db, 'users', user.uid));
+    if(!u.exists()) return {club:null, licences:{}, settings, isAdmin};
+    const clubId = u.data().clubId;
+    const club = (await getDoc(doc(f.db, 'clubs', clubId))).data();
+    const licences = {};
+    (await getDocs(collection(f.db, 'clubs', clubId, 'licences'))).forEach(s => {
+      const l = s.data();
+      licences[s.id] = {...l, ordered:{},
+        nextPaymentAt: l.nextPaymentAt ? l.nextPaymentAt.toDate().toISOString().slice(0,10) : null,
+        clubFeeRenewsAt: l.clubFeeRenewsAt ? l.clubFeeRenewsAt.toDate().toISOString().slice(0,10) : null};
+    });
+    // medals and books ordered in the last 12 months (shown against the per-gymnast limit)
+    const yearAgo = new Date(Date.now() - 365 * 864e5);
+    (await getDocs(collection(f.db, 'clubs', clubId, 'orders'))).forEach(o => {
+      const d = o.data(); if(d.status !== 'paid' || !d.paidAt || d.paidAt.toDate() < yearAgo || !licences[d.pathway]) return;
+      (d.lines || []).forEach(x => { licences[d.pathway].ordered[x.id] = (licences[d.pathway].ordered[x.id] || 0) + x.qty; });
+    });
+    return {club, licences, settings, isAdmin};
+  },
+  async startLicence(pathway, gymnasts, books){ const r = await call('startLicence', {pathway, gymnasts, books}); location.href = r.url; return r; },
+  async changeGymnasts(pathway, gymnasts, books){ return call('changeGymnasts', {pathway, gymnasts, books}); },
+  async billingPortal(){ const r = await call('billingPortal', {}); location.href = r.url; return r; },
+  async orderProducts(pathway, items){ const r = await call('orderProducts', {pathway, items}); location.href = r.url; return r; },
+  async saveSettings(s){
+    const f = await firebase(); const {doc, setDoc, serverTimestamp} = f.fsM;
+    await setDoc(doc(f.db, 'settings/licensing'), {...s, updatedAt: serverTimestamp()}, {merge:true});
+  },
+  async allLicences(){
+    const f = await firebase(); const {collectionGroup, getDocs, getDoc} = f.fsM;
+    const snaps = await getDocs(collectionGroup(f.db, 'licences'));
+    const clubCache = {};
+    const rows = [];
+    for(const s of snaps.docs){
+      const clubRef = s.ref.parent.parent;
+      clubCache[clubRef.id] ||= (await getDoc(clubRef)).data() || {};
+      const c = clubCache[clubRef.id], l = s.data();
+      rows.push({club:c.name, bg:c.bgNumber, pathway:s.id, status:l.status, gymnasts:l.gymnasts, unitPence:l.unitPence, interval:l.interval, cancelAtPeriodEnd:l.cancelAtPeriodEnd});
+    }
+    return rows;
+  }
+};
+
+const api = FIREBASE_CONFIG ? liveApi : demoApi;
+
+/* =====================================================================
+   APP
+   ===================================================================== */
+let state = {signedIn:false, club:null, licences:{}, settings:null, isAdmin:false};
+let tab = 'summary';
+const $view = document.getElementById('view');
+const render = html => { $view.innerHTML = '<div class="screen">' + html + '</div>'; };
+
+function toast(msg, err){
+  const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 3600);
+}
+
+function modal(html){
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+  bg.addEventListener('click', e => { if(e.target === bg) bg.remove(); });
+  document.body.appendChild(bg);
+  bg.close = () => bg.remove();
+  bg.querySelectorAll('[data-close]').forEach(b => b.onclick = bg.close);
+  return bg;
+}
+
+function demoBanner(){
+  if(api.live) return '';
+  return `<div class="demo-banner">
+    <span>Preview mode: demo data, no payments taken.</span>
+    ${state.signedIn ? `<label>Pretend today is <input type="date" id="demoDate" value="${esc(ukDate())}"></label>` : ''}
+  </div>`;
+}
+function wireDemoDate(){
+  const el = document.getElementById('demoDate');
+  if(el) el.onchange = () => { demoToday = el.value || null; show(); };
+}
+
+function setTop(){
+  const ta = document.getElementById('topActions'), nav = document.getElementById('navtabs');
+  document.getElementById('brandTitle').textContent = state.club ? state.club.name : 'NGL Club Account';
+  if(state.signedIn){
+    ta.innerHTML = `<button class="btn ghost small" id="signOut">Sign out</button>`;
+    document.getElementById('signOut').onclick = async () => { await api.signOut(); state = {signedIn:false}; tab = 'summary'; show(); };
+    const tabs = [['summary','Club summary']];
+    if(state.isAdmin) tabs.push(['admin','NGL admin']);
+    nav.hidden = tabs.length < 2;
+    nav.innerHTML = tabs.map(([id, l]) => `<button class="navtab ${tab === id ? 'active' : ''}" data-tab="${id}">${l}</button>`).join('');
+    nav.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; show(); });
+  } else { ta.innerHTML = ''; nav.hidden = true; }
+}
+
+async function refresh(){
+  const d = await api.load();
+  Object.assign(state, d);
+}
+
+function show(){
+  setTop();
+  if(!state.signedIn) return showSignIn();
+  if(!state.club) return showRegister(true);
+  if(tab === 'admin' && state.isAdmin) return showAdmin();
+  showSummary();
+}
+
+/* ---------- Sign in / register ---------- */
+function showSignIn(){
+  render(`<div class="auth">
+    ${demoBanner()}
+    <p class="eyebrow">NGL Club Account</p>
+    <h1>Sign in</h1>
+    <p class="muted">One login for all your club's NGL pathways and licences.</p>
+    <form class="card" id="f" style="margin-top:14px">
+      <div class="field"><label for="em">Email</label><input class="input" id="em" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="pw">Password</label><input class="input" id="pw" type="password" autocomplete="current-password" required></div>
+      <p class="error" id="err"></p>
+      <button class="btn block" type="submit">Sign in</button>
+      <p class="note" style="margin:14px 0 0;text-align:center"><a href="#" id="forgot">Forgotten password?</a> · New to NGL? <a href="#" id="toReg">Register your club</a></p>
+    </form>
+    ${api.live ? '' : '<p class="note">Preview: any email and password opens SAADI Gymnastics with the NGL admin area.</p>'}
+  </div>`);
+  const f = document.getElementById('f'), err = document.getElementById('err');
+  f.onsubmit = async e => {
+    e.preventDefault(); err.textContent = '';
+    try { await api.signIn(val('em'), val('pw')); state.signedIn = true; await refresh(); show(); }
+    catch(x){ err.textContent = friendly(x); }
+  };
+  document.getElementById('toReg').onclick = e => { e.preventDefault(); showRegister(false); };
+  document.getElementById('forgot').onclick = async e => {
+    e.preventDefault();
+    if(!val('em')){ err.textContent = 'Enter your email above first.'; return; }
+    try { await api.resetPassword(val('em')); toast('Password reset email sent'); } catch(x){ err.textContent = friendly(x); }
+  };
+}
+const val = id => document.getElementById(id).value.trim();
+
+function showRegister(finishing){
+  render(`<div class="auth">
+    ${demoBanner()}
+    <p class="eyebrow">NGL Club Account</p>
+    <h1>${finishing ? 'Finish setting up your club' : 'Register your club'}</h1>
+    <p class="muted">One account covers every NGL pathway. You'll go straight to your club summary.</p>
+    <form class="card" id="f" style="margin-top:14px">
+      <div class="field"><label for="cn">Club name</label><input class="input" id="cn" required maxlength="120"></div>
+      <div class="field"><label for="bg">British Gymnastics club number</label><input class="input" id="bg" required maxlength="20"></div>
+      <div class="field"><label for="ct">Contact name</label><input class="input" id="ct" required maxlength="120"></div>
+      ${finishing ? '' : `
+      <div class="field"><label for="re">Email (your login)</label><input class="input" id="re" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="rp">Choose a password</label><input class="input" id="rp" type="password" autocomplete="new-password" minlength="8" required></div>`}
+      <label class="note" style="display:flex;gap:10px;align-items:flex-start;margin:4px 0 14px"><input type="checkbox" id="terms" required style="margin-top:3px"> Our club is affiliated to British Gymnastics and agrees to the NGL licence terms and privacy notice.</label>
+      <p class="error" id="err"></p>
+      <button class="btn block" type="submit">Create club account</button>
+      ${finishing ? '' : '<p class="note" style="margin:14px 0 0;text-align:center">Already registered? <a href="#" id="toIn">Sign in</a></p>'}
+    </form>
+  </div>`);
+  const back = document.getElementById('toIn');
+  if(back) back.onclick = e => { e.preventDefault(); showSignIn(); };
+  document.getElementById('f').onsubmit = async e => {
+    e.preventDefault();
+    const err = document.getElementById('err'); err.textContent = '';
+    try {
+      const d = {name:val('cn'), bgNumber:val('bg'), contactName:val('ct')};
+      if(finishing){ await call('registerClub', {...d, acceptedTerms:true}); }
+      else { await api.register({...d, email:val('re'), password:document.getElementById('rp').value}); }
+      state.signedIn = true; await refresh(); show(); toast('Club account created');
+    } catch(x){ err.textContent = friendly(x); }
+  };
+}
+
+/* ---------- Club summary ---------- */
+function statusTag(l){
+  if(!l || l.status === 'none') return '<span class="tag none">Not started</span>';
+  if(l.status === 'active' && l.cancelAtPeriodEnd) return '<span class="tag wait">Ending</span>';
+  return ({
+    active:'<span class="tag ok">Active</span>',
+    past_due:'<span class="tag wait">Payment due</span>',
+    pending:'<span class="tag wait">Awaiting payment</span>',
+    lapsed:'<span class="tag bad">Lapsed</span>'
+  })[l.status] || '<span class="tag none">Not started</span>';
+}
+
+function windowStrip(){
+  const ws = state.settings.windows, open = currentWindow(ws, now()), nx = nextWindow(ws, now());
+  if(open) return `<div class="window-strip open"><span>🔓</span><span><b>${esc(open.label)}:</b> you can reduce gymnast numbers or cancel a licence until ${fmtDate(open.end)}.</span></div>`;
+  return `<div class="window-strip closed"><span>🔒</span><span>You can add gymnasts at any time. Reducing numbers or cancelling opens in the holidays${nx ? `: next window <b>${esc(nx.label)}</b>, ${fmtDate(nx.start)} to ${fmtDate(nx.end)}` : ''}.</span></div>`;
+}
+
+function showSummary(){
+  const s = state.settings, L = state.licences;
+  const live = Object.values(L).filter(l => givesAccess(l.status));
+  const continuing = Object.entries(L).filter(([, l]) => givesAccess(l.status) && !l.cancelAtPeriodEnd);
+  const gymnasts = continuing.reduce((a, [, l]) => a + l.gymnasts, 0);
+  const monthly = continuing.reduce((a, [id, l]) => { const p = licPrice(l, id); return a + monthlyEq(p.unitPence, p.interval, l.gymnasts); }, 0);
+  const anyWeekly = continuing.some(([id, l]) => licPrice(l, id).interval === 'week');
+  const nextDates = live.map(l => l.nextPaymentAt).filter(Boolean).sort();
+  const params = new URLSearchParams(location.search);
+
+  render(`
+    ${demoBanner()}
+    ${params.get('licence') === 'started' ? `<div class="card" style="border-color:rgba(95,211,141,.5)"><b>Payment set up.</b> <span class="muted">Your ${esc(pathwayById(params.get('pathway'))?.name || '')} licence activates as soon as Stripe confirms it (usually within a minute; Direct Debit can take a few days).</span></div>` : ''}
+    <div class="card">
+      <p class="eyebrow">Club summary</p>
+      <h1 style="margin-bottom:4px">${esc(state.club.name)}</h1>
+      <p class="muted" style="margin:0">BG club number ${esc(state.club.bgNumber)} · ${esc(state.club.contactName)} · ${esc(state.club.email)}</p>
+      <div class="kpis">
+        <div class="kpi"><div class="v">${live.length}</div><div class="l">Active licences</div></div>
+        <div class="kpi"><div class="v">${n0(gymnasts)}</div><div class="l">Licensed gymnasts</div></div>
+        <div class="kpi"><div class="v">${gbp(monthly)}</div><div class="l">Per month, all pathways${anyWeekly ? ' (weekly fees averaged)' : ''}</div></div>
+        <div class="kpi"><div class="v">${nextDates[0] ? fmtDate(nextDates[0]) : '–'}</div><div class="l">Next payment</div></div>
+      </div>
+      ${windowStrip()}
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn ghost small" id="billing" ${live.length || Object.keys(L).length ? '' : 'disabled'}>Payment details &amp; invoices</button>
+      </div>
+    </div>
+
+    <h2 style="margin-top:26px">Pathways</h2>
+    <p class="muted">An NGL Awards Programme Licence lets your club deliver the NGL Awards® and present official NGL medals and certificates. Each pathway is licensed separately: £1 per gymnast per month, plus a book fee for each gymnast who needs a new book.</p>
+    <div class="paths">${PATHWAYS.map(pathCard).join('')}</div>
+    <p class="foot">Questions about your licence? <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p>
+  `);
+  wireDemoDate();
+  document.getElementById('billing').onclick = async () => {
+    try { const r = await api.billingPortal(); if(r.demo) toast('In the live version this opens Stripe: payment details and invoices'); }
+    catch(x){ toast(friendly(x), true); }
+  };
+  document.querySelectorAll('[data-start]').forEach(b => b.onclick = () => startModal(b.dataset.start));
+  document.querySelectorAll('[data-change]').forEach(b => b.onclick = () => changeModal(b.dataset.change));
+  document.querySelectorAll('[data-order]').forEach(b => b.onclick = () => orderModal(b.dataset.order));
+}
+
+function pathCard(p){
+  const l = state.licences[p.id], pr = pricingFor(state.settings, p.id);
+  const has = l && givesAccess(l.status), lp = licPrice(l, p.id);
+  const fee = pr && pr.clubFee ? pr.clubFee.bands : null;
+  const products = pr && pr.products ? Object.values(pr.products) : [];
+  const priceLine = pr ? `${fee ? clubFeeBox(pr, p.id) : ''}
+    <p class="note" style="margin:0">${gbp(pr.unitPence)} per gymnast per ${perWord(pr.interval)}, plus a ${gbp(pr.bookPence)} book fee for each gymnast who needs a book${pr.rrpPence ? ` (suggested price to families ${gbp(pr.rrpPence)})` : ''}.</p>
+    ${products.length ? `<p class="note" style="margin:0">${products.map(x => `${esc(x.name)}s ${gbp(x.pricePence)} each${x.rrpPence ? `, sell for ${gbp(x.rrpPence)}` : ''}`).join(' · ')}</p>` : ''}` : '';
+  const figs = has ? `<div class="figs">
+      <div class="fig"><div class="v">${n0(l.gymnasts)}</div><div class="l">Gymnasts</div></div>
+      <div class="fig"><div class="v">${l.cancelAtPeriodEnd ? '£0' : gbp(l.gymnasts * lp.unitPence)}</div><div class="l">Per ${perWord(lp.interval)}</div></div>
+    </div>
+    <p class="note" style="margin:0">${l.cancelAtPeriodEnd ? `Ends ${fmtDate(l.nextPaymentAt)}. No further payments.` : `Next payment ${fmtDate(l.nextPaymentAt)}`}</p>
+    ${l.clubFeePence ? `<p class="note" style="margin:0">Club fee ${gbp(l.clubFeePence)} a year${l.clubFeeRenewsAt ? `, renews ${fmtDate(l.clubFeeRenewsAt)}` : ''}${l.foundingClub ? '<span class="found">Founding club</span>' : ''}</p>` : ''}
+    ${l.status === 'past_due' ? '<p class="note" style="margin:0;color:var(--warn)">The last payment failed. Stripe will retry; please check your payment details.</p>' : ''}` : `
+    <p class="note" style="margin:0">${l && l.status === 'lapsed' ? 'This licence has lapsed. Restart it to regain access.' : l && l.status === 'pending' ? 'Waiting for Stripe to confirm your first payment.' : pr ? 'Not licensed yet.' : 'Licensing for this pathway is coming soon.'}</p>${priceLine}`;
+  const area = has && p.area ? `<a class="btn ghost small" href="${esc(p.area)}" target="_blank" rel="noopener">Open ${esc(p.name)} area</a>` : has ? '<span class="note" style="align-self:center">Pathway area coming soon</span>' : '';
+  const actions = has
+    ? `<button class="btn small" data-change="${p.id}">Change gymnasts</button>${pr && (pr.products || pr.themes) ? `<button class="btn ghost small" data-order="${p.id}">Order medals${pr.themes ? ' &amp; themes' : pr.products && pr.products.book ? ' &amp; books' : ''}</button>` : ''}${area}`
+    : (l && l.status === 'pending') || !pr ? '' : `<button class="btn small" data-start="${p.id}">${l && l.status === 'lapsed' ? 'Restart licence' : 'Start licence'}</button>`;
+  return `<div class="path" style="--pc:${p.color}">
+    <div class="stripe"></div>
+    <div class="body">
+      <div class="head"><span class="name">${esc(p.name)}</span>${statusTag(l)}</div>
+      ${figs}
+      ${INCLUDES[p.id] ? (has
+        ? `<details><summary>What's included</summary><div style="margin-top:6px">${includesList(p.id)}</div></details>`
+        : `<div><p class="note" style="margin:0 0 4px;font-weight:800;color:var(--white)">What you get, per gymnast</p>${includesList(p.id)}</div>`) : ''}
+      <div class="actions">${actions}</div>
+    </div>
+  </div>`;
+}
+
+/* Club fee box: founding price charged, full price struck through */
+function clubFeeBox(pr, id, gymnasts){
+  const bands = pr.clubFee.bands, f = foundingOpen();
+  let priceHtml;
+  if(gymnasts){
+    const c = clubFeeFor(pr, gymnasts, f);
+    priceHtml = `${f && c.fullPence > c.pence ? `<s>${gbp(c.fullPence)}</s>` : ''}<b class="price">${gbp(c.pence)}</b> a year${bands.length > 1 ? ` <span class="muted">(${esc(c.band)})</span>` : ''}${f ? '<span class="found">Founding club price</span>' : ''}`;
+  } else if(bands.length === 1){
+    const b = bands[0];
+    priceHtml = `${f && b.fullPence > b.foundingPence ? `<s>${gbp(b.fullPence)}</s>` : ''}<b class="price">${gbp(f ? b.foundingPence : b.fullPence)}</b> a year${f ? '<span class="found">Founding club price</span>' : ''}`;
+  } else {
+    priceHtml = `From ${f ? `<s>${gbp(bands[0].fullPence)}</s>` : ''}<b class="price">${gbp(f ? bands[0].foundingPence : bands[0].fullPence)}</b> a year${f ? '<span class="found">Founding club price</span>' : ''}<br><span class="muted">By number of gymnasts: ${esc(bands.map((b, i, a) => { const lo = i === 0 ? 1 : a[i-1].max + 1; return `${b.max == null ? lo + '+' : lo + '–' + b.max} ${gbp(f ? b.foundingPence : b.fullPence)}`; }).join(' · '))}</span>`;
+  }
+  return `<div class="feebox"><div style="font-weight:800;margin-bottom:2px">Club fee: plans for the year</div>${priceHtml}
+    ${CLUB_FEE_VALUE[id] ? `<div class="muted" style="margin-top:4px">${esc(CLUB_FEE_VALUE[id])}</div>` : ''}
+    ${f ? `<div class="muted" style="margin-top:4px">Founding club prices for clubs that join by ${fmtDate(foundingUntil())}, and kept when you renew.</div>` : ''}</div>`;
+}
+
+function stepper(id, value, min){
+  return `<div class="stepper">
+    <button type="button" data-step="-1" aria-label="One fewer">−</button>
+    <input class="input" id="${id}" type="number" inputmode="numeric" min="${min}" max="${MAX_GYMNASTS}" step="1" value="${value}">
+    <button type="button" data-step="1" aria-label="One more">+</button>
+  </div>`;
+}
+function wireStepper(m, id, onChange){
+  const inp = m.querySelector('#' + id);
+  inp.parentElement.querySelectorAll('[data-step]').forEach(b => b.onclick = () => { inp.value = Math.max(+inp.min, Math.min(MAX_GYMNASTS, (parseInt(inp.value, 10) || 0) + +b.dataset.step)); onChange(); });
+  inp.oninput = onChange;
+  return () => parseInt(inp.value, 10);
+}
+
+function startModal(pathway){
+  const p = pathwayById(pathway), s = pricingFor(state.settings, pathway), per = perWord(s.interval);
+  const m = modal(`<p class="eyebrow"><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</p>
+    <h2>Start ${esc(p.name)} licence</h2>
+    <p class="note">${gbp(s.unitPence)} per gymnast per ${per}, plus a ${gbp(s.bookPence)} book fee for each gymnast who needs a book.</p>
+    ${INCLUDES[pathway] ? `<div style="--pc:${p.color};margin:0 0 14px">${includesList(pathway)}</div>` : ''}
+    <p class="muted">How many gymnasts will take part? You can add more at any time.</p>
+    ${stepper('qty', 20, 1)}
+    ${booksField(s.bookPence)}
+    ${s.clubFee ? '<div id="feebox" style="margin-top:14px"></div>' : ''}
+    <div id="calc" style="margin-top:14px"></div>
+    <label class="note" style="display:flex;gap:10px;align-items:flex-start;margin:14px 0"><input type="checkbox" id="ok" style="margin-top:3px"> I understand numbers can only be reduced, or the licence cancelled, during the holiday windows set by NGL.</label>
+    <p class="error" id="err"></p>
+    <div class="btn-row"><button class="btn" id="go">Continue to payment</button><button class="btn ghost" data-close>Cancel</button></div>
+    <p class="note" style="margin-top:12px">Pay by card or Direct Debit on the next screen (Stripe).</p>`);
+  const calc = () => {
+    const q = get();
+    let valid = Number.isInteger(q) && q >= 1 && q <= MAX_GYMNASTS;
+    if(valid) bk.sync();
+    const b = bk.get();
+    if(valid && !(Number.isInteger(b) && b >= 0 && b <= q)){ m.querySelector('#calc').innerHTML = `<p class="error">Books must be between 0 and ${n0(q)}.</p>`; m.querySelector('#go').disabled = true; return; }
+    const cf = s.clubFee && valid ? clubFeeFor(s, q, foundingOpen() || !!(state.licences[pathway] && state.licences[pathway].foundingClub)) : null;
+    if(s.clubFee && valid) m.querySelector('#feebox').innerHTML = clubFeeBox(s, pathway, q);
+    m.querySelector('#calc').innerHTML = valid ? `
+      ${cf ? `<div class="sum"><span>Club fee, first year${s.clubFee.bands.length > 1 ? ` (${esc(cf.band)})` : ''}</span><span>${gbp(cf.pence)}</span></div>` : ''}
+      ${b ? `<div class="sum"><span>Book fee: ${n0(b)} × ${gbp(s.bookPence)}</span><span>${gbp(b * s.bookPence)}</span></div>` : ''}
+      <div class="sum"><span>First ${per}: ${n0(q)} × ${gbp(s.unitPence)}</span><span>${gbp(q * s.unitPence)}</span></div>
+      <div class="sum total"><span>First payment</span><span>${gbp((cf ? cf.pence : 0) + b * s.bookPence + q * s.unitPence)}</span></div>
+      <div class="sum"><span>Then each ${per}</span><span>${gbp(q * s.unitPence)}</span></div>
+      ${cf ? `<div class="sum"><span>Club fee each year after</span><span>${gbp(cf.pence)}</span></div>` : ''}
+      ${s.interval === 'week' ? `<div class="sum"><span>About per month</span><span>${gbp(monthlyEq(s.unitPence, 'week', q))}</span></div>` : ''}`
+      : `<p class="error">Enter between 1 and ${n0(MAX_GYMNASTS)} gymnasts.</p>`;
+    m.querySelector('#go').disabled = !valid;
+  };
+  const bk = wireBooks(m, () => get(), () => calc());
+  const get = wireStepper(m, 'qty', calc); calc();
+  m.querySelector('#go').onclick = async () => {
+    const err = m.querySelector('#err'); err.textContent = '';
+    if(!m.querySelector('#ok').checked){ err.textContent = 'Please tick to confirm the holiday-window rule.'; return; }
+    const btn = m.querySelector('#go'); btn.disabled = true; btn.textContent = 'Opening payment…';
+    try {
+      const r = await api.startLicence(pathway, get(), bk.get());
+      if(r.demo){ m.close(); await refresh(); show(); toast(`${p.name} licence active (demo: Stripe payment skipped)`); }
+    } catch(x){ err.textContent = friendly(x); btn.disabled = false; btn.textContent = 'Continue to payment'; }
+  };
+}
+
+function changeModal(pathway){
+  const p = pathwayById(pathway), l = state.licences[pathway], s = licPrice(l, pathway), per = perWord(s.interval);
+  const start = l.gymnasts;
+  const m = modal(`<p class="eyebrow"><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</p>
+    <h2>Change gymnasts</h2>
+    <p class="muted">${l.cancelAtPeriodEnd ? `This licence is set to end on ${fmtDate(l.nextPaymentAt)}. Choose a number to keep it going.` : `Currently <b>${n0(l.gymnasts)}</b> gymnasts.`}</p>
+    ${stepper('qty', start, 0)}
+    ${booksField(s.bookPence)}
+    <div id="calc" style="margin-top:14px"></div>
+    <p class="error" id="err"></p>
+    <div class="btn-row"><button class="btn" id="go">Confirm change</button><button class="btn ghost" data-close>Close</button></div>
+    ${l.cancelAtPeriodEnd ? '' : `<p class="note" style="margin-top:16px">To end this licence, set the number to 0 during a holiday window.</p>`}`);
+  const calc = () => {
+    const q = get(), box = m.querySelector('#calc'), go = m.querySelector('#go');
+    if(!Number.isInteger(q) || q < 0 || q > MAX_GYMNASTS){ box.innerHTML = `<p class="error">Enter between 0 and ${n0(MAX_GYMNASTS)}.</p>`; go.disabled = true; return; }
+    const added = l.cancelAtPeriodEnd ? Math.max(q - l.gymnasts, 0) : Math.max(q - l.gymnasts, 0);
+    bk.show(added > 0); if(added > 0) bk.sync();
+    const plan = planChange(l, q, s, added > 0 ? bk.get() : null);
+    if(!plan.allowed){
+      box.innerHTML = plan.kind === 'none' ? '' : (plan.kind === 'increase' || plan.kind === 'undo-cancel') ? `<p class="error">${esc(plan.reason)}</p>` : `<div class="lock"><span>🔒</span><span><b>Locked until the holidays.</b> ${esc(plan.reason)}</span></div>`;
+      go.disabled = true; go.textContent = 'Confirm change'; return;
+    }
+    go.disabled = false;
+    go.className = plan.kind === 'cancel' ? 'btn danger' : 'btn';
+    go.textContent = plan.kind === 'cancel' ? 'Cancel licence' : 'Confirm change';
+    box.innerHTML = plan.kind === 'cancel' ? `
+      <div class="sum"><span>Licence ends</span><span>${fmtDate(l.nextPaymentAt)}</span></div>
+      <div class="sum"><span>Further payments</span><span>None</span></div>
+      <p class="note">Access continues until then. Your Awards and pathway content lock when it ends.</p>` : `
+      ${plan.bookFeePence ? `<div class="sum"><span>Book fee: ${n0(plan.books)} × ${gbp(s.bookPence)}</span><span>${gbp(plan.bookFeePence)}</span></div>` : ''}
+      <div class="sum"><span>Each ${per} now</span><span>${gbp(plan.periodFromPence)}</span></div>
+      <div class="sum total"><span>Each ${per} from ${fmtDate(l.nextPaymentAt)}</span><span>${gbp(plan.periodToPence)}</span></div>
+      <p class="note">${plan.bookFeePence ? 'The book fee is added to your next payment. ' : ''}No part-${per} charges.</p>`;
+  };
+  const bk = wireBooks(m, () => Math.max(get() - l.gymnasts, 0), () => calc());
+  const get = wireStepper(m, 'qty', calc); calc();
+  m.querySelector('#go').onclick = async () => {
+    const err = m.querySelector('#err'); err.textContent = '';
+    const btn = m.querySelector('#go'); btn.disabled = true;
+    try {
+      const added = Math.max(get() - l.gymnasts, 0);
+      const r = await api.changeGymnasts(pathway, get(), added > 0 ? bk.get() : undefined);
+      m.close(); await refresh(); show();
+      toast(r.kind === 'cancel' ? `${p.name} licence will end on ${fmtDate(l.nextPaymentAt)}` : `${p.name} updated to ${n0(get())} gymnasts`);
+    } catch(x){ err.textContent = friendly(x); btn.disabled = false; }
+  };
+}
+
+/* ---------- Orders: medals, books, extra themes ---------- */
+function orderModal(pathway){
+  const p = pathwayById(pathway), pr = pricingFor(state.settings, pathway), l = state.licences[pathway];
+  const ordered = (l.ordered || {});
+  const rows = [];
+  Object.entries(pr.products || {}).forEach(([id, x]) => {
+    const cap = Math.max(0, l.gymnasts * (x.perGymnastPerYear || 1) - (ordered[id] || 0));
+    rows.push({id, name: x.name, unit: x.pricePence, rrp: x.rrpPence, cap,
+      hint: `${id === 'book' ? 'For returning gymnasts (new gymnasts\' books are in the book fee). ' : ''}${gbp(x.pricePence)} each${x.rrpPence ? `, suggested price to families ${gbp(x.rrpPence)} (you make ${gbp(x.rrpPence - x.pricePence)} each)` : ''}. Up to ${n0(cap)} more this year for ${n0(l.gymnasts)} gymnasts.`});
+  });
+  if(pr.themes) rows.push({id:'theme', name:'Extra theme', unit: pr.themes.extraPence, cap: 20, hint: `${gbp(pr.themes.extraPence)} each, on top of the ${pr.themes.included} themes in your club fee.`});
+  const m = modal(`<p class="eyebrow"><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</p>
+    <h2>Order</h2>
+    ${rows.map(r => `<div class="shop-row"><div><b>${esc(r.name)}s</b><div class="note">${r.hint}</div></div>
+      <input class="input" type="number" min="0" max="${r.cap}" step="1" value="0" data-item="${r.id}" aria-label="${esc(r.name)} quantity"></div>`).join('')}
+    <div id="calc" style="margin-top:14px"></div>
+    <p class="error" id="err"></p>
+    <div class="btn-row"><button class="btn" id="go" disabled>Pay by card</button><button class="btn ghost" data-close>Close</button></div>
+    <p class="note" style="margin-top:12px">Medals and books are limited to your licensed gymnasts. Orders are posted to your club.</p>`);
+  const items = () => rows.map(r => ({id:r.id, qty: parseInt(m.querySelector(`[data-item="${r.id}"]`).value, 10) || 0}));
+  const calc = () => {
+    const its = items(), err = m.querySelector('#err'); err.textContent = '';
+    let total = 0, bad = null;
+    its.forEach((it, i) => { if(it.qty < 0 || it.qty > rows[i].cap) bad = `You can order up to ${n0(rows[i].cap)} ${rows[i].name.toLowerCase()}s.`; total += it.qty * rows[i].unit; });
+    m.querySelector('#calc').innerHTML = its.filter(i => i.qty).map(it => { const r = rows.find(x => x.id === it.id); return `<div class="sum"><span>${n0(it.qty)} × ${esc(r.name)} at ${gbp(r.unit)}</span><span>${gbp(it.qty * r.unit)}</span></div>`; }).join('') +
+      (total ? `<div class="sum total"><span>Total</span><span>${gbp(total)}</span></div>` : '');
+    if(bad) err.textContent = bad;
+    m.querySelector('#go').disabled = !!bad || !total;
+  };
+  m.querySelectorAll('[data-item]').forEach(i => i.oninput = calc);
+  m.querySelector('#go').onclick = async () => {
+    const btn = m.querySelector('#go'); btn.disabled = true; btn.textContent = 'Opening payment…';
+    try {
+      const r = await api.orderProducts(pathway, items().filter(i => i.qty));
+      if(r.demo){ m.close(); await refresh(); show(); toast('Order placed (demo: payment skipped)'); }
+    } catch(x){ m.querySelector('#err').textContent = friendly(x); btn.disabled = false; btn.textContent = 'Pay by card'; }
+  };
+}
+
+/* ---------- NGL admin ---------- */
+async function showAdmin(){
+  const s = state.settings;
+  render(`${demoBanner()}
+    <div class="card">
+      <p class="eyebrow">NGL admin</p>
+      <h2>Holiday windows ${s.season ? '· ' + esc(s.season) : ''}</h2>
+      <p class="muted">Clubs can reduce gymnast numbers or cancel only between these dates (UK dates, first and last day included). Set them at the start of each school year.</p>
+      <div class="field" style="max-width:220px"><label for="season">School year</label><input class="input" id="season" value="${esc(s.season || '')}" placeholder="2026/27"></div>
+      <div id="wins"></div>
+      <div class="btn-row" style="margin-top:6px"><button class="btn ghost small" id="addWin">+ Add window</button></div>
+      <h2 style="margin-top:24px">Prices by pathway</h2>
+      <p class="note">Per gymnast. New licences use these prices; existing licences keep the fee they started on (book fees use the current price). Leave the fee blank to keep a pathway off sale.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Pathway</th><th>Book fee (£)</th><th>Fee (£)</th><th>Charged every</th><th class="num">Fee per year</th></tr></thead>
+        <tbody>${PATHWAYS.map(p => { const pr = pricingFor(s, p.id) || {}; return `<tr data-price="${p.id}">
+          <td><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</td>
+          <td><input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.01" data-f="book" value="${pr.bookPence != null ? pr.bookPence / 100 : ''}"></td>
+          <td><input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.01" data-f="unit" value="${pr.unitPence != null ? pr.unitPence / 100 : ''}"></td>
+          <td><select class="input" style="width:110px;padding:8px" data-f="interval"><option value="month" ${pr.interval !== 'week' ? 'selected' : ''}>Month</option><option value="week" ${pr.interval === 'week' ? 'selected' : ''}>Week</option></select></td>
+          <td class="num" data-f="year">${pr.unitPence ? gbp(yearCost(pr)) : 'Off sale'}</td></tr>`; }).join('')}</tbody>
+      </table></div>
+      <h2 style="margin-top:24px">Club fees and products</h2>
+      <p class="note">The yearly club fee pays for the plans. While founding pricing is open, new clubs pay the founding price and keep it when they renew; after that, new clubs pay the full price. Clubs see the full price struck through.</p>
+      <div class="field" style="max-width:260px"><label for="foundUntil">Founding club prices open until</label><input class="input" id="foundUntil" type="date" value="${esc(s.foundingUntil || DEFAULT_FOUNDING_UNTIL)}"></div>
+      ${PATHWAYS.map(p => { const pr = pricingFor(s, p.id); if(!pr || !(pr.clubFee || pr.products || pr.themes)) return ''; return `<div class="card" style="background:var(--navy-2);padding:14px;margin-bottom:12px">
+        <h3><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</h3>
+        ${pr.clubFee ? `<div class="table-wrap"><table><thead><tr><th>Gymnasts in pathway</th><th>Up to (blank = no limit)</th><th>Full price (£)</th><th>Founding price (£)</th></tr></thead><tbody>
+          ${pr.clubFee.bands.map((b, i, a) => `<tr><td>${i === 0 ? 1 : (a[i-1].max ?? 0) + 1}+</td>
+            <td><input class="input" style="width:90px;padding:8px" type="number" min="1" step="1" data-cf="${p.id}|${i}|max" value="${b.max ?? ''}"></td>
+            <td><input class="input" style="width:100px;padding:8px" type="number" min="0" step="1" data-cf="${p.id}|${i}|fullPence" value="${b.fullPence / 100}"></td>
+            <td><input class="input" style="width:100px;padding:8px" type="number" min="0" step="1" data-cf="${p.id}|${i}|foundingPence" value="${b.foundingPence / 100}"></td></tr>`).join('')}
+          </tbody></table></div>` : ''}
+        ${pr.themes ? `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">
+          <div class="field"><label>Themes included</label><input class="input" style="width:100px" type="number" min="0" step="1" data-th="${p.id}|included" value="${pr.themes.included}"></div>
+          <div class="field"><label>Extra theme (£)</label><input class="input" style="width:100px" type="number" min="0" step="1" data-th="${p.id}|extraPence" value="${pr.themes.extraPence / 100}"></div></div>` : ''}
+        ${pr.products ? `<div class="table-wrap" style="margin-top:6px"><table><thead><tr><th>Product</th><th>Price to club (£)</th><th>Suggested to families (£)</th><th>Max per gymnast per year</th></tr></thead><tbody>
+          ${Object.entries(pr.products).map(([id, x]) => `<tr><td>${esc(x.name)}</td>
+            <td><input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.05" data-pd="${p.id}|${id}|pricePence" value="${x.pricePence / 100}"></td>
+            <td><input class="input" style="width:90px;padding:8px" type="number" min="0" step="0.05" data-pd="${p.id}|${id}|rrpPence" value="${(x.rrpPence || 0) / 100}"></td>
+            <td><input class="input" style="width:90px;padding:8px" type="number" min="1" step="1" data-pd="${p.id}|${id}|perGymnastPerYear" value="${x.perGymnastPerYear}"></td></tr>`).join('')}
+          </tbody></table></div>` : ''}
+      </div>`; }).join('')}
+      <p class="error" id="err"></p>
+      <button class="btn" id="save">Save settings</button>
+    </div>
+    <div class="card">
+      <h2>All licences</h2>
+      <div id="all"><p class="muted">Loading…</p></div>
+    </div>`);
+  wireDemoDate();
+  let wins = (s.windows || []).map(w => ({...w}));
+  const drawWins = () => {
+    document.getElementById('wins').innerHTML = wins.map((w, i) => `<div class="win-row">
+      <div class="lbl"><label class="note">Name</label><input class="input" data-i="${i}" data-k="label" value="${esc(w.label)}"></div>
+      <div><label class="note">First day</label><input class="input" type="date" data-i="${i}" data-k="start" value="${esc(w.start)}"></div>
+      <div><label class="note">Last day</label><input class="input" type="date" data-i="${i}" data-k="end" value="${esc(w.end)}"></div>
+      <button class="btn danger small" data-del="${i}" aria-label="Remove">Remove</button>
+    </div>`).join('') || '<p class="muted">No windows yet. Clubs cannot reduce numbers until you add one.</p>';
+    document.querySelectorAll('#wins [data-k]').forEach(inp => inp.oninput = () => { wins[+inp.dataset.i][inp.dataset.k] = inp.value; });
+    document.querySelectorAll('#wins [data-del]').forEach(b => b.onclick = () => { wins.splice(+b.dataset.del, 1); drawWins(); });
+  };
+  drawWins();
+  const readPrices = () => {
+    const out = {}; let bad = null;
+    document.querySelectorAll('[data-price]').forEach(tr => {
+      const j = tr.querySelector('[data-f=book]').value.trim(), u = tr.querySelector('[data-f=unit]').value.trim();
+      const interval = tr.querySelector('[data-f=interval]').value;
+      if(!u){ out[tr.dataset.price] = {unitPence:0, bookPence:0, interval}; return; }   // off sale
+      const jp = Math.round(parseFloat(j || '0') * 100), up = Math.round(parseFloat(u) * 100);
+      if(!(jp >= 0) || !(up > 0)) bad = pathwayById(tr.dataset.price).name;
+      out[tr.dataset.price] = {bookPence:jp, unitPence:up, interval};
+    });
+    // club fee bands, themes and products (edited in place on a copy of the current pricing)
+    PATHWAYS.forEach(p => {
+      const cur = pricingFor(s, p.id); if(!cur || !out[p.id]) return;
+      const copy = JSON.parse(JSON.stringify({clubFee: cur.clubFee, themes: cur.themes, products: cur.products}));
+      document.querySelectorAll(`[data-cf^="${p.id}|"]`).forEach(inp => { const [, i, f] = inp.dataset.cf.split('|'); const v = inp.value.trim();
+        copy.clubFee.bands[+i][f] = f === 'max' ? (v === '' ? null : parseInt(v, 10)) : Math.round(parseFloat(v || '0') * 100); });
+      document.querySelectorAll(`[data-th^="${p.id}|"]`).forEach(inp => { const [, f] = inp.dataset.th.split('|'); copy.themes[f] = f === 'extraPence' ? Math.round(parseFloat(inp.value || '0') * 100) : parseInt(inp.value || '0', 10); });
+      document.querySelectorAll(`[data-pd^="${p.id}|"]`).forEach(inp => { const [, id, f] = inp.dataset.pd.split('|'); copy.products[id][f] = f === 'perGymnastPerYear' ? parseInt(inp.value || '1', 10) : Math.round(parseFloat(inp.value || '0') * 100); });
+      if(copy.clubFee){ const b = copy.clubFee.bands; if(b.some((x, i) => (x.max != null && (i > 0 && b[i-1].max != null && x.max <= b[i-1].max)) || !(x.fullPence >= 0) || !(x.foundingPence >= 0)) || b[b.length - 1].max != null) bad = `${p.name} club fee bands (each limit must be higher than the one above, and the last one blank)`; }
+      Object.entries(copy).forEach(([k, v]) => { if(v) out[p.id][k] = v; });
+    });
+    return {out, bad};
+  };
+  document.querySelectorAll('[data-price] input, [data-price] select').forEach(el => el.oninput = () => {
+    const tr = el.closest('tr'), u = parseFloat(tr.querySelector('[data-f=unit]').value);
+    const pr = {bookPence: Math.round((parseFloat(tr.querySelector('[data-f=book]').value) || 0) * 100), unitPence: Math.round((u || 0) * 100), interval: tr.querySelector('[data-f=interval]').value};
+    tr.querySelector('[data-f=year]').textContent = pr.unitPence > 0 ? gbp(yearCost(pr)) : 'Off sale';
+  });
+  document.getElementById('addWin').onclick = () => { wins.push({label:'', start:'', end:''}); drawWins(); };
+  document.getElementById('save').onclick = async () => {
+    const err = document.getElementById('err'); err.textContent = '';
+    const bad = wins.find(w => !w.label.trim() || !w.start || !w.end || w.start > w.end);
+    if(bad){ err.textContent = 'Each window needs a name, a first day and a last day on or after the first.'; return; }
+    const {out: pathways, bad: badPrice} = readPrices();
+    if(badPrice){ err.textContent = `Check the prices for ${badPrice}.`; return; }
+    try {
+      await api.saveSettings({season: val('season'), foundingUntil: document.getElementById('foundUntil').value || DEFAULT_FOUNDING_UNTIL, pathways,
+        windows: wins.map(w => ({label: w.label.trim(), start: w.start, end: w.end})).sort((a, b) => a.start.localeCompare(b.start))});
+      await refresh(); toast('Settings saved'); showAdmin();
+    } catch(x){ err.textContent = friendly(x); }
+  };
+  try {
+    const rows = (await api.allLicences()).sort((a, b) => (a.club || '').localeCompare(b.club || '') || a.pathway.localeCompare(b.pathway));
+    const activeRows = rows.filter(r => givesAccess(r.status));
+    const tot = activeRows.reduce((a, r) => a + (r.gymnasts || 0), 0);
+    const rowMonthly = r => { if(!givesAccess(r.status) || r.cancelAtPeriodEnd) return 0; const p = licPrice(r, r.pathway); return monthlyEq(p.unitPence, p.interval, r.gymnasts || 0); };
+    const income = rows.reduce((a, r) => a + rowMonthly(r), 0);
+    document.getElementById('all').innerHTML = `
+      <div class="kpis" style="margin:0 0 14px">
+        <div class="kpi"><div class="v">${new Set(activeRows.map(r => r.bg)).size}</div><div class="l">Clubs with a live licence</div></div>
+        <div class="kpi"><div class="v">${n0(tot)}</div><div class="l">Licensed gymnasts</div></div>
+        <div class="kpi"><div class="v">${gbp(income)}</div><div class="l">Licence income per month</div></div>
+        <div class="kpi"><div class="v">${rows.filter(r => r.status === 'past_due').length}</div><div class="l">Payments due</div></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Club</th><th>BG number</th><th>Pathway</th><th>Status</th><th class="num">Gymnasts</th><th class="num">Fee</th><th class="num">Per month</th></tr></thead>
+        <tbody>${rows.map(r => `<tr>
+          <td>${esc(r.club)}</td><td>${esc(r.bg)}</td>
+          <td><span class="dot" style="--pc:${pathwayById(r.pathway)?.color}"></span>${esc(pathwayById(r.pathway)?.name || r.pathway)}</td>
+          <td>${statusTag(r)}</td><td class="num">${n0(r.gymnasts)}</td>
+          <td class="num">${(() => { const p = licPrice(r, r.pathway); return gbp(p.unitPence) + '/' + (p.interval === 'week' ? 'wk' : 'mo'); })()}</td>
+          <td class="num">${givesAccess(r.status) && !r.cancelAtPeriodEnd ? gbp(rowMonthly(r)) : '–'}</td></tr>`).join('')}</tbody>
+      </table></div>`;
+  } catch(x){ document.getElementById('all').innerHTML = `<p class="error">${esc(friendly(x))}</p>`; }
+}
+
+/* ---------- Boot ---------- */
+(async () => {
+  if(api.live){
+    const f = await firebase();
+    f.authM.onAuthStateChanged(f.auth, async user => {
+      state.signedIn = !!user;
+      if(user){ try { await refresh(); } catch(x){ toast(friendly(x), true); } }
+      show();
+    });
+  } else show();
+})();
+</script>
+</body>
+</html>
