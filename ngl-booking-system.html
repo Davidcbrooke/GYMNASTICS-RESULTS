@@ -559,15 +559,12 @@
     </div>
 
     <div class="panel-card" style="margin-bottom:22px">
-      <div class="pc-head">&#x1F4B7; 2027 Live P&amp;L <span style="margin-left:auto;font-weight:500;text-transform:none;letter-spacing:0;opacity:0.7">Updates as bookings come in</span></div>
-      <div class="pnl-tiles" id="pnl-tiles"></div>
-      <div class="pnl-toolbar">
-        <button class="btn-export" style="margin-left:0" onclick="window.togglePnlAssump()">&#x2699; Edit Assumptions</button>
-        <button class="btn-export" style="margin-left:0" onclick="window.exportPnlCSV()">&#x2B07; Export P&amp;L CSV</button>
+      <div class="pc-head">&#x1F4B7; Competitions P&amp;L</div>
+      <div style="padding:14px 17px;font-size:0.85rem;line-height:1.5">
+        The live P&amp;L has moved to <strong>NGL Admin &rarr; Finance</strong>, alongside judging and licensing.
+        Your saved assumptions come across automatically the first time you open it on this device.
+        <div style="margin-top:10px"><a class="btn-export" style="margin-left:0;display:inline-block;text-decoration:none" href="NGL_Admin_Hub.html?section=finance" target="_top">Open Finance</a></div>
       </div>
-      <div class="pnl-assump" id="pnl-assump"></div>
-      <div style="overflow-x:auto"><table class="pnl-table" id="pnl-table"></table></div>
-      <div class="pnl-notes" id="pnl-notes"></div>
     </div>
 
     <div class="admin-grid">
@@ -795,6 +792,11 @@ window.showPanel = function(id, btn) {
   if (btn) btn.classList.add('active');
   if (id === 'home') renderPathwayCards();
 };
+
+// Opening this page with ?admin=1 (as NGL Admin does) goes straight to the Admin tab.
+if (new URLSearchParams(location.search).has('admin')) {
+  window.showPanel('admin', document.querySelector('.nav-tab[onclick*="\'admin\'"]'));
+}
 
 // Shows the uploaded pathway logo; if the image file isn't found, falls
 // back to a text lockup (NGL + coloured pathway name) automatically.

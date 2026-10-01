@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Finance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --navy:#14254a; --navy-2:#223a70; --red:#c8202f; --gold:#d9a521; --gold-soft:#fbf1d6;
+  --paper:#f4f5f8; --ink:#16213a; --muted:#5d6782; --line:#d6dbe6; --white:#fff; --ok:#1a7a43; --ok-soft:#e3f3ea;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --cond:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;font-family:var(--body);color:var(--ink);background:var(--paper);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hidden{display:none!important}
+
+header.top{background:var(--navy);color:#fff;border-bottom:4px solid var(--red)}
+.top-inner{max-width:1240px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{font-family:var(--cond);font-size:22px;margin-right:auto;line-height:1.1}
+.brand small{display:block;font-family:var(--body);font-size:12px;opacity:.75;font-weight:500}
+.top select{background:var(--navy-2);color:#fff;border:1px solid #3a5290;border-radius:4px;padding:7px 10px}
+.mode{font-size:12px;padding:3px 8px;border-radius:3px;background:var(--gold);color:var(--navy);font-weight:600}
+#saveState{font-size:12px;opacity:.8;min-width:60px}
+
+main{max-width:1240px;margin:0 auto;padding:16px}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.tabs button{background:none;border:none;padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--navy);border-bottom-color:var(--red)}
+
+h2.sec{font-family:var(--cond);font-size:28px;color:var(--navy);margin:0 0 4px}
+p.lead{color:var(--muted);margin:0 0 14px}
+
+/* Overview */
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:18px}
+.cat{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;display:grid;grid-template-columns:8px 1fr}
+.cat .bar{background:var(--c,var(--navy))}
+.cat .in{padding:14px 16px}
+.cat h3{font-family:var(--cond);font-size:22px;margin:0;color:var(--navy)}
+.cat .rows{margin-top:8px;display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:14px}
+.cat .rows .k{color:var(--muted)}
+.cat .rows .v{text-align:right;font-variant-numeric:tabular-nums}
+.cat .rows .p{font-weight:700;border-top:1px solid var(--line);padding-top:4px;margin-top:2px}
+.cat .note{font-size:13px;color:var(--muted);margin-top:8px}
+.cat button.link{background:none;border:none;color:var(--navy);text-decoration:underline;padding:0;margin-top:8px;font-size:14px}
+.net{background:var(--navy);color:#fff;border-radius:6px;padding:16px 18px;display:flex;flex-wrap:wrap;gap:8px 24px;align-items:baseline;margin-bottom:18px}
+.net .big{font-family:var(--cond);font-size:38px;line-height:1}
+.net .lbl{font-size:13px;opacity:.8}
+
+/* Shared P&L styles (carried over from the booking system) */
+.panel-card{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:18px}
+.pc-head{background:var(--navy);padding:11px 17px;color:#fff;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pc-head span{margin-left:auto;font-weight:500;opacity:.75;font-size:13px}
+.pnl-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px}
+@media (max-width:760px){.pnl-tiles{grid-template-columns:1fr 1fr}}
+.pnl-tile{border:1px solid var(--line);border-top:3px solid var(--navy);padding:12px 14px;border-radius:3px}
+.pnl-tile .v{font-size:1.45rem;font-weight:700;color:var(--navy);line-height:1.1;font-variant-numeric:tabular-nums}
+.pnl-tile .l{font-size:13px;font-weight:600;color:var(--muted);margin-top:5px}
+.pnl-tile .s{font-size:12.5px;color:var(--muted);margin-top:3px}
+.pnl-pos{color:var(--ok)!important}.pnl-neg{color:var(--red)!important}
+.pnl-toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 12px}
+.btn{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:4px;padding:7px 13px;font-weight:600;font-size:14px}
+.btn.primary{background:var(--navy);color:#fff}
+.btn.green{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.ghost{border-color:var(--line);color:var(--ink)}
+.btn-del{background:none;border:1px solid var(--line);color:var(--red);padding:3px 8px;border-radius:3px}
+.pnl-assump{display:none;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px 14px;padding:14px 16px;margin:0 16px 14px;background:var(--paper);border:1px solid var(--line);border-radius:4px}
+.pnl-assump.open,.pnl-assump.always{display:grid}
+.pnl-assump h4{grid-column:1/-1;font-family:var(--cond);font-size:18px;color:var(--navy);margin:6px 0 0}
+.pnl-assump label{font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pnl-assump input{width:80px;padding:5px 7px;border:1px solid var(--line);border-radius:3px;text-align:right}
+.pnl-custom{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);padding:7px 9px;border-radius:3px}
+.pnl-custom input.pnl-cname{width:200px;text-align:left}
+.pnl-custom select{padding:5px 7px;border:1px solid var(--line);border-radius:3px;background:#fff}
+.pnl-ctype{font-size:12px;font-weight:700;color:#fff;padding:3px 8px;border-radius:3px;min-width:60px;text-align:center}
+.pnl-ctype.inc{background:var(--ok)}.pnl-ctype.cost{background:var(--red)}
+.pnl-cgbp{color:var(--muted);margin-right:-5px}
+.tablewrap{overflow-x:auto}
+.pnl-table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+.pnl-table th{background:var(--navy-2);color:#fff;font-size:12.5px;font-weight:600;padding:8px 9px;text-align:right;white-space:nowrap}
+.pnl-table th:nth-child(-n+2),.pnl-table td:nth-child(-n+2){text-align:left}
+.pnl-table td{padding:8px 9px;border-bottom:1px solid #eceff5;text-align:right;white-space:nowrap}
+.pnl-table tr.tot td{background:var(--paper);font-weight:700;color:var(--navy);border-top:2px solid var(--navy)}
+.pnl-table .pathway-tag{margin-left:6px}
+.pathway-tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;color:#fff;vertical-align:middle}
+.pnl-flag{color:#b06000;cursor:help}
+.pnl-notes{font-size:13px;color:var(--muted);padding:10px 16px 14px;line-height:1.6}
+.empty{background:#fff;border:1px dashed var(--line);border-radius:6px;padding:24px;color:var(--muted)}
+.empty h3{font-family:var(--cond);color:var(--navy);margin:0 0 6px;font-size:22px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:4px;font-size:14px;z-index:60}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">NGL Finance<small>Profit and loss across the league</small></div>
+    <label for="season" style="font-size:13px;opacity:.85">Season</label>
+    <select id="season"></select>
+    <span class="mode hidden" id="mode">Demo</span>
+    <span id="saveState" aria-live="polite"></span>
+  </div>
+</header>
+
+<main>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="overview">Overview</button>
+    <button role="tab" aria-selected="false" data-tab="competitions">Competitions</button>
+    <button role="tab" aria-selected="false" data-tab="judging">Judging</button>
+    <button role="tab" aria-selected="false" data-tab="licensing">Licensing</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <section id="tab-overview">
+    <h2 class="sec">League P&amp;L</h2>
+    <p class="lead">Each area's profit, then the organisation-wide income and overheads, for the selected season.</p>
+    <div class="net" id="netBox"></div>
+    <div class="cats" id="cats"></div>
+    <div class="panel-card">
+      <div class="pc-head">Annual income and overheads <span>Salaries, sponsorship and anything not tied to one area</span></div>
+      <div class="pnl-assump always" id="annualEditor"></div>
+    </div>
+  </section>
+
+  <!-- COMPETITIONS -->
+  <section id="tab-competitions" class="hidden">
+    <div class="panel-card">
+      <div class="pc-head">Competitions P&amp;L <span>Updates as bookings come in</span></div>
+      <div class="pnl-tiles" id="pnl-tiles"></div>
+      <div class="pnl-toolbar">
+        <button class="btn primary" id="toggleAssump">Edit assumptions</button>
+        <button class="btn ghost" id="exportCsv">Export CSV</button>
+      </div>
+      <div class="pnl-assump" id="pnl-assump"></div>
+      <div class="tablewrap"><table class="pnl-table" id="pnl-table"></table></div>
+      <div class="pnl-notes" id="pnl-notes"></div>
+    </div>
+  </section>
+
+  <!-- JUDGING -->
+  <section id="tab-judging" class="hidden">
+    <div class="empty">
+      <h3>Judging P&amp;L isn't connected yet</h3>
+      This will total remote judging income from the Remote Judge Booking tool (confirmed, invoiced and paid bookings) against what judges are paid, plus any Judging Pathway income. Tell Dave which figures to bring in and it can be switched on here.
+    </div>
+  </section>
+
+  <!-- LICENSING -->
+  <section id="tab-licensing" class="hidden">
+    <div class="empty">
+      <h3>Licensing P&amp;L isn't connected yet</h3>
+      This will total Awards book and Schools licence income by term, against books, medals and certificates. It needs the licensing admin's data location to connect.
+    </div>
+  </section>
+</main>
+
+<script>
+/* ============ CONFIG ============ */
+const CONFIG = {
+  firebase: {
+    apiKey: "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
+    authDomain: "saadi-rotation.firebaseapp.com",
+    databaseURL: "https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "saadi-rotation",
+    storageBucket: "saadi-rotation.firebasestorage.app",
+    messagingSenderId: "1066734803675",
+    appId: "1:1066734803675:web:0188fd601adea7db08cafe",
+    measurementId: "G-K3V2BRCVF6"
+  },
+  collections: { competitions:"ngl_competitions", bookings:"ngl_bookings", finance:"ngl_finance" },
+  settingsDoc: "settings",                 // ngl_finance/settings holds every assumption
+  legacyLocalKey: "ngl_pnl_assumptions"    // imported once from the old booking-system P&L
+};
+/* ================================ */
+
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(m){ const t=document.createElement("div"); t.className="toast"; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),2800); }
+function gbp(n){ return (n<0?"-":"") + "\u00a3" + Math.round(Math.abs(n)).toLocaleString("en-GB"); }
+
+/* Pathways (same keys and colours as the booking system) */
+const PATHWAYS = {
+  preschool:{label:"NGL Pre-School",short:"Pre-School",accent:"#E84187",ink:"#fff"},
+  schools:{label:"NGL Schools",short:"Schools",accent:"#F8D438",ink:"#28235B"},
+  recreational:{label:"NGL Recreational",short:"Recreational",accent:"#E88230",ink:"#fff"},
+  general:{label:"NGL General League",short:"General League",accent:"#0071B3",ink:"#fff"},
+  performance:{label:"NGL Performance League",short:"Performance League",accent:"#01AFB8",ink:"#fff"},
+  university:{label:"NGL University League",short:"University League",accent:"#6AA525",ink:"#fff"},
+  masters:{label:"NGL Masters",short:"Masters",accent:"#90276A",ink:"#fff"}
+};
+const PATHWAY_ORDER = ["preschool","schools","recreational","general","performance","university","masters"];
+function compPathway(c){
+  if (c.pathway && PATHWAYS[c.pathway]) return c.pathway;
+  const looksRec = ((c.name||"")+" "+(c.level||"")).toLowerCase().includes("rec");
+  return looksRec ? "recreational" : "general";
+}
+function hasMax(c){ return typeof c.maxPlaces === "number" && !isNaN(c.maxPlaces); }
+function compMax(c){ return hasMax(c) ? c.maxPlaces : 20; }
+
+/* ===== Assumptions (moved from the booking system, now shared in Firestore) ===== */
+const PNL_DEFAULTS = {
+  rec2:20, rec4:30, genGirls:40, genBoys:50, perfGirls:45, perfBoys:55, schools:0,
+  specPerGym:1.5, specPrice:6,
+  venueHourly:100, venueHours:4, opsMgr:200, camRate:40, camCount:2, judgeRate:50, judgeCount:2, elevien:185, medals:200,
+  annual:[ {id:"a_opsmgr", name:"National Ops Manager salary", type:"cost", amount:500, basis:"month"} ],
+  custom:[]
+};
+const PNL_FIELDS = [
+  ["Entry fees (per gymnast)", [["rec2","Recreational 2 piece"],["rec4","Recreational 3+ piece"],["genGirls","General League girls"],["genBoys","General League boys"],["perfGirls","Performance girls"],["perfBoys","Performance boys"],["schools","Schools"]]],
+  ["Spectators", [["specPerGym","Spectators per gymnast"],["specPrice","Ticket price"]]],
+  ["Costs per competition", [["venueHourly","Venue hire per hour (non-SAADI)"],["venueHours","Venue hours"],["opsMgr","National Ops Manager"],["camRate","Camera operator rate"],["camCount","Camera operators"],["judgeRate","Remote judge rate"],["judgeCount","Remote judges"],["elevien","Elevien"],["medals","Medals"]]]
+];
+const fresh = () => JSON.parse(JSON.stringify(PNL_DEFAULTS));
+let A = fresh();
+function normalise(x){ const a = Object.assign(fresh(), x||{}); if(!Array.isArray(a.custom)) a.custom=[]; if(!Array.isArray(a.annual)) a.annual=fresh().annual; return a; }
+const annualAmt = l => (parseFloat(l.amount)||0) * (l.basis==="month"?12:1);
+const annualCost = () => A.annual.filter(l=>l.type!=="income").reduce((s,l)=>s+annualAmt(l),0);
+const annualInc  = () => A.annual.filter(l=>l.type==="income").reduce((s,l)=>s+annualAmt(l),0);
+
+let db=null, LIVE=false, comps=[], bookings=[], season=null, saveTimer=null, settingsRef=null, lastLocalWrite=0;
+
+function save(){
+  $("#saveState").textContent = "Saving…";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    if(!LIVE){ $("#saveState").textContent = "Saved (demo)"; return; }
+    try{ lastLocalWrite = Date.now(); await settingsRef.set(JSON.parse(JSON.stringify(A))); $("#saveState").textContent = "Saved"; }
+    catch(err){ console.error(err); $("#saveState").textContent = "Not saved";
+      toast(err.code==="permission-denied" ? "The database blocked saving. Add the ngl_finance rule in Firestore." : "Couldn't save. Check your connection."); }
+  }, 500);
+}
+
+/* ===== Competitions P&L (same maths as before) ===== */
+function pnlPrice(c){
+  const path = compPathway(c);
+  const pieces = parseInt((/^(\d)piece$/.exec(c.apparatus||"")||[])[1]||"0",10);
+  const g = c.gender;
+  if(path==="recreational") return pieces && pieces<=2 ? [A.rec2,""] : [A.rec4, pieces?"":"Apparatus not set, priced as 3+ piece"];
+  if(path==="general"||path==="performance"){
+    const girls = path==="general"?A.genGirls:A.perfGirls, boys = path==="general"?A.genBoys:A.perfBoys;
+    if(g==="girls") return [girls,""]; if(g==="boys") return [boys,""];
+    return [(girls+boys)/2, g==="both"?"Mixed, average of girls and boys price":"Gender not set, average price used"];
+  }
+  if(path==="schools") return [A.schools, A.schools?"":"No Schools price set"];
+  return [0,"Pathway not yet priced"];
+}
+function pnlRow(c, gymnasts){
+  const [price,note] = pnlPrice(c);
+  const entry = gymnasts*price, spec = gymnasts*A.specPerGym*A.specPrice;
+  const saadi = /saadi/i.test(c.venue||"");
+  const venue = saadi ? 0 : A.venueHourly*A.venueHours;
+  const staff = A.opsMgr + A.camRate*A.camCount, judges = A.judgeRate*A.judgeCount, elev = A.elevien, med = A.medals;
+  let otherInc=0, otherCost=0; const lines={};
+  A.custom.forEach(l=>{
+    if(l.path==="__saadi" && !saadi) return;
+    if(l.path==="__away" && saadi) return;
+    if(l.path && l.path.indexOf("__")!==0 && l.path!==compPathway(c)) return;
+    const amt = (parseFloat(l.amount)||0) * (l.basis==="gymnast"?gymnasts:1);
+    lines[l.id]=amt; if(l.type==="income") otherInc+=amt; else otherCost+=amt;
+  });
+  const income = entry+spec+otherInc, costs = venue+staff+judges+elev+med+otherCost;
+  return {c,gymnasts,price,note,entry,spec,otherInc,income,venue,staff,judges,elev,med,otherCost,costs,lines,profit:income-costs};
+}
+const seasonComps = () => comps.filter(c=>(c.date||"").startsWith(String(season))).sort((a,b)=>a.date.localeCompare(b.date));
+const bookedFor = c => bookings.filter(b=>b.compId===c.id && !b.waitlist).reduce((s,b)=>s+(parseInt(b.spaces)||1),0);
+let lastRows = [];
+function compTotals(){
+  const list = seasonComps();
+  const rows = list.map(c=>pnlRow(c, Math.min(bookedFor(c), compMax(c))));
+  const full = list.map(c=>pnlRow(c, compMax(c)));
+  rows.forEach((r,i)=>{ r.unsoldPlaces=full[i].gymnasts-r.gymnasts; r.unsold=full[i].income-r.income; r.unsoldProfit=full[i].profit-r.profit; });
+  const sum=(arr,k)=>arr.reduce((s,r)=>s+r[k],0);
+  const T={}; ["gymnasts","entry","spec","otherInc","income","venue","staff","judges","elev","med","otherCost","costs","profit","unsold","unsoldPlaces","unsoldProfit"].forEach(k=>T[k]=sum(rows,k));
+  const F={income:sum(full,"income"), profit:sum(full,"profit"), gymnasts:sum(full,"gymnasts")};
+  return {list, rows, T, F};
+}
+
+function renderCompetitions(){
+  const {list, rows, T, F} = compTotals(); lastRows = rows;
+  const margin = T.income ? Math.round(T.profit/T.income*100) : 0;
+  $("#pnl-tiles").innerHTML =
+    `<div class="pnl-tile"><div class="v">${gbp(T.income)}</div><div class="l">Income (booked)</div><div class="s">${T.gymnasts} gymnasts across ${list.length} competitions</div></div>`+
+    `<div class="pnl-tile"><div class="v">${gbp(T.costs)}</div><div class="l">Costs</div><div class="s">Venue, staff, judges, Elevien, medals${T.otherCost?" and your own lines":""}</div></div>`+
+    `<div class="pnl-tile"><div class="v ${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</div><div class="l">Competitions profit (booked)</div><div class="s">${margin}% margin</div></div>`+
+    `<div class="pnl-tile" style="border-top-color:#27ae60"><div class="v ${F.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(F.profit)}</div><div class="l">Profit if all full</div><div class="s">${gbp(T.unsold)} still to sell across ${T.unsoldPlaces} places</div></div>`;
+  const tbl = $("#pnl-table");
+  if(!rows.length){ tbl.innerHTML = `<tr><td style="padding:24px;text-align:center;color:var(--muted)">No ${season} competitions yet.</td></tr>`; $("#pnl-notes").textContent=""; return; }
+  const hasInc = A.custom.some(l=>l.type==="income"), hasCost = A.custom.some(l=>l.type!=="income");
+  const tip = t => esc(A.custom.filter(l=>(l.type==="income")===(t==="income")).map(l=>l.name||"Unnamed").join(", "));
+  const flags=[];
+  tbl.innerHTML = `<thead><tr><th>Date</th><th>Competition</th><th>Gymnasts</th><th>Price</th><th>Entries</th><th>Spectators</th>${hasInc?`<th title="${tip("income")}">Other income</th>`:""}<th>Venue</th><th>Staff</th><th>Judges</th><th>Elevien</th><th>Medals</th>${hasCost?`<th title="${tip("cost")}">Other costs</th>`:""}<th>Profit</th><th title="Income still available from unsold places">Unsold value</th></tr></thead><tbody>`+
+    rows.map(r=>{
+      const p = PATHWAYS[compPathway(r.c)];
+      const d = new Date(r.c.date+"T00:00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short"});
+      if(r.note) flags.push(d+" "+r.c.name+": "+r.note);
+      if(!hasMax(r.c)) flags.push(d+" "+r.c.name+": no Max Club Places set (20 assumed)");
+      return `<tr><td>${d}</td><td>${esc(r.c.name)}<span class="pathway-tag" style="background:${p.accent};color:${p.ink}">${p.short}</span></td>`+
+        `<td>${r.gymnasts}/${compMax(r.c)}${hasMax(r.c)?"":' <span class="pnl-flag" title="No Max Club Places set, so 20 is assumed">&#x26A0;</span>'}</td>`+
+        `<td>${gbp(r.price)}${r.note?` <span class="pnl-flag" title="${esc(r.note)}">&#x26A0;</span>`:""}</td>`+
+        `<td>${gbp(r.entry)}</td><td>${gbp(r.spec)}</td>${hasInc?`<td>${gbp(r.otherInc)}</td>`:""}`+
+        `<td>${gbp(r.venue)}</td><td>${gbp(r.staff)}</td><td>${gbp(r.judges)}</td><td>${gbp(r.elev)}</td><td>${gbp(r.med)}</td>${hasCost?`<td>${gbp(r.otherCost)}</td>`:""}`+
+        `<td class="${r.profit>=0?"pnl-pos":"pnl-neg"}" style="font-weight:700">${gbp(r.profit)}</td>`+
+        `<td style="color:#b06000">${r.unsold>0?gbp(r.unsold):"&mdash;"}</td></tr>`;
+    }).join("")+
+    `<tr class="tot"><td colspan="2">Competitions total</td><td>${T.gymnasts}</td><td></td><td>${gbp(T.entry)}</td><td>${gbp(T.spec)}</td>${hasInc?`<td>${gbp(T.otherInc)}</td>`:""}<td>${gbp(T.venue)}</td><td>${gbp(T.staff)}</td><td>${gbp(T.judges)}</td><td>${gbp(T.elev)}</td><td>${gbp(T.med)}</td>${hasCost?`<td>${gbp(T.otherCost)}</td>`:""}<td class="${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</td><td style="color:#b06000">${gbp(T.unsold)}</td></tr></tbody>`;
+  $("#pnl-notes").innerHTML = "Based on confirmed bookings only (waiting lists excluded), capped at each competition's capacity. Venue cost applies to any venue not named SAADI. Annual salaries and sponsorship now sit on the Overview tab." +
+    (flags.length ? `<br><strong style="color:#b06000">&#x26A0; ${flags.length} item${flags.length!==1?"s":""} to check:</strong> ${esc(flags.join(" · "))}` : "");
+}
+
+function pathOpts(sel){
+  return `<option value="">All competitions</option><option value="__saadi"${sel==="__saadi"?" selected":""}>SAADI-hosted only</option><option value="__away"${sel==="__away"?" selected":""}>Other venues only</option>`+
+    PATHWAY_ORDER.map(k=>`<option value="${k}"${sel===k?" selected":""}>${PATHWAYS[k].short} only</option>`).join("");
+}
+function renderAssump(){
+  $("#pnl-assump").innerHTML = PNL_FIELDS.map(([title,fields])=>`<h4>${title}</h4>`+
+      fields.map(([k,label])=>`<label>${label}<input type="number" step="0.5" min="0" value="${A[k]}" data-k="${k}"></label>`).join("")).join("")+
+    `<h4>Your own income and cost lines</h4>`+
+    (A.custom.length ? A.custom.map(l=>`<div class="pnl-custom" data-cid="${l.id}">
+        <span class="pnl-ctype ${l.type==="income"?"inc":"cost"}">${l.type==="income"?"Income":"Cost"}</span>
+        <input type="text" class="pnl-cname" placeholder="e.g. Programme sales" value="${esc(l.name)}" data-f="name">
+        <span class="pnl-cgbp">&pound;</span><input type="number" step="0.5" min="0" value="${l.amount}" data-f="amount">
+        <select data-f="basis"><option value="comp"${l.basis!=="gymnast"?" selected":""}>per competition</option><option value="gymnast"${l.basis==="gymnast"?" selected":""}>per gymnast</option></select>
+        <select data-f="path">${pathOpts(l.path)}</select>
+        <button class="btn-del" data-delc="${l.id}" title="Remove this line">&#x2715;</button></div>`).join("")
+      : `<div style="grid-column:1/-1;font-size:13px;color:var(--muted)">None yet. Add a line for anything not listed above.</div>`)+
+    `<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+      <button class="btn green" data-addc="income">Add income line</button>
+      <button class="btn red" data-addc="cost">Add cost line</button>
+      <button class="btn ghost" id="resetAssump" style="margin-left:auto">Reset to defaults</button></div>`;
+}
+$("#toggleAssump").addEventListener("click", ()=>{ const el=$("#pnl-assump"); if(!el.classList.contains("open")) renderAssump(); el.classList.toggle("open"); $("#toggleAssump").textContent = el.classList.contains("open")?"Hide assumptions":"Edit assumptions"; });
+$("#pnl-assump").addEventListener("input", e=>{
+  const t=e.target;
+  if(t.dataset.k){ const n=parseFloat(t.value); A[t.dataset.k]=isNaN(n)?0:n; save(); renderAll(); return; }
+  const row=t.closest("[data-cid]"); if(row && t.dataset.f){ const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f] = t.dataset.f==="amount"?(parseFloat(t.value)||0):t.value; save(); renderAll(); }
+});
+$("#pnl-assump").addEventListener("change", e=>{ const t=e.target; if(t.tagName==="SELECT"){ const row=t.closest("[data-cid]"); const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f]=t.value; save(); renderAll(true); }});
+$("#pnl-assump").addEventListener("click", e=>{
+  const t=e.target;
+  if(t.dataset.addc){ A.custom.push({id:"l"+Date.now().toString(36), name:"", type:t.dataset.addc, amount:0, basis:"comp", path:""}); save(); renderAssump(); renderAll(true); const n=document.querySelectorAll(".pnl-cname"); if(n.length) n[n.length-1].focus(); }
+  if(t.dataset.delc){ const l=A.custom.find(x=>x.id===t.dataset.delc); if(!confirm(`Remove "${(l&&l.name)||"Unnamed"}"?`)) return; A.custom=A.custom.filter(x=>x.id!==t.dataset.delc); save(); renderAssump(); renderAll(true); }
+  if(t.id==="resetAssump"){ if(!confirm("Reset every competition figure to the defaults and remove your own lines? Annual income and overheads are kept.")) return; const keep=A.annual; A=fresh(); A.annual=keep; save(); renderAssump(); renderAll(true); }
+});
+$("#exportCsv").addEventListener("click", ()=>{
+  const inc=A.custom.filter(l=>l.type==="income"), cst=A.custom.filter(l=>l.type!=="income");
+  const hdr=["Date","Competition","Pathway","Venue","Gymnasts","Capacity","Price per gymnast","Entry income","Spectator income",...inc.map(l=>l.name||"Other income"),"Total income","Venue","Staff","Remote judges","Elevien","Medals",...cst.map(l=>l.name||"Other cost"),"Total costs","Profit","Unsold places","Unsold value"];
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const lines=lastRows.map(r=>[r.c.date,r.c.name,PATHWAYS[compPathway(r.c)].label,r.c.venue||"",r.gymnasts,compMax(r.c),r.price,r.entry,r.spec,...inc.map(l=>r.lines[l.id]||0),r.income,r.venue,r.staff,r.judges,r.elev,r.med,...cst.map(l=>r.lines[l.id]||0),r.costs,r.profit,r.unsoldPlaces,r.unsold].map(q).join(","));
+  lines.push("", q("Competitions profit")+","+lastRows.reduce((s,r)=>s+r.profit,0));
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([[hdr.map(q).join(","),...lines].join("\n")],{type:"text/csv"}));
+  a.download=`NGL-${season}-Competitions-PnL-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+});
+
+/* ===== Overview ===== */
+function renderOverview(force){
+  const {list, T} = compTotals();
+  const AI = annualInc(), AC = annualCost();
+  const areaProfit = T.profit; // judging and licensing join here once connected
+  const net = areaProfit + AI - AC;
+  $("#netBox").innerHTML = `<div><div class="big ${net>=0?"":""}" style="color:${net>=0?"#6ee7a0":"#ffb3aa"}">${gbp(net)}</div><div class="lbl">Net position ${season} (booked)</div></div>
+    <div><div style="font-weight:700">${gbp(areaProfit)}</div><div class="lbl">Profit from areas</div></div>
+    <div><div style="font-weight:700">${gbp(AI)}</div><div class="lbl">Plus annual income</div></div>
+    <div><div style="font-weight:700">${gbp(-AC)}</div><div class="lbl">Less annual overheads</div></div>`;
+  $("#cats").innerHTML =
+    `<div class="cat" style="--c:#14254a"><span class="bar"></span><div class="in"><h3>Competitions</h3>
+      <div class="rows"><span class="k">Income</span><span class="v">${gbp(T.income)}</span><span class="k">Costs</span><span class="v">${gbp(-T.costs)}</span>
+      <span class="k p">Profit</span><span class="v p ${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</span></div>
+      <div class="note">${list.length} competitions, ${T.gymnasts} gymnasts booked. ${gbp(T.unsold)} still to sell.</div>
+      <button class="link" data-go="competitions">Open competitions P&amp;L</button></div></div>`+
+    `<div class="cat" style="--c:#2c6e9b"><span class="bar"></span><div class="in"><h3>Judging</h3><div class="note">Not connected yet. Remote judging income and judge payments will show here.</div><button class="link" data-go="judging">What's needed</button></div></div>`+
+    `<div class="cat" style="--c:#d9a521"><span class="bar"></span><div class="in"><h3>Licensing</h3><div class="note">Not connected yet. Awards and Schools licence income will show here.</div><button class="link" data-go="licensing">What's needed</button></div></div>`;
+  renderAnnual(force);
+}
+function renderAnnual(force){
+  if(!force && $("#annualEditor").contains(document.activeElement)) return; // don't redraw while typing
+  $("#annualEditor").innerHTML = A.annual.map(l=>`<div class="pnl-custom" data-aid="${l.id}">
+      <span class="pnl-ctype ${l.type==="income"?"inc":"cost"}">${l.type==="income"?"Income":"Cost"}</span>
+      <input type="text" class="pnl-cname" placeholder="${l.type==="income"?"e.g. Sponsorship":"e.g. Admin assistant salary"}" value="${esc(l.name)}" data-f="name">
+      <span class="pnl-cgbp">&pound;</span><input type="number" step="1" min="0" value="${l.amount}" data-f="amount">
+      <select data-f="basis"><option value="month"${l.basis==="month"?" selected":""}>per month</option><option value="year"${l.basis!=="month"?" selected":""}>per year</option></select>
+      <button class="btn-del" data-dela="${l.id}" title="Remove">&#x2715;</button></div>`).join("")+
+    `<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap"><button class="btn green" data-adda="income">Add annual income</button><button class="btn red" data-adda="cost">Add annual cost</button></div>`;
+}
+$("#annualEditor").addEventListener("input", e=>{ const t=e.target, row=t.closest("[data-aid]"); if(!row||!t.dataset.f) return; const l=A.annual.find(x=>x.id===row.dataset.aid); l[t.dataset.f]= t.dataset.f==="amount"?(parseFloat(t.value)||0):t.value; save(); renderAll(); });
+$("#annualEditor").addEventListener("change", e=>{ const t=e.target; if(t.tagName!=="SELECT") return; const l=A.annual.find(x=>x.id===t.closest("[data-aid]").dataset.aid); l.basis=t.value; save(); renderAll(); });
+$("#annualEditor").addEventListener("click", e=>{
+  const t=e.target;
+  if(t.dataset.adda){ A.annual.push({id:"a"+Date.now().toString(36), name:"", type:t.dataset.adda, amount:0, basis:"month"}); save(); renderAll(true); }
+  if(t.dataset.dela){ const l=A.annual.find(x=>x.id===t.dataset.dela); if(!confirm(`Remove "${(l&&l.name)||"Unnamed"}"?`)) return; A.annual=A.annual.filter(x=>x.id!==t.dataset.dela); save(); renderAll(true); }
+});
+$("#cats").addEventListener("click", e=>{ const g=e.target.dataset.go; if(g) document.querySelector(`.tabs [data-tab="${g}"]`).click(); });
+
+/* ===== Tabs, season ===== */
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected", x===b));
+  ["overview","competitions","judging","licensing"].forEach(t=>$("#tab-"+t).classList.toggle("hidden", t!==b.dataset.tab));
+}));
+function fillSeasons(){
+  const years = [...new Set(comps.map(c=>(c.date||"").slice(0,4)).filter(y=>/^\d{4}$/.test(y)))].sort();
+  if(!years.length) years.push(String(new Date().getFullYear()));
+  if(!season) season = years.includes("2027") ? "2027" : years[years.length-1];
+  if(!years.includes(season)) years.push(season);
+  $("#season").innerHTML = years.map(y=>`<option${y===season?" selected":""}>${y}</option>`).join("");
+}
+$("#season").addEventListener("change", e=>{ season=e.target.value; renderAll(); });
+// force=true redraws the annual editor even if it has focus (after adding/removing a line or a remote update)
+function renderAll(force){ renderCompetitions(); renderOverview(force); }
+
+/* ===== Data ===== */
+function startLive(){
+  db = firebase.firestore(); LIVE = true;
+  settingsRef = db.collection(CONFIG.collections.finance).doc(CONFIG.settingsDoc);
+  settingsRef.onSnapshot(async doc=>{
+    if(doc.exists){ if(Date.now()-lastLocalWrite > 1500){ A = normalise(doc.data()); if($("#pnl-assump").classList.contains("open")) renderAssump(); renderAll(true); } }
+    else {
+      // First run: bring across the figures saved in the old booking-system P&L on this device.
+      let legacy=null; try{ legacy = JSON.parse(localStorage.getItem(CONFIG.legacyLocalKey)||"null"); }catch(_){}
+      A = normalise(legacy); save(); renderAll();
+      if(legacy) toast("Imported your existing P&L assumptions.");
+    }
+  }, err=>{ console.error(err); toast("Couldn't load finance settings. Check the ngl_finance Firestore rule."); });
+  db.collection(CONFIG.collections.competitions).onSnapshot(s=>{ comps = s.docs.map(d=>({id:d.id,...d.data()})); fillSeasons(); renderAll(); });
+  db.collection(CONFIG.collections.bookings).onSnapshot(s=>{ bookings = s.docs.map(d=>({id:d.id,...d.data()})); renderAll(); });
+}
+function startDemo(){
+  $("#mode").classList.remove("hidden");
+  comps = [
+    {id:"c1",name:"NGL Round 1",date:"2027-02-07",venue:"SAADI Harpenden",pathway:"general",gender:"girls",maxPlaces:24},
+    {id:"c2",name:"NGL Recreational Spring",date:"2027-03-14",venue:"Hemel Leisure Centre",pathway:"recreational",apparatus:"2piece",maxPlaces:30},
+    {id:"c3",name:"NGL Performance Open",date:"2027-04-18",venue:"Stevenage Arena",pathway:"performance",gender:"both"}
+  ];
+  bookings = [{compId:"c1",spaces:18},{compId:"c2",spaces:22},{compId:"c3",spaces:9},{compId:"c3",spaces:4,waitlist:true}];
+  try{ A = normalise(JSON.parse(localStorage.getItem(CONFIG.legacyLocalKey)||"null")); }catch(_){}
+  fillSeasons(); renderAll();
+}
+
+if(window.firebase && CONFIG.firebase.apiKey){
+  firebase.initializeApp(CONFIG.firebase);
+  document.addEventListener("ngl-admin-ready", startLive, {once:true});
+  const g = document.createElement("script"); g.src = "ngl-admin-guard.js"; g.dataset.section = "finance"; document.head.appendChild(g);
+} else startDemo();
+</script>
+</body>
+</html>
