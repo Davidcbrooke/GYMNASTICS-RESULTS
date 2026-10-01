@@ -98,6 +98,7 @@ main{max-width:1240px;margin:0 auto;padding:16px}
 .btn.red{background:var(--red);border-color:var(--red);color:#fff}
 .btn.ghost{border-color:var(--line);color:var(--ink)}
 .btn.danger{border-color:var(--red);color:var(--red)}
+.btn.green{background:var(--ok);border-color:var(--ok);color:#fff}
 .btn.small{padding:5px 10px;font-size:13px}
 
 /* Board */
@@ -125,6 +126,10 @@ main{max-width:1240px;margin:0 auto;padding:16px}
 .st-vacant .dot{background:var(--red)}
 .st-pending .dot{background:var(--gold)}
 .st-confirmed .dot{background:var(--ok)}
+.st-na .dot{background:var(--ok)}
+.slot.st-na{background:#f3faf6}
+.slot.st-na .who{color:var(--ok);font-weight:500;font-style:italic}
+.ov-row.na .n{color:var(--ok);font-weight:500;font-style:italic}
 .src{font-size:11px;color:var(--red);font-weight:600}
 
 /* Requests */
@@ -218,7 +223,7 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
       <button class="chip" aria-pressed="false" data-ov="NGL">NGL roles</button>
       <button class="chip" aria-pressed="false" data-ov="Host">Host club roles</button>
     </div>
-    <div class="ov-key"><span><i class="fl red"></i>Vacant</span><span><i class="fl amber"></i>Awaiting confirmation</span><span><i class="fl green"></i>Confirmed</span><span>Tap any role to fill or edit it</span></div>
+    <div class="ov-key"><span><i class="fl red"></i>Vacant</span><span><i class="fl amber"></i>Awaiting confirmation</span><span><i class="fl green"></i>Confirmed or not needed</span><span>Tap any role to fill or edit it</span></div>
     <div id="ovList"></div>
    </section>
 
@@ -505,16 +510,16 @@ function renderOverview(){
   const f = S.ovFilter;
   $("#ovList").innerHTML = S.comps.map(c=>{
     const st = S.all[c.id], slots = sortedSlots(st);
-    const vac = slots.filter(s=>s.status==="vacant").length, pend = slots.filter(s=>s.status==="pending").length, conf = slots.length-vac-pend;
+    const vac = slots.filter(s=>s.status==="vacant").length, pend = slots.filter(s=>s.status==="pending").length, na = slots.filter(s=>s.status==="na").length, conf = slots.length-vac-pend-na;
     const req = S.pendingByComp[c.id]||0;
-    const show = slots.filter(s => f==="all" ? true : f==="gaps" ? s.status!=="confirmed" : s.owner===f);
-    const rows = show.map(s=>`<button type="button" class="ov-row ${s.status==="vacant"?"vac":""}" data-comp="${esc(c.id)}" data-slot="${s.id}">
+    const show = slots.filter(s => f==="all" ? true : f==="gaps" ? (s.status==="vacant"||s.status==="pending") : s.owner===f);
+    const rows = show.map(s=>`<button type="button" class="ov-row ${s.status==="vacant"?"vac":s.status==="na"?"na":""}" data-comp="${esc(c.id)}" data-slot="${s.id}">
         <i class="fl ${flagOf(s)}" aria-label="${s.status}"></i>
-        <span><span class="r">${esc(slotLabel(s))}</span><span class="n">${s.status==="vacant"?"Vacant":esc(s.name)}</span></span>
+        <span><span class="r">${esc(slotLabel(s))}</span><span class="n">${s.status==="vacant"?"Vacant":s.status==="na"?"Not needed":esc(s.name)}</span></span>
         <span class="o ${s.owner==="Host"?"h":""}">${s.owner==="NGL"?"NGL":"Host"}</span></button>`).join("");
     return `<section class="ov-comp ${vac?"gaps":"all-clear"}">
       <header><div><h3>${esc(c.name)}</h3><div class="when">${esc([c.date&&fmtDate(c.date), c.venue].filter(Boolean).join(", "))}</div></div>
-        <div class="counts">${vac?`<span class="flag red">${vac} vacant</span>`:""}${pend?`<span class="flag amber">${pend} awaiting</span>`:""}<span class="flag green">${conf} confirmed</span>${req?`<span class="flag red">${req} judge request${req>1?"s":""}</span>`:""}</div>
+        <div class="counts">${vac?`<span class="flag red">${vac} vacant</span>`:""}${pend?`<span class="flag amber">${pend} awaiting</span>`:""}<span class="flag green">${conf} confirmed</span>${na?`<span class="flag green">${na} not needed</span>`:""}${req?`<span class="flag red">${req} judge request${req>1?"s":""}</span>`:""}</div>
         <button class="btn small primary" data-open="${esc(c.id)}">Open</button></header>
       ${rows?`<div class="ov-roles">${rows}</div>`:`<div class="ov-empty">${f==="gaps"?"Fully staffed":"No roles match this filter"}</div>`}
     </section>`;
@@ -605,8 +610,8 @@ function pass(s){
   return s.owner===S.filter;
 }
 function slotHTML(s){
-  const who = s.status==="vacant" ? "Vacant" : esc(s.name);
-  const sub = s.status==="vacant" ? "" : [s.club, s.status==="pending"?"Awaiting confirmation":""].filter(Boolean).map(esc).join(", ");
+  const who = s.status==="vacant" ? "Vacant" : s.status==="na" ? "Not needed" : esc(s.name);
+  const sub = (s.status==="vacant"||s.status==="na") ? "" : [s.club, s.status==="pending"?"Awaiting confirmation":""].filter(Boolean).map(esc).join(", ");
   return `<button type="button" class="slot owner-${s.owner} st-${s.status}" data-slot="${s.id}">
     <div class="role">${esc(s.role)} <span class="own">${s.owner==="NGL"?"NGL":"Host"}</span>${s.source==="judging-app"?'<span class="src">Judging app</span>':""}<span class="dot"></span></div>
     <div class="who">${who}</div>${sub?`<div class="sub">${sub}</div>`:""}
@@ -713,17 +718,20 @@ function editSlot(id){
     ${s.source==="judging-app"?`<p style="font-size:13px;color:var(--muted);margin-top:8px">Filled from the judging app. Clearing this role sends the judge back to waiting.</p>`:""}`,
   [
     {label:"Remove role", cls:"danger", left:true, onClick:()=>{ if(!confirm(`Remove ${slotLabel(s)} from this competition?`)) return false; releaseSignup(s); S.staffing.slots = S.staffing.slots.filter(x=>x!==s); save(); render(); }},
+    s.status==="na"
+      ? {label:"Mark as needed", left:true, onClick:()=>{ s.status="vacant"; save(); render(); toast("Marked as needed"); }}
+      : {label:"Not needed", cls:"green", left:true, onClick:()=>{ releaseSignup(s); Object.assign(s,{name:"",email:"",phone:"",club:"",status:"na",source:"",signupId:""}); save(); render(); toast("Marked not needed"); }},
     {label:"Clear person", left:true, onClick:()=>{ releaseSignup(s); Object.assign(s,{name:"",email:"",phone:"",club:"",status:"vacant",source:"",signupId:""}); save(); render(); }},
     {label:"Cancel"},
     {label:"Save", cls:"primary", onClick:()=>{
       const name = val("f_name");
       Object.assign(s,{role:val("f_role")||s.role, owner:$("#f_owner").value, name, phone:val("f_phone"), email:val("f_email"), club:val("f_club"), notes:val("f_notes"),
-        status: name ? $("#f_status").value : "vacant"});
+        status: name ? $("#f_status").value : (s.status==="na" ? "na" : "vacant")});
       if(!name){ releaseSignup(s); s.source=""; s.signupId=""; }
       save(); render(); toast("Saved");
     }}
   ]);
-  $("#f_owner").value = s.owner; $("#f_status").value = s.status==="vacant"?"confirmed":s.status;
+  $("#f_owner").value = s.owner; $("#f_status").value = (s.status==="vacant"||s.status==="na")?"confirmed":s.status;
 }
 function releaseSignup(s){
   if(s.signupId && S.signups.some(x=>x.id===s.signupId)) updateSignup(s.signupId,{status:"pending",assignedRole:""}).catch(console.error);
@@ -764,8 +772,8 @@ function assignReq(r){
   const judges = S.staffing.slots.filter(s=>isJudge(s));
   const pref = s => r.apparatus.some(a=>s.apparatus.toLowerCase().includes(a.toLowerCase()));
   judges.sort((a,b)=>((a.status!=="vacant")-(b.status!=="vacant")) || (pref(b)-pref(a)) || a.apparatus.localeCompare(b.apparatus));
-  const others = S.staffing.slots.filter(s=>!isJudge(s) && s.status==="vacant");
-  const opt = s => `<option value="${s.id}">${esc(slotLabel(s))}${s.status!=="vacant"?" (currently "+esc(s.name)+")":""}${pref(s)?" ★":""}</option>`;
+  const others = S.staffing.slots.filter(s=>!isJudge(s) && (s.status==="vacant"||s.status==="na"));
+  const opt = s => `<option value="${s.id}">${esc(slotLabel(s))}${s.status==="na"?" (marked not needed)":s.status!=="vacant"?" (currently "+esc(s.name)+")":""}${pref(s)?" ★":""}</option>`;
   openDlg(`Assign ${r.name}`, `
     <p style="margin:10px 0 0;color:var(--muted);font-size:14px">${r.apparatus.length?"Asked for "+esc(r.apparatus.join(", "))+". Matching pieces are starred.":""}</p>
     <label for="a_slot">Role</label>
@@ -773,7 +781,7 @@ function assignReq(r){
     <label for="a_status">Status</label><select id="a_status"><option value="confirmed">Confirmed</option><option value="pending">Awaiting confirmation</option></select>`,
   [{label:"Cancel"},{label:"Assign", cls:"primary", onClick:async ()=>{
     const s = S.staffing.slots.find(x=>x.id===$("#a_slot").value);
-    if(s.status!=="vacant" && !confirm(`${s.name} is already in ${slotLabel(s)}. Replace them?`)) return false;
+    if(s.status!=="vacant" && s.status!=="na" && !confirm(`${s.name} is already in ${slotLabel(s)}. Replace them?`)) return false;
     releaseSignup(s);
     Object.assign(s,{name:r.name,email:r.email,phone:r.phone,club:r.club,status:$("#a_status").value,source:"judging-app",signupId:r.id});
     save(); await updateSignup(r.id,{status:"assigned",assignedRole:slotLabel(s)}).catch(err=>{console.error(err);toast("Role saved, but the judging app wasn't updated.");});
@@ -853,7 +861,7 @@ function sortedSlots(st){
 const HEAD = ["Area","Apparatus","Role","Responsibility","Name","Club","Mobile","Email","Status","Source","Notes"];
 function rows(){
   return sortedSlots().map(s=>[GROUP_NAME[s.group], s.apparatus, s.role, s.owner==="NGL"?"NGL":"Host club", s.name, s.club, s.phone, s.email,
-    s.status==="vacant"?"Vacant":s.status==="pending"?"Awaiting confirmation":"Confirmed", s.source==="judging-app"?"Judging app":"", s.notes]);
+    s.status==="vacant"?"Vacant":s.status==="na"?"Not needed":s.status==="pending"?"Awaiting confirmation":"Confirmed", s.source==="judging-app"?"Judging app":"", s.notes]);
 }
 const fileBase = () => `NGL_Staffing_${(comp().name||"Competition").replace(/[^\w]+/g,"_")}`;
 
@@ -878,7 +886,7 @@ function exportPrint(){
   const body = sortedSlots().map(s=>{
     const area = s.group==="station" ? s.apparatus : GROUP_NAME[s.group];
     const head = area!==last ? `<tr class="grp"><td colspan="7">${esc(area)}</td></tr>` : ""; last = area;
-    return head+`<tr><td>${esc(s.role)}</td><td>${s.owner==="NGL"?"NGL":"Host"}</td><td>${esc(s.name)||"<em>Vacant</em>"}</td><td>${esc(s.club)}</td><td>${esc(s.phone)}</td><td>${esc(s.notes)}</td><td class="sig"></td></tr>`;
+    return head+`<tr><td>${esc(s.role)}</td><td>${s.owner==="NGL"?"NGL":"Host"}</td><td>${s.status==="na"?"<em>Not needed</em>":(esc(s.name)||"<em>Vacant</em>")}</td><td>${esc(s.club)}</td><td>${esc(s.phone)}</td><td>${esc(s.notes)}</td><td class="sig"></td></tr>`;
   }).join("");
   $("#printSheet").innerHTML = `<h1>${esc(c.name)} staffing sheet</h1><div class="pmeta">${esc([c.date&&fmtDate(c.date), c.venue].filter(Boolean).join(", "))}</div>
     <table><thead><tr><th>Role</th><th>By</th><th>Name</th><th>Club</th><th>Mobile</th><th>Notes</th><th>Signed in</th></tr></thead><tbody>${body}</tbody></table>`;

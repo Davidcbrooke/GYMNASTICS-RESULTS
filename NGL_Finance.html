@@ -261,6 +261,7 @@ function pnlRow(c, gymnasts){
   const staff = A.opsMgr + A.camRate*A.camCount, judges = A.judgeRate*A.judgeCount, elev = A.elevien, med = A.medals;
   let otherInc=0, otherCost=0; const lines={};
   A.custom.forEach(l=>{
+    if(isFixed(l)) return; // monthly/yearly lines are added once to the totals, not per competition
     if(l.path==="__saadi" && !saadi) return;
     if(l.path==="__away" && saadi) return;
     if(l.path && l.path.indexOf("__")!==0 && l.path!==compPathway(c)) return;
@@ -270,6 +271,11 @@ function pnlRow(c, gymnasts){
   const income = entry+spec+otherInc, costs = venue+staff+judges+elev+med+otherCost;
   return {c,gymnasts,price,note,entry,spec,otherInc,income,venue,staff,judges,elev,med,otherCost,costs,lines,profit:income-costs};
 }
+const isFixed = l => l.basis==="month" || l.basis==="year";
+const fixedAmt = l => (parseFloat(l.amount)||0) * (l.basis==="month"?12:1);
+const fixedLines = () => A.custom.filter(isFixed);
+const fixedInc  = () => fixedLines().filter(l=>l.type==="income").reduce((s,l)=>s+fixedAmt(l),0);
+const fixedCost = () => fixedLines().filter(l=>l.type!=="income").reduce((s,l)=>s+fixedAmt(l),0);
 const seasonComps = () => comps.filter(c=>(c.date||"").startsWith(String(season))).sort((a,b)=>a.date.localeCompare(b.date));
 const bookedFor = c => bookings.filter(b=>b.compId===c.id && !b.waitlist).reduce((s,b)=>s+(parseInt(b.spaces)||1),0);
 let lastRows = [];
@@ -281,6 +287,10 @@ function compTotals(){
   const sum=(arr,k)=>arr.reduce((s,r)=>s+r[k],0);
   const T={}; ["gymnasts","entry","spec","otherInc","income","venue","staff","judges","elev","med","otherCost","costs","profit","unsold","unsoldPlaces","unsoldProfit"].forEach(k=>T[k]=sum(rows,k));
   const F={income:sum(full,"income"), profit:sum(full,"profit"), gymnasts:sum(full,"gymnasts")};
+  // monthly/yearly competition lines (e.g. an employee or annual marketing)
+  T.compProfit = T.profit; T.fixedInc = fixedInc(); T.fixedCost = fixedCost();
+  T.income += T.fixedInc; T.costs += T.fixedCost; T.profit += T.fixedInc - T.fixedCost;
+  F.profit += T.fixedInc - T.fixedCost;
   return {list, rows, T, F};
 }
 
@@ -289,13 +299,13 @@ function renderCompetitions(){
   const margin = T.income ? Math.round(T.profit/T.income*100) : 0;
   $("#pnl-tiles").innerHTML =
     `<div class="pnl-tile"><div class="v">${gbp(T.income)}</div><div class="l">Income (booked)</div><div class="s">${T.gymnasts} gymnasts across ${list.length} competitions</div></div>`+
-    `<div class="pnl-tile"><div class="v">${gbp(T.costs)}</div><div class="l">Costs</div><div class="s">Venue, staff, judges, Elevien, medals${T.otherCost?" and your own lines":""}</div></div>`+
+    `<div class="pnl-tile"><div class="v">${gbp(T.costs)}</div><div class="l">Costs</div><div class="s">Venue, staff, judges, Elevien, medals${T.otherCost?" and your own lines":""}${T.fixedCost?`, plus ${gbp(T.fixedCost)} monthly/yearly`:""}</div></div>`+
     `<div class="pnl-tile"><div class="v ${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</div><div class="l">Competitions profit (booked)</div><div class="s">${margin}% margin</div></div>`+
     `<div class="pnl-tile" style="border-top-color:#27ae60"><div class="v ${F.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(F.profit)}</div><div class="l">Profit if all full</div><div class="s">${gbp(T.unsold)} still to sell across ${T.unsoldPlaces} places</div></div>`;
   const tbl = $("#pnl-table");
   if(!rows.length){ tbl.innerHTML = `<tr><td style="padding:24px;text-align:center;color:var(--muted)">No ${season} competitions yet.</td></tr>`; $("#pnl-notes").textContent=""; return; }
-  const hasInc = A.custom.some(l=>l.type==="income"), hasCost = A.custom.some(l=>l.type!=="income");
-  const tip = t => esc(A.custom.filter(l=>(l.type==="income")===(t==="income")).map(l=>l.name||"Unnamed").join(", "));
+  const hasInc = A.custom.some(l=>!isFixed(l)&&l.type==="income"), hasCost = A.custom.some(l=>!isFixed(l)&&l.type!=="income");
+  const tip = t => esc(A.custom.filter(l=>!isFixed(l)&&(l.type==="income")===(t==="income")).map(l=>l.name||"Unnamed").join(", "));
   const flags=[];
   tbl.innerHTML = `<thead><tr><th>Date</th><th>Competition</th><th>Gymnasts</th><th>Price</th><th>Entries</th><th>Spectators</th>${hasInc?`<th title="${tip("income")}">Other income</th>`:""}<th>Venue</th><th>Staff</th><th>Judges</th><th>Elevien</th><th>Medals</th>${hasCost?`<th title="${tip("cost")}">Other costs</th>`:""}<th>Profit</th><th title="Income still available from unsold places">Unsold value</th></tr></thead><tbody>`+
     rows.map(r=>{
@@ -311,8 +321,12 @@ function renderCompetitions(){
         `<td class="${r.profit>=0?"pnl-pos":"pnl-neg"}" style="font-weight:700">${gbp(r.profit)}</td>`+
         `<td style="color:#b06000">${r.unsold>0?gbp(r.unsold):"&mdash;"}</td></tr>`;
     }).join("")+
-    `<tr class="tot"><td colspan="2">Competitions total</td><td>${T.gymnasts}</td><td></td><td>${gbp(T.entry)}</td><td>${gbp(T.spec)}</td>${hasInc?`<td>${gbp(T.otherInc)}</td>`:""}<td>${gbp(T.venue)}</td><td>${gbp(T.staff)}</td><td>${gbp(T.judges)}</td><td>${gbp(T.elev)}</td><td>${gbp(T.med)}</td>${hasCost?`<td>${gbp(T.otherCost)}</td>`:""}<td class="${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</td><td style="color:#b06000">${gbp(T.unsold)}</td></tr></tbody>`;
-  $("#pnl-notes").innerHTML = "Based on confirmed bookings only (waiting lists excluded), capped at each competition's capacity. Venue cost applies to any venue not named SAADI. Annual salaries and sponsorship now sit on the Overview tab." +
+    `<tr class="tot"><td colspan="2">Competitions total</td><td>${T.gymnasts}</td><td></td><td>${gbp(T.entry)}</td><td>${gbp(T.spec)}</td>${hasInc?`<td>${gbp(T.otherInc)}</td>`:""}<td>${gbp(T.venue)}</td><td>${gbp(T.staff)}</td><td>${gbp(T.judges)}</td><td>${gbp(T.elev)}</td><td>${gbp(T.med)}</td>${hasCost?`<td>${gbp(T.otherCost)}</td>`:""}<td class="${T.compProfit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.compProfit)}</td><td style="color:#b06000">${gbp(T.unsold)}</td></tr>`+
+    (fixedLines().length ? fixedLines().slice().sort((a,b)=>(b.type==="income")-(a.type==="income")).map(l=>{ const inc=l.type==="income";
+      return `<tr><td colspan="${11+(hasInc?1:0)+(hasCost?1:0)}" style="text-align:left">${inc?"Plus":"Less"}: ${esc(l.name||"Unnamed")} (${gbp(parseFloat(l.amount)||0)} per ${l.basis})</td><td class="${inc?"pnl-pos":"pnl-neg"}">${gbp(inc?fixedAmt(l):-fixedAmt(l))}</td><td></td></tr>`; }).join("")+
+      `<tr class="tot"><td colspan="${11+(hasInc?1:0)+(hasCost?1:0)}">Competitions profit ${season}</td><td class="${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</td><td></td></tr>` : "")+
+    `</tbody>`;
+  $("#pnl-notes").innerHTML = "Based on confirmed bookings only (waiting lists excluded), capped at each competition's capacity. Venue cost applies to any venue not named SAADI. Monthly and yearly lines (staff, marketing) count once for the season, not per competition. League-wide overheads not tied to competitions go on the Overview tab." +
     (flags.length ? `<br><strong style="color:#b06000">&#x26A0; ${flags.length} item${flags.length!==1?"s":""} to check:</strong> ${esc(flags.join(" · "))}` : "");
 }
 
@@ -328,8 +342,8 @@ function renderAssump(){
         <span class="pnl-ctype ${l.type==="income"?"inc":"cost"}">${l.type==="income"?"Income":"Cost"}</span>
         <input type="text" class="pnl-cname" placeholder="e.g. Programme sales" value="${esc(l.name)}" data-f="name">
         <span class="pnl-cgbp">&pound;</span><input type="number" step="0.5" min="0" value="${l.amount}" data-f="amount">
-        <select data-f="basis"><option value="comp"${l.basis!=="gymnast"?" selected":""}>per competition</option><option value="gymnast"${l.basis==="gymnast"?" selected":""}>per gymnast</option></select>
-        <select data-f="path">${pathOpts(l.path)}</select>
+        <select data-f="basis">${[["comp","per competition"],["gymnast","per gymnast"],["month","per month"],["year","per year"]].map(([v,t])=>`<option value="${v}"${(l.basis||"comp")===v?" selected":""}>${t}</option>`).join("")}</select>
+        <select data-f="path"${isFixed(l)?' disabled title="Monthly and yearly lines apply once to the season, not per competition"':""}>${pathOpts(l.path)}</select>
         <button class="btn-del" data-delc="${l.id}" title="Remove this line">&#x2715;</button></div>`).join("")
       : `<div style="grid-column:1/-1;font-size:13px;color:var(--muted)">None yet. Add a line for anything not listed above.</div>`)+
     `<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
@@ -343,7 +357,7 @@ $("#pnl-assump").addEventListener("input", e=>{
   if(t.dataset.k){ const n=parseFloat(t.value); A[t.dataset.k]=isNaN(n)?0:n; save(); renderAll(); return; }
   const row=t.closest("[data-cid]"); if(row && t.dataset.f){ const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f] = t.dataset.f==="amount"?(parseFloat(t.value)||0):t.value; save(); renderAll(); }
 });
-$("#pnl-assump").addEventListener("change", e=>{ const t=e.target; if(t.tagName==="SELECT"){ const row=t.closest("[data-cid]"); const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f]=t.value; save(); renderAll(true); }});
+$("#pnl-assump").addEventListener("change", e=>{ const t=e.target; if(t.tagName==="SELECT"){ const row=t.closest("[data-cid]"); const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f]=t.value; save(); if(t.dataset.f==="basis") renderAssump(); renderAll(true); }});
 $("#pnl-assump").addEventListener("click", e=>{
   const t=e.target;
   if(t.dataset.addc){ A.custom.push({id:"l"+Date.now().toString(36), name:"", type:t.dataset.addc, amount:0, basis:"comp", path:""}); save(); renderAssump(); renderAll(true); const n=document.querySelectorAll(".pnl-cname"); if(n.length) n[n.length-1].focus(); }
@@ -351,11 +365,14 @@ $("#pnl-assump").addEventListener("click", e=>{
   if(t.id==="resetAssump"){ if(!confirm("Reset every competition figure to the defaults and remove your own lines? Annual income and overheads are kept.")) return; const keep=A.annual; A=fresh(); A.annual=keep; save(); renderAssump(); renderAll(true); }
 });
 $("#exportCsv").addEventListener("click", ()=>{
-  const inc=A.custom.filter(l=>l.type==="income"), cst=A.custom.filter(l=>l.type!=="income");
+  const inc=A.custom.filter(l=>!isFixed(l)&&l.type==="income"), cst=A.custom.filter(l=>!isFixed(l)&&l.type!=="income");
   const hdr=["Date","Competition","Pathway","Venue","Gymnasts","Capacity","Price per gymnast","Entry income","Spectator income",...inc.map(l=>l.name||"Other income"),"Total income","Venue","Staff","Remote judges","Elevien","Medals",...cst.map(l=>l.name||"Other cost"),"Total costs","Profit","Unsold places","Unsold value"];
   const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
   const lines=lastRows.map(r=>[r.c.date,r.c.name,PATHWAYS[compPathway(r.c)].label,r.c.venue||"",r.gymnasts,compMax(r.c),r.price,r.entry,r.spec,...inc.map(l=>r.lines[l.id]||0),r.income,r.venue,r.staff,r.judges,r.elev,r.med,...cst.map(l=>r.lines[l.id]||0),r.costs,r.profit,r.unsoldPlaces,r.unsold].map(q).join(","));
-  lines.push("", q("Competitions profit")+","+lastRows.reduce((s,r)=>s+r.profit,0));
+  const cp = lastRows.reduce((s,r)=>s+r.profit,0);
+  lines.push("", q("Profit from competitions")+","+cp);
+  fixedLines().forEach(l=>{ const i=l.type==="income"; lines.push(q((i?"Plus: ":"Less: ")+(l.name||"Unnamed")+" ("+l.basis+"ly)")+","+(i?fixedAmt(l):-fixedAmt(l))); });
+  lines.push(q("Competitions profit "+season)+","+(cp+fixedInc()-fixedCost()));
   const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([[hdr.map(q).join(","),...lines].join("\n")],{type:"text/csv"}));
   a.download=`NGL-${season}-Competitions-PnL-${new Date().toISOString().slice(0,10)}.csv`; a.click();
 });
