@@ -248,6 +248,10 @@
   .stat-tile { background: var(--white); border: 1px solid var(--border); border-top: 3px solid var(--navy); padding: 13px 15px; }
   .sv { font-size: 1.85rem; font-weight: 700; color: var(--navy); line-height: 1; }
   .sv.red { color: var(--red); }
+  .stats-notes { display: grid; gap: 8px; margin: -10px 0 22px; }
+  .stats-notes:empty { display: none; }
+  .stats-note { background: #fff8ec; border: 1px solid #f5d87a; border-left: 3px solid #e67e22; padding: 9px 12px; font-size: 0.76rem; line-height: 1.45; color: #5a4300; }
+  .tag-removed { background: #fdecea; border: 1px solid #f5b5ad; border-radius: 2px; padding: 1px 6px; font-size: 0.65rem; font-weight: 700; color: #b3261e; white-space: nowrap; }
   .sl { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--grey-mid); margin-top: 5px; }
 
   .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
@@ -535,6 +539,7 @@
       <div class="stat-tile"><div class="sv" id="stat-clubs">&#x2014;</div><div class="sl">Clubs Registered</div></div>
       <div class="stat-tile"><div class="sv red" id="stat-gymnasts">&#x2014;</div><div class="sl">Gymnasts Planned</div></div>
     </div>
+    <div id="stats-notes" class="stats-notes"></div>
 
     <div class="panel-card" style="margin-bottom:22px">
       <div class="pc-head">&#x1F525; Season Fill <span style="margin-left:auto;font-weight:500;text-transform:none;letter-spacing:0;opacity:0.7">Admin only &mdash; not shown to clubs</span></div>
@@ -972,6 +977,16 @@ function fillFor(filterFn) {
   return places ? Math.round(booked / places * 100) : null;
 }
 
+// ══ SHARED GYMNAST COUNTS ══
+// One definition used by the Overview tiles and the P&L, so they always agree:
+// confirmed bookings only (no waiting list), only on competitions that are
+// still in the calendar, and never more than a competition's Max Club Places.
+function bookedFor(c) {
+  return allBookings.filter(b => b.compId === c.id && !b.waitlist).reduce((s, b) => s + (parseInt(b.spaces) || 1), 0);
+}
+function countedFor(c) { return Math.min(bookedFor(c), compMax(c)); }
+function isOrphanBooking(b) { return !allCompetitions.some(c => c.id === b.compId); }
+
 // ══ 2027 LIVE P&L ══
 // All figures editable in Admin > Edit Assumptions; saved in this browser only.
 const PNL_DEFAULTS = {
@@ -1043,10 +1058,7 @@ function renderPnL() {
   const tbl = document.getElementById('pnl-table');
   if (!tbl) return;
   const comps = pnlComps();
-  const rows = comps.map(c => {
-    const booked = allBookings.filter(b => b.compId === c.id && !b.waitlist).reduce((s,b) => s + (parseInt(b.spaces)||1), 0);
-    return pnlRow(c, Math.min(booked, compMax(c)));
-  });
+  const rows = comps.map(c => pnlRow(c, countedFor(c)));
   const full = comps.map(c => pnlRow(c, compMax(c)));
   rows.forEach((r, i) => { r.unsoldPlaces = full[i].gymnasts - r.gymnasts; r.unsold = full[i].income - r.income; r.unsoldProfit = full[i].profit - r.profit; });
   const sum = (arr, k) => arr.reduce((s, r) => s + r[k], 0);
@@ -1532,14 +1544,33 @@ function updateStats() {
   if (!adminLoggedIn) return;
   renderAdminSeason();
   renderPnL();
-  const gyms  = allBookings.reduce((s,b)=>s+(b.spaces||b.gymnasts||0),0);
-  const clubs = [...new Set(allBookings.map(b=>b.club))].length;
-  const waitCount = allBookings.filter(b=>b.waitlist).length;
+  // Bookings for competitions that have been removed from the calendar are
+  // left out of every total (they're flagged below and in All Bookings).
+  const live    = allBookings.filter(b => !isOrphanBooking(b));
+  const orphans = allBookings.filter(b => isOrphanBooking(b));
+  const gyms  = allCompetitions.reduce((s, c) => s + countedFor(c), 0);
+  const clubs = [...new Set(live.map(b=>b.club))].length;
+  const waitCount = live.filter(b=>b.waitlist).length;
   document.getElementById('stat-comps').textContent    = allCompetitions.length;
-  document.getElementById('stat-bookings').textContent = (allBookings.length - waitCount) + (waitCount ? ' + ' + waitCount + ' wait' : '');
+  document.getElementById('stat-bookings').textContent = (live.length - waitCount) + (waitCount ? ' + ' + waitCount + ' wait' : '');
   document.getElementById('stat-clubs').textContent    = clubs;
   document.getElementById('stat-gymnasts').textContent = gyms;
   document.getElementById('bk-count').textContent      = allBookings.length;
+
+  const fmtD = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : '';
+  const notes = [];
+  if (orphans.length) {
+    const oG = orphans.filter(b => !b.waitlist).reduce((s,b) => s + (parseInt(b.spaces) || 1), 0);
+    const names = [...new Set(orphans.map(b => (b.compName || 'Unknown competition') + (b.compDate ? ' (' + fmtD(b.compDate) + ')' : '')))];
+    notes.push('<strong>Not counted:</strong> ' + orphans.length + ' booking' + (orphans.length !== 1 ? 's' : '') + ' (' + oG + ' gymnasts) for competitions removed from the calendar &mdash; ' +
+      names.join('; ') + '. They\u2019re marked <em>Competition removed</em> in All Bookings. Move them to the new date or delete them once the clubs know.');
+  }
+  allCompetitions.filter(c => bookedFor(c) > compMax(c)).forEach(c => {
+    notes.push('<strong>Over the limit:</strong> ' + c.name + ' (' + fmtD(c.date) + ') has ' + bookedFor(c) + ' booked against ' + compMax(c) +
+      ' places, so it\u2019s counted as ' + compMax(c) + '. Raise Max Club Places to ' + bookedFor(c) + ' to count them all.');
+  });
+  const nEl = document.getElementById('stats-notes');
+  if (nEl) nEl.innerHTML = notes.map(n => '<div class="stats-note">&#x26A0; ' + n + '</div>').join('');
 }
 
 function populateFilter() {
@@ -1567,7 +1598,7 @@ function renderBookingsTable() {
       '<td class="td-ref">' + (b.reference||b.id) + '</td>' +
       '<td class="td-club">' + b.club + (b.waitlist ? ' <span style="background:#fff3e0;border:1px solid #f5d87a;border-radius:2px;padding:1px 6px;font-size:0.65rem;font-weight:700;color:#b06000">WAITLIST</span>' : '') + '</td>' +
       '<td>' + b.region + '</td>' +
-      '<td>' + (b.compName||'') + '</td>' +
+      '<td>' + (b.compName||'') + (isOrphanBooking(b) ? ' <span class="tag-removed" title="This competition has been removed from the calendar, so this booking isn\u2019t counted in any total">COMPETITION REMOVED</span>' : '') + '</td>' +
       '<td>' + compDate + '</td>' +
       '<td class="td-num">' + (b.spaces||b.gymnasts||'&mdash;') + '</td>' +
       '<td>' + b.email + '</td>' +
