@@ -250,18 +250,41 @@ function compMax(c){ return hasMax(c) ? c.maxPlaces : 20; }
 const PNL_DEFAULTS = {
   rec2:20, rec4:30, genGirls:40, genBoys:50, perfGirls:45, perfBoys:55, schools:0,
   specPerGym:1.5, specPrice:6,
-  venueHourly:100, venueHours:4, opsMgr:200, camRate:40, camCount:2, judgeRate:50, judgeCount:2, elevien:185, medals:200,
+  venueHourly:100, venueHours:4, opsMgr:200, camRate:40, camCount:2, judgeRate:50, judgeCount:2, elevien:185,
+  medalPrice:1.5, subdivisions:8, defaultPieces:4, aaMedals:0, cardFee:1,
   annual:[ {id:"a_opsmgr", name:"National Ops Manager salary", type:"cost", amount:500, basis:"month"} ],
   custom:[]
 };
+const MAX_JUDGES = 2;
+// League-wide lines added once to existing saved settings (they can then be edited or removed)
+const MIGRATIONS = [
+  {flag:"m_merch", lines:[
+    {id:"a_merch_inc", name:"Merchandise sales", type:"income", amount:1000, basis:"year"},
+    {id:"a_merch_cost", name:"Merchandise stock", type:"cost", amount:500, basis:"year"} ]}
+];
 const PNL_FIELDS = [
   ["Entry fees (per gymnast)", [["rec2","Recreational 2 piece"],["rec4","Recreational 3+ piece"],["genGirls","General League girls"],["genBoys","General League boys"],["perfGirls","Performance girls"],["perfBoys","Performance boys"],["schools","Schools"]]],
   ["Spectators", [["specPerGym","Spectators per gymnast"],["specPrice","Ticket price"]]],
-  ["Costs per competition", [["venueHourly","Venue hire per hour (non-SAADI)"],["venueHours","Venue hours"],["opsMgr","National Ops Manager"],["camRate","Camera operator rate"],["camCount","Camera operators"],["judgeRate","Remote judge rate"],["judgeCount","Remote judges"],["elevien","Elevien"],["medals","Medals"]]]
+  ["Costs per competition", [["venueHourly","Venue hire per hour (non-SAADI)"],["venueHours","Venue hours"],["opsMgr","National Ops Manager"],["camRate","Camera operator rate"],["camCount","Camera operators"],["judgeRate","Remote judge rate"],["judgeCount","Remote judges (max 2)"],["elevien","Elevien"]]],
+  ["Medals", [["medalPrice","Price per medal"],["subdivisions","Sub-divisions per competition"],["defaultPieces","Apparatus if not set on competition"],["aaMedals","All-around medals (1 yes, 0 no)"]]],
+  ["Per gymnast costs", [["cardFee","Card payment fee"]]]
 ];
+// Medals: 1st/2nd/3rd on each apparatus (plus all-around if switched on) in each sub-division.
+// Gymnasts are assumed spread evenly, so a sub-division with fewer than 3 gymnasts gives fewer medals.
+function compPieces(c){ const m=/^(\d)piece$/.exec(c.apparatus||""); return m ? parseInt(m[1],10) : (A.defaultPieces||4); }
+function medalCount(c, gymnasts){
+  const subs = Math.max(1, A.subdivisions||1), per = gymnasts/subs;
+  return Math.round(subs * (compPieces(c) + (A.aaMedals?1:0)) * Math.min(3, per));
+}
 const fresh = () => JSON.parse(JSON.stringify(PNL_DEFAULTS));
 let A = fresh();
-function normalise(x){ const a = Object.assign(fresh(), x||{}); if(!Array.isArray(a.custom)) a.custom=[]; if(!Array.isArray(a.annual)) a.annual=fresh().annual; return a; }
+let migrated = false;
+function normalise(x){
+  const a = Object.assign(fresh(), x||{}); if(!Array.isArray(a.custom)) a.custom=[]; if(!Array.isArray(a.annual)) a.annual=fresh().annual;
+  delete a.medals; // replaced by the medal calculation
+  MIGRATIONS.forEach(m=>{ if(a[m.flag]) return; m.lines.forEach(l=>{ if(!a.annual.some(x=>x.id===l.id)) a.annual.push(Object.assign({},l)); }); a[m.flag]=true; migrated=true; });
+  return a;
+}
 const annualAmt = l => (parseFloat(l.amount)||0) * (l.basis==="month"?12:1);
 const annualCost = () => A.annual.filter(l=>l.type!=="income").reduce((s,l)=>s+annualAmt(l),0);
 const annualInc  = () => A.annual.filter(l=>l.type==="income").reduce((s,l)=>s+annualAmt(l),0);
@@ -298,7 +321,8 @@ function pnlRow(c, gymnasts){
   const entry = gymnasts*price, spec = gymnasts*A.specPerGym*A.specPrice;
   const saadi = /saadi/i.test(c.venue||"");
   const venue = saadi ? 0 : A.venueHourly*A.venueHours;
-  const staff = A.opsMgr + A.camRate*A.camCount, judges = A.judgeRate*A.judgeCount, elev = A.elevien, med = A.medals;
+  const staff = A.opsMgr + A.camRate*A.camCount, judges = A.judgeRate*Math.min(MAX_JUDGES, A.judgeCount), elev = A.elevien;
+  const medalN = medalCount(c, gymnasts), med = medalN*A.medalPrice, card = gymnasts*A.cardFee;
   let otherInc=0, otherCost=0; const lines={};
   A.custom.forEach(l=>{
     if(isFixed(l)) return; // monthly/yearly lines are added once to the totals, not per competition
@@ -308,8 +332,8 @@ function pnlRow(c, gymnasts){
     const amt = (parseFloat(l.amount)||0) * (l.basis==="gymnast"?gymnasts:1);
     lines[l.id]=amt; if(l.type==="income") otherInc+=amt; else otherCost+=amt;
   });
-  const income = entry+spec+otherInc, costs = venue+staff+judges+elev+med+otherCost;
-  return {c,gymnasts,price,note,entry,spec,otherInc,income,venue,staff,ops:A.opsMgr,cams:A.camRate*A.camCount,judges,elev,med,otherCost,costs,lines,profit:income-costs};
+  const income = entry+spec+otherInc, costs = venue+staff+judges+elev+med+card+otherCost;
+  return {c,gymnasts,price,note,entry,spec,otherInc,income,venue,staff,ops:A.opsMgr,cams:A.camRate*A.camCount,judges,elev,med,medalN,card,otherCost,costs,lines,profit:income-costs};
 }
 const isFixed = l => l.basis==="month" || l.basis==="year";
 const fixedAmt = l => (parseFloat(l.amount)||0) * (l.basis==="month"?12:1);
@@ -330,7 +354,7 @@ function compTotals(){
   const full = list.map(c=>pnlRow(c, compMax(c)));
   rows.forEach((r,i)=>{ r.unsoldPlaces=full[i].gymnasts-r.gymnasts; r.unsold=full[i].income-r.income; r.unsoldProfit=full[i].profit-r.profit; });
   const sum=(arr,k)=>arr.reduce((s,r)=>s+r[k],0);
-  const T={}; ["gymnasts","entry","spec","otherInc","income","venue","staff","judges","elev","med","otherCost","costs","profit","unsold","unsoldPlaces","unsoldProfit"].forEach(k=>T[k]=sum(rows,k));
+  const T={}; ["gymnasts","entry","spec","otherInc","income","venue","staff","judges","elev","med","medalN","card","otherCost","costs","profit","unsold","unsoldPlaces","unsoldProfit"].forEach(k=>T[k]=sum(rows,k));
   const F={income:sum(full,"income"), profit:sum(full,"profit"), gymnasts:sum(full,"gymnasts")};
   // monthly/yearly competition lines (e.g. an employee or annual marketing)
   const fx = fixedFor(compView);
@@ -345,11 +369,11 @@ function compTotals(){
 /* ===== Traditional P&L statement ===== */
 let lastStmt = null;
 function aggregate(rows){
-  const g = {gymnasts:0, entry:{}, spec:0, venue:0, ops:0, cams:0, judges:0, elev:0, med:0, line:{}};
+  const g = {gymnasts:0, entry:{}, spec:0, venue:0, ops:0, cams:0, judges:0, elev:0, med:0, medalN:0, card:0, line:{}};
   rows.forEach(r=>{
     const p = compPathway(r.c);
     g.gymnasts += r.gymnasts; g.entry[p] = (g.entry[p]||0) + r.entry; g.spec += r.spec;
-    g.venue += r.venue; g.ops += r.ops; g.cams += r.cams; g.judges += r.judges; g.elev += r.elev; g.med += r.med;
+    g.venue += r.venue; g.ops += r.ops; g.cams += r.cams; g.judges += r.judges; g.elev += r.elev; g.med += r.med; g.medalN += r.medalN; g.card += r.card;
     Object.entries(r.lines).forEach(([id,v])=>{ g.line[id] = (g.line[id]||0) + v; });
   });
   return g;
@@ -370,6 +394,7 @@ function buildStatement(list, view){
 
   lines.push(["Competitions", [list.length, "", list.length, list.length], "info"]);
   lines.push(["Gymnasts", [B.gymnasts, F.gymnasts-B.gymnasts, P.gymnasts, F.gymnasts], "info"]);
+  lines.push(["Medals needed", [B.medalN, F.medalN-B.medalN, P.medalN, F.medalN], "info"]);
 
   const inc = [];
   paths.forEach(k=>inc.push([`Entry fees: ${PATHWAYS[k].short}`, val(g=>g.entry[k]||0)]));
@@ -384,7 +409,8 @@ function buildStatement(list, view){
   cost.push(["Camera operators", val(g=>g.cams)]);
   cost.push(["Remote judges", val(g=>g.judges)]);
   cost.push(["Elevien", val(g=>g.elev)]);
-  cost.push(["Medals", val(g=>g.med)]);
+  cost.push(["Medals", val(g=>g.med), `£${A.medalPrice} each`]);
+  cost.push(["Card payment fees", val(g=>g.card), "per gymnast"]);
   perComp.filter(l=>l.type!=="income").forEach(l=>cost.push([l.name||"Other cost", val(g=>g.line[l.id]||0), l.basis==="gymnast"?"per gymnast":"per competition"]));
   fixed.filter(l=>l.type!=="income").forEach(l=>{ const a=fixedAmt(l); cost.push([l.name||"Other cost", [a,0,a,a], l.basis==="month"?"monthly":"yearly"]); });
   const TC = sumRows(cost);
@@ -475,7 +501,7 @@ function renderCompetitions(){
   const hasInc = A.custom.some(l=>!isFixed(l)&&l.type==="income"), hasCost = A.custom.some(l=>!isFixed(l)&&l.type!=="income");
   const tip = t => esc(A.custom.filter(l=>!isFixed(l)&&(l.type==="income")===(t==="income")).map(l=>l.name||"Unnamed").join(", "));
   const flags=[];
-  tbl.innerHTML = `<thead><tr><th>Date</th><th>Competition</th><th>Gymnasts</th><th>Price</th><th>Entries</th><th>Spectators</th>${hasInc?`<th title="${tip("income")}">Other income</th>`:""}<th>Venue</th><th>Staff</th><th>Judges</th><th>Elevien</th><th>Medals</th>${hasCost?`<th title="${tip("cost")}">Other costs</th>`:""}<th>Profit</th><th title="Income still available from unsold places">Unsold value</th></tr></thead><tbody>`+
+  tbl.innerHTML = `<thead><tr><th>Date</th><th>Competition</th><th>Gymnasts</th><th>Price</th><th>Entries</th><th>Spectators</th>${hasInc?`<th title="${tip("income")}">Other income</th>`:""}<th>Venue</th><th>Staff</th><th>Judges</th><th>Elevien</th><th>Medals</th><th>Card fees</th>${hasCost?`<th title="${tip("cost")}">Other costs</th>`:""}<th>Profit</th><th title="Income still available from unsold places">Unsold value</th></tr></thead><tbody>`+
     rows.map(r=>{
       const p = PATHWAYS[compPathway(r.c)];
       const d = new Date(r.c.date+"T00:00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short"});
@@ -485,14 +511,14 @@ function renderCompetitions(){
         `<td>${r.gymnasts}/${compMax(r.c)}${hasMax(r.c)?"":' <span class="pnl-flag" title="No Max Club Places set, so 20 is assumed">&#x26A0;</span>'}</td>`+
         `<td>${gbp(r.price)}${r.note?` <span class="pnl-flag" title="${esc(r.note)}">&#x26A0;</span>`:""}</td>`+
         `<td>${gbp(r.entry)}</td><td>${gbp(r.spec)}</td>${hasInc?`<td>${gbp(r.otherInc)}</td>`:""}`+
-        `<td>${gbp(r.venue)}</td><td>${gbp(r.staff)}</td><td>${gbp(r.judges)}</td><td>${gbp(r.elev)}</td><td>${gbp(r.med)}</td>${hasCost?`<td>${gbp(r.otherCost)}</td>`:""}`+
+        `<td>${gbp(r.venue)}</td><td>${gbp(r.staff)}</td><td>${gbp(r.judges)}</td><td>${gbp(r.elev)}</td><td title="${r.medalN} medals">${gbp(r.med)}</td><td>${gbp(r.card)}</td>${hasCost?`<td>${gbp(r.otherCost)}</td>`:""}`+
         `<td class="${r.profit>=0?"pnl-pos":"pnl-neg"}" style="font-weight:700">${gbp(r.profit)}</td>`+
         `<td style="color:#b06000">${r.unsold>0?gbp(r.unsold):"&mdash;"}</td></tr>`;
     }).join("")+
-    `<tr class="tot"><td colspan="2">Competitions total</td><td>${T.gymnasts}</td><td></td><td>${gbp(T.entry)}</td><td>${gbp(T.spec)}</td>${hasInc?`<td>${gbp(T.otherInc)}</td>`:""}<td>${gbp(T.venue)}</td><td>${gbp(T.staff)}</td><td>${gbp(T.judges)}</td><td>${gbp(T.elev)}</td><td>${gbp(T.med)}</td>${hasCost?`<td>${gbp(T.otherCost)}</td>`:""}<td class="${T.compProfit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.compProfit)}</td><td style="color:#b06000">${gbp(T.unsold)}</td></tr>`+
+    `<tr class="tot"><td colspan="2">Competitions total</td><td>${T.gymnasts}</td><td></td><td>${gbp(T.entry)}</td><td>${gbp(T.spec)}</td>${hasInc?`<td>${gbp(T.otherInc)}</td>`:""}<td>${gbp(T.venue)}</td><td>${gbp(T.staff)}</td><td>${gbp(T.judges)}</td><td>${gbp(T.elev)}</td><td title="${T.medalN} medals">${gbp(T.med)}</td><td>${gbp(T.card)}</td>${hasCost?`<td>${gbp(T.otherCost)}</td>`:""}<td class="${T.compProfit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.compProfit)}</td><td style="color:#b06000">${gbp(T.unsold)}</td></tr>`+
     (fixedLines().length ? fixedLines().slice().sort((a,b)=>(b.type==="income")-(a.type==="income")).map(l=>{ const inc=l.type==="income";
-      return `<tr><td colspan="${11+(hasInc?1:0)+(hasCost?1:0)}" style="text-align:left">${inc?"Plus":"Less"}: ${esc(l.name||"Unnamed")} (${gbp(parseFloat(l.amount)||0)} per ${l.basis})</td><td class="${inc?"pnl-pos":"pnl-neg"}">${gbp(inc?fixedAmt(l):-fixedAmt(l))}</td><td></td></tr>`; }).join("")+
-      `<tr class="tot"><td colspan="${11+(hasInc?1:0)+(hasCost?1:0)}">Competitions profit ${season}</td><td class="${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</td><td></td></tr>` : "")+
+      return `<tr><td colspan="${12+(hasInc?1:0)+(hasCost?1:0)}" style="text-align:left">${inc?"Plus":"Less"}: ${esc(l.name||"Unnamed")} (${gbp(parseFloat(l.amount)||0)} per ${l.basis})</td><td class="${inc?"pnl-pos":"pnl-neg"}">${gbp(inc?fixedAmt(l):-fixedAmt(l))}</td><td></td></tr>`; }).join("")+
+      `<tr class="tot"><td colspan="${12+(hasInc?1:0)+(hasCost?1:0)}">Competitions profit ${season}</td><td class="${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</td><td></td></tr>` : "")+
     `</tbody>`;
   $("#pnl-notes").innerHTML = "Based on confirmed bookings only (waiting lists excluded), capped at each competition's capacity. Venue cost applies to any venue not named SAADI. Monthly and yearly lines (staff, marketing) count once for the season and sit in the P&amp;L you choose, or are shared across all competitions. League-wide overheads not tied to competitions go on the Overview tab." +
     (flags.length ? `<br><strong style="color:#b06000">&#x26A0; ${flags.length} item${flags.length!==1?"s":""} to check:</strong> ${esc(flags.join(" · "))}` : "");
@@ -507,7 +533,7 @@ function pathOpts(sel){
 }
 function renderAssump(){
   $("#pnl-assump").innerHTML = PNL_FIELDS.map(([title,fields])=>`<h4>${title}</h4>`+
-      fields.map(([k,label])=>`<label>${label}<input type="number" step="0.5" min="0" value="${A[k]}" data-k="${k}"></label>`).join("")).join("")+
+      fields.map(([k,label])=>`<label>${label}<input type="number" step="${k==="medalPrice"||k==="cardFee"?0.05:k==="aaMedals"?1:0.5}" min="0"${k==="judgeCount"?` max="${MAX_JUDGES}"`:""}${k==="aaMedals"?` max="1"`:""} value="${A[k]}" data-k="${k}"></label>`).join("")).join("")+
     `<h4>Your own income and cost lines</h4>`+
     (A.custom.length ? A.custom.map(l=>`<div class="pnl-custom" data-cid="${l.id}">
         <span class="pnl-ctype ${l.type==="income"?"inc":"cost"}">${l.type==="income"?"Income":"Cost"}</span>
@@ -537,9 +563,9 @@ $("#pnl-assump").addEventListener("click", e=>{
 });
 $("#exportCsv").addEventListener("click", ()=>{
   const inc=A.custom.filter(l=>!isFixed(l)&&l.type==="income"), cst=A.custom.filter(l=>!isFixed(l)&&l.type!=="income");
-  const hdr=["Date","Competition","Pathway","Venue","Gymnasts","Capacity","Price per gymnast","Entry income","Spectator income",...inc.map(l=>l.name||"Other income"),"Total income","Venue","Staff","Remote judges","Elevien","Medals",...cst.map(l=>l.name||"Other cost"),"Total costs","Profit","Unsold places","Unsold value"];
+  const hdr=["Date","Competition","Pathway","Venue","Gymnasts","Capacity","Price per gymnast","Entry income","Spectator income",...inc.map(l=>l.name||"Other income"),"Total income","Venue","Staff","Remote judges","Elevien","Medals needed","Medals","Card fees",...cst.map(l=>l.name||"Other cost"),"Total costs","Profit","Unsold places","Unsold value"];
   const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
-  const lines=lastRows.map(r=>[r.c.date,r.c.name,PATHWAYS[compPathway(r.c)].label,r.c.venue||"",r.gymnasts,compMax(r.c),r.price,r.entry,r.spec,...inc.map(l=>r.lines[l.id]||0),r.income,r.venue,r.staff,r.judges,r.elev,r.med,...cst.map(l=>r.lines[l.id]||0),r.costs,r.profit,r.unsoldPlaces,r.unsold].map(q).join(","));
+  const lines=lastRows.map(r=>[r.c.date,r.c.name,PATHWAYS[compPathway(r.c)].label,r.c.venue||"",r.gymnasts,compMax(r.c),r.price,r.entry,r.spec,...inc.map(l=>r.lines[l.id]||0),r.income,r.venue,r.staff,r.judges,r.elev,r.medalN,r.med,r.card,...cst.map(l=>r.lines[l.id]||0),r.costs,r.profit,r.unsoldPlaces,r.unsold].map(q).join(","));
   const cp = lastRows.reduce((s,r)=>s+r.profit,0);
   lines.push("", q("Profit from competitions")+","+cp);
   fixedLines().forEach(l=>{ const i=l.type==="income"; lines.push(q((i?"Plus: ":"Less: ")+(l.name||"Unnamed")+" ("+l.basis+"ly)")+","+(i?fixedAmt(l):-fixedAmt(l))); });
@@ -608,7 +634,7 @@ function startLive(){
   db = firebase.firestore(); LIVE = true;
   settingsRef = db.collection(CONFIG.collections.finance).doc(CONFIG.settingsDoc);
   settingsRef.onSnapshot(async doc=>{
-    if(doc.exists){ if(Date.now()-lastLocalWrite > 1500){ A = normalise(doc.data()); if($("#pnl-assump").classList.contains("open")) renderAssump(); renderAll(true); } }
+    if(doc.exists){ if(Date.now()-lastLocalWrite > 1500){ migrated=false; A = normalise(doc.data()); if(migrated) save(); if($("#pnl-assump").classList.contains("open")) renderAssump(); renderAll(true); } }
     else {
       // First run: bring across the figures saved in the old booking-system P&L on this device.
       let legacy=null; try{ legacy = JSON.parse(localStorage.getItem(CONFIG.legacyLocalKey)||"null"); }catch(_){}
