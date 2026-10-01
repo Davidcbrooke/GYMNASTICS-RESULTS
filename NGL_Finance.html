@@ -80,6 +80,11 @@ p.lead{color:var(--muted);margin:0 0 14px}
 .stmt .neg{color:var(--red)}
 .stmt .tag{font-size:11.5px;color:var(--muted);margin-left:6px}
 details.bycomp{border-top:1px solid var(--line)}
+.pills{display:flex;gap:6px;flex-wrap:wrap;padding:14px 16px 0}
+.pill{border:1px solid var(--line);background:#fff;border-radius:16px;padding:6px 14px;font-size:14px;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;gap:7px}
+.pill i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.pill[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.stmt tr.pend td{color:var(--muted);font-style:italic}
 details.bycomp summary{cursor:pointer;padding:12px 16px;font-weight:600;color:var(--navy)}
 .pnl-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px}
 @media (max-width:760px){.pnl-tiles{grid-template-columns:1fr 1fr}}
@@ -142,10 +147,15 @@ details.bycomp summary{cursor:pointer;padding:12px 16px;font-weight:600;color:va
 
   <!-- OVERVIEW -->
   <section id="tab-overview">
-    <h2 class="sec">League P&amp;L</h2>
-    <p class="lead">Each area's profit, then the organisation-wide income and overheads, for the selected season.</p>
+    <h2 class="sec">NGL P&amp;L</h2>
+    <p class="lead">The whole league, built up from each competition pathway, judging and licensing, then league-wide income and overheads.</p>
     <div class="net" id="netBox"></div>
     <div class="cats" id="cats"></div>
+    <div class="panel-card">
+      <div class="pc-head">Consolidated NGL P&amp;L <span>Each line is one of the individual P&amp;Ls</span></div>
+      <div class="tablewrap"><table class="stmt" id="nglStmt"></table></div>
+      <div class="pnl-toolbar" style="padding-top:14px"><button class="btn ghost" id="exportNgl">Export NGL P&amp;L</button></div>
+    </div>
     <div class="panel-card">
       <div class="pc-head">Annual income and overheads <span>Salaries, sponsorship and anything not tied to one area</span></div>
       <div class="pnl-assump always" id="annualEditor"></div>
@@ -156,6 +166,7 @@ details.bycomp summary{cursor:pointer;padding:12px 16px;font-weight:600;color:va
   <section id="tab-competitions" class="hidden">
     <div class="panel-card">
       <div class="pc-head">Competitions P&amp;L <span>Updates as bookings come in</span></div>
+      <div class="pills" id="pathPills"></div>
       <div class="stmt-bar">
         <span>Middle column shows the season at</span>
         <label><input type="number" id="scenPct" min="1" max="100" step="5" value="80"> % capacity</label>
@@ -308,8 +319,13 @@ const fixedCost = () => fixedLines().filter(l=>l.type!=="income").reduce((s,l)=>
 const seasonComps = () => comps.filter(c=>(c.date||"").startsWith(String(season))).sort((a,b)=>a.date.localeCompare(b.date));
 const bookedFor = c => bookings.filter(b=>b.compId===c.id && !b.waitlist).reduce((s,b)=>s+(parseInt(b.spaces)||1),0);
 let lastRows = [];
+let compView = "all";            // "all" or a pathway key
+const viewComps = () => compView==="all" ? seasonComps() : seasonComps().filter(c=>compPathway(c)===compView);
+// monthly/yearly lines: tied to a pathway, or shared across all competitions
+const fixedFor = view => fixedLines().filter(l => view==="all" ? true : l.path===view);
+const sharedFixed = () => fixedLines().filter(l => !PATHWAYS[l.path]);
 function compTotals(){
-  const list = seasonComps();
+  const list = viewComps();
   const rows = list.map(c=>pnlRow(c, Math.min(bookedFor(c), compMax(c))));
   const full = list.map(c=>pnlRow(c, compMax(c)));
   rows.forEach((r,i)=>{ r.unsoldPlaces=full[i].gymnasts-r.gymnasts; r.unsold=full[i].income-r.income; r.unsoldProfit=full[i].profit-r.profit; });
@@ -317,7 +333,10 @@ function compTotals(){
   const T={}; ["gymnasts","entry","spec","otherInc","income","venue","staff","judges","elev","med","otherCost","costs","profit","unsold","unsoldPlaces","unsoldProfit"].forEach(k=>T[k]=sum(rows,k));
   const F={income:sum(full,"income"), profit:sum(full,"profit"), gymnasts:sum(full,"gymnasts")};
   // monthly/yearly competition lines (e.g. an employee or annual marketing)
-  T.compProfit = T.profit; T.fixedInc = fixedInc(); T.fixedCost = fixedCost();
+  const fx = fixedFor(compView);
+  T.compProfit = T.profit;
+  T.fixedInc = fx.filter(l=>l.type==="income").reduce((s,l)=>s+fixedAmt(l),0);
+  T.fixedCost = fx.filter(l=>l.type!=="income").reduce((s,l)=>s+fixedAmt(l),0);
   T.income += T.fixedInc; T.costs += T.fixedCost; T.profit += T.fixedInc - T.fixedCost;
   F.profit += T.fixedInc - T.fixedCost;
   return {list, rows, T, F};
@@ -335,7 +354,8 @@ function aggregate(rows){
   });
   return g;
 }
-function buildStatement(list){
+function buildStatement(list, view){
+  view = view || "all";
   const pct = Math.min(100, Math.max(1, parseFloat(A.scenarioPct)||80));
   const booked = list.map(c=>pnlRow(c, Math.min(bookedFor(c), compMax(c))));
   const scen   = list.map(c=>pnlRow(c, Math.round(compMax(c)*pct/100)));
@@ -343,7 +363,7 @@ function buildStatement(list){
   const B = aggregate(booked), P = aggregate(scen), F = aggregate(full);
   const cols = [B, null, P, F]; // null = still to sell (full minus booked)
   const paths = PATHWAY_ORDER.filter(k=>list.some(c=>compPathway(c)===k));
-  const perComp = A.custom.filter(l=>!isFixed(l)), fixed = fixedLines();
+  const perComp = A.custom.filter(l=>!isFixed(l)), fixed = fixedFor(view);
   const lines = []; // [label, [booked, toSell, scen, full], cls]
   const val = fn => { const v = [fn(B), 0, fn(P), fn(F)]; v[1] = v[3]-v[0]; return v; };
   const sumRows = (rows) => rows.reduce((a,r)=>a.map((x,i)=>x+r[1][i]), [0,0,0,0]);
@@ -370,37 +390,69 @@ function buildStatement(list){
   const TC = sumRows(cost);
   const NET = TI.map((x,i)=>x-TC[i]);
   const MARGIN = TI.map((x,i)=>x ? Math.round(NET[i]/x*100) : null);
-  return {pct, lines, inc, cost, TI, TC, NET, MARGIN, B, F};
+  return {pct, lines, inc, cost, TI, TC, NET, MARGIN, B, F, n:list.length};
 }
 const money = (n, dimZero) => n===""||n===null ? "" : (Math.round(n)===0 ? "&ndash;" : (n<0 ? `<span class="neg">(${gbp(-n)})</span>` : gbp(n)));
-function renderStatement(list){
-  const s = lastStmt = buildStatement(list);
-  $("#scenPct").value = s.pct;
+function stmtHTML(s, title){
   const cls = i => i===0 ? "cur" : i===1 ? "dim" : "";
   const tr = (label, vals, rowCls, tag, fmt) => `<tr class="${rowCls||""}"><td>${esc(label)}${tag?`<span class="tag">${esc(tag)}</span>`:""}</td>${vals.map((v,i)=>`<td class="${cls(i)}">${fmt?fmt(v,i):money(v)}</td>`).join("")}</tr>`;
-  const head = `<thead><tr><th>${esc(season)} competitions</th>
+  const head = `<thead><tr><th>${esc(title)}</th>
       <th class="cur"><b>Booked to date</b><small>${s.B.gymnasts} gymnasts</small></th>
       <th><b>Still to sell</b><small>${s.F.gymnasts-s.B.gymnasts} places</small></th>
       <th><b>At ${s.pct}% capacity</b><small>if bookings reach ${s.pct}%</small></th>
       <th><b>At 100% capacity</b><small>${s.F.gymnasts} gymnasts</small></th></tr></thead>`;
-  if(!list.length){ $("#stmt").innerHTML = head + `<tbody><tr><td colspan="5" style="padding:20px;color:var(--muted)">No ${esc(season)} competitions yet.</td></tr></tbody>`; return; }
-  $("#stmt").innerHTML = head + "<tbody>" +
+  return head + "<tbody>" +
     s.lines.map(([l,v,c])=>tr(l, v, c, "", x=>x===""?"":x)).join("") +
     `<tr class="sec"><td colspan="5">Income</td></tr>` +
-    s.inc.map(([l,v,tag])=>tr(l, v, "item", tag)).join("") +
+    s.inc.map(([l,v,tag,rc])=>tr(l, v, "item "+(rc||""), tag)).join("") +
     tr("Total income", s.TI, "tot") +
     `<tr class="sec"><td colspan="5">Costs</td></tr>` +
-    s.cost.map(([l,v,tag])=>tr(l, v, "item", tag)).join("") +
+    s.cost.map(([l,v,tag,rc])=>tr(l, v, "item "+(rc||""), tag)).join("") +
     tr("Total costs", s.TC, "tot") +
     tr("Net profit", s.NET, "netrow") +
     tr("Margin", s.MARGIN, "margin", "", (v,i)=> i===1 || v===null ? "" : `<span class="${v<0?"neg":""}">${v}%</span>`) +
     "</tbody>";
 }
+const viewTitle = () => compView==="all" ? `${season} all competitions` : `${season} ${PATHWAYS[compView].short}`;
+function renderStatement(list){
+  const s = lastStmt = buildStatement(list, compView);
+  $("#scenPct").value = s.pct;
+  if(!list.length && !fixedFor(compView).length){ $("#stmt").innerHTML = `<tbody><tr><td style="padding:20px;color:var(--muted)">No ${esc(season)} competitions${compView==="all"?"":" in "+esc(PATHWAYS[compView].short)} yet.</td></tr></tbody>`; return; }
+  $("#stmt").innerHTML = stmtHTML(s, viewTitle());
+}
+function renderPills(){
+  const list = seasonComps();
+  const paths = PATHWAY_ORDER.filter(k=>list.some(c=>compPathway(c)===k) || fixedLines().some(l=>l.path===k));
+  if(compView!=="all" && !paths.includes(compView)) compView = "all";
+  $("#pathPills").innerHTML = `<button class="pill" data-view="all" aria-pressed="${compView==="all"}">All competitions</button>` +
+    paths.map(k=>`<button class="pill" data-view="${k}" aria-pressed="${compView===k}"><i style="background:${PATHWAYS[k].accent}"></i>${PATHWAYS[k].short}</button>`).join("");
+}
+$("#pathPills").addEventListener("click", e=>{ const b=e.target.closest("[data-view]"); if(!b) return; compView=b.dataset.view; renderCompetitions(); });
+
+/* Consolidated NGL P&L: one line per individual P&L */
+let lastNgl = null;
+function buildConsolidated(){
+  const list = seasonComps();
+  const all = buildStatement(list, "all");
+  const paths = PATHWAY_ORDER.filter(k=>list.some(c=>compPathway(c)===k) || fixedLines().some(l=>l.path===k));
+  const per = paths.map(k=>({k, s:buildStatement(list.filter(c=>compPathway(c)===k), k)}));
+  const zero = [0,0,0,0], flat = a => [a,0,a,a];
+  const inc = [], cost = [];
+  per.forEach(({k,s})=>{ inc.push([`${PATHWAYS[k].short} competitions`, s.TI, `${s.n} comp${s.n===1?"":"s"}`]); cost.push([`${PATHWAYS[k].short} competitions`, s.TC]); });
+  sharedFixed().forEach(l=>{ const a=fixedAmt(l); (l.type==="income"?inc:cost).push([`Competitions: ${l.name||"shared"}`, flat(a), l.basis==="month"?"monthly":"yearly"]); });
+  inc.push(["Judging", zero, "not connected yet", "pend"]); cost.push(["Judging", zero, "not connected yet", "pend"]);
+  inc.push(["Licensing", zero, "not connected yet", "pend"]); cost.push(["Licensing", zero, "not connected yet", "pend"]);
+  A.annual.forEach(l=>{ const a=annualAmt(l); (l.type==="income"?inc:cost).push([l.name||(l.type==="income"?"Annual income":"Annual cost"), flat(a), l.basis==="month"?"monthly, league-wide":"yearly, league-wide"]); });
+  const sum = rows => rows.reduce((a,r)=>a.map((x,i)=>x+r[1][i]), [0,0,0,0]);
+  const TI = sum(inc), TC = sum(cost), NET = TI.map((x,i)=>x-TC[i]), MARGIN = TI.map((x,i)=>x?Math.round(NET[i]/x*100):null);
+  return {pct:all.pct, lines:all.lines, inc, cost, TI, TC, NET, MARGIN, B:all.B, F:all.F, per};
+}
+
 $("#scenPct").addEventListener("change", e=>{ A.scenarioPct = Math.min(100, Math.max(1, parseFloat(e.target.value)||80)); save(); renderAll(); });
-$("#exportStmt").addEventListener("click", ()=>{
-  const s = lastStmt; if(!s) return;
+function exportStatement(s, title, file){
+  if(!s) return;
   const q = v => '"'+String(v).replace(/"/g,'""')+'"', n = v => v===""||v===null ? "" : Math.round(v);
-  const out = [[`${season} competitions P&L`,"Booked to date","Still to sell",`At ${s.pct}% capacity`,"At 100% capacity"].map(q).join(",")];
+  const out = [[title,"Booked to date","Still to sell",`At ${s.pct}% capacity`,"At 100% capacity"].map(q).join(",")];
   s.lines.forEach(([l,v])=>out.push([q(l),...v.map(n)].join(",")));
   out.push(q("Income")); s.inc.forEach(([l,v,t])=>out.push([q(l+(t?` (${t})`:"")),...v.map(n)].join(",")));
   out.push([q("Total income"),...s.TI.map(n)].join(","));
@@ -408,12 +460,15 @@ $("#exportStmt").addEventListener("click", ()=>{
   out.push([q("Total costs"),...s.TC.map(n)].join(","));
   out.push([q("Net profit"),...s.NET.map(n)].join(","));
   const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([out.join("\n")],{type:"text/csv"}));
-  a.download=`NGL-${season}-Competitions-PnL-statement-${new Date().toISOString().slice(0,10)}.csv`; a.click();
-});
+  a.download=`${file}-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+}
+$("#exportStmt").addEventListener("click", ()=>exportStatement(lastStmt, viewTitle()+" P&L", `NGL-${season}-${compView==="all"?"Competitions":PATHWAYS[compView].short.replace(/\s+/g,"-")}-PnL`));
+$("#exportNgl").addEventListener("click", ()=>exportStatement(lastNgl, `NGL P&L ${season}`, `NGL-${season}-Consolidated-PnL`));
 
 function renderCompetitions(){
   const {list, rows, T, F} = compTotals(); lastRows = rows;
   const margin = T.income ? Math.round(T.profit/T.income*100) : 0;
+  renderPills();
   renderStatement(list);
   const tbl = $("#pnl-table");
   if(!rows.length){ tbl.innerHTML = `<tr><td style="padding:24px;text-align:center;color:var(--muted)">No ${season} competitions yet.</td></tr>`; $("#pnl-notes").textContent=""; return; }
@@ -439,10 +494,13 @@ function renderCompetitions(){
       return `<tr><td colspan="${11+(hasInc?1:0)+(hasCost?1:0)}" style="text-align:left">${inc?"Plus":"Less"}: ${esc(l.name||"Unnamed")} (${gbp(parseFloat(l.amount)||0)} per ${l.basis})</td><td class="${inc?"pnl-pos":"pnl-neg"}">${gbp(inc?fixedAmt(l):-fixedAmt(l))}</td><td></td></tr>`; }).join("")+
       `<tr class="tot"><td colspan="${11+(hasInc?1:0)+(hasCost?1:0)}">Competitions profit ${season}</td><td class="${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</td><td></td></tr>` : "")+
     `</tbody>`;
-  $("#pnl-notes").innerHTML = "Based on confirmed bookings only (waiting lists excluded), capped at each competition's capacity. Venue cost applies to any venue not named SAADI. Monthly and yearly lines (staff, marketing) count once for the season, not per competition. League-wide overheads not tied to competitions go on the Overview tab." +
+  $("#pnl-notes").innerHTML = "Based on confirmed bookings only (waiting lists excluded), capped at each competition's capacity. Venue cost applies to any venue not named SAADI. Monthly and yearly lines (staff, marketing) count once for the season and sit in the P&amp;L you choose, or are shared across all competitions. League-wide overheads not tied to competitions go on the Overview tab." +
     (flags.length ? `<br><strong style="color:#b06000">&#x26A0; ${flags.length} item${flags.length!==1?"s":""} to check:</strong> ${esc(flags.join(" · "))}` : "");
 }
 
+function fixedPathOpts(sel){
+  return `<option value="">Shared across all competitions</option>` + PATHWAY_ORDER.map(k=>`<option value="${k}"${sel===k?" selected":""}>${PATHWAYS[k].short} P&amp;L</option>`).join("");
+}
 function pathOpts(sel){
   return `<option value="">All competitions</option><option value="__saadi"${sel==="__saadi"?" selected":""}>SAADI-hosted only</option><option value="__away"${sel==="__away"?" selected":""}>Other venues only</option>`+
     PATHWAY_ORDER.map(k=>`<option value="${k}"${sel===k?" selected":""}>${PATHWAYS[k].short} only</option>`).join("");
@@ -456,7 +514,7 @@ function renderAssump(){
         <input type="text" class="pnl-cname" placeholder="e.g. Programme sales" value="${esc(l.name)}" data-f="name">
         <span class="pnl-cgbp">&pound;</span><input type="number" step="0.5" min="0" value="${l.amount}" data-f="amount">
         <select data-f="basis">${[["comp","per competition"],["gymnast","per gymnast"],["month","per month"],["year","per year"]].map(([v,t])=>`<option value="${v}"${(l.basis||"comp")===v?" selected":""}>${t}</option>`).join("")}</select>
-        <select data-f="path"${isFixed(l)?' disabled title="Monthly and yearly lines apply once to the season, not per competition"':""}>${pathOpts(l.path)}</select>
+        <select data-f="path">${isFixed(l) ? fixedPathOpts(l.path) : pathOpts(l.path)}</select>
         <button class="btn-del" data-delc="${l.id}" title="Remove this line">&#x2715;</button></div>`).join("")
       : `<div style="grid-column:1/-1;font-size:13px;color:var(--muted)">None yet. Add a line for anything not listed above.</div>`)+
     `<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
@@ -470,7 +528,7 @@ $("#pnl-assump").addEventListener("input", e=>{
   if(t.dataset.k){ const n=parseFloat(t.value); A[t.dataset.k]=isNaN(n)?0:n; save(); renderAll(); return; }
   const row=t.closest("[data-cid]"); if(row && t.dataset.f){ const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f] = t.dataset.f==="amount"?(parseFloat(t.value)||0):t.value; save(); renderAll(); }
 });
-$("#pnl-assump").addEventListener("change", e=>{ const t=e.target; if(t.tagName==="SELECT"){ const row=t.closest("[data-cid]"); const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f]=t.value; save(); if(t.dataset.f==="basis") renderAssump(); renderAll(true); }});
+$("#pnl-assump").addEventListener("change", e=>{ const t=e.target; if(t.tagName==="SELECT"){ const row=t.closest("[data-cid]"); const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f]=t.value; if(t.dataset.f==="basis" && isFixed(l) && !PATHWAYS[l.path]) l.path=""; save(); if(t.dataset.f==="basis") renderAssump(); renderAll(true); }});
 $("#pnl-assump").addEventListener("click", e=>{
   const t=e.target;
   if(t.dataset.addc){ A.custom.push({id:"l"+Date.now().toString(36), name:"", type:t.dataset.addc, amount:0, basis:"comp", path:""}); save(); renderAssump(); renderAll(true); const n=document.querySelectorAll(".pnl-cname"); if(n.length) n[n.length-1].focus(); }
@@ -492,22 +550,22 @@ $("#exportCsv").addEventListener("click", ()=>{
 
 /* ===== Overview ===== */
 function renderOverview(force){
-  const {list, T} = compTotals();
-  const AI = annualInc(), AC = annualCost();
-  const areaProfit = T.profit; // judging and licensing join here once connected
-  const net = areaProfit + AI - AC;
-  $("#netBox").innerHTML = `<div><div class="big ${net>=0?"":""}" style="color:${net>=0?"#6ee7a0":"#ffb3aa"}">${gbp(net)}</div><div class="lbl">Net position ${season} (booked)</div></div>
-    <div><div style="font-weight:700">${gbp(areaProfit)}</div><div class="lbl">Profit from areas</div></div>
-    <div><div style="font-weight:700">${gbp(AI)}</div><div class="lbl">Plus annual income</div></div>
-    <div><div style="font-weight:700">${gbp(-AC)}</div><div class="lbl">Less annual overheads</div></div>`;
+  const c = lastNgl = buildConsolidated();
+  const net = c.NET[0];
+  const areas = c.per.reduce((a,p)=>a+p.s.NET[0],0);
+  $("#netBox").innerHTML = `<div><div class="big" style="color:${net>=0?"#6ee7a0":"#ffb3aa"}">${gbp(net)}</div><div class="lbl">NGL net position ${season} (booked to date)</div></div>
+    <div><div style="font-weight:700">${gbp(c.NET[3])}</div><div class="lbl">If every competition sells out</div></div>
+    <div><div style="font-weight:700">${gbp(c.TI[0])}</div><div class="lbl">Income booked</div></div>
+    <div><div style="font-weight:700">${gbp(c.TC[0])}</div><div class="lbl">Costs</div></div>`;
+  const card = (title, colour, s, go, note) => `<div class="cat" style="--c:${colour}"><span class="bar"></span><div class="in"><h3>${title}</h3>
+      <div class="rows"><span class="k">Income</span><span class="v">${gbp(s.TI[0])}</span><span class="k">Costs</span><span class="v">${gbp(-s.TC[0])}</span>
+      <span class="k p">Profit</span><span class="v p ${s.NET[0]>=0?"pnl-pos":"pnl-neg"}">${gbp(s.NET[0])}</span></div>
+      <div class="note">${note}</div><button class="link" data-go="competitions" data-view="${go}">Open this P&amp;L</button></div></div>`;
   $("#cats").innerHTML =
-    `<div class="cat" style="--c:#14254a"><span class="bar"></span><div class="in"><h3>Competitions</h3>
-      <div class="rows"><span class="k">Income</span><span class="v">${gbp(T.income)}</span><span class="k">Costs</span><span class="v">${gbp(-T.costs)}</span>
-      <span class="k p">Profit</span><span class="v p ${T.profit>=0?"pnl-pos":"pnl-neg"}">${gbp(T.profit)}</span></div>
-      <div class="note">${list.length} competitions, ${T.gymnasts} gymnasts booked. ${gbp(T.unsold)} still to sell.</div>
-      <button class="link" data-go="competitions">Open competitions P&amp;L</button></div></div>`+
+    c.per.map(({k,s})=>card(`${PATHWAYS[k].short}`, PATHWAYS[k].accent, s, k, `${s.n} competition${s.n===1?"":"s"}, ${s.B.gymnasts} of ${s.F.gymnasts} places booked. ${gbp(s.NET[3])} profit if full.`)).join("") +
     `<div class="cat" style="--c:#2c6e9b"><span class="bar"></span><div class="in"><h3>Judging</h3><div class="note">Not connected yet. Remote judging income and judge payments will show here.</div><button class="link" data-go="judging">What's needed</button></div></div>`+
     `<div class="cat" style="--c:#d9a521"><span class="bar"></span><div class="in"><h3>Licensing</h3><div class="note">Not connected yet. Awards and Schools licence income will show here.</div><button class="link" data-go="licensing">What's needed</button></div></div>`;
+  $("#nglStmt").innerHTML = stmtHTML(c, `NGL ${season}`);
   renderAnnual(force);
 }
 function renderAnnual(force){
@@ -527,7 +585,7 @@ $("#annualEditor").addEventListener("click", e=>{
   if(t.dataset.adda){ A.annual.push({id:"a"+Date.now().toString(36), name:"", type:t.dataset.adda, amount:0, basis:"month"}); save(); renderAll(true); }
   if(t.dataset.dela){ const l=A.annual.find(x=>x.id===t.dataset.dela); if(!confirm(`Remove "${(l&&l.name)||"Unnamed"}"?`)) return; A.annual=A.annual.filter(x=>x.id!==t.dataset.dela); save(); renderAll(true); }
 });
-$("#cats").addEventListener("click", e=>{ const g=e.target.dataset.go; if(g) document.querySelector(`.tabs [data-tab="${g}"]`).click(); });
+$("#cats").addEventListener("click", e=>{ const g=e.target.dataset.go; if(!g) return; if(e.target.dataset.view){ compView=e.target.dataset.view; renderCompetitions(); } document.querySelector(`.tabs [data-tab="${g}"]`).click(); window.scrollTo(0,0); });
 
 /* ===== Tabs, season ===== */
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
