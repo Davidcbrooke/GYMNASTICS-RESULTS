@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -208,6 +209,7 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
   </header>
 
   <main>
+    <div id="loadErr" class="hidden" role="alert" style="background:#fbe3e5;border:1px solid var(--red);color:#7a121b;border-radius:6px;padding:12px 14px;margin-bottom:14px;font-size:14px"></div>
    <section id="overview">
     <div class="ov-head">
       <h2>All competitions</h2>
@@ -338,6 +340,8 @@ const CONFIG = {
     {id:"ngl-2026-finals-a",       name:"NGL National Finals: Level A",          date:"2026-11-22", venue:"", discipline:"WAG", order:1},
     {id:"ngl-2026-finals-bc",      name:"NGL National Finals: Levels B and C",   date:"2026-11-22", venue:"", discipline:"WAG", order:2}
   ],
+  // Which seasons of ngl_competitions to show (standalone competitions above always show)
+  seasons: ["2027"],
   // CHECK: field names the judging app uses on each sign-up document
   signupFields: {
     competitionId: "competitionId",
@@ -443,24 +447,37 @@ $("#loginForm").addEventListener("submit", e=>{
 async function start(){
   $("#login").classList.add("hidden"); $("#app").classList.remove("hidden");
   if(CONFIG.firebase.apiKey && window.firebase){
-    try{ firebase.initializeApp(CONFIG.firebase); db = firebase.firestore(); LIVE = true; }catch(err){ console.error(err); }
+    try{ if(!firebase.apps.length) firebase.initializeApp(CONFIG.firebase); db = firebase.firestore(); LIVE = true; }catch(err){ console.error(err); }
   }
   $("#mode").textContent = LIVE ? "Live" : "Demo";
   $("#mode").classList.toggle("live", LIVE);
-  await loadComps();
+  try{ await loadComps(); }
+  catch(err){ console.error(err); showLoadErr("Couldn't load competitions ("+(err.code||err.message)+")."); }
+}
+const loadErrs = [];
+function showLoadErr(msg){
+  loadErrs.push(msg);
+  const el = $("#loadErr"); el.classList.remove("hidden");
+  el.innerHTML = loadErrs.map(esc).join("<br>") + (loadErrs.join(" ").includes("permission")
+    ? "<br><strong>The Firestore rules are blocking this.</strong> Add the ngl_staffing rule, then refresh." : "");
 }
 
 async function loadComps(){
   if(LIVE){
-    const snap = await db.collection(CONFIG.collections.competitions).get();
-    S.comps = snap.docs.map(d=>{ const x=d.data(); return {id:d.id, name:x.name||x.title||"Untitled competition", date:x.date||x.compDate||"", venue:x.venue||x.location||"", discipline:x.discipline||""}; })
+    try{
+      const snap = await db.collection(CONFIG.collections.competitions).get();
+      S.comps = snap.docs.map(d=>{ const x=d.data(); return {id:d.id, name:x.name||x.title||"Untitled competition", date:x.date||x.compDate||"", venue:x.venue||x.location||"", discipline:x.discipline||x.gender||"", pathway:x.pathway||"", level:x.level||""}; })
+        .filter(c=>CONFIG.seasons.some(y=>String(c.date?.toDate ? c.date.toDate().getFullYear() : c.date).startsWith(y)));
+    }catch(err){ console.error(err); S.comps = []; showLoadErr("Couldn't read the 2027 competitions from "+CONFIG.collections.competitions+" ("+(err.code||err.message)+")."); }
   } else S.comps = DEMO_COMPS.slice();
   S.comps = [...CONFIG.standaloneComps.map(c=>({...c})), ...S.comps]
     .sort((a,b)=>(dateVal(a.date)-dateVal(b.date)) || ((a.order||0)-(b.order||0)));
   // load every competition's staffing in one go
   if(LIVE){
-    const snap = await db.collection(CONFIG.collections.staffing).get();
-    snap.docs.forEach(d=>{ S.all[d.id] = d.data(); });
+    try{
+      const snap = await db.collection(CONFIG.collections.staffing).get();
+      snap.docs.forEach(d=>{ S.all[d.id] = d.data(); });
+    }catch(err){ console.error(err); showLoadErr("Couldn't read saved staffing from "+CONFIG.collections.staffing+" ("+(err.code||err.message)+"). Changes won't save until this is fixed."); }
     db.collection(CONFIG.collections.judgeSignups).onSnapshot(sn=>{
       const F = CONFIG.signupFields; S.pendingByComp = {};
       sn.docs.forEach(d=>{ const x=d.data(); if(String(x[F.status]||"pending").toLowerCase()==="pending"){ const k=x[F.competitionId]; S.pendingByComp[k]=(S.pendingByComp[k]||0)+1; } });
@@ -475,7 +492,8 @@ async function loadComps(){
 }
 
 function defaultStaffing(c){
-  const disc = /mag|boys|men/i.test(c.discipline||c.name) ? "MAG" : "WAG";
+  const d = ((c.discipline||"")+" "+(c.name||"")).toLowerCase();
+  const disc = /\bboth\b/.test(c.discipline||"") ? "Both" : /mag|boys|\bmen/.test(d) ? "MAG" : "WAG";
   const st = {compId:c.id, compName:c.name, discipline:disc, customApparatus:"", judgesPerPiece:1, apparatus:apparatusFor(disc), unsaved:true};
   st.slots = templateSlots(st); return st;
 }
@@ -876,7 +894,15 @@ async function copyHostRequest(){
 }
 
 // auto sign-in for this browser session (runs last so everything above is defined)
-try{ if(sessionStorage.getItem("ngl_staff_ok")==="1") start(); }catch(_){}
+if(CONFIG.firebase.apiKey && window.firebase){
+  // Live: use the NGL Admin hub sign-in instead of the old password
+  $("#login").classList.add("hidden");
+  firebase.initializeApp(CONFIG.firebase);
+  document.addEventListener("ngl-admin-ready", start, {once:true});
+  const g = document.createElement("script"); g.src = "ngl-admin-guard.js"; g.dataset.section = "staffing"; document.head.appendChild(g);
+} else {
+  try{ if(sessionStorage.getItem("ngl_staff_ok")==="1") start(); }catch(_){}
+}
 </script>
 </body>
 </html>
