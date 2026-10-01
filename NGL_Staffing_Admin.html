@@ -37,7 +37,34 @@ header.top{background:var(--navy);color:var(--white);border-bottom:4px solid var
 .top-inner{max-width:1240px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .brand{font-family:var(--cond);font-size:22px;letter-spacing:.3px;margin-right:auto;line-height:1.1}
 .brand small{display:block;font-family:var(--body);font-size:12px;opacity:.75;font-weight:500}
-#compSelect{background:var(--navy-2);color:var(--white);border:1px solid #3a5290;border-radius:4px;padding:8px 10px;max-width:100%;min-width:220px}
+.flag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.flag.red{background:#fbe3e5;color:var(--red)}
+.flag.amber{background:var(--gold-soft);color:#7a5a07}
+.flag.green{background:var(--ok-soft);color:var(--ok)}
+.fl{width:12px;height:12px;border-radius:3px;flex:none;display:inline-block}
+.fl.red{background:var(--red)} .fl.amber{background:var(--gold)} .fl.green{background:var(--ok)}
+/* Overview */
+.ov-head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px}
+.ov-head h2{font-family:var(--cond);font-size:30px;margin:0;color:var(--navy);line-height:1.05;margin-right:auto}
+.ov-key{display:flex;gap:14px;font-size:13px;color:var(--muted);flex-wrap:wrap;margin-bottom:14px}
+.ov-key span{display:inline-flex;align-items:center;gap:6px}
+.ov-comp{background:var(--white);border:1px solid var(--line);border-radius:6px;margin-bottom:16px;overflow:hidden}
+.ov-comp > header{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:#fafbfd}
+.ov-comp h3{font-family:var(--cond);font-size:22px;margin:0;color:var(--navy);line-height:1.1}
+.ov-comp .when{font-size:13px;color:var(--muted)}
+.ov-comp .counts{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.ov-comp.all-clear > header{border-left:6px solid var(--ok)}
+.ov-comp.gaps > header{border-left:6px solid var(--red)}
+.ov-roles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:0 18px;padding:6px 14px 10px}
+.ov-row{display:flex;align-items:center;gap:10px;padding:7px 4px;border:none;border-bottom:1px solid #eef0f5;background:none;text-align:left;width:100%;font-size:14px}
+.ov-row:hover{background:var(--paper)}
+.ov-row .r{color:var(--muted);font-size:12.5px;display:block;line-height:1.2}
+.ov-row .n{font-weight:600;display:block;line-height:1.25}
+.ov-row.vac .n{color:var(--red);font-weight:600}
+.ov-row .o{margin-left:auto;font-size:11px;font-weight:600;color:var(--navy);background:#e6eaf3;border-radius:3px;padding:0 6px}
+.ov-row .o.h{background:var(--gold-soft);color:#7a5a07}
+.ov-empty{padding:12px 14px;color:var(--ok);font-weight:600;font-size:14px}
+.backbtn{margin-bottom:12px}
 .mode{font-size:12px;padding:3px 8px;border-radius:3px;background:var(--gold);color:var(--navy);font-weight:600}
 .mode.live{background:#2d8a5b;color:#fff}
 #saveState{font-size:12px;opacity:.8;min-width:60px}
@@ -89,11 +116,12 @@ main{max-width:1240px;margin:0 auto;padding:16px}
 .slot.st-vacant{border-style:dashed;border-left-style:solid;background:#fafbfd}
 .slot .role{font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
 .slot .who{font-weight:600;font-size:15px;margin-top:1px}
-.slot.st-vacant .who{color:#98a0b5;font-weight:500}
+.slot.st-vacant .who{color:var(--red);font-weight:600}
 .slot .sub{font-size:12.5px;color:var(--muted)}
 .own{font-size:11px;font-weight:600;padding:0 6px;border-radius:3px;background:#e6eaf3;color:var(--navy)}
 .owner-Host .own{background:var(--gold-soft);color:#7a5a07}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-left:auto}
+.dot{width:12px;height:12px;border-radius:3px;display:inline-block;margin-left:auto}
+.st-vacant .dot{background:var(--red)}
 .st-pending .dot{background:var(--gold)}
 .st-confirmed .dot{background:var(--ok)}
 .src{font-size:11px;color:var(--red);font-weight:600}
@@ -174,13 +202,26 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
   <header class="top">
     <div class="top-inner">
       <div class="brand">NGL Competition Staffing<small>Who's working each competition</small></div>
-      <select id="compSelect" aria-label="Competition"></select>
       <span id="mode" class="mode">Demo</span>
       <span id="saveState" aria-live="polite"></span>
     </div>
   </header>
 
   <main>
+   <section id="overview">
+    <div class="ov-head">
+      <h2>All competitions</h2>
+      <button class="chip" aria-pressed="true" data-ov="all">All roles</button>
+      <button class="chip" aria-pressed="false" data-ov="gaps">Gaps only</button>
+      <button class="chip" aria-pressed="false" data-ov="NGL">NGL roles</button>
+      <button class="chip" aria-pressed="false" data-ov="Host">Host club roles</button>
+    </div>
+    <div class="ov-key"><span><i class="fl red"></i>Vacant</span><span><i class="fl amber"></i>Awaiting confirmation</span><span><i class="fl green"></i>Confirmed</span><span>Tap any role to fill or edit it</span></div>
+    <div id="ovList"></div>
+   </section>
+
+   <section id="detail" class="hidden">
+    <button class="btn ghost small backbtn" id="backBtn">All competitions</button>
     <div class="comp-strip">
       <div>
         <h2 id="compName">Choose a competition</h2>
@@ -264,6 +305,7 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
         <button class="btn danger" id="resetBtn">Reset this competition's staffing</button>
       </div>
     </section>
+   </section>
   </main>
 </div>
 
@@ -289,6 +331,13 @@ const CONFIG = {
     staffing: "ngl_staffing",            // new: one doc per competition id
     judgeSignups: "ngl_judge_signups"    // CHECK: the judging app's sign-up collection
   },
+  // Standalone competitions that aren't in ngl_competitions. Staffing for these
+  // still saves to ngl_staffing under the id given here, so keep ids unchanged.
+  standaloneComps: [
+    {id:"ngl-2026-recreational",   name:"NGL Recreational Competition",         date:"2026-10-25", venue:"", discipline:"WAG"},
+    {id:"ngl-2026-finals-a",       name:"NGL National Finals: Level A",          date:"2026-11-22", venue:"", discipline:"WAG", order:1},
+    {id:"ngl-2026-finals-bc",      name:"NGL National Finals: Levels B and C",   date:"2026-11-22", venue:"", discipline:"WAG", order:2}
+  ],
   // CHECK: field names the judging app uses on each sign-up document
   signupFields: {
     competitionId: "competitionId",
@@ -312,7 +361,7 @@ const GROUP_ORDER = {control:0, station:1, floor:2, other:3};
 const GROUP_NAME = {control:"Control desk", station:"Stations", floor:"Floor team", other:"Additional roles"};
 
 let db = null, LIVE = false;
-const S = { comps:[], compId:null, staffing:null, signups:[], filter:"all", rfilter:"open", unsub:null };
+const S = { comps:[], compId:null, staffing:null, signups:[], filter:"all", rfilter:"open", unsub:null, all:{}, ovFilter:"all", pendingByComp:{} };
 
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -325,6 +374,7 @@ const DEMO_COMPS = [
   {id:"demo-r2", name:"NGL Round 2", date:"2027-03-14", venue:"Hemel Hempstead", discipline:"WAG"},
   {id:"demo-mag", name:"NGL Boys League Round 1", date:"2027-03-21", venue:"Stevenage", discipline:"MAG"}
 ];
+const DEMO_STAFF = {};
 let DEMO_SIGNUPS = [
   {id:"s1", competitionId:"demo-r1", name:"Priya Shah", email:"priya@example.com", phone:"07700 900111", club:"Luton Gym Club", tier:"Senior Judge", apparatus:["Beam","Floor"], status:"pending", notes:"Can stay all day"},
   {id:"s2", competitionId:"demo-r1", name:"Tom Ellis", email:"tom@example.com", phone:"07700 900222", club:"Watford GC", tier:"Junior Judge", apparatus:["Vault"], status:"pending", notes:""},
@@ -389,7 +439,6 @@ $("#loginForm").addEventListener("submit", e=>{
   try{ sessionStorage.setItem("ngl_staff_ok","1"); }catch(_){}
   start();
 });
-try{ if(sessionStorage.getItem("ngl_staff_ok")==="1") start(); }catch(_){}
 
 async function start(){
   $("#login").classList.add("hidden"); $("#app").classList.remove("hidden");
@@ -405,40 +454,90 @@ async function loadComps(){
   if(LIVE){
     const snap = await db.collection(CONFIG.collections.competitions).get();
     S.comps = snap.docs.map(d=>{ const x=d.data(); return {id:d.id, name:x.name||x.title||"Untitled competition", date:x.date||x.compDate||"", venue:x.venue||x.location||"", discipline:x.discipline||""}; })
-      .sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  } else S.comps = DEMO_COMPS;
-  $("#compSelect").innerHTML = S.comps.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.date?" ("+esc(fmtDate(c.date))+")":""}</option>`).join("");
-  if(S.comps.length){ await openComp(S.comps[0].id); }
-  else $("#board").innerHTML = `<div class="empty">No competitions found in ${esc(CONFIG.collections.competitions)}. Add one in the competition admin first.</div>`;
+  } else S.comps = DEMO_COMPS.slice();
+  S.comps = [...CONFIG.standaloneComps.map(c=>({...c})), ...S.comps]
+    .sort((a,b)=>(dateVal(a.date)-dateVal(b.date)) || ((a.order||0)-(b.order||0)));
+  // load every competition's staffing in one go
+  if(LIVE){
+    const snap = await db.collection(CONFIG.collections.staffing).get();
+    snap.docs.forEach(d=>{ S.all[d.id] = d.data(); });
+    db.collection(CONFIG.collections.judgeSignups).onSnapshot(sn=>{
+      const F = CONFIG.signupFields; S.pendingByComp = {};
+      sn.docs.forEach(d=>{ const x=d.data(); if(String(x[F.status]||"pending").toLowerCase()==="pending"){ const k=x[F.competitionId]; S.pendingByComp[k]=(S.pendingByComp[k]||0)+1; } });
+      renderOverview();
+    }, err=>console.error(err));
+  } else {
+    Object.assign(S.all, DEMO_STAFF);
+    S.pendingByComp = {}; DEMO_SIGNUPS.forEach(d=>{ if(d.status==="pending") S.pendingByComp[d.competitionId]=(S.pendingByComp[d.competitionId]||0)+1; });
+  }
+  S.comps.forEach(c=>{ if(!S.all[c.id]) S.all[c.id] = defaultStaffing(c); });
+  renderOverview();
 }
-$("#compSelect").addEventListener("change", e=>openComp(e.target.value));
 
+function defaultStaffing(c){
+  const disc = /mag|boys|men/i.test(c.discipline||c.name) ? "MAG" : "WAG";
+  const st = {compId:c.id, compName:c.name, discipline:disc, customApparatus:"", judgesPerPiece:1, apparatus:apparatusFor(disc), unsaved:true};
+  st.slots = templateSlots(st); return st;
+}
+
+/* ---------- Overview ---------- */
+const flagOf = s => s.status==="vacant" ? "red" : s.status==="pending" ? "amber" : "green";
+function renderOverview(){
+  if(!S.comps.length){ $("#ovList").innerHTML = `<div class="empty">No competitions found in ${esc(CONFIG.collections.competitions)}. Add one in the competition admin first.</div>`; return; }
+  const f = S.ovFilter;
+  $("#ovList").innerHTML = S.comps.map(c=>{
+    const st = S.all[c.id], slots = sortedSlots(st);
+    const vac = slots.filter(s=>s.status==="vacant").length, pend = slots.filter(s=>s.status==="pending").length, conf = slots.length-vac-pend;
+    const req = S.pendingByComp[c.id]||0;
+    const show = slots.filter(s => f==="all" ? true : f==="gaps" ? s.status!=="confirmed" : s.owner===f);
+    const rows = show.map(s=>`<button type="button" class="ov-row ${s.status==="vacant"?"vac":""}" data-comp="${esc(c.id)}" data-slot="${s.id}">
+        <i class="fl ${flagOf(s)}" aria-label="${s.status}"></i>
+        <span><span class="r">${esc(slotLabel(s))}</span><span class="n">${s.status==="vacant"?"Vacant":esc(s.name)}</span></span>
+        <span class="o ${s.owner==="Host"?"h":""}">${s.owner==="NGL"?"NGL":"Host"}</span></button>`).join("");
+    return `<section class="ov-comp ${vac?"gaps":"all-clear"}">
+      <header><div><h3>${esc(c.name)}</h3><div class="when">${esc([c.date&&fmtDate(c.date), c.venue].filter(Boolean).join(", "))}</div></div>
+        <div class="counts">${vac?`<span class="flag red">${vac} vacant</span>`:""}${pend?`<span class="flag amber">${pend} awaiting</span>`:""}<span class="flag green">${conf} confirmed</span>${req?`<span class="flag red">${req} judge request${req>1?"s":""}</span>`:""}</div>
+        <button class="btn small primary" data-open="${esc(c.id)}">Open</button></header>
+      ${rows?`<div class="ov-roles">${rows}</div>`:`<div class="ov-empty">${f==="gaps"?"Fully staffed":"No roles match this filter"}</div>`}
+    </section>`;
+  }).join("");
+}
+document.querySelectorAll("[data-ov]").forEach(b=>b.addEventListener("click",()=>{
+  S.ovFilter=b.dataset.ov; document.querySelectorAll("[data-ov]").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderOverview();
+}));
+$("#ovList").addEventListener("click", e=>{
+  const o = e.target.closest("[data-open]"); if(o) return openComp(o.dataset.open);
+  const r = e.target.closest("[data-slot]");
+  if(r){ useComp(r.dataset.comp); editSlot(r.dataset.slot); }
+});
+$("#backBtn").addEventListener("click", ()=>{
+  $("#detail").classList.add("hidden"); $("#overview").classList.remove("hidden");
+  renderOverview(); window.scrollTo(0,0);
+});
+
+function dateVal(d){
+  const dt = d?.toDate ? d.toDate() : new Date(d);
+  return isNaN(dt) ? 9e15 : dt.getTime();
+}
 function fmtDate(d){
   const dt = d?.toDate ? d.toDate() : new Date(d);
   return isNaN(dt) ? String(d) : dt.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
 }
 const comp = () => S.comps.find(c=>c.id===S.compId) || {};
 
+function useComp(id){
+  if(S.compId===id) return;
+  S.compId = id; S.staffing = S.all[id]; loadSignups();
+}
 async function openComp(id){
-  S.compId = id; $("#compSelect").value = id;
+  useComp(id); S.compId = id; S.staffing = S.all[id];
+  $("#overview").classList.add("hidden"); $("#detail").classList.remove("hidden"); window.scrollTo(0,0);
   const c = comp();
   $("#compName").textContent = c.name;
   $("#compMeta").textContent = [c.date&&fmtDate(c.date), c.venue].filter(Boolean).join(", ");
-  let st = null;
-  if(LIVE){ const doc = await db.collection(CONFIG.collections.staffing).doc(id).get(); if(doc.exists) st = doc.data(); }
-  else st = DEMO_STAFF[id] || null;
-  if(!st){
-    const disc = /mag|boys|men/i.test(c.discipline||c.name) ? "MAG" : "WAG";
-    st = {compId:id, compName:c.name, discipline:disc, customApparatus:"", judgesPerPiece:1, apparatus:apparatusFor(disc)};
-    st.slots = templateSlots(st);
-    S.staffing = st; save(true);
-  }
-  S.staffing = st;
   syncSettings();
-  loadSignups();
   render();
 }
-const DEMO_STAFF = {};
 
 function loadSignups(){
   if(S.unsub){ S.unsub(); S.unsub=null; }
@@ -455,13 +554,15 @@ function loadSignups(){
 
 let saveTimer = null;
 function save(now){
+  delete S.staffing.unsaved;
   S.staffing.updatedAt = new Date().toISOString();
+  const target = S.staffing, targetId = S.compId;
   $("#saveState").textContent = "Saving…";
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async ()=>{
     try{
-      if(LIVE) await db.collection(CONFIG.collections.staffing).doc(S.compId).set(S.staffing);
-      else DEMO_STAFF[S.compId] = S.staffing;
+      if(LIVE) await db.collection(CONFIG.collections.staffing).doc(targetId).set(target);
+      else DEMO_STAFF[targetId] = target;
       $("#saveState").textContent = "Saved";
     }catch(err){ console.error(err); $("#saveState").textContent = "Not saved"; toast("Save failed. Check your connection and try again."); }
   }, now?0:400);
@@ -477,6 +578,7 @@ function render(){
   $("#tReq").textContent = waiting;
   $("#reqBadge").textContent = waiting; $("#reqBadge").classList.toggle("hidden", !waiting);
   renderBoard(); renderRequests();
+  if(!$("#overview").classList.contains("hidden")) renderOverview();
 }
 
 function pass(s){
@@ -722,9 +824,10 @@ $("#exportMenu").addEventListener("click", e=>{
   ({xlsx:exportXlsx, csv:exportCsv, print:exportPrint, hostEmail:copyHostRequest})[b.dataset.export]();
 });
 
-function sortedSlots(){
-  const ord = S.staffing.apparatus;
-  return S.staffing.slots.slice().sort((a,b)=>
+function sortedSlots(st){
+  st = st || S.staffing;
+  const ord = st.apparatus;
+  return st.slots.slice().sort((a,b)=>
     (GROUP_ORDER[a.group]-GROUP_ORDER[b.group]) ||
     ((ord.indexOf(a.apparatus)+99)%(99+ord.length) - (ord.indexOf(b.apparatus)+99)%(99+ord.length)) ||
     (isJudge(b)-isJudge(a)) || a.role.localeCompare(b.role, undefined, {numeric:true}));
@@ -771,6 +874,9 @@ async function copyHostRequest(){
   try{ await navigator.clipboard.writeText(text); toast("Request copied. Paste it into an email."); }
   catch(_){ openDlg("Host club request", `<textarea style="min-height:240px;margin-top:10px">${esc(text)}</textarea>`, [{label:"Close", cls:"primary"}]); }
 }
+
+// auto sign-in for this browser session (runs last so everything above is defined)
+try{ if(sessionStorage.getItem("ngl_staff_ok")==="1") start(); }catch(_){}
 </script>
 </body>
 </html>
