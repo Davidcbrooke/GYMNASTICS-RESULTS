@@ -141,6 +141,7 @@ details.bycomp summary{cursor:pointer;padding:12px 16px;font-weight:600;color:va
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="overview">Overview</button>
     <button role="tab" aria-selected="false" data-tab="competitions">Competitions</button>
+    <button role="tab" aria-selected="false" data-tab="clubrec">Club-hosted Recreational</button>
     <button role="tab" aria-selected="false" data-tab="judging">Judging</button>
     <button role="tab" aria-selected="false" data-tab="licensing">Licensing</button>
   </nav>
@@ -183,6 +184,38 @@ details.bycomp summary{cursor:pointer;padding:12px 16px;font-weight:600;color:va
         <div class="tablewrap"><table class="pnl-table" id="pnl-table"></table></div>
       </details>
       <div class="pnl-notes" id="pnl-notes"></div>
+    </div>
+  </section>
+
+  <!-- CLUB-HOSTED RECREATIONAL -->
+  <section id="tab-clubrec" class="hidden">
+    <h2 class="sec">Club-hosted Recreational</h2>
+    <p class="lead">The club runs the whole competition in its own hall. NGL supplies Elevien, medals, certificates and stickers, sells every gymnast and spectator ticket, and pays the club per gymnast. This is a plan for the season, not live bookings.</p>
+    <div class="panel-card">
+      <div class="pc-head">Plan summary <span>Change the plan below and everything updates</span></div>
+      <div class="pnl-tiles" id="crTiles"></div>
+    </div>
+    <div class="panel-card">
+      <div class="pc-head">Plan and assumptions <span>Saved for everyone</span></div>
+      <div class="pnl-assump always" id="crAssump"></div>
+    </div>
+    <div class="panel-card">
+      <div class="pc-head">NGL P&amp;L <span>Year 1 includes each new club's banner and TV</span></div>
+      <div class="tablewrap"><table class="stmt" id="crNgl"></table></div>
+    </div>
+    <div class="panel-card">
+      <div class="pc-head">Club P&amp;L <span>What a host club makes</span></div>
+      <div class="tablewrap"><table class="stmt" id="crClub"></table></div>
+      <div class="pnl-notes" id="crClubNote"></div>
+    </div>
+    <div class="panel-card">
+      <div class="pc-head">Running costs at a club-hosted competition <span>Leave at £0 while the club covers them</span></div>
+      <div class="pnl-assump always" id="crCosts"></div>
+    </div>
+    <div class="panel-card">
+      <div class="pc-head">If turnout is different <span>Same plan, different gymnasts per competition</span></div>
+      <div class="tablewrap"><table class="stmt" id="crSens"></table></div>
+      <div class="pnl-toolbar" style="padding-top:14px"><button class="btn ghost" id="crExport">Export club-hosted P&amp;L</button></div>
     </div>
   </section>
 
@@ -250,10 +283,28 @@ function compMax(c){ return hasMax(c) ? c.maxPlaces : 20; }
 const PNL_DEFAULTS = {
   rec2:20, rec4:30, genGirls:40, genBoys:50, perfGirls:45, perfBoys:55, schools:0,
   specPerGym:1.5, specPrice:6,
-  venueHourly:100, venueHours:4, opsMgr:200, camRate:40, camCount:2, judgeRate:50, judgeCount:2, elevien:185,
+  venueHourly:100, venueHours:4, opsMgr:200, camRate:40, camCount:2, judgeRate:50, judgeCount:2, elevien:180,
   medalPrice:1.5, subdivisions:8, defaultPieces:4, aaMedals:0, cardFee:1,
   annual:[ {id:"a_opsmgr", name:"National Ops Manager salary", type:"cost", amount:500, basis:"month"} ],
   custom:[]
+};
+/* Club-hosted Recreational plan (stored in the same settings doc under clubRec) */
+const CLUBREC_DEFAULTS = {
+  clubs:10, compsPerClub:2, gymnasts:80, pct3:80,
+  saadi3:2, saadi2:0,               // competitions hosted at SAADI: no club payment
+  fee2:7.5, fee3:10,
+  medals3:4, medals2:2,
+  certSticker:0.4, banner:200, tv:300,
+  costs:[
+    {id:"cr_j_vault", name:"Judges: Vault", amount:0, basis:"comp", payer:"club"},
+    {id:"cr_j_bars",  name:"Judges: Bars",  amount:0, basis:"comp", payer:"club"},
+    {id:"cr_j_beam",  name:"Judges: Beam",  amount:0, basis:"comp", payer:"club"},
+    {id:"cr_j_floor", name:"Judges: Floor", amount:0, basis:"comp", payer:"club"},
+    {id:"cr_scorer",  name:"Scorer",        amount:0, basis:"comp", payer:"club"},
+    {id:"cr_music",   name:"Music",         amount:0, basis:"comp", payer:"club"},
+    {id:"cr_announce",name:"Announcer",     amount:0, basis:"comp", payer:"club"},
+    {id:"cr_runners", name:"Runners",       amount:0, basis:"comp", payer:"club"}
+  ]
 };
 const MAX_JUDGES = 2;
 // League-wide lines added once to existing saved settings (they can then be edited or removed)
@@ -282,6 +333,8 @@ let migrated = false;
 function normalise(x){
   const a = Object.assign(fresh(), x||{}); if(!Array.isArray(a.custom)) a.custom=[]; if(!Array.isArray(a.annual)) a.annual=fresh().annual;
   delete a.medals; // replaced by the medal calculation
+  a.clubRec = Object.assign(JSON.parse(JSON.stringify(CLUBREC_DEFAULTS)), a.clubRec||{});
+  if(!Array.isArray(a.clubRec.costs)) a.clubRec.costs = JSON.parse(JSON.stringify(CLUBREC_DEFAULTS.costs));
   MIGRATIONS.forEach(m=>{ if(a[m.flag]) return; m.lines.forEach(l=>{ if(!a.annual.some(x=>x.id===l.id)) a.annual.push(Object.assign({},l)); }); a[m.flag]=true; migrated=true; });
   return a;
 }
@@ -559,7 +612,7 @@ $("#pnl-assump").addEventListener("click", e=>{
   const t=e.target;
   if(t.dataset.addc){ A.custom.push({id:"l"+Date.now().toString(36), name:"", type:t.dataset.addc, amount:0, basis:"comp", path:""}); save(); renderAssump(); renderAll(true); const n=document.querySelectorAll(".pnl-cname"); if(n.length) n[n.length-1].focus(); }
   if(t.dataset.delc){ const l=A.custom.find(x=>x.id===t.dataset.delc); if(!confirm(`Remove "${(l&&l.name)||"Unnamed"}"?`)) return; A.custom=A.custom.filter(x=>x.id!==t.dataset.delc); save(); renderAssump(); renderAll(true); }
-  if(t.id==="resetAssump"){ if(!confirm("Reset every competition figure to the defaults and remove your own lines? Annual income and overheads are kept.")) return; const keep=A.annual; A=fresh(); A.annual=keep; save(); renderAssump(); renderAll(true); }
+  if(t.id==="resetAssump"){ if(!confirm("Reset every competition figure to the defaults and remove your own lines? Annual income and overheads, and the club-hosted Recreational plan, are kept.")) return; const keep=A.annual, keepCr=A.clubRec; A=fresh(); A.annual=keep; A.clubRec=keepCr; save(); renderAssump(); renderAll(true); }
 });
 $("#exportCsv").addEventListener("click", ()=>{
   const inc=A.custom.filter(l=>!isFixed(l)&&l.type==="income"), cst=A.custom.filter(l=>!isFixed(l)&&l.type!=="income");
@@ -572,6 +625,164 @@ $("#exportCsv").addEventListener("click", ()=>{
   lines.push(q("Competitions profit "+season)+","+(cp+fixedInc()-fixedCost()));
   const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([[hdr.map(q).join(","),...lines].join("\n")],{type:"text/csv"}));
   a.download=`NGL-${season}-Competitions-PnL-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+});
+
+/* ===== Club-hosted Recreational ===== */
+function CR(){ if(!A.clubRec) A.clubRec = JSON.parse(JSON.stringify(CLUBREC_DEFAULTS)); return A.clubRec; }
+const num = v => { const n=parseFloat(v); return isNaN(n)?0:n; };
+// Cost of the running-cost lines for one competition, split by who pays
+function crRunCost(gymnasts, payer){
+  return CR().costs.filter(l=>(l.payer||"club")===payer).reduce((s,l)=>s+num(l.amount)*(l.basis==="gymnast"?gymnasts:1),0);
+}
+// One competition from NGL's side and the club's side
+function crComp(pieces, gymnasts){
+  const r = CR(), three = pieces===3;
+  const price = three ? A.rec4 : A.rec2, fee = three ? r.fee3 : r.fee2;
+  const o = {
+    gymnasts, entry: gymnasts*price, spec: gymnasts*A.specPerGym*A.specPrice,
+    club: gymnasts*fee, elev: A.elevien, med: gymnasts*(three ? num(r.medals3) : num(r.medals2))*A.medalPrice, medalN: gymnasts*(three ? num(r.medals3) : num(r.medals2)), cert: gymnasts*r.certSticker, card: gymnasts*A.cardFee,
+    nglRun: crRunCost(gymnasts,"ngl"), clubRun: crRunCost(gymnasts,"club")
+  };
+  o.income = o.entry + o.spec;
+  o.costs = o.club + o.elev + o.med + o.cert + o.card + o.nglRun;
+  o.profit = o.income - o.costs;
+  o.clubNet = o.club - o.clubRun;
+  return o;
+}
+// The whole season plan
+function crPlan(gymnasts){
+  const r = CR();
+  const clubs = Math.max(0, Math.round(num(r.clubs))), total = clubs*Math.max(0, Math.round(num(r.compsPerClub)));
+  const n3 = Math.round(total*Math.min(100,Math.max(0,num(r.pct3)))/100), n2 = total-n3;
+  const g = gymnasts==null ? Math.max(0, Math.round(num(r.gymnasts))) : gymnasts;
+  const c2 = crComp(2,g), c3 = crComp(3,g);
+  const tot = k => c2[k]*n2 + c3[k]*n3;
+  const s3 = Math.min(n3, Math.max(0, Math.round(num(r.saadi3)))), s2 = Math.min(n2, Math.max(0, Math.round(num(r.saadi2))));
+  const paidClubs = Math.max(0, clubs - (s3+s2>0 ? 1 : 0)); // SAADI counts as one of the host clubs
+  const p = {clubs,total,n2,n3,s2,s3,paidClubs,g,c2,c3,
+    entry2:c2.entry*n2, entry3:c3.entry*n3, spec:tot("spec"),
+    club2:c2.club*(n2-s2), club3:c3.club*(n3-s3), elev:tot("elev"), med:tot("med"), medalN:tot("medalN"), cert:tot("cert"), card:tot("card"), nglRun:tot("nglRun"),
+    banner: clubs*num(r.banner), tv: clubs*num(r.tv)};
+  p.income = p.entry2 + p.entry3 + p.spec;
+  p.costs2 = p.club2 + p.club3 + p.elev + p.med + p.cert + p.card + p.nglRun; // every year
+  p.costs1 = p.costs2 + p.banner + p.tv;                                      // year 1
+  p.profit1 = p.income - p.costs1; p.profit2 = p.income - p.costs2;
+  p.clubPay = p.club2 + p.club3;
+  p.perClub = paidClubs ? p.clubPay/paidClubs : 0;
+  p.perClubRun = clubs ? tot("clubRun")/clubs : 0;
+  return p;
+}
+let lastCr = null;
+function crStatement(p){
+  const r = CR(), pct = x => p.income ? Math.round(x/p.income*100)+"%" : "";
+  const L = [];
+  const row = (label, y1, y2, cls, tag) => L.push({label, y1, y2, cls:cls||"item", tag:tag||""});
+  L.push({label:"Competitions", y1:p.total, y2:p.total, cls:"info", raw:true, tag:`${p.n3} at 3+ piece, ${p.n2} at 2 piece`});
+  L.push({label:"Gymnasts", y1:p.total*p.g, y2:p.total*p.g, cls:"info", raw:true, tag:`${p.g} per competition`});
+  L.push({sec:"Income"});
+  row("Entry fees: 3+ piece", p.entry3, p.entry3, "", `${p.n3*p.g} × £${A.rec4}`);
+  row("Entry fees: 2 piece", p.entry2, p.entry2, "", `${p.n2*p.g} × £${A.rec2}`);
+  row("Spectator tickets", p.spec, p.spec, "", `${A.specPerGym} per gymnast × £${A.specPrice}`);
+  row("Total income", p.income, p.income, "tot");
+  L.push({sec:"Costs"});
+  const saadiTag = n => n ? `, ${n} at SAADI not paid` : "";
+  row("Club payments: 3+ piece", p.club3, p.club3, "", `£${r.fee3} per gymnast${saadiTag(p.s3)}`);
+  row("Club payments: 2 piece", p.club2, p.club2, "", `£${r.fee2} per gymnast${saadiTag(p.s2)}`);
+  row("Elevien", p.elev, p.elev, "", `£${A.elevien} per competition`);
+  row("Medals", p.med, p.med, "", `${Math.round(p.medalN)} medals at £${A.medalPrice}: ${r.medals3} per 3+ piece gymnast, ${r.medals2} per 2 piece gymnast`);
+  row("Certificates and stickers", p.cert, p.cert, "", `£${r.certSticker} per gymnast`);
+  row("Card payment fees", p.card, p.card, "", `£${A.cardFee} per gymnast`);
+  CR().costs.filter(l=>l.payer==="ngl").forEach(l=>{ const v=(p.n2+p.n3)*num(l.amount)*(l.basis==="gymnast"?p.g:1); row(l.name||"Running cost", v, v, "", "paid by NGL"); });
+  row("Banners", p.banner, 0, "", `£${r.banner} per new club, one-off`);
+  row("55\" TVs", p.tv, 0, "", `£${r.tv} per new club, one-off`);
+  row("Total costs", p.costs1, p.costs2, "tot");
+  row("NGL profit", p.profit1, p.profit2, "netrow");
+  L.push({label:"Margin", y1:pct(p.profit1), y2:pct(p.profit2), cls:"margin", raw:true});
+  return L;
+}
+function crStmtHTML(L){
+  const cell = (x, raw) => raw ? esc(x) : money(x);
+  return `<thead><tr><th>Club-hosted Recreational ${esc(season)}</th><th class="cur"><b>Year 1</b><small>with new-club set-up</small></th><th><b>Year 2 on</b><small>no set-up costs</small></th></tr></thead><tbody>` +
+    L.map(l => l.sec ? `<tr class="sec"><td colspan="3">${l.sec}</td></tr>` :
+      `<tr class="${l.cls}"><td>${esc(l.label)}${l.tag?`<span class="tag">${esc(l.tag)}</span>`:""}</td><td class="cur">${cell(l.y1,l.raw)}</td><td>${cell(l.y2,l.raw)}</td></tr>`).join("") + "</tbody>";
+}
+function renderClubRec(force){
+  const r = CR(), p = lastCr = crPlan();
+  $("#crTiles").innerHTML = [
+    [gbp(p.profit1), "NGL profit, year 1", `${p.total} competitions, ${p.total*p.g} gymnasts`],
+    [gbp(p.profit2), "NGL profit, year 2 on", "no banner or TV costs"],
+    [gbp(p.clubPay), "Paid to clubs", `${p.paidClubs} clubs${p.s3+p.s2?", SAADI not paid":""}`],
+    [gbp(p.perClub - p.perClubRun), "Each club, per year", "average, after running costs"]
+  ].map(([v,l,s])=>`<div class="pnl-tile"><div class="v ${v.startsWith("-")?"pnl-neg":""}">${v}</div><div class="l">${l}</div><div class="s">${esc(s)}</div></div>`).join("");
+  $("#crNgl").innerHTML = crStmtHTML(crStatement(p));
+
+  // Club P&L
+  const c2=p.c2, c3=p.c3, perYear = k => p.clubs ? (c2[k]*p.n2 + c3[k]*p.n3)/p.clubs : 0;
+  const clubYear = p.perClub, clubYearNet = p.perClub - p.perClubRun;
+  const runLines = r.costs.filter(l=>(l.payer||"club")==="club");
+  const cl = (l, a, b, c, cls, tag) => `<tr class="${cls||"item"}"><td>${esc(l)}${tag?`<span class="tag">${esc(tag)}</span>`:""}</td><td class="cur">${money(a)}</td><td>${money(b)}</td><td>${money(c)}</td></tr>`;
+  const lineAmt = (l, g) => num(l.amount)*(l.basis==="gymnast"?g:1);
+  $("#crClub").innerHTML = `<thead><tr><th>Host club</th><th class="cur"><b>3+ piece competition</b><small>${p.g} gymnasts</small></th><th><b>2 piece competition</b><small>${p.g} gymnasts</small></th><th><b>Per club per year</b><small>average of the plan</small></th></tr></thead><tbody>`+
+    `<tr class="sec"><td colspan="4">Income</td></tr>`+
+    cl("Payment from NGL", c3.club, c2.club, clubYear, "", `£${r.fee3} / £${r.fee2} per gymnast`)+
+    cl("Total income", c3.club, c2.club, clubYear, "tot")+
+    `<tr class="sec"><td colspan="4">Costs</td></tr>`+
+    (runLines.length ? runLines.map(l=>cl(l.name||"Running cost", lineAmt(l,p.g), lineAmt(l,p.g), p.clubs ? lineAmt(l,p.g)*p.total/p.clubs : 0, "", l.basis==="gymnast"?"per gymnast":"per competition")).join("")
+      : `<tr class="item"><td colspan="4" style="text-align:left;color:var(--muted)">No running costs left with the club</td></tr>`)+
+    cl("Total costs", c3.clubRun, c2.clubRun, perYear("clubRun"), "tot")+
+    cl("Club profit", c3.clubNet, c2.clubNet, clubYearNet, "netrow")+`</tbody>`;
+  $("#crClubNote").innerHTML = `In year 1 each new club also keeps a 55" TV (${gbp(r.tv)}) and gets an NGL banner (${gbp(r.banner)}). The club uses its own hall and keeps any café or raffle income on the day.` +
+    (p.s3+p.s2 ? ` Competitions at SAADI (${p.s3+p.s2} in the plan) have no club payment, so the per-year figure is the average across the other ${p.paidClubs} clubs.` : "");
+
+  // Turnout table
+  const steps = [...new Set([40,60,80,100,120,p.g])].sort((a,b)=>a-b);
+  $("#crSens").innerHTML = `<thead><tr><th>Gymnasts per competition</th><th><b>Paid to clubs</b></th><th><b>Each club per year</b></th><th class="cur"><b>NGL year 1</b></th><th><b>NGL year 2 on</b></th></tr></thead><tbody>`+
+    steps.map(g=>{ const s=crPlan(g); return `<tr${g===p.g?' style="font-weight:700"':""}><td>${g}${g===p.g?'<span class="tag">your plan</span>':""}</td><td>${money(s.clubPay)}</td><td>${money(s.perClub - s.perClubRun)}</td><td class="cur">${money(s.profit1)}</td><td>${money(s.profit2)}</td></tr>`; }).join("")+`</tbody>`;
+
+  if(force || !$("#crAssump").contains(document.activeElement)) renderCrAssump();
+  if(force || !$("#crCosts").contains(document.activeElement)) renderCrCosts();
+}
+const CR_FIELDS = [
+  ["The plan", [["clubs","Host clubs",1],["compsPerClub","Competitions per club",1],["gymnasts","Gymnasts per competition",1],["pct3","% of competitions at 3+ piece",5]]],
+  ["NGL pays the club (per gymnast)", [["fee3","3+ piece",0.5],["fee2","2 piece",0.5]]],
+  ["Hosted at SAADI (no club payment)", [["saadi3","SAADI 3+ piece competitions",1],["saadi2","SAADI 2 piece competitions",1]]],
+  ["NGL supplies", [["medals3","Medals per gymnast, 3+ piece",1],["medals2","Medals per gymnast, 2 piece",1],["certSticker","Certificates and stickers, per gymnast",0.05],["banner","Banner, one-off per new club",10],["tv","55\" TV, one-off per new club",10]]]
+];
+function renderCrAssump(){
+  const r = CR();
+  $("#crAssump").innerHTML = CR_FIELDS.map(([t,fs])=>`<h4>${t}</h4>`+fs.map(([k,l,st])=>`<label>${l}<input type="number" min="0" step="${st}" value="${r[k]}" data-crk="${k}"></label>`).join("")).join("")+
+    `<h4>Shared with the Competitions tab</h4>
+     <div style="grid-column:1/-1;font-size:13.5px;color:var(--muted)">Entry £${A.rec4} (3+ piece) and £${A.rec2} (2 piece) · Spectators ${A.specPerGym} per gymnast at £${A.specPrice} · Elevien £${A.elevien} · Medal £${A.medalPrice} each · Card fee £${A.cardFee} per gymnast.
+     Change these under <button class="link" style="background:none;border:none;color:var(--navy);text-decoration:underline;padding:0" data-go="competitions">Competitions, Edit assumptions</button>.</div>`;
+}
+function renderCrCosts(){
+  const r = CR();
+  $("#crCosts").innerHTML = r.costs.map(l=>`<div class="pnl-custom" data-crid="${l.id}">
+      <span class="pnl-ctype cost">Cost</span>
+      <input type="text" class="pnl-cname" placeholder="e.g. First aider" value="${esc(l.name)}" data-f="name">
+      <span class="pnl-cgbp">&pound;</span><input type="number" step="0.5" min="0" value="${l.amount}" data-f="amount">
+      <select data-f="basis"><option value="comp"${l.basis!=="gymnast"?" selected":""}>per competition</option><option value="gymnast"${l.basis==="gymnast"?" selected":""}>per gymnast</option></select>
+      <select data-f="payer"><option value="club"${(l.payer||"club")==="club"?" selected":""}>Paid by the club</option><option value="ngl"${l.payer==="ngl"?" selected":""}>Paid by NGL</option></select>
+      <button class="btn-del" data-crdel="${l.id}" title="Remove this line">&#x2715;</button></div>`).join("")+
+    `<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"><button class="btn red" id="crAdd">Add running cost</button></div>`;
+}
+$("#crAssump").addEventListener("input", e=>{ const k=e.target.dataset.crk; if(!k) return; CR()[k]=num(e.target.value); save(); renderAll(); });
+$("#crAssump").addEventListener("click", e=>{ if(e.target.dataset.go){ document.querySelector('.tabs [data-tab="competitions"]').click(); const el=$("#pnl-assump"); if(!el.classList.contains("open")) $("#toggleAssump").click(); el.scrollIntoView({behavior:"smooth"}); }});
+$("#crCosts").addEventListener("input", e=>{ const t=e.target, row=t.closest("[data-crid]"); if(!row||!t.dataset.f||t.tagName==="SELECT") return; const l=CR().costs.find(x=>x.id===row.dataset.crid); l[t.dataset.f] = t.dataset.f==="amount"?num(t.value):t.value; save(); renderAll(); });
+$("#crCosts").addEventListener("change", e=>{ const t=e.target; if(t.tagName!=="SELECT") return; const l=CR().costs.find(x=>x.id===t.closest("[data-crid]").dataset.crid); l[t.dataset.f]=t.value; save(); renderAll(true); });
+$("#crCosts").addEventListener("click", e=>{
+  const t=e.target;
+  if(t.id==="crAdd"){ CR().costs.push({id:"cr"+Date.now().toString(36), name:"", amount:0, basis:"comp", payer:"club"}); save(); renderAll(true); const n=$("#crCosts").querySelectorAll(".pnl-cname"); if(n.length) n[n.length-1].focus(); }
+  if(t.dataset.crdel){ const l=CR().costs.find(x=>x.id===t.dataset.crdel); if(!confirm(`Remove "${(l&&l.name)||"Unnamed"}"?`)) return; CR().costs=CR().costs.filter(x=>x.id!==t.dataset.crdel); save(); renderAll(true); }
+});
+$("#crExport").addEventListener("click", ()=>{
+  const p = crPlan(), q = v => '"'+String(v).replace(/"/g,'""')+'"', n = v => typeof v==="number" ? Math.round(v) : v;
+  const out = [["Club-hosted Recreational "+season,"Year 1","Year 2 on"].map(q).join(",")];
+  crStatement(p).forEach(l=> out.push(l.sec ? q(l.sec) : [q(l.label+(l.tag?` (${l.tag})`:"")), q(n(l.y1)), q(n(l.y2))].join(",")));
+  out.push("", ["Gymnasts per competition","Paid to clubs","Each club per year","NGL year 1","NGL year 2 on"].map(q).join(","));
+  [40,60,80,100,120].forEach(g=>{ const s=crPlan(g); out.push([g,s.clubPay,s.perClub-s.perClubRun,s.profit1,s.profit2].map(x=>Math.round(x)).join(",")); });
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([out.join("\n")],{type:"text/csv"}));
+  a.download=`NGL-${season}-Club-hosted-Recreational-PnL-${new Date().toISOString().slice(0,10)}.csv`; a.click();
 });
 
 /* ===== Overview ===== */
@@ -589,6 +800,10 @@ function renderOverview(force){
       <div class="note">${note}</div><button class="link" data-go="competitions" data-view="${go}">Open this P&amp;L</button></div></div>`;
   $("#cats").innerHTML =
     c.per.map(({k,s})=>card(`${PATHWAYS[k].short}`, PATHWAYS[k].accent, s, k, `${s.n} competition${s.n===1?"":"s"}, ${s.B.gymnasts} of ${s.F.gymnasts} places booked. ${gbp(s.NET[3])} profit if full.`)).join("") +
+    (()=>{ const p=crPlan(); return `<div class="cat" style="--c:${PATHWAYS.recreational.accent}"><span class="bar"></span><div class="in"><h3>Club-hosted Recreational</h3>
+      <div class="rows"><span class="k">Income</span><span class="v">${gbp(p.income)}</span><span class="k">Costs (year 1)</span><span class="v">${gbp(-p.costs1)}</span>
+      <span class="k p">Profit (year 1)</span><span class="v p ${p.profit1>=0?"pnl-pos":"pnl-neg"}">${gbp(p.profit1)}</span></div>
+      <div class="note">Plan: ${p.clubs} clubs, ${p.total} competitions, ${p.g} gymnasts each. ${gbp(p.profit2)} a year from year 2. Not included in the totals above until it's live.</div><button class="link" data-go="clubrec">Open this P&amp;L</button></div></div>`; })() +
     `<div class="cat" style="--c:#2c6e9b"><span class="bar"></span><div class="in"><h3>Judging</h3><div class="note">Not connected yet. Remote judging income and judge payments will show here.</div><button class="link" data-go="judging">What's needed</button></div></div>`+
     `<div class="cat" style="--c:#d9a521"><span class="bar"></span><div class="in"><h3>Licensing</h3><div class="note">Not connected yet. Awards and Schools licence income will show here.</div><button class="link" data-go="licensing">What's needed</button></div></div>`;
   $("#nglStmt").innerHTML = stmtHTML(c, `NGL ${season}`);
@@ -616,7 +831,7 @@ $("#cats").addEventListener("click", e=>{ const g=e.target.dataset.go; if(!g) re
 /* ===== Tabs, season ===== */
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected", x===b));
-  ["overview","competitions","judging","licensing"].forEach(t=>$("#tab-"+t).classList.toggle("hidden", t!==b.dataset.tab));
+  ["overview","competitions","clubrec","judging","licensing"].forEach(t=>$("#tab-"+t).classList.toggle("hidden", t!==b.dataset.tab));
 }));
 function fillSeasons(){
   const years = [...new Set(comps.map(c=>(c.date||"").slice(0,4)).filter(y=>/^\d{4}$/.test(y)))].sort();
@@ -627,7 +842,7 @@ function fillSeasons(){
 }
 $("#season").addEventListener("change", e=>{ season=e.target.value; renderAll(); });
 // force=true redraws the annual editor even if it has focus (after adding/removing a line or a remote update)
-function renderAll(force){ renderCompetitions(); renderOverview(force); }
+function renderAll(force){ renderCompetitions(); renderOverview(force); renderClubRec(force); }
 
 /* ===== Data ===== */
 function startLive(){
