@@ -615,7 +615,11 @@
   <div class="wrap" id="admin-dash" style="display:none">
     <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
       <div><div class="sec-title" style="margin-bottom:2px">Judging Applications</div><div class="sec-sub" style="margin-bottom:0">Review, accept, and confirm judges for each competition</div></div>
-      <button class="btn btn-ghost btn-small" onclick="window.adminLogout()">Sign Out</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-navy btn-small" style="width:auto" onclick="window.emailAllJudges()">&#x2709; Email All Judges</button>
+        <button class="btn btn-ghost btn-small" onclick="window.copyAllJudgeEmails()">&#x1F4CB; Copy Emails</button>
+        <button class="btn btn-ghost btn-small" onclick="window.adminLogout()">Sign Out</button>
+      </div>
     </div>
 
     <div class="stats-row">
@@ -1753,6 +1757,30 @@ window.deleteJudge = async function(uid) {
     window.renderAdminApplications();
   } catch (e) {
     alert('Could not delete this judge: ' + e.message);
+  }
+};
+
+// ══ EMAIL ALL JUDGES (mailto with everyone BCC'd, same pattern as the booking system) ══
+function getAllJudgeEmails() {
+  return [...new Set(allJudges.map(j => (j.email || '').trim()).filter(Boolean))];
+}
+
+window.emailAllJudges = function() {
+  const emails = getAllJudgeEmails();
+  if (!emails.length) { alert('No judge emails found yet.'); return; }
+  const subject = encodeURIComponent('NGL Judging Pathway');
+  window.location.href = 'mailto:?bcc=' + encodeURIComponent(emails.join(',')) + '&subject=' + subject;
+};
+
+window.copyAllJudgeEmails = async function() {
+  const emails = getAllJudgeEmails();
+  if (!emails.length) { alert('No judge emails found yet.'); return; }
+  const list = emails.join(', ');
+  try {
+    await navigator.clipboard.writeText(list);
+    alert('Copied ' + emails.length + ' judge email address' + (emails.length === 1 ? '' : 'es') + ' to the clipboard.');
+  } catch (e) {
+    alert('Could not copy automatically. Here are the addresses:\n\n' + list);
   }
 };
 
