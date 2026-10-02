@@ -596,6 +596,13 @@
   @media(min-width:680px){.pw-content .schools-cta{grid-template-columns:1fr 1fr;}}
   .pw-content .schools-cta .card{margin:0; display:flex; flex-direction:column; align-items:flex-start;}
   .pw-content .schools-cta p{line-height:1.55; font-size:15px; margin:0 0 16px; flex:1;}
+  .pw-content .schools-cta.one{grid-template-columns:1fr;}
+  .pw-content .rec-btns{display:flex; gap:10px; flex-wrap:wrap;}
+  .pw-content .buy-btn.rec-alt{background:transparent; color:var(--white); border:1px solid var(--line);}
+  .pw-content .rec-install{margin-top:14px;}
+  .pw-content .rec-install ul{margin:0 0 12px; padding-left:20px;}
+  .pw-content .rec-install li{margin-bottom:8px; line-height:1.5; font-size:14.5px;}
+  .pw-content .rec-small{color:var(--muted); font-size:13px; margin:0;}
   .pw-content .cta-tag{display:inline-block; padding:5px 12px; border-radius:999px; background:#f5d12f; color:#0a1440; font-weight:800; font-size:12px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px;}
 
   @media (max-width:480px){
@@ -688,6 +695,7 @@
     <div class="quick-label">Know where you're going? Quick links</div>
     <div class="quick-row">
       <a class="quick-pill" href="https://nglschools.co.uk/" target="_blank" rel="noopener">Schools Hub</a>
+      <a class="quick-pill" href="https://nglrecreational.co.uk/" target="_blank" rel="noopener">Recreational Hub</a>
       <a class="quick-pill" href="https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" target="_top">National League Table</a>
       <a class="quick-pill" href="https://www.nationalgymnasticsleague.co.uk/league-schedule-4" target="_top">Book 2026 Competitions</a>
       <a class="quick-pill" href="https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" target="_top">Book 2027 Competitions</a>
@@ -898,6 +906,8 @@
 
   var SCHOOLS_CLUB_HUB_URL = 'https://nglschools.co.uk/club/';
   var SCHOOLS_PARENT_HUB_URL = 'https://nglschools.co.uk/';
+  var REC_HUB_URL = 'https://nglrecreational.co.uk/';
+  var REC_FAMILIES_URL = 'https://nglrecreational.co.uk/families/';
 
   // ---- Recreational levels / skills / videos (shared by Awards + Competitions) ----
   var REC_BOOK_URL = 'https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration';
@@ -1378,11 +1388,30 @@
     return '<p class="coming-soon">Routine videos coming soon.</p>';
   }
 
+  // Recreational Hub entry: clubs register or log in, parents use their club code.
+  // Shows only the card for the audience picked in Step 1 (both if none).
+  function recHubCardsHTML(){
+    var club = '<div class="card"><div class="cta-tag">For clubs</div>' +
+      '<p>Lesson plans, warm-ups, award books and assessment sheets in the NGL Recreational Hub. Register your club to buy a licence, or log in if you already have one.</p>' +
+      '<div class="rec-btns"><a class="buy-btn" href="' + REC_HUB_URL + '?go=register" target="_blank" rel="noopener">Register your club</a>' +
+      '<a class="buy-btn rec-alt" href="' + REC_HUB_URL + '?go=login" target="_blank" rel="noopener">Club login</a></div></div>';
+    var family = '<div class="card"><div class="cta-tag">For families</div>' +
+      '<p>Got a Recreational code from your club? See what your child is learning this fortnight and how it links to their award book and competition.</p>' +
+      '<div class="rec-btns"><a class="buy-btn" href="' + REC_FAMILIES_URL + '" target="_blank" rel="noopener">Open the Families page</a></div></div>';
+    var cards = selectedAudience === 'club' ? club : selectedAudience === 'parent' ? family : club + family;
+    var install = '<div class="card rec-install"><div class="cta-tag">Save it to your phone</div>' +
+      '<p>The Hub works like an app. Open it on your phone, then:</p>' +
+      '<ul><li><strong>iPhone (Safari):</strong> tap the Share button, then <strong>Add to Home Screen</strong>.</li>' +
+      '<li><strong>Android (Chrome):</strong> tap the \u22ee menu, then <strong>Add to Home screen</strong> or <strong>Install app</strong>.</li></ul>' +
+      '<p class="rec-small">The NGL Recreational icon then sits on your home screen and opens straight into the Hub.</p></div>';
+    return '<div class="schools-cta' + (selectedAudience ? ' one' : '') + '">' + cards + '</div>' + install;
+  }
+
   function recreationalAwardsHTML(p){
     return '<div class="card"><p class="lede">' + p.desc + '</p></div>' +
       '<div class="card"><div class="book-layout"><img src="' + COVER_IMAGE.recreational + '" alt="NGL Recreational Awards Book cover">' +
       '<div class="book-copy"><p>The Recreational Awards Programme is made up of <strong>4 books, each with 4 levels</strong>, covering every stage of development in Recreational Gymnastics.</p>' +
-      '<div class="coming-tag">' + COMING_TEXT.recreational + '</div></div></div></div>';
+      '<div class="coming-tag">' + COMING_TEXT.recreational + '</div></div></div></div>' + recHubCardsHTML();
   }
 
   // Recreational's Awards→Competitions tab: same in-place switch, since the
