@@ -105,6 +105,11 @@ details.bycomp summary{cursor:pointer;padding:12px 16px;font-weight:600;color:va
 .pnl-assump h4{grid-column:1/-1;font-family:var(--cond);font-size:18px;color:var(--navy);margin:6px 0 0}
 .pnl-assump label{font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .pnl-assump input{width:80px;padding:5px 7px;border:1px solid var(--line);border-radius:3px;text-align:right}
+.assump-scope{grid-column:1/-1;font-size:13.5px;color:var(--ink);background:#fff;border:1px solid var(--line);border-left:4px solid var(--gold);padding:9px 12px;border-radius:3px}
+.assump-scope .btn{margin-top:6px;font-size:13px;padding:4px 10px}
+.pnl-assump label.ov input{background:var(--gold-soft);border-color:var(--gold);font-weight:600}
+.pnl-assump .fld{display:inline-flex;align-items:center;gap:4px}
+.pnl-assump .undo{background:none;border:none;color:var(--navy);font-size:15px;padding:0 2px;line-height:1}
 .pnl-custom{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);padding:7px 9px;border-radius:3px}
 .pnl-custom input.pnl-cname{width:200px;text-align:left}
 .pnl-custom select{padding:5px 7px;border:1px solid var(--line);border-radius:3px;background:#fff}
@@ -252,6 +257,7 @@ const PNL_DEFAULTS = {
   specPerGym:1.5, specPrice:6,
   venueHourly:100, venueHours:4, opsMgr:200, camRate:40, camCount:2, judgeRate:50, judgeCount:2, elevien:185,
   medalPrice:1.5, subdivisions:8, defaultPieces:4, aaMedals:0, recAllMedal:1, cardFee:1, hostKit:60, hostPay2:7.5, hostPay4:10,
+  over:{},
   annual:[ {id:"a_opsmgr", name:"National Ops Manager salary", type:"cost", amount:500, basis:"month"} ],
   custom:[]
 };
@@ -260,7 +266,8 @@ const MAX_JUDGES = 2;
 const MIGRATIONS = [
   {flag:"m_merch", lines:[
     {id:"a_merch_inc", name:"Merchandise sales", type:"income", amount:1000, basis:"year"},
-    {id:"a_merch_cost", name:"Merchandise stock", type:"cost", amount:500, basis:"year"} ]}
+    {id:"a_merch_cost", name:"Merchandise stock", type:"cost", amount:500, basis:"year"} ]},
+  {flag:"m_recops", over:{recreational:{opsMgr:0}}}
 ];
 const PNL_FIELDS = [
   ["Entry fees (per gymnast)", [["rec2","Recreational 2 piece"],["rec4","Recreational 3+ piece"],["genGirls","General League girls"],["genBoys","General League boys"],["perfGirls","Performance girls"],["perfBoys","Performance boys"],["schools","Schools"]]],
@@ -280,12 +287,20 @@ function isNewHost(c){
   const first = comps.filter(x=>venueKey(x)===venueKey(c)).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||String(a.id).localeCompare(String(b.id)))[0];
   return first && first.id===c.id;
 }
-function compPieces(c){ const m=/^(\d)piece$/.exec(c.apparatus||""); return m ? parseInt(m[1],10) : (A.defaultPieces||4); }
-function medalCount(c, gymnasts){
+// Each pathway can override any figure; anything not overridden uses the "All competitions" value.
+const overFor = path => (A.over && A.over[path]) || {};
+const effFor = path => Object.assign({}, A, overFor(path));
+const eff = c => effFor(compPathway(c));
+// Fields that only make sense for one pathway (others are shared by every pathway)
+const FIELD_PATHS = { rec2:["recreational"], rec4:["recreational"], genGirls:["general"], genBoys:["general"], perfGirls:["performance"], perfBoys:["performance"], schools:["schools"],
+  recAllMedal:["recreational"], hostPay2:["recreational"], hostPay4:["recreational"] };
+function compPieces(c, P){ P=P||eff(c); const m=/^(\d)piece$/.exec(c.apparatus||""); return m ? parseInt(m[1],10) : (P.defaultPieces||4); }
+function medalCount(c, gymnasts, P){
+  P = P||eff(c);
   // Recreational: everyone medals, so one medal per gymnast per apparatus
-  if(A.recAllMedal && compPathway(c)==="recreational") return gymnasts * (compPieces(c) + (A.aaMedals?1:0));
-  const subs = Math.max(1, A.subdivisions||1), per = gymnasts/subs;
-  return Math.round(subs * (compPieces(c) + (A.aaMedals?1:0)) * Math.min(3, per));
+  if(P.recAllMedal && compPathway(c)==="recreational") return gymnasts * (compPieces(c,P) + (P.aaMedals?1:0));
+  const subs = Math.max(1, P.subdivisions||1), per = gymnasts/subs;
+  return Math.round(subs * (compPieces(c,P) + (P.aaMedals?1:0)) * Math.min(3, per));
 }
 const fresh = () => JSON.parse(JSON.stringify(PNL_DEFAULTS));
 let A = fresh();
@@ -293,7 +308,8 @@ let migrated = false;
 function normalise(x){
   const a = Object.assign(fresh(), x||{}); if(!Array.isArray(a.custom)) a.custom=[]; if(!Array.isArray(a.annual)) a.annual=fresh().annual;
   delete a.medals; // replaced by the medal calculation
-  MIGRATIONS.forEach(m=>{ if(a[m.flag]) return; m.lines.forEach(l=>{ if(!a.annual.some(x=>x.id===l.id)) a.annual.push(Object.assign({},l)); }); a[m.flag]=true; migrated=true; });
+  if(!a.over||typeof a.over!=="object") a.over={};
+  MIGRATIONS.forEach(m=>{ if(a[m.flag]) return; if(m.over) Object.entries(m.over).forEach(([k,v])=>{ a.over[k]=Object.assign({}, v, a.over[k]||{}); }); (m.lines||[]).forEach(l=>{ if(!a.annual.some(x=>x.id===l.id)) a.annual.push(Object.assign({},l)); }); a[m.flag]=true; migrated=true; });
   return a;
 }
 const annualAmt = l => (parseFloat(l.amount)||0) * (l.basis==="month"?12:1);
@@ -315,6 +331,7 @@ function save(){
 
 /* ===== Competitions P&L (same maths as before) ===== */
 function pnlPrice(c){
+  const A = eff(c);
   const path = compPathway(c);
   const pieces = parseInt((/^(\d)piece$/.exec(c.apparatus||"")||[])[1]||"0",10);
   const g = c.gender;
@@ -328,16 +345,17 @@ function pnlPrice(c){
   return [0,"Pathway not yet priced"];
 }
 function pnlRow(c, gymnasts){
+  const P = eff(c);
   const [price,note] = pnlPrice(c);
-  const entry = gymnasts*price, spec = gymnasts*A.specPerGym*A.specPrice;
+  const entry = gymnasts*price, spec = gymnasts*P.specPerGym*P.specPrice;
   const saadi = /saadi/i.test(c.venue||"");
-  const venue = saadi ? 0 : A.venueHourly*A.venueHours;
+  const venue = saadi ? 0 : P.venueHourly*P.venueHours;
   const rec = compPathway(c)==="recreational";
-  const ops = rec ? 0 : A.opsMgr; // Recreational competitions carry no Ops Manager fee
+  const ops = P.opsMgr;
   // Recreational host clubs are paid per gymnast; nothing is paid when SAADI hosts
-  const hostPay = rec && !saadi ? gymnasts * (compPieces(c)<=2 ? A.hostPay2 : A.hostPay4) : 0;
-  const staff = ops + A.camRate*A.camCount, judges = A.judgeRate*Math.min(MAX_JUDGES, A.judgeCount), elev = A.elevien;
-  const medalN = medalCount(c, gymnasts), med = medalN*A.medalPrice, card = gymnasts*A.cardFee, kit = isNewHost(c) ? A.hostKit : 0;
+  const hostPay = rec && !saadi ? gymnasts * (compPieces(c,P)<=2 ? P.hostPay2 : P.hostPay4) : 0;
+  const staff = ops + P.camRate*P.camCount, judges = P.judgeRate*Math.min(MAX_JUDGES, P.judgeCount), elev = P.elevien;
+  const medalN = medalCount(c, gymnasts, P), med = medalN*P.medalPrice, card = gymnasts*P.cardFee, kit = isNewHost(c) ? P.hostKit : 0;
   let otherInc=0, otherCost=0; const lines={};
   A.custom.forEach(l=>{
     if(isFixed(l)) return; // monthly/yearly lines are added once to the totals, not per competition
@@ -348,7 +366,7 @@ function pnlRow(c, gymnasts){
     lines[l.id]=amt; if(l.type==="income") otherInc+=amt; else otherCost+=amt;
   });
   const income = entry+spec+otherInc, costs = venue+staff+judges+elev+med+card+kit+hostPay+otherCost;
-  return {c,gymnasts,price,note,entry,spec,otherInc,income,venue,staff,ops,hostPay,cams:A.camRate*A.camCount,judges,elev,med,medalN,card,kit,otherCost,costs,lines,profit:income-costs};
+  return {c,gymnasts,price,note,entry,spec,otherInc,income,venue,staff,ops,hostPay,cams:P.camRate*P.camCount,judges,elev,med,medalN,card,kit,otherCost,costs,lines,profit:income-costs};
 }
 const isFixed = l => l.basis==="month" || l.basis==="year";
 const fixedAmt = l => (parseFloat(l.amount)||0) * (l.basis==="month"?12:1);
@@ -424,7 +442,7 @@ function buildStatement(list, view){
   cost.push(["Camera operators", val(g=>g.cams)]);
   cost.push(["Remote judges", val(g=>g.judges)]);
   cost.push(["Elevien", val(g=>g.elev)]);
-  cost.push(["Medals", val(g=>g.med), `£${A.medalPrice} each`]);
+  cost.push(["Medals", val(g=>g.med), `£${effFor(view).medalPrice} each`]);
   cost.push(["Card payment fees", val(g=>g.card), "per gymnast"]);
   cost.push(["Host club t-shirts", val(g=>g.kit), "one-off per new host club"]);
   cost.push(["Host club payments", val(g=>g.hostPay), "Recreational, not at SAADI"]);
@@ -470,7 +488,8 @@ function renderPills(){
   $("#pathPills").innerHTML = `<button class="pill" data-view="all" aria-pressed="${compView==="all"}">All competitions</button>` +
     paths.map(k=>`<button class="pill" data-view="${k}" aria-pressed="${compView===k}"><i style="background:${PATHWAYS[k].accent}"></i>${PATHWAYS[k].short}</button>`).join("");
 }
-$("#pathPills").addEventListener("click", e=>{ const b=e.target.closest("[data-view]"); if(!b) return; compView=b.dataset.view; renderCompetitions(); });
+$("#pathPills").addEventListener("click", e=>{ const b=e.target.closest("[data-view]"); if(!b) return; compView=b.dataset.view; renderCompetitions(); if($("#pnl-assump").classList.contains("open")) renderAssump(); updateAssumpBtn(); });
+function updateAssumpBtn(){ const open=$("#pnl-assump").classList.contains("open"), w = compView==="all" ? "" : " for "+PATHWAYS[compView].short; $("#toggleAssump").textContent = open ? "Hide assumptions" : "Edit assumptions"+w; }
 
 /* Consolidated NGL P&L: one line per individual P&L */
 let lastNgl = null;
@@ -549,8 +568,15 @@ function pathOpts(sel){
     PATHWAY_ORDER.map(k=>`<option value="${k}"${sel===k?" selected":""}>${PATHWAYS[k].short} only</option>`).join("");
 }
 function renderAssump(){
-  $("#pnl-assump").innerHTML = PNL_FIELDS.map(([title,fields])=>`<h4>${title}</h4>`+
-      fields.map(([k,label])=>`<label>${label}<input type="number" step="${k==="medalPrice"||k==="cardFee"?0.05:k==="aaMedals"||k==="recAllMedal"?1:0.5}" min="0"${k==="judgeCount"?` max="${MAX_JUDGES}"`:""}${k==="aaMedals"||k==="recAllMedal"?` max="1"`:""} value="${A[k]}" data-k="${k}"></label>`).join("")).join("")+
+  const pw = compView==="all" ? null : compView, o = pw ? overFor(pw) : {}, E = pw ? effFor(pw) : A;
+  const show = k => !FIELD_PATHS[k] || !pw || FIELD_PATHS[k].includes(pw);
+  const nOver = Object.keys(o).length;
+  const intro = pw
+    ? `<div class="assump-scope"><b>${esc(PATHWAYS[pw].short)} only.</b> Changes here apply just to ${esc(PATHWAYS[pw].short)} competitions. Figures in gold differ from All competitions; click &#x21BA; to put one back.${nOver?` <button class="btn ghost" id="clearOver">Use All competitions figures for everything</button>`:""}</div>`
+    : `<div class="assump-scope"><b>All competitions.</b> These are the starting figures for every pathway. To change a figure for one pathway, choose it above (e.g. Recreational) and edit it there.${PATHWAY_ORDER.some(k=>Object.keys(overFor(k)).length)?`<br>Pathways with their own figures: ${PATHWAY_ORDER.filter(k=>Object.keys(overFor(k)).length).map(k=>esc(PATHWAYS[k].short)).join(", ")}.`:""}</div>`;
+  $("#pnl-assump").innerHTML = intro + PNL_FIELDS.map(([title,fields])=>{ const f=fields.filter(([k])=>show(k)); return f.length ? `<h4>${title}</h4>`+
+      f.map(([k,label])=>{ const ov = pw && k in o;
+        return `<label class="${ov?"ov":""}">${label}<span class="fld">${ov?`<button class="undo" data-undo="${k}" title="Use the All competitions figure (${A[k]})">&#x21BA;</button>`:""}<input type="number" step="${k==="medalPrice"||k==="cardFee"?0.05:k==="aaMedals"||k==="recAllMedal"?1:0.5}" min="0"${k==="judgeCount"?` max="${MAX_JUDGES}"`:""}${k==="aaMedals"||k==="recAllMedal"?` max="1"`:""} value="${E[k]}" data-k="${k}"></span></label>`; }).join("") : ""; }).join("")+
     `<h4>Your own income and cost lines</h4>`+
     (A.custom.length ? A.custom.map(l=>`<div class="pnl-custom" data-cid="${l.id}">
         <span class="pnl-ctype ${l.type==="income"?"inc":"cost"}">${l.type==="income"?"Income":"Cost"}</span>
@@ -565,18 +591,23 @@ function renderAssump(){
       <button class="btn red" data-addc="cost">Add cost line</button>
       <button class="btn ghost" id="resetAssump" style="margin-left:auto">Reset to defaults</button></div>`;
 }
-$("#toggleAssump").addEventListener("click", ()=>{ const el=$("#pnl-assump"); if(!el.classList.contains("open")) renderAssump(); el.classList.toggle("open"); $("#toggleAssump").textContent = el.classList.contains("open")?"Hide assumptions":"Edit assumptions"; });
+$("#toggleAssump").addEventListener("click", ()=>{ const el=$("#pnl-assump"); if(!el.classList.contains("open")) renderAssump(); el.classList.toggle("open"); updateAssumpBtn(); });
 $("#pnl-assump").addEventListener("input", e=>{
   const t=e.target;
-  if(t.dataset.k){ const n=parseFloat(t.value); A[t.dataset.k]=isNaN(n)?0:n; save(); renderAll(); return; }
+  if(t.dataset.k){ const n=parseFloat(t.value), v=isNaN(n)?0:n;
+    if(compView==="all") A[t.dataset.k]=v;
+    else { A.over[compView] = A.over[compView]||{}; if(v===A[t.dataset.k]) delete A.over[compView][t.dataset.k]; else A.over[compView][t.dataset.k]=v; }
+    save(); renderAll(); return; }
   const row=t.closest("[data-cid]"); if(row && t.dataset.f){ const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f] = t.dataset.f==="amount"?(parseFloat(t.value)||0):t.value; save(); renderAll(); }
 });
-$("#pnl-assump").addEventListener("change", e=>{ const t=e.target; if(t.tagName==="SELECT"){ const row=t.closest("[data-cid]"); const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f]=t.value; if(t.dataset.f==="basis" && isFixed(l) && !PATHWAYS[l.path]) l.path=""; save(); if(t.dataset.f==="basis") renderAssump(); renderAll(true); }});
+$("#pnl-assump").addEventListener("change", e=>{ const t=e.target; if(t.dataset.k){ renderAssump(); return; } if(t.tagName==="SELECT"){ const row=t.closest("[data-cid]"); const l=A.custom.find(x=>x.id===row.dataset.cid); l[t.dataset.f]=t.value; if(t.dataset.f==="basis" && isFixed(l) && !PATHWAYS[l.path]) l.path=""; save(); if(t.dataset.f==="basis") renderAssump(); renderAll(true); }});
 $("#pnl-assump").addEventListener("click", e=>{
   const t=e.target;
-  if(t.dataset.addc){ A.custom.push({id:"l"+Date.now().toString(36), name:"", type:t.dataset.addc, amount:0, basis:"comp", path:""}); save(); renderAssump(); renderAll(true); const n=document.querySelectorAll(".pnl-cname"); if(n.length) n[n.length-1].focus(); }
+  if(t.dataset.undo){ if(A.over[compView]) delete A.over[compView][t.dataset.undo]; save(); renderAssump(); renderAll(true); return; }
+  if(t.id==="clearOver"){ if(!confirm(`Use the All competitions figures for everything in ${PATHWAYS[compView].short}?`)) return; A.over[compView]={}; save(); renderAssump(); renderAll(true); return; }
+  if(t.dataset.addc){ A.custom.push({id:"l"+Date.now().toString(36), name:"", type:t.dataset.addc, amount:0, basis:"comp", path:compView==="all"?"":compView}); save(); renderAssump(); renderAll(true); const n=document.querySelectorAll(".pnl-cname"); if(n.length) n[n.length-1].focus(); }
   if(t.dataset.delc){ const l=A.custom.find(x=>x.id===t.dataset.delc); if(!confirm(`Remove "${(l&&l.name)||"Unnamed"}"?`)) return; A.custom=A.custom.filter(x=>x.id!==t.dataset.delc); save(); renderAssump(); renderAll(true); }
-  if(t.id==="resetAssump"){ if(!confirm("Reset every competition figure to the defaults and remove your own lines? Annual income and overheads are kept.")) return; const keep=A.annual; A=fresh(); A.annual=keep; save(); renderAssump(); renderAll(true); }
+  if(t.id==="resetAssump"){ if(!confirm("Reset every competition figure to the defaults and remove your own lines? Annual income and overheads are kept.")) return; const keep=A.annual, flags=Object.fromEntries(MIGRATIONS.map(m=>[m.flag,true])); A=Object.assign(fresh(), flags); A.annual=keep; save(); renderAssump(); renderAll(true); }
 });
 $("#exportCsv").addEventListener("click", ()=>{
   const inc=A.custom.filter(l=>!isFixed(l)&&l.type==="income"), cst=A.custom.filter(l=>!isFixed(l)&&l.type!=="income");
@@ -628,7 +659,7 @@ $("#annualEditor").addEventListener("click", e=>{
   if(t.dataset.adda){ A.annual.push({id:"a"+Date.now().toString(36), name:"", type:t.dataset.adda, amount:0, basis:"month"}); save(); renderAll(true); }
   if(t.dataset.dela){ const l=A.annual.find(x=>x.id===t.dataset.dela); if(!confirm(`Remove "${(l&&l.name)||"Unnamed"}"?`)) return; A.annual=A.annual.filter(x=>x.id!==t.dataset.dela); save(); renderAll(true); }
 });
-$("#cats").addEventListener("click", e=>{ const g=e.target.dataset.go; if(!g) return; if(e.target.dataset.view){ compView=e.target.dataset.view; renderCompetitions(); } document.querySelector(`.tabs [data-tab="${g}"]`).click(); window.scrollTo(0,0); });
+$("#cats").addEventListener("click", e=>{ const g=e.target.dataset.go; if(!g) return; if(e.target.dataset.view){ compView=e.target.dataset.view; renderCompetitions(); if($("#pnl-assump").classList.contains("open")) renderAssump(); updateAssumpBtn(); } document.querySelector(`.tabs [data-tab="${g}"]`).click(); window.scrollTo(0,0); });
 
 /* ===== Tabs, season ===== */
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
