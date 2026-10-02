@@ -329,11 +329,32 @@
 
     <!-- Logged out: auth forms -->
     <div id="auth-area">
-      <div id="no-profile-warning" style="display:none;max-width:440px;margin:0 auto 14px" class="err-box">
-        Your login exists but no pathway profile is linked to it. Please sign out, then register again below with a new email &mdash; or contact an NGL admin to fix your existing account.
-        <button class="btn btn-ghost btn-small" style="margin-top:8px" onclick="window.doLogout()">Sign Out</button>
+      <!-- COMPLETE PROFILE RECOVERY: shown when a login exists but its profile write never finished -->
+      <div id="complete-profile-area" style="display:none;max-width:440px;margin:0 auto">
+        <div class="card">
+          <div class="card-head"><h2>Finish Setting Up Your Account</h2><p>Your login worked, but your profile didn't finish saving last time &mdash; just a couple of details and you're in</p></div>
+          <div class="card-body">
+            <div class="fg"><label>Full Name <span class="req">*</span></label><input type="text" id="cp-name" placeholder="e.g. Sam Taylor"></div>
+            <div class="fg"><label>Club</label><input type="text" id="cp-club" placeholder="e.g. Northgate Gymnastics Club"></div>
+            <div class="fg"><label>Phone <span class="req">*</span></label><input type="tel" id="cp-phone" placeholder="07xxx xxxxxx"></div>
+            <div class="fg">
+              <label>British Gymnastics Qualification</label>
+              <select id="cp-qual">
+                <option value="None">None yet &mdash; I'm starting as an Apprentice</option>
+                <option value="Club Judge">Club Judge</option>
+                <option value="Regional Judge">Regional Judge</option>
+                <option value="National Judge">National Judge</option>
+                <option value="Brevet">Brevet</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="btn-complete-profile" onclick="window.completeProfile()">Finish Setup &#8594;</button>
+            <div class="err-box" id="complete-profile-err"></div>
+            <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="window.doLogout()">Not you? Sign Out</button>
+          </div>
+        </div>
       </div>
-      <div class="card" style="max-width:440px;margin:0 auto">
+
+      <div id="no-login-forms" class="card" style="max-width:440px;margin:0 auto">
         <div class="card-head"><h2>Join the NGL Judging Pathway</h2><p>Register once, judge forever</p></div>
         <div class="card-body">
           <div class="auth-toggle">
@@ -1088,15 +1109,67 @@ window.doRegister = async function() {
         photoUrl = await getDownloadURL(photoRef);
       } catch (e) { /* photo upload failing shouldn't block registration */ }
     }
-    await setDoc(doc(db, 'ngl_judges', cred.user.uid), {
+    const profile = {
       name, club, email, phone, qualification: qual, photoUrl,
       priorShadowed, priorSecondJudged, createdAt: new Date().toISOString()
-    });
-    // onAuthStateChanged will pick up the rest
+    };
+    await setDoc(doc(db, 'ngl_judges', cred.user.uid), profile);
+    // Update the UI directly rather than relying on the auth listener, which may have
+    // already fired (and found no profile) before this write finished on a slow connection.
+    currentProfile = profile;
+    document.getElementById('complete-profile-area').style.display = 'none';
+    document.getElementById('auth-area').style.display = 'none';
+    document.getElementById('passport-area').style.display = 'block';
+    document.getElementById('signup-gate').style.display = 'none';
+    renderPassport();
   } catch (e) {
-    showAuthErr('register-err', friendlyAuthError(e));
+    if (auth.currentUser) {
+      // The login was created but the profile write failed (flaky connection, closed tab, etc).
+      // Don't show a misleading "registration failed" error — the account exists; send them
+      // to the recovery form instead, which writes the profile for this same login.
+      document.getElementById('complete-profile-area').style.display = 'block';
+      document.getElementById('no-login-forms').style.display = 'none';
+      document.getElementById('cp-name').value = name;
+      document.getElementById('cp-club').value = club;
+      document.getElementById('cp-phone').value = phone;
+      document.getElementById('cp-qual').value = qual;
+    } else {
+      showAuthErr('register-err', friendlyAuthError(e));
+    }
   }
   btn.disabled = false; btn.textContent = 'Join the Pathway \u2192';
+};
+
+window.completeProfile = async function() {
+  if (!currentUser) return;
+  const name  = document.getElementById('cp-name').value.trim();
+  const club  = document.getElementById('cp-club').value.trim();
+  const phone = document.getElementById('cp-phone').value.trim();
+  const qual  = document.getElementById('cp-qual').value;
+  const errBox = document.getElementById('complete-profile-err');
+  errBox.style.display = 'none';
+
+  if (!name)  return showAuthErr('complete-profile-err', 'Please enter your name.');
+  if (!phone) return showAuthErr('complete-profile-err', 'Please enter a contact phone number.');
+
+  const btn = document.getElementById('btn-complete-profile');
+  btn.disabled = true; btn.textContent = 'Saving\u2026';
+  try {
+    const profile = {
+      name, club, email: currentUser.email || '', phone, qualification: qual, photoUrl: '',
+      priorShadowed: 0, priorSecondJudged: 0, createdAt: new Date().toISOString()
+    };
+    await setDoc(doc(db, 'ngl_judges', currentUser.uid), profile);
+    currentProfile = profile;
+    document.getElementById('complete-profile-area').style.display = 'none';
+    document.getElementById('auth-area').style.display = 'none';
+    document.getElementById('passport-area').style.display = 'block';
+    document.getElementById('signup-gate').style.display = 'none';
+    renderPassport();
+  } catch (e) {
+    showAuthErr('complete-profile-err', 'Could not save your profile: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = 'Finish Setup \u2192';
 };
 
 window.doLogin = async function() {
@@ -1176,12 +1249,14 @@ onAuthStateChanged(auth, async (user) => {
     const snap = await getDoc(doc(db, 'ngl_judges', user.uid));
     currentProfile = snap.exists() ? snap.data() : null;
     if (!currentProfile) {
-      document.getElementById('no-profile-warning').style.display = 'block';
+      document.getElementById('complete-profile-area').style.display = 'block';
+      document.getElementById('no-login-forms').style.display = 'none';
       document.getElementById('auth-area').style.display = 'block';
       document.getElementById('passport-area').style.display = 'none';
       document.getElementById('signup-gate').style.display = 'block';
     } else {
-      document.getElementById('no-profile-warning').style.display = 'none';
+      document.getElementById('complete-profile-area').style.display = 'none';
+      document.getElementById('no-login-forms').style.display = 'block';
       document.getElementById('auth-area').style.display = 'none';
       document.getElementById('passport-area').style.display = 'block';
       document.getElementById('signup-gate').style.display = 'none';
@@ -1194,7 +1269,8 @@ onAuthStateChanged(auth, async (user) => {
     });
   } else {
     currentProfile = null;
-    document.getElementById('no-profile-warning').style.display = 'none';
+    document.getElementById('complete-profile-area').style.display = 'none';
+    document.getElementById('no-login-forms').style.display = 'block';
     document.getElementById('auth-area').style.display = 'block';
     document.getElementById('passport-area').style.display = 'none';
     document.getElementById('signup-gate').style.display = 'block';
@@ -1760,30 +1836,5 @@ window.deleteResource = async function(id) {
 };
 
 </script>
-  <!-- Add to ngl-judging-pathway.html (the file on GitHub Pages), just before
-     the closing </body> tag. It tells the Squarespace page how tall this
-     page is, so the iframe can grow and shrink to fit instead of using a
-     fixed height with its own scrollbar. -->
-<script>
-(function () {
-  var lastHeight = 0;
-  function report() {
-    var h = document.documentElement.scrollHeight;
-    if (h !== lastHeight) {
-      lastHeight = h;
-      window.parent.postMessage({ type: 'ngl-judging-resize', height: h }, '*');
-    }
-  }
-  window.addEventListener('load', report);
-  window.addEventListener('resize', report);
-  if (window.ResizeObserver) {
-    new ResizeObserver(report).observe(document.body);
-  } else {
-    setInterval(report, 400);
-  }
-  report();
-})();
-</script>
-
 </body>
 </html>
