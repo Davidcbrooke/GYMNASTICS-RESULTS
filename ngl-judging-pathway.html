@@ -1769,13 +1769,13 @@ window.emailAllJudges = function() {
   const emails = getAllJudgeEmails();
   if (!emails.length) { alert('No judge emails found yet.'); return; }
   const subject = encodeURIComponent('NGL Judging Pathway');
-  window.location.href = 'mailto:?bcc=' + encodeURIComponent(emails.join(',')) + '&subject=' + subject;
+  window.location.href = 'mailto:?bcc=' + encodeURIComponent(emails.join(';')) + '&subject=' + subject;
 };
 
 window.copyAllJudgeEmails = async function() {
   const emails = getAllJudgeEmails();
   if (!emails.length) { alert('No judge emails found yet.'); return; }
-  const list = emails.join(', ');
+  const list = emails.join('; ');
   try {
     await navigator.clipboard.writeText(list);
     alert('Copied ' + emails.length + ' judge email address' + (emails.length === 1 ? '' : 'es') + ' to the clipboard.');
