@@ -255,6 +255,13 @@
   }
   .pw-content .lede{font-size:15px; line-height:1.55; color:var(--white); margin:0 0 20px;}
   .pw-content .lede:last-child{margin-bottom:0;}
+  .pw-content .ov-p{font-size:15px; line-height:1.6; color:var(--muted); margin:0 0 14px;}
+  .pw-content .ov-p strong{color:var(--white); font-weight:700;}
+  .pw-content .ov-formats{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:4px;}
+  @media (max-width:640px){ .pw-content .ov-formats{grid-template-columns:1fr;} }
+  .pw-content .ov-format{background:var(--navy); border:1px solid var(--line-soft); border-radius:12px; padding:14px 16px;}
+  .pw-content .ov-format p{margin:8px 0 0; font-size:14.5px; line-height:1.55; color:var(--white);}
+  .pw-content .ov-tag{display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#0a1440; background:#38bcb9; border-radius:999px; padding:4px 10px;}
   .pw-content .card ul{margin:0 0 18px; padding-left:20px;}
   .pw-content .card li{margin-bottom:8px; line-height:1.5; font-size:14.5px;}
   .pw-content .gallery-label{font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:0 0 12px; font-weight:700;}
@@ -589,17 +596,6 @@
   @media(min-width:680px){.pw-content .schools-cta{grid-template-columns:1fr 1fr;}}
   .pw-content .schools-cta .card{margin:0; display:flex; flex-direction:column; align-items:flex-start;}
   .pw-content .schools-cta p{line-height:1.55; font-size:15px; margin:0 0 16px; flex:1;}
-  /* NGL Awards Programme Licence card (clubs only, no prices) */
-  .pw-content .licence-card{border:2px solid var(--pathway-color, #f5d12f);}
-  .pw-content .licence-card h3{margin:0 0 6px; font-size:20px;}
-  .pw-content .lic-cols{display:grid; grid-template-columns:1fr; gap:14px; margin:14px 0;}
-  @media(min-width:680px){.pw-content .lic-cols{grid-template-columns:1fr 1fr;}}
-  .pw-content .lic-col{background:rgba(255,255,255,.05); border-radius:12px; padding:14px 16px;}
-  .pw-content .lic-col h4{margin:0 0 8px; font-size:15px;}
-  .pw-content .lic-col ul{margin:0; padding-left:20px;}
-  .pw-content .lic-col li{margin:0 0 6px; line-height:1.45;}
-  .pw-content .lic-steps{margin:0 0 16px; padding-left:22px;}
-  .pw-content .lic-steps li{margin:0 0 8px; line-height:1.5;}
   .pw-content .cta-tag{display:inline-block; padding:5px 12px; border-radius:999px; background:#f5d12f; color:#0a1440; font-weight:800; font-size:12px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px;}
 
   @media (max-width:480px){
@@ -771,7 +767,7 @@
     <div class="pw-content" id="pw-content"></div>
   </div>
 
-  <a class="new-here" href="https://www.nationalgymnasticsleague.co.uk/club-support-" target="_top">New to the NGL? See what we offer clubs →</a>
+  <a class="new-here" href="https://www.nationalgymnasticsleague.co.uk/club-support-" target="_top">New to the NGL? See what membership includes →</a>
 
   <div class="card">
     <h2>Who We Are</h2>
@@ -842,7 +838,7 @@
   // Step 1: audience
   // ============================================================
   var audienceNotes = {
-    club: "Everything to run your pathway: the NGL Awards Programme Licence, competitions, judging and club support, in one place.",
+    club: "Everything to run your pathway — awards scheme, competitions, judging and club support, in one place.",
     parent: "Follow your gymnast's pathway — their awards progress and upcoming competitions, at a glance."
   };
   var audienceButtons = document.querySelectorAll('.audience-btn');
@@ -1004,7 +1000,16 @@
       ]
     },
     performance: {
-      overview: "NGL Performance League — Levels 1 to 6, following on from General League. Launching for the 2027 season.",
+      overview: "NGL Performance League — Levels 1 to 6, for gymnasts training over 10 hours a week. Launching for the 2027 season.",
+      overviewHTML:
+        '<p class="lede"><strong>NGL Performance League — Levels 1 to 6, for gymnasts training over 10 hours a week.</strong> Launching for the 2027 season.</p>' +
+        '<p class="ov-p">At this level, the official British Gymnastics competitions are the Women\'s Artistic <strong>NDP Grades</strong> and <strong>Classic Challenge</strong>, and the Men\'s Artistic <strong>Bob Currier</strong> and <strong>Paul Blakebrough</strong> pathways.</p>' +
+        '<p class="ov-p">The aim of NGL Performance competitions is to support every need of gymnasts at this level. Some find the competitive standard too high, or the restrictions too rigid, but still want to continue their journey. Others are looking for extra development and preparation before they move on to the NDP Grades, Classic Challenge, Bob Currier or Paul Blakebrough pathways.</p>' +
+        '<p class="ov-p">This means we will be developing a number of formats. To begin with:</p>' +
+        '<div class="ov-formats">' +
+          '<div class="ov-format"><span class="ov-tag">Girls · WAG</span><p>Preparation competitions built on the British Gymnastics pathway, to support gymnasts on their way to the final BG event.</p></div>' +
+          '<div class="ov-format"><span class="ov-tag">Boys · MAG</span><p>A competition that relaxes the age regulations while keeping the challenging level.</p></div>' +
+        '</div>',
       seasons: [
         {
           label: "2027 Season",
@@ -1274,7 +1279,7 @@
       return '<div class="section-panel' + (i === 0 ? ' active' : '') + '" data-sec="s' + i + '"><div class="action-grid">' +
         s.actions.map(actionCardHTML).join('') + '</div>' + extraHTML + '</div>';
     }).join('');
-    return '<div class="card"><p class="lede">' + data.overview + '</p></div><div class="section-tabs">' + tabs + '</div>' + panels;
+    return '<div class="card">' + (data.overviewHTML || '<p class="lede">' + data.overview + '</p>') + '</div><div class="section-tabs">' + tabs + '</div>' + panels;
   }
 
   // ============================================================
@@ -1397,7 +1402,7 @@
       '<p>A six-level programme across Floor, Bench and Vault, delivered in schools by your local British Gymnastics club, with Bronze, Silver and Gold certificates and a Graduation Performance to finish the year.</p>' +
       '</div></div></div>' +
       '<div class="schools-cta">' +
-      '<div class="card"><div class="cta-tag">For clubs</div><p>Take NGL Schools into your local schools. See how the programme works and register your club.</p>' +
+      '<div class="card"><div class="cta-tag">For clubs</div><p>Take NGL Schools into your local schools. See how the programme works, licence pricing, and register your club.</p>' +
       '<a class="buy-btn" href="' + SCHOOLS_CLUB_HUB_URL + '" target="_blank" rel="noopener">NGL Schools Club Hub</a></div>' +
       '<div class="card"><div class="cta-tag">For families</div><p>Got an NGL Schools code from your club or school? Watch the routines and practise at home.</p>' +
       '<a class="buy-btn" href="' + SCHOOLS_PARENT_HUB_URL + '" target="_blank" rel="noopener">Open the Schools Hub</a></div>' +
@@ -1433,70 +1438,7 @@
       '<a class="buy-btn" href="' + SCHOOLS_PARENT_HUB_URL + '" target="_blank" rel="noopener">Open the Schools Hub</a></div>';
   }
 
-  // ============================================================
-  // NGL AWARDS PROGRAMME LICENCE (shown to clubs on Awards Scheme; no prices)
-  // ============================================================
-  var LICENCE_COPY = {
-    preschool: {
-      intro: "Bring the Around the World with Somi &amp; Flic adventure to your Pre-School classes.",
-      club: ["Themed training plans, ready to teach", "Ready-made social media posts for every theme", "Exclusive use of the NGL Somi &amp; Flic characters", "Extra themes available to add"],
-      gymnast: ["Their own NGL Passport", "A country medal every 4 weeks, sent to your club with each term's registration"]
-    },
-    schools: {
-      intro: "A ready-made, recognised awards programme your coaches can deliver in any primary school.",
-      club: ["The NGL Schools programme and a Club Hub to manage your schools", "Tuition videos for your coaches", "A club code for the Schools Hub app, for every family", "The right to run NGL Graduation Ceremonies"],
-      gymnast: ["A six-level Awards Book that lasts for years", "Bronze, Silver and Gold certificates", "The Schools Hub app and routine videos", "A place at Graduation"]
-    },
-    recreational: {
-      intro: "A full year of coaching, done for you, with a medal moment every term.",
-      club: ["A full year of weekly coaching plans, illustrated and aligned to NGL Recreational competitions", "The Recreational Hub: routine, masterclass and conditioning videos"],
-      gymnast: ["The NGL Recreational Awards Book", "A medal each term for the level they pass, sent to your club with each term's registration", "Attendance certificates"]
-    },
-    general: {
-      intro: "Compete locally, rank nationally, with a route to National Finals for every gymnast.",
-      club: ["Entry to the General League", "League rules and routine resources", "Your club on the live National League Table", "A route to regional qualification and National Finals"],
-      gymnast: ["The Gymnast Progress Book, Levels 1 to 4", "A place in the national rankings"]
-    },
-    performance: {
-      intro: "Structured routines, higher-level competition and national rankings for your stronger gymnasts.",
-      club: ["Entry to the Performance League, Levels 1 to 6", "Rules and routine resources", "Your club in the national Performance rankings"],
-      gymnast: ["The Gymnast Routine Book, Levels 1 to 6", "A place in the national rankings"]
-    }
-  };
-  var LICENCE_MAILTO = 'mailto:admin@nationalgymnasticsleague.co.uk?subject=' + encodeURIComponent('NGL Awards Programme Licence: register our interest');
-
-  function licenceCardHTML(id){
-    var p = PATHWAY_META[id], c = LICENCE_COPY[id];
-    if (!c) {
-      return '<div class="card licence-card"><div class="cta-tag">For clubs</div><h3>NGL Awards Programme Licence</h3>' +
-        '<p>' + p.name + ' will run on the same simple licence as every NGL pathway: a yearly Club Licence and a termly Gymnast Licence. Register your interest and we will let you know when it opens.</p>' +
-        '<a class="buy-btn" href="' + LICENCE_MAILTO + '" target="_top">Register your interest</a></div>';
-    }
-    var li = function (arr) { return '<ul>' + arr.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>'; };
-    return '<div class="card licence-card"><div class="cta-tag">For clubs</div>' +
-      '<h3>NGL Awards Programme Licence</h3>' +
-      '<p class="lede">' + c.intro + ' Your licence lets your club deliver the NGL Awards&reg; and present official NGL medals and certificates.</p>' +
-      '<div class="lic-cols">' +
-        '<div class="lic-col"><h4>Your club gets: Club Licence</h4>' + li(c.club) + '</div>' +
-        '<div class="lic-col"><h4>Each gymnast gets: Gymnast Licence</h4>' + li(c.gymnast) + '</div>' +
-      '</div>' +
-      '<h4 style="margin:0 0 8px;">How it works</h4>' +
-      '<ol class="lic-steps">' +
-        '<li><strong>Club Licence, yearly.</strong> Tiered to the number of Gymnast Licences you hold, so smaller clubs pay less. It renews each September, and joining mid-year is pro-rata. Founding clubs lock in a lower price.</li>' +
-        '<li><strong>Gymnast Licence, termly.</strong> Each term you confirm your number of gymnasts. One bill covers their licences, that term\'s medals and a book for anyone new. Add gymnasts at any time.</li>' +
-      '</ol>' +
-      '<a class="buy-btn" href="' + LICENCE_MAILTO + '" target="_top">Register your interest</a>' +
-      '</div>';
-  }
-
   function awardsPanelHTML(id){
-    var html = awardsPanelInner(id);
-    if (selectedAudience !== 'club') return html;
-    // Clubs see the licence at the top of the Awards Programme tab
-    return html.replace('<div class="section-panel active" data-sec="awards">', '<div class="section-panel active" data-sec="awards">' + licenceCardHTML(id));
-  }
-
-  function awardsPanelInner(id){
     var p = PATHWAY_META[id];
     if (id === 'schools') {
       return pathwaySectionsHTML({ awardsHTML: schoolsAwardsHTML(p), eventLabel: p.eventLabel, eventHTML: schoolsEventHTML(), videosHTML: schoolsVideosHTML() });
@@ -1744,7 +1686,6 @@
     if (keep) {
       choiceRow.querySelectorAll('.choice-card').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.type === keep)); });
       if (keep === 'competitions' && selectedPathwayId === 'recreational') showStep4(selectedPathwayId, keep); // re-render club banner
-      if (keep === 'awards') showStep4(selectedPathwayId, keep); // show or hide the club licence card
     }
   }
 
