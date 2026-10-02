@@ -338,14 +338,8 @@
             <div class="fg"><label>Club</label><input type="text" id="cp-club" placeholder="e.g. Northgate Gymnastics Club"></div>
             <div class="fg"><label>Phone <span class="req">*</span></label><input type="tel" id="cp-phone" placeholder="07xxx xxxxxx"></div>
             <div class="fg">
-              <label>British Gymnastics Qualification</label>
-              <select id="cp-qual">
-                <option value="None">None yet &mdash; I'm starting as an Apprentice</option>
-                <option value="Club Judge">Club Judge</option>
-                <option value="Regional Judge">Regional Judge</option>
-                <option value="National Judge">National Judge</option>
-                <option value="Brevet">Brevet</option>
-              </select>
+              <label>British Gymnastics Qualification(s)</label>
+              <div id="cp-qual-rows"></div>
             </div>
             <button class="btn btn-primary" id="btn-complete-profile" onclick="window.completeProfile()">Finish Setup &#8594;</button>
             <div class="err-box" id="complete-profile-err"></div>
@@ -380,15 +374,9 @@
             </div>
             <div class="fg"><label>Password <span class="req">*</span></label><input type="password" id="rg-password" placeholder="At least 6 characters"></div>
             <div class="fg">
-              <label>British Gymnastics Qualification</label>
-              <select id="rg-qual" onchange="window.togglePriorExperience()">
-                <option value="None">None yet &mdash; I'm starting as an Apprentice</option>
-                <option value="Club Judge">Club Judge</option>
-                <option value="Regional Judge">Regional Judge</option>
-                <option value="National Judge">National Judge</option>
-                <option value="Brevet">Brevet</option>
-              </select>
-              <div class="hint">Your qualification sets your starting tier: none = Apprentice, Club Judge = Club Judge, Regional or above = Senior.</div>
+              <label>British Gymnastics Qualification(s)</label>
+              <div id="rg-qual-rows"></div>
+              <div class="hint">Add one row per discipline if you're qualified in more than one. Your highest qualification sets your starting tier: none = Apprentice, Club Judge = Club Judge, Regional or above = Senior.</div>
             </div>
             <div id="rg-prior-wrap" style="display:none">
               <div class="form-row2">
@@ -443,6 +431,7 @@
             <div class="apparatus-grid" id="pp-apparatus"></div>
           </div>
         </div>
+        <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="window.openEditProfileModal()">&#x270F;&#xFE0F; Edit My Profile</button>
       </div>
 
       <div class="card" style="margin-bottom:16px" id="progress-card">
@@ -708,19 +697,37 @@
       <input type="hidden" id="qual-uid">
       <p style="font-size:0.82rem;color:var(--navy);margin-bottom:14px" id="qual-summary"></p>
       <div class="fg">
-        <label>British Gymnastics Qualification</label>
-        <select id="qual-select">
-          <option value="None">None</option>
-          <option value="Club Judge">Club Judge</option>
-          <option value="Regional Judge">Regional Judge</option>
-          <option value="National Judge">National Judge</option>
-          <option value="Brevet">Brevet</option>
-        </select>
+        <label>British Gymnastics Qualification(s)</label>
+        <div id="qual-modal-rows"></div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost btn-small" onclick="window.closeQualModal()">Cancel</button>
       <button class="btn btn-primary" style="width:auto" onclick="window.saveQualification()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MY PROFILE MODAL (self-service, for judges) -->
+<div class="modal-overlay" id="edit-profile-modal">
+  <div class="modal">
+    <div class="modal-head">
+      &#x270F;&#xFE0F; Edit My Profile
+      <button class="modal-close" onclick="window.closeEditProfileModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg"><label>Full Name <span class="req">*</span></label><input type="text" id="ep-name"></div>
+      <div class="fg"><label>Club</label><input type="text" id="ep-club"></div>
+      <div class="fg"><label>Phone <span class="req">*</span></label><input type="tel" id="ep-phone"></div>
+      <div class="fg">
+        <label>British Gymnastics Qualification(s)</label>
+        <div id="ep-qual-rows"></div>
+      </div>
+      <div class="err-box" id="edit-profile-err"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-small" onclick="window.closeEditProfileModal()">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" id="btn-save-my-profile" onclick="window.saveMyProfile()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -793,7 +800,7 @@ const SHADOWS_TO_UNLOCK_JUNIOR = 3;
 
 // Tier is driven by BG qualification, with one experience-based route to Club Judge for those with no qualification yet.
 function calcTier(profile, shadowCount) {
-  const qual = profile.qualification;
+  const qual = highestQualLevel(profile);
   let qualTier = 1;
   if (qual === 'Club Judge') qualTier = 2;
   if (SENIOR_QUALS.includes(qual)) qualTier = 3;
@@ -960,13 +967,92 @@ window.setAuthMode = function(mode) {
   document.getElementById('tab-register').classList.toggle('active', mode === 'register');
   document.getElementById('login-form').style.display = mode === 'login' ? 'block' : 'none';
   document.getElementById('register-form').style.display = mode === 'register' ? 'block' : 'none';
-  if (mode === 'register') window.togglePriorExperience();
+  if (mode === 'register') {
+    QUAL_STATE.register = [{ discipline: 'Not Discipline-Specific', level: 'None' }];
+    renderQualRows('register', 'rg-qual-rows');
+    window.togglePriorExperience();
+  }
 };
 
-window.togglePriorExperience = function() {
-  const qual = document.getElementById('rg-qual').value;
-  document.getElementById('rg-prior-wrap').style.display = (qual === 'None') ? 'block' : 'none';
+// ══ QUALIFICATION ROWS (shared: registration, admin edit, self-service profile edit) ══
+const QUAL_LEVELS = ['None', 'Club Judge', 'Regional Judge', 'National Judge', 'Brevet'];
+const QUAL_DISCIPLINES = ['Not Discipline-Specific', 'WAG (Girls)', 'MAG (Boys)'];
+const QUAL_RANK = { 'None': 1, 'Club Judge': 2, 'Regional Judge': 3, 'National Judge': 3, 'Brevet': 3 };
+const QUAL_STATE = { register: [{ discipline: 'Not Discipline-Specific', level: 'None' }], completeProfile: [], editProfile: [], admin: [] };
+
+function renderQualRows(stateKey, containerId) {
+  const rows = QUAL_STATE[stateKey];
+  const el = document.getElementById(containerId);
+  el.innerHTML = rows.map((row, i) =>
+    '<div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px">' +
+      '<div class="fg" style="flex:1;margin-bottom:0">' +
+        (i === 0 ? '<label style="font-size:0.6rem">Discipline</label>' : '') +
+        '<select onchange="window.updateQualRow(\'' + stateKey + '\',\'' + containerId + '\',' + i + ',\'discipline\',this.value)">' +
+          QUAL_DISCIPLINES.map(d => '<option value="' + d + '"' + (row.discipline === d ? ' selected' : '') + '>' + d + '</option>').join('') +
+        '</select></div>' +
+      '<div class="fg" style="flex:1;margin-bottom:0">' +
+        (i === 0 ? '<label style="font-size:0.6rem">Qualification</label>' : '') +
+        '<select onchange="window.updateQualRow(\'' + stateKey + '\',\'' + containerId + '\',' + i + ',\'level\',this.value)">' +
+          QUAL_LEVELS.map(l => '<option value="' + l + '"' + (row.level === l ? ' selected' : '') + '>' + (l === 'None' ? 'None yet' : l) + '</option>').join('') +
+        '</select></div>' +
+      (rows.length > 1 ? '<button type="button" class="btn btn-ghost btn-small" onclick="window.removeQualRow(\'' + stateKey + '\',\'' + containerId + '\',' + i + ')">&#10005;</button>' : '') +
+    '</div>'
+  ).join('') +
+  '<button type="button" class="btn btn-ghost btn-small" onclick="window.addQualRow(\'' + stateKey + '\',\'' + containerId + '\')">+ Add Another Qualification</button>';
+}
+
+window.updateQualRow = function(stateKey, containerId, i, field, value) {
+  QUAL_STATE[stateKey][i][field] = value;
+  if (stateKey === 'register') window.togglePriorExperience();
 };
+
+window.addQualRow = function(stateKey, containerId) {
+  QUAL_STATE[stateKey].push({ discipline: 'Not Discipline-Specific', level: 'None' });
+  renderQualRows(stateKey, containerId);
+  if (stateKey === 'register') window.togglePriorExperience();
+};
+
+window.removeQualRow = function(stateKey, containerId, i) {
+  QUAL_STATE[stateKey].splice(i, 1);
+  if (QUAL_STATE[stateKey].length === 0) QUAL_STATE[stateKey].push({ discipline: 'Not Discipline-Specific', level: 'None' });
+  renderQualRows(stateKey, containerId);
+  if (stateKey === 'register') window.togglePriorExperience();
+};
+
+function highestLevelOfRows(rows) {
+  let best = 'None';
+  rows.forEach(r => { if ((QUAL_RANK[r.level] || 1) > (QUAL_RANK[best] || 1)) best = r.level; });
+  return best;
+}
+
+window.togglePriorExperience = function() {
+  const best = highestLevelOfRows(QUAL_STATE.register);
+  document.getElementById('rg-prior-wrap').style.display = (best === 'None') ? 'block' : 'none';
+};
+
+// Reads a profile's qualifications as an array, falling back to the old single-string field
+// so accounts created before multi-qualification support still work.
+function getQualifications(profile) {
+  if (Array.isArray(profile.qualifications) && profile.qualifications.length) return profile.qualifications;
+  if (profile.qualification && profile.qualification !== 'None') {
+    return [{ discipline: 'Not Discipline-Specific', level: profile.qualification }];
+  }
+  return [];
+}
+
+function highestQualLevel(profile) {
+  return highestLevelOfRows(getQualifications(profile));
+}
+
+function formatQualifications(profile) {
+  const quals = getQualifications(profile);
+  if (!quals.length) return 'None';
+  return quals.map(q =>
+    q.discipline && q.discipline !== 'Not Discipline-Specific'
+      ? q.level + ' (' + q.discipline.split(' ')[0] + ')'
+      : q.level
+  ).join(', ');
+}
 
 // ══ FUN QUIZ ══
 function renderQuizMenu() {
@@ -1088,9 +1174,10 @@ window.doRegister = async function() {
   const email  = document.getElementById('rg-email').value.trim();
   const phone  = document.getElementById('rg-phone').value.trim();
   const pw     = document.getElementById('rg-password').value;
-  const qual   = document.getElementById('rg-qual').value;
+  const qualifications = QUAL_STATE.register.filter(r => r.level !== 'None');
+  const highestQual = highestLevelOfRows(QUAL_STATE.register);
   const photoFile = document.getElementById('rg-photo').files[0];
-  const showPrior = (qual === 'None');
+  const showPrior = (highestQual === 'None');
   const priorShadowed = showPrior ? (parseInt(document.getElementById('rg-prior-shadow').value) || 0) : 0;
   const priorSecondJudged = showPrior ? (parseInt(document.getElementById('rg-prior-second').value) || 0) : 0;
   const errBox = document.getElementById('register-err');
@@ -1114,7 +1201,7 @@ window.doRegister = async function() {
       } catch (e) { /* photo upload failing shouldn't block registration */ }
     }
     const profile = {
-      name, club, email, phone, qualification: qual, photoUrl,
+      name, club, email, phone, qualifications, qualification: highestQual, photoUrl,
       priorShadowed, priorSecondJudged, createdAt: new Date().toISOString()
     };
     await setDoc(doc(db, 'ngl_judges', cred.user.uid), profile);
@@ -1131,12 +1218,13 @@ window.doRegister = async function() {
       // The login was created but the profile write failed (flaky connection, closed tab, etc).
       // Don't show a misleading "registration failed" error — the account exists; send them
       // to the recovery form instead, which writes the profile for this same login.
+      QUAL_STATE.completeProfile = qualifications.length ? qualifications.slice() : [{ discipline: 'Not Discipline-Specific', level: 'None' }];
+      renderQualRows('completeProfile', 'cp-qual-rows');
       document.getElementById('complete-profile-area').style.display = 'block';
       document.getElementById('no-login-forms').style.display = 'none';
       document.getElementById('cp-name').value = name;
       document.getElementById('cp-club').value = club;
       document.getElementById('cp-phone').value = phone;
-      document.getElementById('cp-qual').value = qual;
     } else {
       showAuthErr('register-err', friendlyAuthError(e));
     }
@@ -1149,7 +1237,7 @@ window.completeProfile = async function() {
   const name  = document.getElementById('cp-name').value.trim();
   const club  = document.getElementById('cp-club').value.trim();
   const phone = document.getElementById('cp-phone').value.trim();
-  const qual  = document.getElementById('cp-qual').value;
+  const qualifications = QUAL_STATE.completeProfile.filter(r => r.level !== 'None');
   const errBox = document.getElementById('complete-profile-err');
   errBox.style.display = 'none';
 
@@ -1160,7 +1248,8 @@ window.completeProfile = async function() {
   btn.disabled = true; btn.textContent = 'Saving\u2026';
   try {
     const profile = {
-      name, club, email: currentUser.email || '', phone, qualification: qual, photoUrl: '',
+      name, club, email: currentUser.email || '', phone, qualifications,
+      qualification: highestLevelOfRows(QUAL_STATE.completeProfile), photoUrl: '',
       priorShadowed: 0, priorSecondJudged: 0, createdAt: new Date().toISOString()
     };
     await setDoc(doc(db, 'ngl_judges', currentUser.uid), profile);
@@ -1253,6 +1342,8 @@ onAuthStateChanged(auth, async (user) => {
     const snap = await getDoc(doc(db, 'ngl_judges', user.uid));
     currentProfile = snap.exists() ? snap.data() : null;
     if (!currentProfile) {
+      QUAL_STATE.completeProfile = [{ discipline: 'Not Discipline-Specific', level: 'None' }];
+      renderQualRows('completeProfile', 'cp-qual-rows');
       document.getElementById('complete-profile-area').style.display = 'block';
       document.getElementById('no-login-forms').style.display = 'none';
       document.getElementById('auth-area').style.display = 'block';
@@ -1308,7 +1399,7 @@ function renderPassport() {
   if (!currentProfile) return;
   document.getElementById('pp-name').textContent = currentProfile.name || '\u2014';
   document.getElementById('pp-club').textContent = currentProfile.club || '';
-  document.getElementById('pp-qual').textContent = 'BG: ' + (currentProfile.qualification || 'None');
+  document.getElementById('pp-qual').textContent = 'BG: ' + formatQualifications(currentProfile);
 
   const avatarEl = document.getElementById('pp-avatar-holder');
   avatarEl.innerHTML = currentProfile.photoUrl
@@ -1691,6 +1782,57 @@ document.getElementById('accept-modal').addEventListener('click', function(e) {
 document.getElementById('qual-modal').addEventListener('click', function(e) {
   if (e.target === this) window.closeQualModal();
 });
+document.getElementById('edit-profile-modal').addEventListener('click', function(e) {
+  if (e.target === this) window.closeEditProfileModal();
+});
+
+// ══ EDIT MY PROFILE (self-service) ══
+window.openEditProfileModal = function() {
+  if (!currentUser || !currentProfile) return;
+  document.getElementById('ep-name').value = currentProfile.name || '';
+  document.getElementById('ep-club').value = currentProfile.club || '';
+  document.getElementById('ep-phone').value = currentProfile.phone || '';
+  document.getElementById('edit-profile-err').style.display = 'none';
+  const existing = getQualifications(currentProfile);
+  QUAL_STATE.editProfile = existing.length ? existing.slice() : [{ discipline: 'Not Discipline-Specific', level: 'None' }];
+  renderQualRows('editProfile', 'ep-qual-rows');
+  document.getElementById('edit-profile-modal').classList.add('open');
+};
+
+window.closeEditProfileModal = function() {
+  document.getElementById('edit-profile-modal').classList.remove('open');
+};
+
+window.saveMyProfile = async function() {
+  if (!currentUser) return;
+  const name = document.getElementById('ep-name').value.trim();
+  const club = document.getElementById('ep-club').value.trim();
+  const phone = document.getElementById('ep-phone').value.trim();
+  const qualifications = QUAL_STATE.editProfile.filter(r => r.level !== 'None');
+  const qualification = highestLevelOfRows(QUAL_STATE.editProfile);
+  const errBox = document.getElementById('edit-profile-err');
+  errBox.style.display = 'none';
+
+  if (!name)  { errBox.textContent = 'Please enter your name.'; errBox.style.display = 'block'; return; }
+  if (!phone) { errBox.textContent = 'Please enter a contact phone number.'; errBox.style.display = 'block'; return; }
+
+  const btn = document.getElementById('btn-save-my-profile');
+  btn.disabled = true; btn.textContent = 'Saving\u2026';
+  try {
+    await updateDoc(doc(db, 'ngl_judges', currentUser.uid), { name, club, phone, qualifications, qualification });
+    currentProfile.name = name;
+    currentProfile.club = club;
+    currentProfile.phone = phone;
+    currentProfile.qualifications = qualifications;
+    currentProfile.qualification = qualification;
+    renderPassport();
+    window.closeEditProfileModal();
+  } catch (e) {
+    errBox.textContent = 'Could not save your profile: ' + e.message;
+    errBox.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Save Changes';
+};
 
 // ══ ADMIN: JUDGES / QUALIFICATION OVERRIDE ══
 function renderAdminJudgesList() {
@@ -1701,7 +1843,7 @@ function renderAdminJudgesList() {
     const tier = getJudgeTier(j);
     return '<div class="app-row" style="grid-template-columns:1fr 1fr auto auto">' +
       '<div><div class="aj-name">' + (j.name||'') + '</div><div class="aj-meta">' + (j.email||'') + (j.club ? ' &middot; ' + j.club : '') + '</div></div>' +
-      '<div><span class="role-pill">' + tier.icon + ' ' + tier.name + '</span><div class="aj-meta">BG: ' + (j.qualification||'None') + '</div></div>' +
+      '<div><span class="role-pill">' + tier.icon + ' ' + tier.name + '</span><div class="aj-meta">BG: ' + formatQualifications(j) + '</div></div>' +
       '<button class="btn btn-ghost btn-small" onclick="window.openQualModal(\'' + j.uid + '\')">Edit Qualification</button>' +
       '<button class="btn btn-ghost btn-small" style="color:var(--red)" onclick="window.deleteJudge(\'' + j.uid + '\')">Delete</button>' +
       '</div>';
@@ -1712,8 +1854,10 @@ window.openQualModal = function(uid) {
   const j = allJudges.find(x => x.uid === uid);
   if (!j) return;
   document.getElementById('qual-uid').value = uid;
-  document.getElementById('qual-summary').textContent = j.name + ' \u2014 currently ' + (j.qualification || 'None');
-  document.getElementById('qual-select').value = j.qualification || 'None';
+  document.getElementById('qual-summary').textContent = j.name + ' \u2014 currently ' + formatQualifications(j);
+  const existing = getQualifications(j);
+  QUAL_STATE.admin = existing.length ? existing.slice() : [{ discipline: 'Not Discipline-Specific', level: 'None' }];
+  renderQualRows('admin', 'qual-modal-rows');
   document.getElementById('qual-modal').classList.add('open');
 };
 
@@ -1723,11 +1867,13 @@ window.closeQualModal = function() {
 
 window.saveQualification = async function() {
   const uid = document.getElementById('qual-uid').value;
-  const qualification = document.getElementById('qual-select').value;
+  const qualifications = QUAL_STATE.admin.filter(r => r.level !== 'None');
+  const qualification = highestLevelOfRows(QUAL_STATE.admin);
   try {
-    await updateDoc(doc(db, 'ngl_judges', uid), { qualification });
+    await updateDoc(doc(db, 'ngl_judges', uid), { qualifications, qualification });
     await loadAllJudges();
     renderAdminJudgesList();
+    window.renderAdminApplications();
     window.closeQualModal();
   } catch (e) {
     alert('Could not update qualification: ' + e.message);
