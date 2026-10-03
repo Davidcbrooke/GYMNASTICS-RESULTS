@@ -597,6 +597,10 @@
   .pw-content .schools-cta .card{margin:0; display:flex; flex-direction:column; align-items:flex-start;}
   .pw-content .schools-cta p{line-height:1.55; font-size:15px; margin:0 0 16px; flex:1;}
   .pw-content .schools-cta.one{grid-template-columns:1fr;}
+  .pw-content .rec-pitch h3{font-size:19px; line-height:1.3; margin:0 0 10px; color:var(--white);}
+  .pw-content .rec-pitch ul{margin:0 0 16px; padding-left:20px;}
+  .pw-content .rec-pitch li{margin-bottom:9px; line-height:1.5; font-size:14.5px;}
+  .pw-content .schools-cta.one .rec-pitch p{flex:none;}
   .pw-content .rec-btns{display:flex; gap:10px; flex-wrap:wrap;}
   .pw-content .buy-btn.rec-alt{background:transparent; color:var(--white); border:1px solid var(--line);}
   .pw-content .rec-install{margin-top:14px;}
@@ -1391,18 +1395,32 @@
   // Recreational Hub entry: clubs register or log in, parents use their club code.
   // Shows only the card for the audience picked in Step 1 (both if none).
   function recHubCardsHTML(){
-    var club = '<div class="card"><div class="cta-tag">For clubs</div>' +
-      '<p>Lesson plans, warm-ups, award books and assessment sheets in the NGL Recreational Hub. Register your club to buy a licence, or log in if you already have one.</p>' +
+    var club = '<div class="card rec-pitch"><div class="cta-tag">For clubs</div>' +
+      '<h3>A lesson plan built from your gym up</h3>' +
+      '<p>No more one-size-fits-all. The NGL Recreational Hub starts with what your club actually has — your apparatus, your term and your class length — and builds the most effective coaching plan around it.</p>' +
+      '<ul>' +
+        '<li><strong>Built around your apparatus.</strong> No bars, a floor beam, a block instead of a vault table: the plan adapts, and tells you which competition format suits your gymnasts.</li>' +
+        '<li><strong>Fits your term, 10 to 14 weeks.</strong> Every skill your gymnasts are tested on is coached before the assessment weeks, whatever the length of term.</li>' +
+        '<li><strong>Fits your classes.</strong> 45, 60 or 75 minutes, with the stations that prepare tested skills always kept.</li>' +
+        '<li><strong>Every gymnast at their own level.</strong> Each station is a ladder from Beginner to Advanced, and coaches see only the books their group is on.</li>' +
+        '<li><strong>Ready in two minutes.</strong> Four quick questions, then coaches follow it on an iPad or phone, or print it in colour with set-up photos.</li>' +
+      '</ul>' +
       '<div class="rec-btns"><a class="buy-btn" href="' + REC_HUB_URL + '?go=register" target="_blank" rel="noopener">Register your club</a>' +
       '<a class="buy-btn rec-alt" href="' + REC_HUB_URL + '?go=login" target="_blank" rel="noopener">Club login</a></div></div>';
-    var family = '<div class="card"><div class="cta-tag">For families</div>' +
-      '<p>Got a Recreational code from your club? See what your child is learning this fortnight and how it links to their award book and competition.</p>' +
+    var family = '<div class="card rec-pitch"><div class="cta-tag">For families</div>' +
+      '<h3>Coaching built around your child</h3>' +
+      '<p>Your child isn\'t following a generic plan. Their club\'s NGL Recreational lesson plan is built around the equipment in their gym and the length of their term, so every skill they need to pass their level is coached before they are assessed.</p>' +
+      '<ul>' +
+        '<li><strong>Coached at their own level.</strong> Every station has steps from Beginner to Advanced, so your child works on the step that is right for them.</li>' +
+        '<li><strong>Ready for assessment.</strong> The skills in their award book are practised in the weeks before assessment, not left to chance.</li>' +
+        '<li><strong>See what they are learning.</strong> With your club\'s code, see this fortnight\'s skills and how they link to their award book and the Recreational Competition.</li>' +
+      '</ul>' +
       '<div class="rec-btns"><a class="buy-btn" href="' + REC_FAMILIES_URL + '" target="_blank" rel="noopener">Open the Families page</a></div></div>';
     var cards = selectedAudience === 'club' ? club : selectedAudience === 'parent' ? family : club + family;
     var install = '<div class="card rec-install"><div class="cta-tag">Save it to your phone</div>' +
       '<p>The Hub works like an app. Open it on your phone, then:</p>' +
       '<ul><li><strong>iPhone (Safari):</strong> tap the Share button, then <strong>Add to Home Screen</strong>.</li>' +
-      '<li><strong>Android (Chrome):</strong> tap the \u22ee menu, then <strong>Add to Home screen</strong> or <strong>Install app</strong>.</li></ul>' +
+      '<li><strong>Android (Chrome):</strong> tap the ⋮ menu, then <strong>Add to Home screen</strong> or <strong>Install app</strong>.</li></ul>' +
       '<p class="rec-small">The NGL Recreational icon then sits on your home screen and opens straight into the Hub.</p></div>';
     return '<div class="schools-cta' + (selectedAudience ? ' one' : '') + '">' + cards + '</div>' + install;
   }
