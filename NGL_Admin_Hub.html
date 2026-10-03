@@ -98,6 +98,39 @@ td input[type=checkbox]{width:18px;height:18px}
 @media (max-width:620px){.add{grid-template-columns:1fr}}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:4px;font-size:14px;z-index:60}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Notifications */
+.bell{position:relative;display:inline-flex;align-items:center;gap:6px}
+.bell svg{width:18px;height:18px}
+.bell .count{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);color:#fff;font-size:12px;font-weight:600;line-height:20px;text-align:center;border:2px solid var(--navy)}
+.newstrip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;text-align:left;background:var(--gold-soft);border:1px solid #ecd28a;border-left:6px solid var(--gold);border-radius:6px;padding:10px 14px;margin:0 0 16px;color:var(--ink)}
+.newstrip b{font-family:var(--cond);font-size:19px;color:var(--navy)}
+.newstrip span{color:var(--muted);font-size:14px}
+.newstrip .go{margin-left:auto;font-weight:600;color:var(--navy);text-decoration:underline}
+.newtag{display:inline-block;vertical-align:middle;margin-left:8px;background:var(--red);color:#fff;font-family:var(--body);font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;text-decoration:none!important}
+#notifs{position:fixed;z-index:50;top:calc(64px + env(safe-area-inset-top,0px));right:max(16px,calc((100vw - 1100px)/2 + 16px));width:min(440px,calc(100vw - 32px));max-height:min(72vh,640px);display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-top:4px solid var(--red);border-radius:6px;box-shadow:0 18px 40px rgba(20,37,74,.22)}
+#notifs:focus{outline:none}
+.n-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.n-head h3{font-family:var(--cond);font-size:22px;margin:0 auto 0 0;color:var(--navy)}
+#notifList{overflow-y:auto;padding:4px 14px 14px}
+.n-empty{color:var(--muted);font-size:14px;margin:14px 0}
+.n-err{color:var(--red)}
+.n-group{border-bottom:1px solid var(--line);padding:12px 0}
+.n-group:last-child{border-bottom:none}
+.n-group header{display:flex;align-items:center;gap:8px}
+.n-dot{width:12px;height:12px;border-radius:3px;background:var(--c);flex:0 0 auto}
+.n-group h4{margin:0;font-family:var(--cond);font-size:19px;color:var(--navy);line-height:1.15}
+.n-count{margin-left:auto;font-size:12px;font-weight:600;color:var(--red)}
+.n-group ul{list-style:none;margin:8px 0 10px;padding:0;display:grid;gap:8px}
+.n-group li{padding:8px 10px;border-radius:4px;background:var(--paper);border-left:3px solid transparent}
+.n-group li.is-new{background:#fff;border:1px solid var(--line);border-left:3px solid var(--c)}
+.n-who{font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.n-pill{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;background:var(--red);color:#fff;padding:1px 6px;border-radius:3px}
+.n-what{font-size:14px;color:var(--ink)}
+.n-when{font-size:12.5px;color:var(--muted);margin-top:2px}
+.n-go{border-color:var(--c);color:var(--navy)}
+.n-note{font-size:13px;color:var(--muted);margin:0}
+@media (max-width:620px){#notifs{left:12px;right:12px;width:auto;top:calc(100px + env(safe-area-inset-top,0px))}}
 </style>
 </head>
 <body>
@@ -121,6 +154,7 @@ td input[type=checkbox]{width:18px;height:18px}
   <header class="top">
     <div class="top-inner">
       <div class="brand">National Gymnastics League<small>Admin</small></div>
+      <button class="btn small bell" id="bell" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="notifs" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>New sign-ups<span class="count hidden" id="bellCount">0</span></button>
       <span class="who" id="who"></span>
       <button class="btn small" id="signout">Sign out</button>
     </div>
@@ -128,6 +162,7 @@ td input[type=checkbox]{width:18px;height:18px}
   <main>
     <div class="hello" id="hello"></div>
     <p class="sub" id="helloSub"></p>
+    <button type="button" class="newstrip hidden" id="newStrip"></button>
     <div class="sections" id="sections"></div>
 
     <section class="panel hidden" id="team">
@@ -143,6 +178,11 @@ td input[type=checkbox]{width:18px;height:18px}
       <p style="font-size:13px;color:var(--muted);margin:10px 0 0">Invited people get an email to set their own password, then see only the areas you ticked. You can change their access in the table at any time.</p>
     </section>
   </main>
+</div>
+
+<div id="notifs" class="hidden" role="dialog" aria-label="New sign-ups" tabindex="-1">
+  <div class="n-head"><h3>New sign-ups</h3><button type="button" class="btn small ghost" id="markAll">Mark all as seen</button><button type="button" class="btn small ghost" id="notifClose" aria-label="Close">✕</button></div>
+  <div id="notifList"></div>
 </div>
 
 <div id="viewer" class="hidden">
@@ -193,6 +233,228 @@ const DEMO_USERS = {
   "sam@ngl.test":  {name:"Sam Taylor", owner:false, sections:["judging","staffing"]}
 };
 
+/* ============ NEW SIGN-UP NOTIFICATIONS ============
+   Watches every place a club (or judge) signs up and lists the new ones under
+   the bell, grouped by pathway, each group with a link to its admin area.
+   One shared list in Firestore (ngl_club_registry) records every club already
+   seen per pathway, so "new" means new to NGL, not new to this browser. The
+   email Cloud Function writes to the same list, so the two always agree. */
+const NOTIFY = {
+  registry: "ngl_club_registry",      // doc id = pathway__key, plus a _meta doc
+  seen: "ngl_admin_seen",             // doc id = admin email: {seenAt, ids}
+  keepDays: 60,                       // how far back the panel looks
+  refreshMs: 5 * 60 * 1000,
+  pathways: {
+    recreational: {label:"Recreational competitions",     colour:"#E88230", section:"competitions"},
+    general:      {label:"General League competitions",   colour:"#0071B3", section:"competitions"},
+    performance:  {label:"Performance League competitions",colour:"#01AFB8", section:"competitions"},
+    schools:      {label:"Schools competitions",          colour:"#E0B800", section:"competitions"},
+    preschool:    {label:"Pre-School competitions",       colour:"#E84187", section:"competitions"},
+    university:   {label:"University League competitions",colour:"#5b4a9e", section:"competitions"},
+    masters:      {label:"Masters competitions",          colour:"#8a6d3b", section:"competitions"},
+    judging:      {label:"Judging Pathway",               colour:"#2c6e9b", section:"judging"},
+    rotation:     {label:"Rotation Planner",              colour:"#7a8090", section:"rotation"}
+  }
+};
+const N = { reg:{}, seen:{seenAt:0, ids:[]}, err:"", timer:null, open:false, loaded:false };
+
+const nameKey = s => {
+  const raw = String(s || "").toLowerCase();
+  const k = raw.replace(/&/g, " ").replace(/\b(the|gymnastics?|gym|club|academy|ltd|limited|and|cic)\b/g, " ").replace(/[^a-z0-9]/g, "");
+  return k || raw.replace(/[^a-z0-9]/g, "");
+};
+const toMs = v => !v ? 0 : typeof v === "number" ? v : v.toMillis ? v.toMillis() : (Date.parse(v) || 0);
+const regId = (pathway, key) => (pathway + "__" + key).replace(/[\/.#$\[\]]/g, "_").slice(0, 140);
+const ukDate = ms => ms ? new Date(ms).toLocaleDateString("en-GB", {day:"numeric", month:"short", year:"numeric"}) : "";
+const sectionName = id => (CONFIG.sections.find(s => s.id === id) || {}).name || id;
+
+function compPathwayOf(c){
+  if(c && c.pathway && NOTIFY.pathways[c.pathway] && NOTIFY.pathways[c.pathway].section === "competitions") return c.pathway;
+  const looksRec = (((c && c.name) || "") + " " + ((c && c.level) || "")).toLowerCase().includes("rec");
+  return looksRec ? "recreational" : "general";
+}
+
+/* Read every source and return one entry per club per pathway. */
+async function scanSources(){
+  const found = {};
+  const add = f => { const cur = found[f.id]; if(!cur || (f.when && f.when < cur.when)) found[f.id] = {...(cur || {}), ...f, emails:[...new Set([...(cur ? cur.emails : []), ...f.emails])]}; else if(f.emails.length) cur.emails = [...new Set([...cur.emails, ...f.emails])]; };
+
+  // Competitions: a club's first booking in each pathway
+  const [comps, books] = await Promise.all([db.collection("ngl_competitions").get(), db.collection("ngl_bookings").get()]);
+  const compMap = {}; comps.forEach(d => compMap[d.id] = d.data());
+  books.forEach(d => {
+    const b = d.data(); if(!b.club) return;
+    const c = compMap[b.compId];
+    const pathway = compPathwayOf(c || {name:b.compName});
+    const key = nameKey(b.club);
+    const places = b.waitlist ? "a waiting-list place" : `${b.spaces || 1} place${(b.spaces || 1) === 1 ? "" : "s"}`;
+    add({id:regId(pathway, key), pathway, kind:"club", club:b.club, nameKey:key, emails:b.email ? [String(b.email).toLowerCase()] : [],
+         when:toMs(b.bookedAt), detail:`Booked ${places} for ${b.compName || (c && c.name) || "a competition"}`, source:"ngl_bookings"});
+  });
+
+  // Judging Pathway: every new judge registration (with their club)
+  const judges = await db.collection("ngl_judges").get();
+  judges.forEach(d => {
+    const j = d.data();
+    add({id:regId("judging", d.id), pathway:"judging", kind:"judge", club:j.club || "", person:j.name || j.email || "New judge",
+         nameKey:nameKey(j.club), emails:j.email ? [String(j.email).toLowerCase()] : [], when:toMs(j.createdAt),
+         detail:`${j.name || "A judge"} joined the Judging Pathway${j.club ? " from " + j.club : ""}`, source:"ngl_judges"});
+  });
+
+  // Rotation Planner: clubs registered in the Realtime Database
+  try{
+    const base = CONFIG.firebase.databaseURL;
+    const uids = Object.keys(await (await fetch(`${base}/clubs.json?shallow=true`)).json() || {});
+    const profiles = await Promise.all(uids.map(u => fetch(`${base}/clubs/${encodeURIComponent(u)}/profile.json`).then(r => r.json()).catch(() => null)));
+    uids.forEach((u, i) => {
+      const p = profiles[i] || {}; if(!p.clubName && !p.email) return;
+      add({id:regId("rotation", u), pathway:"rotation", kind:"club", club:p.clubName || p.email, nameKey:nameKey(p.clubName),
+           emails:p.email ? [String(p.email).toLowerCase()] : [], when:toMs(p.createdAt),
+           detail:`Registered for the Rotation Planner${p.contactName ? " (contact: " + p.contactName + ")" : ""}`, source:"rtdb:clubs"});
+    });
+  }catch(e){ console.warn("Rotation Planner clubs not read", e); }
+
+  return Object.values(found);
+}
+
+/* Add anything not already on the shared list. The very first run records
+   everything that exists today as a baseline, so you start from a clean slate. */
+async function syncRegistry(found){
+  const col = db.collection(NOTIFY.registry);
+  const [meta, snap] = await Promise.all([col.doc("_meta").get(), col.get()]);
+  const reg = {}, byEmail = {};
+  snap.forEach(d => { if(d.id === "_meta") return; const r = d.data(); reg[d.id] = r; (r.emails || []).forEach(e => byEmail[r.pathway + "|" + e] = d.id); });
+  const baseline = !meta.exists, now = Date.now(), writes = [];
+  for(const f of found){
+    if(reg[f.id]) continue;
+    if(f.kind === "club" && f.emails.some(e => byEmail[f.pathway + "|" + e])) continue;   // same club under a different spelling
+    const rec = {pathway:f.pathway, section:NOTIFY.pathways[f.pathway].section, kind:f.kind, club:f.club || "", person:f.person || "",
+                 nameKey:f.nameKey || "", emails:f.emails, detail:f.detail, source:f.source, signedUpAt:f.when || null,
+                 firstSeen: baseline ? (f.when || now) : now, baseline, emailed: baseline, by:"hub"};
+    reg[f.id] = rec; f.emails.forEach(e => byEmail[f.pathway + "|" + e] = f.id); writes.push([f.id, rec]);
+  }
+  for(let i = 0; i < writes.length; i += 400){
+    const batch = db.batch();
+    writes.slice(i, i + 400).forEach(([id, rec]) => batch.set(col.doc(id), rec));
+    await batch.commit();
+  }
+  if(baseline) await col.doc("_meta").set({baselineAt:now, by:ME.email, entries:writes.length});
+  return reg;
+}
+
+async function refreshNotifications(){
+  try{
+    if(LIVE){
+      const [found, seenDoc] = await Promise.all([scanSources(), db.collection(NOTIFY.seen).doc(ME.email).get()]);
+      N.reg = await syncRegistry(found);
+      N.seen = seenDoc.exists ? {seenAt:seenDoc.data().seenAt || 0, ids:seenDoc.data().ids || []} : {seenAt:0, ids:[]};
+    } else if(!N.loaded){
+      N.reg = demoRegistry();
+    }
+    N.err = ""; N.loaded = true;
+  }catch(err){
+    console.error(err);
+    N.err = err.code === "permission-denied"
+      ? "Notifications need a small database rule update before they can run (ngl_club_registry and ngl_admin_seen)."
+      : "Couldn't check for new sign-ups. They'll be checked again in a few minutes.";
+  }
+  renderNotifications();
+}
+
+function visibleItems(){
+  const since = Date.now() - NOTIFY.keepDays * 864e5;
+  return Object.entries(N.reg)
+    .filter(([id, r]) => !r.baseline && r.firstSeen >= since && NOTIFY.pathways[r.pathway] && can(r.section))
+    .map(([id, r]) => ({id, ...r, isNew: r.firstSeen > N.seen.seenAt && !N.seen.ids.includes(id)}))
+    .sort((a, b) => b.firstSeen - a.firstSeen);
+}
+
+function renderNotifications(){
+  const items = visibleItems(), fresh = items.filter(i => i.isNew);
+  const count = $("#bellCount");
+  count.textContent = fresh.length > 99 ? "99+" : fresh.length;
+  count.classList.toggle("hidden", !fresh.length);
+  $("#bell").setAttribute("aria-label", fresh.length ? `Notifications: ${fresh.length} new sign-up${fresh.length === 1 ? "" : "s"}` : "Notifications");
+  $("#newStrip").classList.toggle("hidden", !fresh.length);
+  $("#newStrip").innerHTML = fresh.length ? `<b>${fresh.length} new sign-up${fresh.length === 1 ? "" : "s"}</b> <span>${[...new Set(fresh.map(i => NOTIFY.pathways[i.pathway].label))].map(esc).join(" · ")}</span><span class="go">View</span>` : "";
+
+  // "2 new" on each section tile
+  document.querySelectorAll("#sections .sec").forEach(b => {
+    const n = fresh.filter(i => i.section === b.dataset.sec).length;
+    let tag = b.querySelector(".newtag");
+    if(!n){ tag && tag.remove(); return; }
+    if(!tag){ tag = document.createElement("span"); tag.className = "newtag"; b.querySelector(".in h2").appendChild(tag); }
+    tag.textContent = `${n} new`;
+  });
+
+  const list = $("#notifList");
+  if(N.err){ list.innerHTML = `<p class="n-empty n-err">${esc(N.err)}</p>`; return; }
+  if(!N.loaded){ list.innerHTML = `<p class="n-empty">Checking for new sign-ups…</p>`; return; }
+  if(!items.length){ list.innerHTML = `<p class="n-empty">No new clubs or judges in the last ${NOTIFY.keepDays} days. You'll see them here as soon as they sign up.</p>`; return; }
+
+  const groups = [];
+  items.forEach(i => { let g = groups.find(x => x.pathway === i.pathway); if(!g){ g = {pathway:i.pathway, items:[]}; groups.push(g); } g.items.push(i); });
+  list.innerHTML = groups.map(g => {
+    const p = NOTIFY.pathways[g.pathway], s = CONFIG.sections.find(x => x.id === p.section) || {};
+    const n = g.items.filter(i => i.isNew).length;
+    return `<section class="n-group" style="--c:${p.colour}">
+      <header><span class="n-dot"></span><h4>${esc(p.label)}</h4>${n ? `<span class="n-count">${n} new</span>` : ""}</header>
+      <ul>${g.items.map(i => `<li class="${i.isNew ? "is-new" : ""}">
+        <div class="n-who">${esc(i.kind === "judge" ? i.person : i.club)}${i.isNew ? '<span class="n-pill">New</span>' : ""}</div>
+        <div class="n-what">${esc(i.detail)}</div>
+        <div class="n-when">${i.kind === "judge" ? "Registered" : "Signed up"} ${esc(ukDate(i.signedUpAt || i.firstSeen))}</div></li>`).join("")}</ul>
+      ${s.url ? `<button type="button" class="btn small n-go" data-go="${esc(p.section)}" data-path="${esc(g.pathway)}">Go to ${esc(s.name)} →</button>`
+              : `<p class="n-note">${esc(s.name || "This area")} isn't linked in the admin yet.</p>`}
+    </section>`;
+  }).join("");
+}
+
+async function saveSeen(){
+  if(!LIVE) return;
+  try{ await db.collection(NOTIFY.seen).doc(ME.email).set(N.seen); }catch(e){ console.warn("Couldn't save seen state", e); }
+}
+function markSeen(ids){ N.seen.ids = [...new Set([...N.seen.ids, ...ids])].slice(-500); renderNotifications(); saveSeen(); }
+function markAllSeen(){ N.seen = {seenAt:Date.now(), ids:[]}; renderNotifications(); saveSeen(); }
+
+function toggleNotifs(force){
+  N.open = force ?? !N.open;
+  $("#notifs").classList.toggle("hidden", !N.open);
+  $("#bell").setAttribute("aria-expanded", String(N.open));
+  if(N.open) $("#notifs").focus();
+}
+$("#bell").addEventListener("click", e => { e.stopPropagation(); toggleNotifs(); });
+$("#newStrip").addEventListener("click", () => toggleNotifs(true));
+$("#notifClose").addEventListener("click", () => toggleNotifs(false));
+$("#markAll").addEventListener("click", markAllSeen);
+$("#notifList").addEventListener("click", e => {
+  const b = e.target.closest("[data-go]"); if(!b) return;
+  markSeen(visibleItems().filter(i => i.pathway === b.dataset.path && i.isNew).map(i => i.id));
+  toggleNotifs(false); openSection(b.dataset.go);
+});
+document.addEventListener("click", e => { if(N.open && !e.target.closest("#notifs") && !e.target.closest("#bell")) toggleNotifs(false); });
+document.addEventListener("keydown", e => { if(e.key === "Escape" && N.open) toggleNotifs(false); });
+document.addEventListener("visibilitychange", () => { if(!document.hidden && ME) refreshNotifications(); });
+
+function startNotifications(){
+  N.loaded = false; renderNotifications();
+  refreshNotifications();
+  clearInterval(N.timer); N.timer = setInterval(refreshNotifications, NOTIFY.refreshMs);
+}
+function stopNotifications(){ clearInterval(N.timer); N.timer = null; N.reg = {}; N.loaded = false; toggleNotifs(false); }
+
+/* Demo mode only: sample sign-ups so the panel can be previewed without Firebase. */
+function demoRegistry(){
+  const d = n => Date.now() - n * 36e5;
+  const r = (pathway, kind, club, person, detail, h) => ({pathway, section:NOTIFY.pathways[pathway].section, kind, club, person, detail, firstSeen:d(h), signedUpAt:d(h), baseline:false});
+  return {
+    a: r("recreational", "club", "Spalding Gymnastics", "", "Booked 8 places for NGL Recreational Competition, 29 Mar 2027", 3),
+    b: r("general", "club", "Flipping Out", "", "Booked 15 places for South West Region 6–8 & 9–11", 20),
+    c: r("judging", "judge", "K-Gym", "Sarah Collins", "Sarah Collins joined the Judging Pathway from K-Gym", 30),
+    d: r("rotation", "club", "Gemini Gymnastics", "", "Registered for the Rotation Planner (contact: Amy Reid)", 50),
+    e: r("performance", "club", "REACT Gymnastics", "", "Booked 6 places for NGL Performance Open", 400)
+  };
+}
+
 if(CONFIG.firebase.apiKey && window.firebase){
   firebase.initializeApp(CONFIG.firebase);
   auth = firebase.auth(); db = firebase.firestore(); LIVE = true;
@@ -204,7 +466,7 @@ if(CONFIG.firebase.apiKey && window.firebase){
   saved ? loadMe(saved) : showSignin();
 }
 
-function showSignin(){ $("#hub").classList.add("hidden"); $("#viewer").classList.add("hidden"); $("#signin").classList.remove("hidden"); }
+function showSignin(){ stopNotifications(); $("#hub").classList.add("hidden"); $("#viewer").classList.add("hidden"); $("#signin").classList.remove("hidden"); }
 
 $("#signinForm").addEventListener("submit", async e=>{
   e.preventDefault(); $("#err").textContent = "";
@@ -279,6 +541,7 @@ async function loadMeInner(email){
   const hr = new Date().getHours();
   $("#hello").textContent = `${hr<12?"Morning":hr<18?"Afternoon":"Evening"}, ${(ME.name||"").split(" ")[0] || "there"}`;
   renderSections();
+  startNotifications();
   if(ME.owner){ $("#team").classList.remove("hidden"); loadTeam(); } else $("#team").classList.add("hidden");
   const next = new URLSearchParams(location.search).get("section");
   if(next && can(next)) openSection(next);
