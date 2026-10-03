@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E88230">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/icons/favicon-64.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NGL Recreational">
+<title>NGL Recreational Hub</title>
+<style>
+  :root{
+    --navy:#0a1440; --navy-2:#0d1a4f; --navy-3:#152463; --navy-4:#1d2f7a;
+    --line:rgba(255,255,255,0.14); --white:#fff; --muted:#b7c1e6;
+    --rec:#E88230; --rec-ink:#2a1405; --gold:#f2a900; --ok:#5fd38d; --warn:#ffb454; --bad:#ff8a95;
+    --ruby:#C8194A; --pink:#E0559C; --teal:#0FA3A8; --indigo:#5A55C8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--navy);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+  button,input,select{font:inherit;color:inherit;}
+  a{color:var(--rec);}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 16px;}
+
+  .topbar{position:relative;z-index:30;background:var(--rec);width:100vw;margin-left:calc(50% - 50vw);}
+  .topbar-strap{text-align:center;color:var(--rec-ink);font-weight:800;font-size:13px;letter-spacing:.02em;padding:calc(7px + env(safe-area-inset-top,0px)) 16px 7px;}
+  .topbar-in{background:linear-gradient(180deg,#2a245f 0%,#2a245f 40%,var(--navy) 100%);border-top-right-radius:120px 38px;padding-bottom:18px;}
+  @media(min-width:700px){.topbar-in{border-top-right-radius:220px 46px;}}
+  .topbar-row{display:flex;align-items:center;gap:12px;min-height:66px;}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--white);}
+  .logo img{height:50px;width:auto;display:block;}
+  @media(min-width:700px){.logo img{height:58px;}}
+  .logo-mark{font-weight:900;font-size:22px;letter-spacing:.02em;line-height:1;}
+  .logo-mark small{display:block;font-size:11px;letter-spacing:.22em;color:var(--rec);font-weight:800;margin-top:3px;}
+  .top-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
+  @media(max-width:600px){.top-actions .pill{display:none;}}
+  .pill{font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px;background:var(--rec);color:var(--rec-ink);white-space:nowrap;}
+
+  .navtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:10px 0 12px;}
+  .navtabs::-webkit-scrollbar{display:none;}
+  .navtab{flex:0 0 auto;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--navy-3);font-weight:700;font-size:14px;cursor:pointer;}
+  .navtab.active{background:var(--rec);border-color:var(--rec);color:var(--rec-ink);}
+  .navtab.locked{opacity:.55;}
+
+  main{padding:18px 0 60px;}
+  .screen{animation:fadein .2s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){.screen{animation:none;}}
+
+  h1{font-size:clamp(28px,5vw,44px);line-height:1.08;margin:0 0 12px;font-weight:900;letter-spacing:-.015em;text-wrap:balance;}
+  h2{font-size:22px;margin:0 0 10px;font-weight:850;text-wrap:balance;}
+  h3{font-size:16px;margin:0 0 6px;font-weight:800;}
+  p{line-height:1.55;margin:0 0 10px;}
+  .muted{color:var(--muted);}
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--rec);font-weight:800;margin:0 0 10px;}
+  .card{background:var(--navy-3);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px;}
+  .grid2{display:grid;grid-template-columns:1fr;gap:16px;}
+  .grid3{display:grid;grid-template-columns:1fr;gap:14px;}
+  .grid4{display:grid;grid-template-columns:1fr;gap:12px;}
+  @media(min-width:760px){.grid2{grid-template-columns:1fr 1fr;}.grid3{grid-template-columns:repeat(3,1fr);}.grid4{grid-template-columns:repeat(2,1fr);}}
+  @media(min-width:1000px){.grid4{grid-template-columns:repeat(4,1fr);}}
+  .grid2>*,.grid3>*,.grid4>*{min-width:0;}
+  .section{margin:30px 0 0;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 18px;border-radius:12px;border:0;cursor:pointer;background:var(--rec);color:var(--rec-ink);font-weight:900;font-size:15px;text-decoration:none;}
+  .btn:active{transform:scale(.98);}
+  .btn:focus-visible,.navtab:focus-visible,.chip:focus-visible{outline:3px solid var(--white);outline-offset:2px;}
+  .btn.ghost{background:transparent;color:var(--white);border:1px solid var(--line);font-weight:700;}
+  .btn.small{padding:8px 12px;font-size:13px;border-radius:10px;}
+  .btn.block{width:100%;}
+  .btn[disabled]{opacity:.55;cursor:default;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+
+  .hero{display:grid;grid-template-columns:1fr;gap:24px;align-items:center;padding:14px 0 6px;}
+  @media(min-width:820px){.hero{grid-template-columns:1.3fr .7fr;}}
+  .lead{font-size:18px;color:var(--muted);}
+  .levels-art{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .lvtile{border-radius:16px;padding:18px 14px;font-weight:900;font-size:20px;color:#fff;min-height:96px;display:flex;flex-direction:column;justify-content:flex-end;}
+  .lvtile small{font-size:12px;font-weight:700;opacity:.9;letter-spacing:.04em;}
+  .bg-ruby{background:var(--ruby);}.bg-pink{background:var(--pink);}.bg-teal{background:var(--teal);}.bg-indigo{background:var(--indigo);}
+  .steps{counter-reset:st;}
+  .step{position:relative;padding-left:48px;}
+  .step::before{counter-increment:st;content:counter(st);position:absolute;left:0;top:0;width:34px;height:34px;border-radius:50%;background:var(--rec);color:var(--rec-ink);display:grid;place-items:center;font-weight:900;}
+  .ticks{list-style:none;padding:0;margin:0;}
+  .ticks li{padding:7px 0 7px 28px;position:relative;line-height:1.45;}
+  .ticks li::before{content:"✓";position:absolute;left:4px;color:var(--rec);font-weight:900;}
+  .stat{font-size:34px;font-weight:900;color:var(--rec);line-height:1;}
+  .journey{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .jstep{font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);}
+  .jstep.on{background:var(--rec);border-color:var(--rec);color:var(--rec-ink);}
+
+  table{width:100%;border-collapse:collapse;}
+  th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800;}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .table-wrap{overflow-x:auto;}
+  s.was{color:var(--muted);font-weight:600;margin-right:6px;}
+
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 6px;}
+  .input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--navy-2);color:var(--white);font-size:16px;outline:none;}
+  .input:focus{border-color:var(--rec);}
+  select.input{appearance:auto;}
+  .error{color:var(--bad);font-weight:700;font-size:14px;min-height:1em;margin:0 0 10px;}
+  .note{font-size:13px;color:var(--muted);}
+  .auth{max-width:440px;margin:10px auto 0;}
+  .demo-banner{font-size:13px;text-align:center;color:var(--rec-ink);background:var(--warn);border-radius:10px;padding:9px 12px;margin:0 0 16px;font-weight:700;}
+
+  .lic-card{background:linear-gradient(135deg,var(--navy-4),var(--navy-3));position:relative;overflow:hidden;}
+  .lic-card::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(232,130,48,.32),transparent 70%);pointer-events:none;}
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px;}
+  @media(min-width:760px){.kpis{grid-template-columns:repeat(4,1fr);}}
+  .kpi{background:var(--navy-2);border:1px solid var(--line);border-radius:14px;padding:14px;}
+  .kpi .v{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;}
+  .kpi .l{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px;}
+  .tag{display:inline-block;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+  .tag.ok{background:rgba(95,211,141,.18);color:var(--ok);}
+  .tag.wait{background:rgba(255,180,84,.18);color:var(--warn);}
+  .tag.off{background:rgba(255,138,149,.16);color:var(--bad);}
+  .tag.info{background:rgba(232,130,48,.2);color:var(--rec);}
+  .row-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(3,8,30,.7);z-index:50;display:grid;place-items:center;padding:16px;}
+  .modal{background:var(--navy-3);border:1px solid var(--line);border-radius:18px;padding:22px;width:100%;max-width:520px;max-height:90vh;overflow:auto;}
+  .modal-wide{max-width:780px;}
+  .sum{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .sum.total{font-weight:900;font-size:18px;border-bottom:0;}
+  .foot{text-align:center;font-size:12px;color:var(--muted);margin-top:40px;}
+  .mono{white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em;}
+
+  /* Content area */
+  .toolbar{display:flex;flex-direction:column;gap:10px;margin:0 0 18px;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .chips .lbl{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;align-self:center;margin-right:4px;min-width:62px;}
+  .chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--navy-2);font-weight:700;font-size:13px;cursor:pointer;}
+  .chip.on{background:var(--white);color:var(--navy);border-color:var(--white);}
+  .chip.lv-ruby.on{background:var(--ruby);border-color:var(--ruby);color:#fff;}
+  .chip.lv-pink.on{background:var(--pink);border-color:var(--pink);color:#fff;}
+  .chip.lv-teal.on{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .chip.lv-indigo.on{background:var(--indigo);border-color:var(--indigo);color:#fff;}
+  .piece{background:var(--navy-3);border:1px solid var(--line);border-radius:18px;margin-bottom:16px;overflow:hidden;}
+  .piece-h{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:14px 18px;border-bottom:1px solid var(--line);}
+  .piece-h h2{margin:0;font-size:19px;}
+  .piece-h .th{color:var(--rec);font-weight:800;}
+  .piece-h .su{margin-left:auto;font-size:12px;color:var(--muted);font-weight:700;}
+  .intro{padding:10px 18px;font-size:14px;color:var(--muted);border-bottom:1px solid var(--line);}
+  .intro b{color:var(--white);}
+  .grid-st{width:100%;border-collapse:collapse;min-width:720px;}
+  .grid-st th{padding:9px 12px;font-size:12px;color:#fff;letter-spacing:.06em;}
+  .grid-st th.n{background:transparent;color:var(--muted);width:44px;}
+  .grid-st td{padding:11px 12px;font-size:14px;line-height:1.45;border-bottom:1px solid var(--line);}
+  .grid-st td.n{font-weight:900;color:var(--muted);text-align:center;}
+  .grid-st tr:last-child td{border-bottom:0;}
+  .grid-st.one{min-width:0;}
+  .grid-st.one td{font-size:16px;}
+  .chg{display:inline-block;margin-left:6px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rec);}
+  .final{color:var(--rec);font-weight:800;}
+  .asm{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+  .apill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;padding:2px 7px 2px 5px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--c);color:var(--white);line-height:1.3;}
+  .thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .thumb{padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:64px;height:64px;background:var(--navy-2);cursor:zoom-in;}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .grid-st.one .thumb{width:96px;height:96px;}
+  .apill i{width:8px;height:8px;border-radius:50%;background:var(--c);display:inline-block;flex:0 0 auto;}
+  .blockhead{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;margin:0 0 12px;}
+  .blockhead h1{margin:0;font-size:clamp(24px,4vw,34px);}
+  .blockhead .muted{font-weight:700;}
+  .bookgrid{display:grid;grid-template-columns:1fr;gap:12px;}
+  @media(min-width:700px){.bookgrid{grid-template-columns:repeat(2,1fr);}}
+  @media(min-width:1000px){.bookgrid{grid-template-columns:repeat(3,1fr);}}
+  .bookgrid>*{min-width:0;}
+  .skill-list{list-style:none;padding:0;margin:0;}
+  .skill-list li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.4;}
+  .skill-list li:last-child{border-bottom:0;}
+  .lvl-band{display:flex;align-items:center;gap:10px;margin:22px 0 10px;}
+  .lvl-band .dot{width:12px;height:28px;border-radius:4px;}
+  .lvl-band h2{margin:0;font-size:20px;}
+  .locked-card{text-align:center;padding:34px 20px;}
+
+  /* Families */
+  .fhead{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;border-left:6px solid;padding:4px 0 4px 14px;}
+  .fstations{display:flex;flex-direction:column;}
+  .fstation{padding:12px 18px;border-bottom:1px solid var(--line);}
+  .fstation:last-child{border-bottom:0;}
+  .ftext{font-size:15px;line-height:1.45;}
+  .flinks{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .flink{display:inline-block;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;line-height:1.35;}
+  .flink.fa{background:var(--c);color:#fff;}
+  .flink.fc{background:var(--gold);color:#2a1405;}
+  .flink.fb{border:1px solid var(--c);color:var(--white);}
+  .legend-f{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:13px;color:var(--muted);margin:0 0 14px;}
+  .legend-f .flink{margin-left:6px;}
+  /* Invoice */
+  .inv-screen{background:#fff;border-radius:12px;padding:6px;overflow-x:auto;}
+  .inv{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff;color:#1c1f3a;font-size:13px;line-height:1.45;padding:22px;min-width:560px;}
+  .inv-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #E88230;padding-bottom:14px;margin-bottom:16px;}
+  .inv-brand{font-weight:900;font-size:20px;color:#2a245f;}
+  .inv-brand small{display:block;font-size:10px;letter-spacing:.2em;color:#E88230;}
+  .inv-title{text-align:right;}
+  .inv-h{font-size:26px;font-weight:900;letter-spacing:.08em;color:#2a245f;}
+  .inv-no{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;font-size:15px;}
+  .inv-paid{display:inline-block;margin-top:6px;border:2px solid #1f9d55;color:#1f9d55;font-weight:900;padding:2px 10px;border-radius:6px;transform:rotate(-4deg);}
+  .inv-cols{display:grid;grid-template-columns:1.2fr 1.2fr 1fr;gap:16px;margin-bottom:18px;}
+  .inv-label{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#6b6f8f;margin-bottom:3px;}
+  .inv-table{width:100%;border-collapse:collapse;margin-bottom:18px;}
+  .inv-table th{background:#2a245f;color:#fff;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;text-align:left;border:0;}
+  .inv-table td{padding:10px;border-bottom:1px solid #e3e4ee;color:#1c1f3a;font-size:13px;}
+  .inv-table .num{text-align:right;}
+  .inv-total td{font-weight:900;font-size:16px;border-bottom:0;background:#fdebdc;}
+  .inv-pay{background:#f4f5fa;border-left:4px solid #E88230;padding:12px 14px;border-radius:6px;}
+  .inv-pay table{border-collapse:collapse;margin:6px 0 8px;width:auto;}
+  .inv-pay td{padding:3px 18px 3px 0;border:0;font-size:13px;color:#1c1f3a;}
+  .inv-pay p{margin:0;font-size:12px;color:#4a4e6d;}
+  .inv-foot{margin-top:18px;text-align:center;font-size:11px;color:#6b6f8f;}
+
+  /* Print sheets */
+  #print-area{display:none;}
+  .sheet{background:#fff;color:#111;font-size:12px;}
+  .sheet h2{color:#111;font-size:18px;margin:0 0 4px;}
+  .sheet p{color:#333;margin:0 0 10px;}
+  .sheet table{border-collapse:collapse;width:100%;}
+  .sheet th,.sheet td{border:1px solid #999;padding:5px 6px;font-size:11px;color:#111;vertical-align:top;}
+  .sheet th{background:#eee;letter-spacing:0;text-transform:none;}
+  .sheet.compact .onepage{break-inside:avoid;}
+  .sheet.compact h2{font-size:15px;}
+  .sheet.compact td,.sheet.compact th{font-size:9.5px;padding:3px 5px;line-height:1.3;}
+  .sheet.compact .st{font-weight:700;margin-top:2px;}
+  .sheet .foot{font-size:9px;color:#555;margin-top:6px;}
+  .sheet .pc{background:#f6e2d2;font-weight:800;}
+  @media print{
+    @page{size:A4 landscape;margin:10mm;}
+    body{background:#fff !important;}
+    .app,.modal-bg{display:none !important;}
+    #print-area{display:block;}
+    #print-area .inv{min-width:0;padding:0;}
+  }
+
+
+  /* ---------- Branded print sheets ---------- */
+  .print-wait{position:fixed;left:50%;top:20px;transform:translateX(-50%);z-index:100;background:var(--rec);color:var(--rec-ink);font-weight:800;padding:10px 16px;border-radius:999px;}
+  .sheet .brand{-webkit-print-color-adjust:exact;print-color-adjust:exact;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sheet .ph-head{display:flex;align-items:center;gap:14px;background:#0a1440;color:#fff;border-radius:8px;padding:8px 14px;border-bottom:4px solid #E88230;margin-bottom:6px;}
+  .sheet .ph-logo{height:34px;width:auto;display:block;}
+  .sheet .ph-title{flex:1;min-width:0;}
+  .sheet .ph-wk{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#E88230;}
+  .sheet .ph-pc{font-size:17px;font-weight:900;color:#fff;line-height:1.2;}
+  .sheet .ph-meta{font-size:9.5px;color:#b7c1e6;text-align:right;line-height:1.35;}
+  .sheet .ph-strip{display:grid;gap:5px;margin-bottom:6px;}
+  .sheet .ph-shot{position:relative;height:40mm;border-radius:6px;overflow:hidden;background:#eef0f6;border:1px solid #d5d9e6;}
+  .sheet .ph-shot img{width:100%;height:100%;object-fit:cover;display:block;}
+  .sheet .ph-none{display:grid;place-items:center;height:100%;color:#888;font-size:9px;}
+  .sheet .ph-n{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#E88230;color:#2a1405;font-weight:900;font-size:10.5px;}
+  .sheet .ph-shot .ph-n{position:absolute;top:4px;left:4px;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+  .sheet.compact .brand th{color:#2a1405;font-size:10px;border-color:#d9b89c;}
+  .sheet.compact .brand th span{font-weight:400;}
+  .sheet.compact .brand td{border-color:#d5d9e6;font-size:10.5px;padding:4px 6px;}
+  .sheet .brand .ph-stn{width:24px;text-align:center;background:#0a1440 !important;color:#fff !important;}
+  .sheet.compact .brand .st{border-left:3px solid;border-radius:3px;padding:1px 4px;margin-top:3px;font-weight:700;}
+  .sheet .ph-foot{display:flex;justify-content:space-between;font-size:8.5px;color:#555;margin-top:5px;}
+
+
+  /* ---------- Your group picker ---------- */
+  .grpcard{background:var(--navy-3);border:1px solid var(--line);border-radius:16px;padding:16px;margin:8px 0 6px;}
+  .grpcard h2{font-size:19px;margin:0 0 4px;}
+  .grpcard .muted{margin:0 0 12px;font-size:14px;}
+  .grprow{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  @media(min-width:600px){.grprow{grid-template-columns:repeat(4,1fr);}}
+  .grpbox{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:64px;padding:12px 14px;border-radius:14px;border:2px solid var(--c);background:transparent;color:var(--white);cursor:pointer;text-align:left;}
+  .grpbox.on{background:var(--c);}
+  .grpbox .grp-name{font-size:18px;font-weight:900;}
+  .grpbox .grp-rung{font-size:14px;font-weight:800;}
+  .grpbox .grp-sub{font-size:11.5px;opacity:.8;}
+  .grpbox .grp-tick{position:absolute;top:8px;right:10px;width:22px;height:22px;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;font-size:13px;font-weight:900;}
+  .grprow.compact{grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 14px;}
+  .grprow.compact .grpbox{min-height:48px;padding:6px 10px;justify-content:center;gap:0;}
+  .grprow.compact .grp-name{font-size:14px;line-height:1.1;}
+  .grprow.compact .grp-rung{font-size:11.5px;}
+  .grprow.compact .grp-tick{display:none;}
+
+
+  /* ---------- Build your club plan ---------- */
+  .cp-prog{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 18px;}
+  .cp-step{font-size:12px;font-weight:800;color:var(--muted);display:flex;flex-direction:column;gap:6px;}
+  .cp-step span{height:6px;border-radius:3px;background:var(--navy-4);font-size:0;}
+  .cp-step.done span{background:var(--rec);opacity:.6;}.cp-step.on span{background:var(--rec);}.cp-step.on{color:var(--white);}
+  .cp-q{background:var(--navy-3);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;}
+  .cp-ql{font-size:18px;font-weight:900;margin:0 0 10px 2px;}
+  .cp-opts{display:grid;grid-template-columns:1fr;gap:8px;}
+  @media(min-width:600px){.cp-opts{grid-template-columns:repeat(3,1fr);}}
+  .optbtn{min-height:56px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--navy-2);color:var(--white);font-weight:800;font-size:15px;text-align:left;cursor:pointer;}
+  .optbtn.on{background:var(--rec);border-color:var(--rec);color:var(--rec-ink);}
+  .bbgrid.five{grid-template-columns:repeat(5,1fr);}
+  .bbgrid.five .bigbtn{align-items:center;text-align:center;padding:16px 6px;}
+  .bbgrid.five .bb-t{font-size:28px;}
+  .cp-nav{display:flex;justify-content:space-between;gap:10px;margin-top:22px;}
+  .cp-nav .btn{min-height:52px;padding:14px 22px;font-size:16px;}
+  .cp-date{margin:0 0 16px;}
+  .cp-date label{display:block;font-weight:800;margin:0 0 8px;}
+  .input.big{font-size:18px;padding:14px;min-height:54px;width:100%;max-width:340px;}
+  .cp-sum{display:grid;grid-template-columns:1fr;gap:10px;}
+  @media(min-width:700px){.cp-sum{grid-template-columns:repeat(3,1fr);}}
+  .cp-sum>div{background:var(--navy-3);border:1px solid var(--line);border-radius:14px;padding:14px;}
+  .cp-sum span{display:block;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+  .cp-sum b{display:block;font-size:16px;line-height:1.35;}
+  .cp-sum small{display:block;color:var(--muted);margin-top:4px;font-size:13px;}
+  .cp-h{font-size:22px;margin:28px 0 10px;}
+  .cp-res{display:grid;grid-template-columns:1fr;gap:10px;}
+  @media(min-width:700px){.cp-res{grid-template-columns:1fr 1fr;}}
+  .cp-book{display:flex;gap:12px;align-items:flex-start;background:var(--navy-3);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:14px;padding:12px 14px;}
+  .cp-bk{font-weight:900;font-size:17px;min-width:70px;}.cp-bk small{display:block;font-size:12.5px;color:var(--muted);font-weight:700;}
+  .cp-bt b{display:block;}.cp-book.ok .cp-bt b{color:var(--ok);}.cp-book.warn .cp-bt b{color:var(--warn);}
+  .cp-bt small{color:var(--muted);font-size:13px;}.cp-bt ul{margin:6px 0 0;padding-left:18px;font-size:13px;}
+  .cp-flag{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(255,180,84,.12);border:1px solid rgba(255,180,84,.45);}
+  .cp-flag.soft{background:rgba(255,255,255,.05);border-color:var(--line);color:var(--muted);}
+  .weekgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  @media(min-width:600px){.weekgrid{grid-template-columns:repeat(7,1fr);}}
+  .wkbtn{min-height:52px;border-radius:12px;border:1px solid var(--line);background:var(--navy-3);color:var(--white);font-weight:800;cursor:pointer;}
+  .wkbtn.assess{border-style:dashed;}
+  .cp-dash{display:block;width:100%;text-align:left;cursor:pointer;border-color:rgba(232,130,48,.6);color:var(--white);}
+  .cp-dash h2{margin:2px 0 6px;}
+
+
+  /* ---------- Club plan story ---------- */
+  .story-hero{background:linear-gradient(135deg,rgba(232,130,48,.18),rgba(232,130,48,.04));border:1px solid rgba(232,130,48,.45);border-radius:18px;padding:20px;margin:20px 0 6px;}
+  .story-hero h2{font-size:clamp(21px,3.4vw,27px);line-height:1.25;margin:4px 0 10px;}
+  .lead-s{font-size:16px;line-height:1.55;color:var(--white);margin:0;}
+  .story-h{font-size:20px;margin:26px 0 12px;}
+  .story-steps{display:grid;grid-template-columns:1fr;gap:10px;}
+  @media(min-width:760px){.story-steps{grid-template-columns:repeat(3,1fr);}}
+  .story-step{display:flex;gap:12px;background:var(--navy-3);border:1px solid var(--line);border-radius:14px;padding:14px;}
+  .story-step>span{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--rec);color:var(--rec-ink);display:grid;place-items:center;font-weight:900;font-size:17px;}
+  .story-step b,.story-f b{display:block;font-size:16px;margin-bottom:4px;}
+  .story-step p,.story-f p{margin:0;color:var(--muted);font-size:14px;line-height:1.5;}
+  .story-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+  @media(min-width:600px){.story-grid{grid-template-columns:1fr 1fr;}}
+  .story-f{background:var(--navy-3);border:1px solid var(--line);border-left:4px solid var(--rec);border-radius:12px;padding:12px 14px;}
+  .story-b li{font-size:15px;}
+  .modal-wide .story-hero{margin-top:0;}
+
+
+  /* ---------- Show your class today's skill ---------- */
+  .skillvid{margin:0 0 16px;}
+  .skillvid-h{font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--rec);margin:0 0 8px 2px;}
+  .skillvid-box{position:relative;display:block;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000;border:1px solid var(--line);}
+  .skillvid-box iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  .skillvid-box.empty{background:linear-gradient(135deg,#1d2f7a,#0d1a4f);cursor:pointer;padding:0;}
+  .skillvid-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:84px;height:84px;border-radius:50%;background:var(--rec);box-shadow:0 10px 30px rgba(0,0,0,.45);}
+  .skillvid-play::after{content:"";position:absolute;left:34px;top:26px;border-style:solid;border-width:16px 0 16px 26px;border-color:transparent transparent transparent var(--rec-ink);}
+  .skillvid-soon{position:absolute;left:0;right:0;bottom:14px;text-align:center;color:var(--muted);font-weight:700;font-size:14px;}
+
+  .lic-until{font-size:18px;margin:2px 0 4px;}
+  .lic-renew{margin:12px 0 0;padding:12px 14px;border-radius:12px;background:rgba(255,180,84,.12);border:1px solid rgba(255,180,84,.45);}
+
+  /* ---------- Coach flow: big buttons ---------- */
+  .flow{max-width:760px;margin:0 auto;}
+  .flow-h{font-size:clamp(26px,5vw,34px);margin:6px 0 6px;line-height:1.15;}
+  .flow-hrow{display:flex;align-items:center;gap:12px;}.flow-hrow .btn{margin-left:auto;}
+  .flow-sub{color:var(--muted);margin:0 0 16px;font-size:15px;}
+  .flow-sub b{color:var(--white);}
+  .flow-l{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:22px 2px 10px;}
+  .backbar{background:none;border:0;color:var(--muted);font-weight:800;font-size:15px;padding:10px 0;cursor:pointer;}
+  .backbar:hover{color:var(--white);}
+  .bbgrid{display:grid;grid-template-columns:1fr;gap:12px;}
+  @media(min-width:600px){.bbgrid{grid-template-columns:1fr 1fr;}.bbgrid.three{grid-template-columns:1fr 1fr 1fr;}}
+  .bigbtn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;width:100%;min-height:84px;padding:18px 20px;border-radius:16px;border:1px solid var(--line);background:var(--navy-3);color:var(--white);text-align:left;cursor:pointer;transition:transform .12s ease,background .15s ease;}
+  .bigbtn:hover{background:var(--navy-4);}
+  .bigbtn:active{transform:scale(.98);}
+  .bigbtn:focus-visible{outline:3px solid var(--white);outline-offset:2px;}
+  .bigbtn .bb-t{font-size:20px;font-weight:900;line-height:1.2;}
+  .bigbtn .bb-k{font-size:14px;color:var(--muted);line-height:1.35;}
+  .bigbtn.now{background:var(--rec);border-color:var(--rec);color:var(--rec-ink);}
+  .bigbtn.now .bb-k{color:var(--rec-ink);opacity:.85;}
+  .bigbtn.wide{margin-top:4px;}
+  .bigbtn.warm{border-color:rgba(242,169,0,.55);}
+  .bigbtn.assess{border-style:dashed;}
+  .bigbtn.go{margin-top:18px;background:var(--rec);border-color:var(--rec);color:var(--rec-ink);align-items:center;text-align:center;}
+  .bigbtn.go .bb-k{color:var(--rec-ink);opacity:.85;}
+  .setgrid{display:grid;grid-template-columns:1fr;gap:14px;}
+  @media(min-width:600px){.setgrid{grid-template-columns:1fr 1fr;}}
+  .setcard{position:relative;background:var(--navy-3);border:1px solid var(--line);border-radius:16px;padding:12px;}
+  .setn{position:absolute;top:18px;left:18px;z-index:2;width:38px;height:38px;border-radius:50%;background:var(--rec);color:var(--rec-ink);display:grid;place-items:center;font-weight:900;font-size:18px;box-shadow:0 4px 12px rgba(0,0,0,.35);}
+  .setphoto{display:block;width:100%;aspect-ratio:4/3;border:0;padding:0;border-radius:12px;overflow:hidden;background:var(--navy-4);cursor:zoom-in;}
+  .setphoto img{width:100%;height:100%;object-fit:cover;display:block;}
+  .setphoto.empty{display:grid;place-items:center;color:var(--muted);font-weight:700;cursor:default;}
+  .setcard .thumbs{margin-top:8px;}
+  .ladder{background:var(--navy-3);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px;}
+  .ladder-h{font-weight:900;font-size:18px;margin:2px 4px 10px;}
+  .rung{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;background:var(--navy-2);}
+  .rung:last-child{margin-bottom:0;}
+  .rung.starred{border-color:rgba(242,169,0,.6);}
+  .rung-n{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--rec);margin-bottom:4px;}
+  .rung-n span{color:var(--muted);font-weight:700;letter-spacing:0;text-transform:none;margin-left:8px;}
+  .rung-t{font-size:16px;line-height:1.45;}
+  .stars{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .star{font-size:12.5px;font-weight:800;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 22%,transparent);border:1px solid var(--c);}
+  .star .sk{font-weight:600;color:var(--muted);}
+</style>
+</head>
+<body>
+<div id="print-area"></div>
+<div class="app">
+  <header class="topbar"><div class="topbar-strap">Recreational Awards Scheme · Club Hub</div><div class="topbar-in">
+    <div class="wrap topbar-row">
+      <a class="logo" href="#" data-go="home" aria-label="NGL Recreational home"><img src="/icons/rec-logo.png" alt="NGL Recreational"></a>
+      <div class="top-actions" id="topActions"></div>
+    </div>
+  </div></header>
+  <div class="wrap">
+    <nav class="navtabs" id="navtabs" hidden></nav>
+    <main id="view"></main>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   NGL Recreational: club plan generator (shared by the Hub and Families)
+   Input: NGL content + the club's term settings. Output: the club's own
+   fortnights, each with its apparatus and stations, plus a coverage report.
+   ===================================================================== */
+const PLAN_WEEK_A = ['FF','VT','BM'], PLAN_WEEK_B = ['BF','BA','FT'];
+const CLASS_RULES = {
+  45: {warm:8, cool:4, rot:11, cap:4, stretch:1},
+  60: {warm:10, cool:5, rot:15, cap:6, stretch:0},
+  75: {warm:10, cool:5, rot:20, cap:8, stretch:0}
+};
+const PIECE_OPTS = {
+  VT: [['table','Vault table'],['block','Block only'],['none','No vault']],
+  BM: [['beam','High, medium or low beam'],['floor','Floor beam or bench'],['none','No beam']],
+  BA: [['bars','Bars'],['none','No bars']],
+  FT: [['fasttrack','Fast track and trampette'],['tramp','Trampette only']]
+};
+function planDefaults(t){
+  t = t || {};
+  return {start: t.start || '', weeks: +t.weeks || 14, halfTerm: t.halfTerm || '', classLen: +t.classLen || 60,
+    pieces: Object.assign({VT:'table', BM:'beam', BA:'bars', FT:'fasttrack'}, t.pieces || {}), startBlock: 1, custom: !!t.custom};
+}
+function stationCps(s){
+  const out = [];
+  Object.keys(s.assess || {}).forEach(c => (s.assess[c] || []).forEach(y => out.push(y.p + '|' + y.L + '|' + y.s)));
+  return out;
+}
+function buildClubPlan(content, term){
+  const t = planDefaults(term), rule = CLASS_RULES[t.classLen] || CLASS_RULES[60];
+  const src = content.plan.blocks, teach = src.filter(b => !b.assessment), assessB = src.find(b => b.assessment);
+  const removed = Object.keys(t.pieces).filter(k => t.pieces[k] === 'none');
+  const has = c => !removed.includes(c);
+  const noBars = !has('BA');
+  // Week B with no bars: two longer rotations
+  const capFor = code => {
+    if(noBars && PLAN_WEEK_B.includes(code)){ const len = (t.classLen - rule.warm - rule.cool) / 2; return Math.max(4, Math.min(8, Math.round(len / 3))); }
+    return rule.cap;
+  };
+  const T = t.weeks - 2, F = Math.floor(T / 2), odd = T % 2 === 1;
+  // fortnight slots per piece; Week A pieces get the odd week too
+  const slotsFor = code => F + (odd && PLAN_WEEK_A.includes(code) ? 1 : 0);
+  // map NGL teaching blocks (1..6) onto this club's slots
+  const mapBlock = (bn, nSlots) => Math.min(nSlots - 1, Math.floor((bn - 1) * nSlots / teach.length));
+  const codes = [...PLAN_WEEK_A, ...PLAN_WEEK_B].filter(has);
+  // candidates per piece, each with a home slot
+  const cand = {};
+  codes.forEach(code => {
+    const n = slotsFor(code); cand[code] = [];
+    teach.forEach(b => { const p = b.pieces.find(x => x.code === code); if(!p) return;
+      p.stations.forEach(s => cand[code].push({b, p, s, home: mapBlock(b.n, n), cps: stationCps(s)})); });
+  });
+  // checkpoints the full NGL plan teaches on the apparatus this club has
+  const required = new Set();
+  codes.forEach(code => cand[code].forEach(x => x.cps.forEach(c => { if(!(noBars && c.startsWith('Bars|'))) required.add(c); })));
+  // greedy cover: a station goes in its home fortnight, or the one either side if that is full
+  const chosen = {}, used = {}, covered = new Set();
+  codes.forEach(code => { chosen[code] = Array.from({length: slotsFor(code)}, () => []); used[code] = new Set(); });
+  const room = (code, k, extra) => k >= 0 && k < slotsFor(code) && chosen[code][k].length < capFor(code) + extra;
+  for(;;){
+    let best = null, gain = 0;
+    codes.forEach(code => cand[code].forEach((x, i) => {
+      if(used[code].has(i)) return;
+      const g = x.cps.filter(c => required.has(c) && !covered.has(c)).length;
+      if(g <= gain) return;
+      const k = [x.home, x.home + 1, x.home - 1, x.home + 2, x.home - 2].find(k => room(code, k, rule.stretch));
+      if(k === undefined) return;
+      gain = g; best = [code, i, k];
+    }));
+    if(!best) break;
+    const [code, i, k] = best; used[code].add(i); chosen[code][k].push(i); cand[code][i].cps.forEach(c => covered.add(c));
+  }
+  // fill with progressions from each fortnight's own themes, in authored order
+  codes.forEach(code => chosen[code].forEach((list, k) => {
+    cand[code].forEach((x, i) => { if(x.home === k && !used[code].has(i) && list.length < capFor(code)){ used[code].add(i); list.push(i); } });
+  }));
+  // assemble fortnights
+  const blocks = [];
+  const nSlots = Math.max(F + (odd ? 1 : 0), 1);
+  for(let k = 0; k < nSlots; k++){
+    const isOdd = odd && k === F;
+    const w1 = 2 * k + 1;
+    const pieces = [];
+    codes.forEach(code => {
+      if(isOdd && !PLAN_WEEK_A.includes(code)) return;
+      const pick = (chosen[code][k] || []).slice().sort((a, b) => a - b).map(i => cand[code][i]);
+      if(!pick.length) return;
+      const own = pick.filter(x => x.home === k), themes = [...new Set((own.length ? own : pick).map(x => x.p.theme))];
+      const first = pick[0].p;
+      pieces.push({code, piece: first.piece, theme: themes.join(' + '), setup: first.setup, intro: first.intro,
+        stations: pick.map((x, j) => Object.assign({}, x.s, {n: j + 1, from: x.b.n}))});
+    });
+    const srcBlocks = [...new Set(teach.filter(b => codes.some(c => mapBlock(b.n, slotsFor(c)) === k)).map(b => b.n))];
+    blocks.push({n: k + 1, label: isOdd ? 'Week ' + w1 : 'Fortnight ' + (k + 1), weeks: isOdd ? 'Week ' + w1 : `Weeks ${w1} & ${w1 + 1}`,
+      assessment: false, odd: isOdd, warm: Math.max(0, (srcBlocks[0] || 1) - 1), pieces});
+  }
+  blocks.push({n: nSlots + 1, label: 'Assessment', weeks: `Weeks ${t.weeks - 1} & ${t.weeks}`, assessment: true, odd: false,
+    warm: content.warmups.length - 1,
+    pieces: assessB.pieces.filter(p => has(p.code)).map(p => Object.assign({}, p, {stations: p.stations.slice(0, capFor(p.code)).map((s, j) => Object.assign({}, s, {n: j + 1}))}))});
+  // coverage report by book
+  const byBook = [0,1,2,3].map(() => ({need:0, got:0, missing:[]}));
+  required.forEach(c => { const [p, L, s] = c.split('|'); const b = byBook[Math.ceil(+L / 4) - 1]; if(!b) return;
+    b.need++; if(covered.has(c)) b.got++; else b.missing.push({p, L:+L, s}); });
+  const adapted = [];
+  if(t.pieces.BM === 'floor') adapted.push('Beam skills are taught and assessed on a floor beam or bench, and marked adapted.');
+  if(t.pieces.VT === 'block') adapted.push('Vault skills are taught on a block instead of a vault table.');
+  if(t.pieces.FT === 'tramp') adapted.push('Fast Track stations run on the trampette with a run of panel mats.');
+  const key4 = ['VT','BM','BA'].filter(c => removed.includes(c));
+  return {settings: t, rule, blocks, coverage: byBook, removed, adapted,
+    twoPiece: key4.length > 0, noBars, F, odd};
+}
+// Which club week is it? Half-term week is skipped.
+function clubWeekNow(term, plan, today){
+  const t = planDefaults(term);
+  if(!t.start) return null;
+  const day = 86400000, start = new Date(t.start + 'T00:00:00'), now = today || new Date();
+  let wk = Math.floor((now - start) / (7 * day)) + 1;
+  let half = false;
+  if(t.halfTerm){
+    const hw = Math.floor((new Date(t.halfTerm + 'T00:00:00') - start) / (7 * day)) + 1;
+    if(wk === hw) half = true; else if(wk > hw) wk -= 1;
+  }
+  if(wk < 1 || wk > t.weeks) return {wk, W:t.weeks, outside:true};
+  if(half) return {wk, W:t.weeks, half:true};
+  const blocks = plan.blocks;
+  if(wk > t.weeks - 2) return {wk, W:t.weeks, block: blocks[blocks.length - 1].n, week: wk === t.weeks - 1 ? 'A' : 'B'};
+  const k = Math.floor((wk - 1) / 2);
+  const b = blocks[Math.min(k, blocks.length - 2)];
+  return {wk, W:t.weeks, block: b.n, week: b.odd ? 'A' : ((wk - 1) % 2 === 0 ? 'A' : 'B')};
+}
+
+/* =====================================================================
+   NGL RECREATIONAL — CLUB HUB
+   ---------------------------------------------------------------------
+   Uses the same Firebase project and club accounts as NGL Schools, so a
+   club has one NGL login. Recreational is its own licence on that
+   account: a Schools licence does NOT open this Hub.
+
+   Firestore (Recreational additions):
+     clubs/{uid}.rec          {status:'active'|'inactive', band, season,
+                               expires (timestamp), activatedAt}
+                               Only NGL admins can write this field.
+     recOrders/{ORD-XXXXX}    clubId, clubName, kind, season, term, lines[],
+                               total, status, createdAt, paidAt
+     recContent/meta          {key, version} readable only by clubs with an
+                               active, unexpired licence (and NGL admins).
+     recShared/{key}/docs/{plan|warmups|book|competition|imgIndex|img0..}
+                               the programme, readable only with the key.
+     recCodes/{CODE}          family code: clubId, clubName, status, key,
+                               term{start,weeks,startBlock}, expires.
+   The lesson plan, warm-ups and books are NOT in this file. NGL Admin
+   uploads rec-content.json from the Admin tab and it is stored in
+   Firestore behind the security rules (see firestore.rules).
+
+   PREVIEW MODE: when FIREBASE_CONFIG is null the Hub runs on demo data
+   and window.DEMO_CONTENT (preview builds only). Nothing is saved.
+   ===================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBK8gNFh4lYv6829YRFm-7Ia0tzh_RwMKQ",
+  authDomain: "ngl-schools.firebaseapp.com",
+  projectId: "ngl-schools",
+  storageBucket: "ngl-schools.firebasestorage.app",
+  messagingSenderId: "202087533031",
+  appId: "1:202087533031:web:a905eaa461925256b71542"
+};
+
+const SITE_URL = 'https://nglrecreational.co.uk';
+const CONTACT_EMAIL = 'admin@nationalgymnasticsleague.co.uk';
+const INVOICE = {
+  businessName: 'National Gymnastics League',
+  addressLines: ['66 Waveney Road', 'Harpenden', 'Hertfordshire', 'AL5 4QZ'],
+  email: CONTACT_EMAIL,
+  termsDays: 14,
+  vatNote: 'No VAT charged: National Gymnastics League is not VAT registered.',   // clear this when VAT_RATE is set
+  bank: { accountName: 'National Gymnastics League', sortCode: '60-84-64', accountNumber: '93416867' }
+};
+/* Invoice emails use the same EmailJS service and template as NGL Schools
+   (the template takes subject + invoice_html). */
+const EMAILJS = { serviceId:'service_3qlufgh', templateId:'template_8i40iia', publicKey:'ZSjEpECoOMHkWNB1D' };
+
+/* ---------- Pricing (edit here) ----------
+   One yearly Club Licence per club, banded by size. It runs 12 months from the day it is
+   activated. Books, medals and t-shirts are bought through the Hub while the licence is active.
+   Each band can buy books up to 10% above its top gymnast number in a licence year; past that
+   the club upgrades to the next band for the difference. */
+const CLUB_BANDS = [
+  {key:'s', label:'Up to 99 recreational gymnasts',  short:'Under 100', price:500,  books:110},
+  {key:'m', label:'100 to 399 recreational gymnasts', short:'100–399',  price:1000, books:440},
+  {key:'l', label:'400 or more recreational gymnasts', short:'400+',    price:1500, books:null}   // null = no limit
+];
+const SHOP = [
+  {kind:'book',   name:'Recreational award book',  price:5,  rrp:'£10',      note:'Lasts more than a year (4 levels)'},
+  {kind:'medal',  name:'Recreational medal',       price:3, rrp:'£5',       note:'One per gymnast each term'},
+  {kind:'tshirt', name:'NGL children’s t-shirt',   price:12, rrp:'£17 to £20', note:''}
+];
+const VAT_RATE = 0;   // NGL is not VAT registered yet. When it is, set 0.2 and VAT is added to every invoice.
+const TERMS = [
+  {key:'autumn', label:'Autumn term'},
+  {key:'spring', label:'Spring term'},
+  {key:'summer', label:'Summer term'}
+];
+const LEVELS = [
+  {key:'ruby', name:'Ruby', book:1, color:'var(--ruby)'},
+  {key:'pink', name:'Pink', book:2, color:'var(--pink)'},
+  {key:'teal', name:'Teal', book:3, color:'var(--teal)'},
+  {key:'indigo', name:'Indigo', book:4, color:'var(--indigo)'}
+];
+
+const gbp = n => '£' + Number(n).toLocaleString('en-GB', {minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2});
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- Season / terms ---------- */
+function currentSeason(d = new Date()){
+  const y = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1;
+  return y + '/' + String(y + 1).slice(2);
+}
+function currentTermKey(d = new Date()){
+  const m = d.getMonth();
+  return m >= 8 ? 'autumn' : (m <= 2 ? 'spring' : 'summer');
+}
+// A licence runs 12 months from activation. A renewal paid early starts when the current one ends.
+function addYear(d){ const x = new Date(d); x.setFullYear(x.getFullYear() + 1); return x; }
+function licenceExpiry(rec, now = new Date()){
+  const cur = rec && rec.expires ? toDate(rec.expires) : null;
+  return addYear(cur && cur > now ? cur : now);
+}
+const clubFee = band => (CLUB_BANDS.find(x => x.key === band) || CLUB_BANDS[0]).price;
+const shopItem = k => SHOP.find(x => x.kind === k);
+// Adds a VAT line when NGL is VAT registered
+function withVat(lines){
+  if(!VAT_RATE) return lines;
+  const net = lines.reduce((a, l) => a + l.qty * l.unit, 0);
+  return [...lines, {kind:'vat', desc:`VAT at ${Math.round(VAT_RATE * 100)}%`, qty:1, unit:Math.round(net * VAT_RATE * 100) / 100}];
+}
+/* Book allowance: books in the order that started or renewed the licence, and every order since. */
+function bookAllowance(club, orders){
+  const band = (CLUB_BANDS.find(b => b.key === (club.rec && club.rec.band)) || CLUB_BANDS[0]);
+  const lic = orders.filter(o => o.kind === 'start' || o.kind === 'renew').sort((a,b) => toDate(b.createdAt) - toDate(a.createdAt))[0];
+  const from = lic ? toDate(lic.createdAt) : new Date(0);
+  const used = orders.filter(o => toDate(o.createdAt) >= from)
+    .reduce((a, o) => a + (o.lines || []).filter(l => l.kind === 'book').reduce((x, l) => x + l.qty, 0), 0);
+  return {band, used, limit: band.books, left: band.books == null ? Infinity : Math.max(0, band.books - used)};
+}
+// Upgrade = the difference between the two bands, pro-rata for the whole months left on the licence
+function monthsRemaining(rec, now = new Date()){
+  if(!rec || !rec.expires) return 12;
+  const e = toDate(rec.expires); let m = (e.getFullYear() - now.getFullYear()) * 12 + (e.getMonth() - now.getMonth());
+  if(e.getDate() > now.getDate()) m += 1;          // part month counts as a month
+  return Math.max(1, Math.min(12, m));
+}
+function upgradeCost(fromKey, toKey, rec){
+  const a = CLUB_BANDS.find(b => b.key === fromKey) || CLUB_BANDS[0], b = CLUB_BANDS.find(x => x.key === toKey) || a;
+  return Math.round((b.price - a.price) * monthsRemaining(rec) / 12 * 100) / 100;
+}
+const nextBand = key => CLUB_BANDS[Math.min(CLUB_BANDS.length - 1, CLUB_BANDS.findIndex(b => b.key === key) + 1)];
+
+const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+function orderRef(){
+  const r = new Uint32Array(5); crypto.getRandomValues(r);
+  return 'ORD-' + Array.from(r, x => CODE_ALPHABET[x % CODE_ALPHABET.length]).join('');
+}
+/* NGL Schools needs every club to hold a (switched-off) Schools code, so a
+   club that registers here can still open the Schools Club Hub later. */
+function codePrefix(name){
+  const words = String(name).toUpperCase().replace(/[^A-Z ]/g,'').split(/\s+/)
+    .filter(w => w && !['GYMNASTICS','GYMNASTIC','GYM','CLUB','THE','ACADEMY','OF','AND'].includes(w));
+  return (words[0] || 'NGL').slice(0, 10).padEnd(2, 'X');
+}
+function newAccessCode(clubName){
+  const r = new Uint32Array(4); crypto.getRandomValues(r);
+  return codePrefix(clubName) + '-' + Array.from(r, x => CODE_ALPHABET[x % CODE_ALPHABET.length]).join('');
+}
+function friendlyAuthError(e){
+  const c = (e && e.code) || '';
+  if(c.includes('invalid-credential') || c.includes('wrong-password') || c.includes('user-not-found')) return 'That email and password don’t match. Please try again.';
+  if(c.includes('email-already-in-use')) return 'There’s already an NGL club account with that email (perhaps from NGL Schools). Log in with it instead.';
+  if(c.includes('weak-password')) return 'Please choose a password of at least 8 characters.';
+  if(c.includes('invalid-email')) return 'Please check the email address.';
+  if(c.includes('too-many-requests')) return 'Too many attempts. Please wait a few minutes and try again.';
+  if(c.includes('network')) return 'We couldn’t connect. Please check your internet connection.';
+  return 'Something went wrong. Please try again.';
+}
+const toDate = c => !c ? new Date() : (typeof c.toDate === 'function' ? c.toDate() : (c.seconds ? new Date(c.seconds * 1000) : new Date(c)));
+const fmtDate = d => d.toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+
+/* =====================================================================
+   STATE + DATA LAYER
+   ===================================================================== */
+const S = {season: currentSeason(), uid:null, isAdmin:false, club:null, orders:[], content:null, contentError:''};
+const hasAccess = () => !!(S.club && S.club.rec && S.club.rec.status === 'active' && toDate(S.club.rec.expires) > new Date());
+const orderTotal = o => (o.lines || []).reduce((a, l) => a + l.qty * l.unit, 0);
+
+let FB = null;
+async function fb(){
+  if(FB) return FB;
+  const v = '10.12.2';
+  const [app, auth, fs] = await Promise.all([
+    import(`https://www.gstatic.com/firebasejs/${v}/firebase-app.js`),
+    import(`https://www.gstatic.com/firebasejs/${v}/firebase-auth.js`),
+    import(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore.js`)
+  ]);
+  const a = app.initializeApp(FIREBASE_CONFIG);
+  FB = {auth, fs, A: auth.getAuth(a), D: fs.getFirestore(a)};
+  return FB;
+}
+async function loadClubData(uid){
+  const {fs, D} = await fb();
+  S.uid = uid;
+  const [clubSnap, adminSnap, ordersSnap] = await Promise.all([
+    fs.getDoc(fs.doc(D, 'clubs', uid)),
+    fs.getDoc(fs.doc(D, 'admins', uid)).catch(() => null),
+    fs.getDocs(fs.query(fs.collection(D, 'recOrders'), fs.where('clubId', '==', uid))).catch(() => ({docs:[]}))
+  ]);
+  S.club = clubSnap.exists() ? clubSnap.data() : null;
+  S.isAdmin = !!(adminSnap && adminSnap.exists());
+  S.orders = ordersSnap.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => toDate(a.createdAt) - toDate(b.createdAt));
+  S.content = null;
+}
+async function claimSchoolsCode(clubName, clubId){
+  const {fs, D} = await fb();
+  for(let i = 0; i < 6; i++){
+    const code = newAccessCode(clubName);
+    const ref = fs.doc(D, 'accessCodes', code);
+    if((await fs.getDoc(ref)).exists()) continue;
+    await fs.setDoc(ref, {clubId, clubName, season:S.season, status:'inactive', createdAt: fs.serverTimestamp()});
+    return code;
+  }
+  return '';
+}
+
+const liveApi = {
+  async restore(){
+    const {auth, A} = await fb();
+    return new Promise(res => {
+      const off = auth.onAuthStateChanged(A, async user => {
+        off();
+        if(!user){ res(false); return; }
+        try{ await loadClubData(user.uid); res(!!S.club || S.isAdmin); }catch(e){ res(false); }
+      });
+    });
+  },
+  async signIn(email, password){
+    try{
+      const {auth, A} = await fb();
+      const cred = await auth.signInWithEmailAndPassword(A, email, password);
+      await loadClubData(cred.user.uid);
+      if(!S.club && !S.isAdmin) return {ok:false, reason:'This login isn’t linked to a club. Please register your club.'};
+      return {ok:true};
+    }catch(e){ return {ok:false, reason:friendlyAuthError(e)}; }
+  },
+  async resetPassword(email){
+    try{ const {auth, A} = await fb(); await auth.sendPasswordResetEmail(A, email); return {ok:true}; }
+    catch(e){ return {ok:false, reason:friendlyAuthError(e)}; }
+  },
+  async register(d){
+    try{
+      const {auth, fs, A, D} = await fb();
+      const cred = await auth.createUserWithEmailAndPassword(A, d.email, d.password);
+      S.uid = cred.user.uid;
+      const code = await claimSchoolsCode(d.name, S.uid).catch(() => '');
+      await fs.setDoc(fs.doc(D, 'clubs', S.uid), {name:d.name, bgNumber:d.bgNumber, contact:d.contact, email:d.email, accessCode:code, source:'recreational', createdAt:fs.serverTimestamp()});
+      await loadClubData(S.uid);
+      return {ok:true};
+    }catch(e){ return {ok:false, reason:friendlyAuthError(e)}; }
+  },
+  async signOut(){ const {auth, A} = await fb(); await auth.signOut(A); },
+  async placeOrder(o){
+    const {fs, D} = await fb();
+    const id = orderRef();
+    const data = {...o, clubId:S.uid, clubName:S.club.name, status:'awaiting-payment'};
+    await fs.setDoc(fs.doc(D, 'recOrders', id), {...data, createdAt:fs.serverTimestamp()});
+    const local = {id, ...data, createdAt:new Date()}; S.orders.push(local); return local;
+  },
+  async loadContent(){
+    const {fs, D} = await fb();
+    const meta = await fs.getDoc(fs.doc(D, 'recContent', 'meta'));
+    if(!meta.exists()) throw new Error('No content published yet');
+    const key = meta.data().key; S.contentKey = key;
+    const keys = ['plan','warmups','book','competition','imgIndex'];
+    const snaps = await Promise.all(keys.map(k => fs.getDoc(fs.doc(D, 'recShared', key, 'docs', k))));
+    const c = {};
+    snaps.forEach((s, i) => { if(s.exists()) c[keys[i]] = JSON.parse(s.data().json); });
+    if(!c.plan) throw new Error('No content published yet');
+    return c;
+  },
+  async loadImgChunk(n){
+    const {fs, D} = await fb();
+    const s = await fs.getDoc(fs.doc(D, 'recShared', S.contentKey, 'docs', 'img' + n));
+    return s.exists() ? JSON.parse(s.data().json) : {};
+  },
+  async syncFamily(){
+    const {fs, D} = await fb();
+    const meta = await fs.getDoc(fs.doc(D, 'recContent', 'meta'));
+    const upd = {clubName:S.club.name, expires:S.club.rec.expires};
+    if(meta.exists()) upd.key = meta.data().key;
+    await fs.updateDoc(fs.doc(D, 'recCodes', S.club.recCode), upd);
+  },
+  async saveFamily(term){
+    const {fs, D} = await fb();
+    // 1. The club plan itself: always saved on the club's own record.
+    await fs.updateDoc(fs.doc(D, 'clubs', S.uid), {recTerm:term});
+    S.club.recTerm = term;
+    // 2. The family code: only once the Recreational licence is active.
+    const rec = S.club.rec;
+    if(!rec || rec.status !== 'active' || !rec.expires) return S.club.recCode || null;
+    let code = S.club.recCode;
+    const data = {clubId:S.uid, clubName:S.club.name, status:'active', key:S.contentKey || '', term, expires:rec.expires};
+    try{
+      if(!code){
+        for(let i = 0; i < 6; i++){
+          const c = newAccessCode(S.club.name);
+          const ref = fs.doc(D, 'recCodes', c);
+          if((await fs.getDoc(ref)).exists()) continue;
+          await fs.setDoc(ref, {...data, createdAt:fs.serverTimestamp()}); code = c; break;
+        }
+      }else{
+        await fs.updateDoc(fs.doc(D, 'recCodes', code), {clubName:S.club.name, key:data.key, term, expires:data.expires});
+      }
+      if(code){ await fs.updateDoc(fs.doc(D, 'clubs', S.uid), {recCode:code}); S.club.recCode = code; }
+    }catch(e){ console.warn('Family code not updated', e); S.familyWarn = true; }
+    return code;
+  },
+  // ----- NGL admin -----
+  async adminLoad(){
+    const {fs, D} = await fb();
+    const [c, o] = await Promise.all([fs.getDocs(fs.collection(D, 'clubs')), fs.getDocs(fs.collection(D, 'recOrders'))]);
+    return {
+      clubs: c.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => String(a.name).localeCompare(String(b.name))),
+      orders: o.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => toDate(b.createdAt) - toDate(a.createdAt))
+    };
+  },
+  async adminMarkPaid(order, club){
+    const {fs, D} = await fb();
+    const batch = fs.writeBatch(D);
+    batch.update(fs.doc(D, 'recOrders', order.id), {status:'paid', paidAt:fs.serverTimestamp()});
+    if(order.upgradeTo && club.rec){
+      batch.update(fs.doc(D, 'clubs', club.id), {rec:{...club.rec, band:order.upgradeTo}});
+    }else if(order.band){
+      batch.update(fs.doc(D, 'clubs', club.id), {rec:{status:'active', band:order.band, season:order.season,
+        expires: fs.Timestamp.fromDate(licenceExpiry(club.rec)), activatedAt: fs.serverTimestamp()}});
+    }
+    await batch.commit();
+  },
+  async adminSetStatus(club, status){
+    const {fs, D} = await fb();
+    const rec = {...(club.rec || {}), status};
+    if(status === 'active' && !rec.expires){ rec.season = S.season; rec.expires = fs.Timestamp.fromDate(addYear(new Date())); rec.band = rec.band || 's'; }
+    await fs.updateDoc(fs.doc(D, 'clubs', club.id), {rec});
+    club.rec = rec;
+  },
+  async adminPublish(content, progress){
+    const {fs, D} = await fb();
+    for(const k of ['plan','warmups','book','competition']) if(!content[k]) throw new Error('rec-content.json is missing “' + k + '”');
+    const r = new Uint32Array(6); crypto.getRandomValues(r);
+    const key = Array.from(r, x => x.toString(36)).join('');
+    const imgs = content.images || [], idx = {};
+    imgs.forEach((ch, n) => Object.keys(ch).forEach(h => idx[h] = n));
+    const put = (name, obj) => fs.setDoc(fs.doc(D, 'recShared', key, 'docs', name), {json: JSON.stringify(obj), version: content.version || '', updatedAt: fs.serverTimestamp()});
+    for(const k of ['plan','warmups','book','competition']){ progress && progress('Uploading ' + k + '…'); await put(k, content[k]); }
+    await put('imgIndex', idx);
+    for(let n = 0; n < imgs.length; n++){ progress && progress(`Uploading photos ${n + 1} of ${imgs.length}…`); await put('img' + n, imgs[n]); }
+    await fs.setDoc(fs.doc(D, 'recContent', 'meta'), {key, version: content.version || '', updatedAt: fs.serverTimestamp()});
+    progress && progress('Updating family codes…');
+    const codes = await fs.getDocs(fs.collection(D, 'recCodes'));
+    for(const c of codes.docs) await fs.updateDoc(c.ref, {key});
+    S.content = null; IMG.cache = {}; IMG.loaded = {};
+  }
+};
+
+/* ---------- Preview (demo) implementation ---------- */
+const DEMO_CLUB = () => ({name:'SAADI Gymnastics', contact:'Dave Brooke', email:CONTACT_EMAIL, bgNumber:'',
+  rec:{status:'active', band:'m', season:S.season, expires:addYear(new Date(Date.now() - 30 * 86400000))}, recCode:'SAADI-7K4P',
+  recTerm:{start: new Date(Date.now() - 16 * 86400000).toISOString().slice(0,10), weeks:14, startBlock:1}});
+const demoApi = {
+  async restore(){ return false; },
+  async signIn(){
+    S.club = DEMO_CLUB(); S.isAdmin = true;
+    S.orders = [{id:'ORD-DEMO1', clubId:'demo', clubName:S.club.name, kind:'start', band:'m', season:S.season, term:'autumn', status:'paid', createdAt:new Date(Date.now() - 30 * 86400000),
+      lines:[{kind:'club', desc:'Recreational Club Licence, 100 to 399 gymnasts (12 months)', qty:1, unit:clubFee('m')},
+             {kind:'medal', desc:'Recreational medals', qty:240, unit:shopItem('medal').price},
+             {kind:'book', desc:'Recreational award books', qty:240, unit:shopItem('book').price}]}];
+    return {ok:true};
+  },
+  async resetPassword(){ return {ok:true}; },
+  async register(d){ S.club = {name:d.name, contact:d.contact, email:d.email, bgNumber:d.bgNumber}; S.isAdmin = true; S.orders = []; return {ok:true}; },
+  async signOut(){},
+  async placeOrder(o){ const x = {id:orderRef(), ...o, clubId:'demo', clubName:S.club.name, status:'awaiting-payment', createdAt:new Date()}; S.orders.push(x); return x; },
+  async loadContent(){
+    if(!window.DEMO_CONTENT) throw new Error('No preview content in this build');
+    const c = window.DEMO_CONTENT, idx = {};
+    (c.images || []).forEach((ch, n) => Object.keys(ch).forEach(h => idx[h] = n));
+    return {...c, imgIndex: idx};
+  },
+  async loadImgChunk(n){ return (window.DEMO_CONTENT.images || [])[n] || {}; },
+  async syncFamily(){},
+  async saveFamily(term){ S.club.recCode = S.club.recCode || newAccessCode(S.club.name); S.club.recTerm = term; return S.club.recCode; },
+  async adminLoad(){ return {clubs:[{id:'demo', ...S.club}], orders:S.orders.slice().reverse()}; },
+  async adminMarkPaid(order, club){
+    const o = S.orders.find(x => x.id === order.id); if(o) o.status = 'paid';
+    if(order.upgradeTo && S.club.rec){ S.club.rec = {...S.club.rec, band:order.upgradeTo}; }
+    else if(order.band){ S.club.rec = {status:'active', band:order.band, season:order.season, expires:licenceExpiry(S.club.rec)}; }
+  },
+  async adminSetStatus(club, status){ S.club.rec = {...(S.club.rec || {band:'s', season:S.season, expires:addYear(new Date())}), status}; club.rec = S.club.rec; },
+  async adminPublish(){ }
+};
+const api = FIREBASE_CONFIG ? liveApi : demoApi;
+
+/* =====================================================================
+   SHELL
+   ===================================================================== */
+let signedIn = false;
+let tab = 'dashboard';
+const UI = {block:1, piece:'all', level:'all', wblock:1, book:1};
+const $view = document.getElementById('view');
+function render(html){ $view.innerHTML = '<div class="screen">' + html + '</div>'; }
+const CONTENT_TABS = ['club','plan','warmups','books','competition'];
+function setTop(){
+  const ta = document.getElementById('topActions');
+  const nav = document.getElementById('navtabs');
+  if(signedIn){
+    ta.innerHTML = `${S.club ? `<span class="pill">${esc(S.club.name)}</span>` : ''}<button class="btn ghost small" data-act="signout">Sign out</button>`;
+    nav.hidden = false;
+    const lock = !hasAccess() && !S.isAdmin;
+    const tabs = S.club ? [['dashboard','Dashboard'],['club','Club plan'],['warmups','Warm-ups'],['plan','Lesson plan'],['books','Award books'],['competition','Competition'],['orders','Orders'],['licence','Licence & pricing']] : [];
+    if(S.isAdmin) tabs.push(['admin','NGL Admin']);
+    nav.innerHTML = tabs.map(([k,l]) => `<button class="navtab ${tab===k?'active':''} ${lock && CONTENT_TABS.includes(k) ? 'locked' : ''}" data-tab="${k}">${lock && CONTENT_TABS.includes(k) ? '🔒 ' : ''}${l}</button>`).join('');
+  }else{
+    ta.innerHTML = `<button class="btn ghost small" data-go="login">Club login</button>`;
+    nav.hidden = true;
+  }
+}
+function show(){
+  setTop();
+  if(!signedIn){ screenLanding(); return; }
+  if(tab === 'admin' && S.isAdmin) return screenAdmin();
+  if(!S.club){ tab = 'admin'; return screenAdmin(); }
+  if(CONTENT_TABS.includes(tab)){
+    if(!hasAccess() && !S.isAdmin) return screenLocked();
+    return withContent(() => ({club:screenClub, plan:screenPlan, warmups:screenWarmups, books:screenBooks, competition:screenCompetition})[tab]());
+  }
+  ({dashboard:screenDashboard, orders:screenOrders, licence:screenLicence})[tab]();
+}
+async function withContent(fn){
+  if(S.content){ fn(); return; }
+  render(`<div class="card locked-card"><p class="muted">Loading the Recreational programme…</p></div>`);
+  try{ S.content = await api.loadContent(); fn(); }
+  catch(e){
+    console.error(e);
+    render(`<div class="card locked-card"><h2>The programme isn’t available just now</h2><p class="muted">${S.isAdmin ? 'No content has been published yet. Press “Publish latest from website” in the NGL Admin tab.' : 'Please try again in a moment. If this keeps happening, email ' + esc(CONTACT_EMAIL) + '.'}</p></div>`);
+  }
+}
+function modal(html){
+  const m = document.createElement('div'); m.className = 'modal-bg';
+  m.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+  m.addEventListener('click', e => { if(e.target === m || e.target.closest('[data-close]')) m.remove(); });
+  document.body.appendChild(m); return m;
+}
+
+/* =====================================================================
+   PUBLIC PAGES
+   ===================================================================== */
+function pitchHTML(inside){
+  return `
+  ${inside ? '' : `
+  <section class="hero">
+    <div>
+      <p class="eyebrow">NGL Recreational · for British Gymnastics clubs</p>
+      <h1>A complete recreational programme, from first forward roll to Indigo.</h1>
+      <p class="lead">Lesson plans, warm-ups, award books and competitions that all line up. Your coaches know what to teach each week, every child works at their own level, and every skill is taught before it is assessed.</p>
+      <div class="btn-row" style="margin-top:18px">
+        <button class="btn" data-go="register">Register your club</button>
+        <button class="btn ghost" data-go="login">Club login</button>
+      </div>
+      <p class="note" style="margin-top:12px">Already have an NGL Schools club account? Log in with it. Recreational is a separate licence on the same account.</p>
+    </div>
+    <div class="levels-art" aria-hidden="true">
+      ${LEVELS.map(l => `<div class="lvtile bg-${l.key}"><small>Book ${l.book}</small>${l.name}</div>`).join('')}
+    </div>
+  </section>`}
+
+  <div class="section grid3">
+    <div class="card"><div class="stat">4</div><p class="muted" style="margin-top:8px">Award books, Ruby to Indigo, matching the four NGL Recreational competition levels.</p></div>
+    <div class="card"><div class="stat">16</div><p class="muted" style="margin-top:8px">Levels, one per term, assessed in the last two weeks of every term.</p></div>
+    <div class="card"><div class="stat">6</div><p class="muted" style="margin-top:8px">Pieces of apparatus, each with stations at four levels so mixed groups train together.</p></div>
+  </div>
+
+  <div class="section">
+    <h2>How it fits together</h2>
+    <div class="grid3 steps">
+      <div class="card step"><h3>Award book</h3><p class="muted">The master. Each level lists the skills a gymnast passes at the end of term.</p></div>
+      <div class="card step"><h3>Lesson plan and warm-up</h3><p class="muted">Two-week blocks of stations and warm-ups that teach those skills, with Ruby, Pink, Teal and Indigo versions of every station.</p></div>
+      <div class="card step"><h3>Competition</h3><p class="muted">NGL Recreational competitions use the same four levels, so gymnasts compete what they have been taught.</p></div>
+    </div>
+  </div>
+
+  ${inside ? '' : `<div class="section card">${planStoryHTML(false)}</div>`}
+
+  <div class="section grid2">
+    <div class="card">
+      <h2>What your coaches get</h2>
+      <ul class="ticks">
+        <li>A full lesson plan: six teaching blocks plus an assessment block, with stations for Floor, Vault, Beam, Bars and Fast Track</li>
+        <li>A 10-minute warm-up for every block, built from the physical preparation in the books</li>
+        <li>Printable award-book assessment sheets for every level</li>
+        <li>The competition routines for Ruby, Pink, Teal and Indigo</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>What every gymnast gets</h2>
+      <ul class="ticks">
+        <li>An NGL Recreational award book for their level</li>
+        <li>A medal every term</li>
+        <li>Certificates as they pass each level</li>
+        <li>A clear route into NGL Recreational competitions</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section card">
+    <h2>From recreational to the leagues</h2>
+    <p class="muted">Gymnasts move through the four books and can compete at every level, then on into the NGL General and Performance Leagues.</p>
+    <div class="journey">
+      <span class="jstep">Pre-School</span><span class="jstep">Schools</span><span class="jstep on">Recreational</span><span class="jstep">General</span><span class="jstep">Performance</span><span class="jstep">University</span><span class="jstep">Masters</span>
+    </div>
+  </div>
+
+  ${inside ? '' : `
+  <div class="section card" style="text-align:center">
+    <h2>Licensed to BG clubs</h2>
+    <p class="muted">Clubs hold a yearly Club Licence and buy award books and medals through the Club Hub. Full pricing is in the Club Hub once you register.</p>
+    <div class="btn-row" style="justify-content:center"><button class="btn" data-go="register">Register your club</button></div>
+  </div>`}
+  <div class="foot">Questions? <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></div>`;
+}
+function screenLanding(){ signedIn = false; setTop(); render(pitchHTML(false)); window.scrollTo(0,0); }
+
+function screenLogin(msg){
+  setTop();
+  render(`
+    <div class="auth card">
+      ${FIREBASE_CONFIG ? '' : '<div class="demo-banner">Preview mode: any email and password opens a demo club with an active licence and the NGL Admin tab</div>'}
+      <h2>Club login</h2>
+      <p class="muted">Use your NGL club account. If you already use NGL Schools, it’s the same login.</p>
+      <form id="loginForm">
+        <div class="field"><label for="em">Email</label><input class="input" id="em" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="pw">Password</label><input class="input" id="pw" type="password" autocomplete="current-password" required></div>
+        <p class="error" id="err">${esc(msg||'')}</p>
+        <button class="btn block" type="submit">Sign in</button>
+      </form>
+      <p class="note" style="margin-top:14px;text-align:center">New to NGL? <a href="#" data-go="register">Register your club</a><br><a href="#" data-act="reset">Forgotten your password?</a></p>
+    </div>`);
+  document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Signing in…';
+    const r = await api.signIn(document.getElementById('em').value.trim(), document.getElementById('pw').value);
+    btn.disabled = false; btn.textContent = 'Sign in';
+    if(r.ok){ signedIn = true; tab = S.club ? 'dashboard' : 'admin'; show(); }
+    else document.getElementById('err').textContent = r.reason || 'Sign-in failed.';
+  });
+}
+function screenRegister(){
+  setTop();
+  render(`
+    <div class="auth card">
+      ${FIREBASE_CONFIG ? '' : '<div class="demo-banner">Preview mode: this shows a brand-new club. Start a licence, then use the NGL Admin tab to mark the invoice paid and watch the programme unlock. Nothing is saved.</div>'}
+      <h2>Register your club</h2>
+      <p class="muted">Creates your NGL club account. Already use NGL Schools? <a href="#" data-go="login">Log in instead</a>.</p>
+      <form id="regForm">
+        <div class="field"><label for="rn">Club name</label><input class="input" id="rn" required></div>
+        <div class="field"><label for="rb">British Gymnastics club number</label><input class="input" id="rb" required></div>
+        <div class="field"><label for="rc">Contact name</label><input class="input" id="rc" autocomplete="name" required></div>
+        <div class="field"><label for="re">Email</label><input class="input" id="re" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="rp">Password (8+ characters)</label><input class="input" id="rp" type="password" autocomplete="new-password" minlength="8" required></div>
+        <p class="error" id="err"></p>
+        <button class="btn block" type="submit">Create club account</button>
+      </form>
+    </div>`);
+  document.getElementById('regForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Creating…';
+    const v = id => document.getElementById(id).value.trim();
+    const r = await api.register({name:v('rn'), bgNumber:v('rb'), contact:v('rc'), email:v('re'), password:document.getElementById('rp').value});
+    btn.disabled = false; btn.textContent = 'Create club account';
+    if(r.ok){ signedIn = true; tab = 'dashboard'; show(); }
+    else document.getElementById('err').textContent = r.reason;
+  });
+}
+
+/* =====================================================================
+   CLUB SCREENS
+   ===================================================================== */
+const pending = () => S.orders.filter(o => o.status !== 'paid');
+function orderFor(o){
+  const bits = [];
+  if(o.kind === 'start') bits.push('New Club Licence'); else if(o.kind === 'renew') bits.push('Licence renewal'); else if(o.upgradeTo) bits.push('Band upgrade');
+  const n = k => (o.lines || []).filter(l => l.kind === k).reduce((a, l) => a + l.qty, 0);
+  if(n('book')) bits.push(n('book') + ' books'); if(n('medal')) bits.push(n('medal') + ' medals'); if(n('tshirt')) bits.push(n('tshirt') + ' t-shirts');
+  if(n('gymnast')) bits.push(n('gymnast') + ' gymnast licences');
+  return bits.join(', ') || 'Order';
+}
+const bandOf = k => CLUB_BANDS.find(b => b.key === k) || CLUB_BANDS[0];
+function screenDashboard(){
+  const rec = S.club.rec;
+  const active = hasAccess();
+  const waiting = pending();
+  const allow = active ? bookAllowance(S.club, S.orders) : null;
+  const daysLeft = rec && rec.expires ? Math.ceil((toDate(rec.expires) - new Date()) / 86400000) : 0;
+  const lapsed = !active && rec && rec.expires && (rec.status === 'active' || rec.status === 'inactive') && toDate(rec.expires) <= new Date();
+  let lic;
+  if(active){
+    lic = `<div class="card lic-card">
+      <p class="eyebrow">Recreational Club Licence</p>
+      <h2>${esc(S.club.name)} <span class="tag ok">✓ Licence paid</span></h2>
+      <p class="lic-until">Paid until <b>${fmtDate(new Date(toDate(rec.expires).getTime() - 86400000))}</b></p>
+      <p class="muted">${esc(bandOf(rec.band).label)}</p>
+      ${daysLeft <= 45 ? `<div class="lic-renew"><b>Your licence ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.</b> Renew now so your coaches and families keep access without a break.</div>` : ''}
+      <div class="kpis">
+        <div class="kpi"><div class="v">${allow.limit == null ? allow.used : allow.used + ' / ' + allow.limit}</div><div class="l">${allow.limit == null ? 'Award books this licence year' : 'Award books used of your allowance'}</div></div>
+        <div class="kpi"><div class="v">${waiting.length}</div><div class="l">Invoices awaiting payment</div></div>
+        <div class="kpi"><div class="v">16</div><div class="l">Award-book levels</div></div>
+        <div class="kpi"><div class="v">7</div><div class="l">Lesson-plan blocks</div></div>
+      </div>
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn" data-act="shop-order">Order books, medals and t-shirts</button>
+        ${daysLeft <= 45 ? `<button class="btn" data-act="renew">Renew my licence</button>` : ''}
+      </div>
+    </div>
+    <button class="card cp-dash" data-tab="club"><p class="eyebrow">Step 1</p><h2>${S.club.recTerm && S.club.recTerm.custom ? 'Your club plan' : 'Build your club plan'}</h2>
+      <p class="muted" style="margin:0">${S.club.recTerm && S.club.recTerm.custom ? 'Change your apparatus, term dates or class length, and print your plan.' : 'Tell us your apparatus, term and class length, and we’ll build your lesson plan.'}</p></button>
+    <div class="grid4">
+      <button class="card" data-tab="plan" style="text-align:left;cursor:pointer"><h3>Lesson plan</h3><p class="muted" style="margin:0">Stations for every block, at four levels.</p></button>
+      <button class="card" data-tab="warmups" style="text-align:left;cursor:pointer"><h3>Warm-ups</h3><p class="muted" style="margin:0">10-minute physical prep for each block.</p></button>
+      <button class="card" data-tab="books" style="text-align:left;cursor:pointer"><h3>Award books</h3><p class="muted" style="margin:0">Skills by level and assessment sheets.</p></button>
+      <button class="card" data-tab="competition" style="text-align:left;cursor:pointer"><h3>Competition</h3><p class="muted" style="margin:0">Ruby to Indigo routines and rules.</p></button>
+    </div>
+    ${familyCard()}`;
+  }else if(lapsed && !waiting.some(o => o.band)){
+    lic = `<div class="card lic-card">
+      <p class="eyebrow">Recreational Club Licence</p>
+      <h2>${esc(S.club.name)} <span class="tag off">Expired</span></h2>
+      <p class="lic-until">Your licence ended on <b>${fmtDate(new Date(toDate(rec.expires).getTime() - 86400000))}</b></p>
+      <p class="muted">Lesson plans, warm-ups, award books and ordering are locked until you renew. Your club plan and settings are kept.</p>
+      <div class="btn-row"><button class="btn" data-act="renew">Renew my licence</button><button class="btn ghost" data-tab="licence">See pricing</button></div>
+    </div>`;
+  }else if(waiting.some(o => o.band)){
+    const o = waiting.find(x => x.band);
+    lic = `<div class="card lic-card">
+      <p class="eyebrow">Recreational Club Licence</p>
+      <h2>Almost there <span class="tag wait">Awaiting payment</span></h2>
+      <p class="muted">Your lesson plans, warm-ups and award books unlock as soon as we receive payment for invoice <b class="mono">${esc(o.id)}</b> (${gbp(orderTotal(o))}).</p>
+      <div class="btn-row"><button class="btn" data-act="invoice" data-order="${esc(o.id)}">View invoice</button></div>
+    </div>`;
+  }else{
+    lic = `<div class="card lic-card">
+      <p class="eyebrow">Recreational Club Licence</p>
+      <h2>Start your Recreational licence</h2>
+      <p class="muted">Choose your club size and add any books and medals you need to start, and we’ll send your invoice. Everything unlocks as soon as it’s paid, and your licence runs for 12 months from then.</p>
+      <p class="note">An NGL Schools licence doesn’t include Recreational.</p>
+      <div class="btn-row"><button class="btn" data-act="start">Start my licence</button><button class="btn ghost" data-tab="licence">See pricing</button></div>
+    </div>`;
+  }
+  if(active && S.club.recCode && !S.familySynced){ S.familySynced = true; api.syncFamily().catch(e => console.error(e)); }
+  render(`<p class="eyebrow">Club Hub</p><h1>Welcome${S.club.contact ? ', ' + esc(S.club.contact.split(' ')[0]) : ''}</h1>${lic}`);
+}
+
+const FAMILY_URL = SITE_URL + '/families/';
+function familyMessage(){
+  return `Your child is working through the NGL Recreational award books at ${S.club.name}.\n\n`
+    + `See what they're learning each week, which skills are on their assessment, and their competition routine:\n${FAMILY_URL}?code=${S.club.recCode}\n\n`
+    + `Or go to ${FAMILY_URL} and enter our club code: ${S.club.recCode}`;
+}
+async function copyText(text, note){
+  try{ await navigator.clipboard.writeText(text); }
+  catch(e){ const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(_){} ta.remove(); }
+  const n = document.getElementById('copyNote'); if(n) n.textContent = note;
+}
+function familyCard(){
+  const t = S.club.recTerm;
+  if(!S.club.recCode) return `<div class="card"><p class="eyebrow">Families</p><h2>Share the programme with parents</h2>
+    <p class="muted">Parents see what their child is learning each week, which skills are on their assessment, and their competition routine. Set your term dates and we'll create your club's family code. No child details are stored.</p>
+    <button class="btn" data-tab="club">Build your club plan</button></div>`;
+  return `<div class="card"><p class="eyebrow">Families</p><h2>Your family code: <span class="mono" style="color:var(--rec)">${esc(S.club.recCode)}</span></h2>
+    <p class="muted">${t ? `Term started ${fmtDate(new Date(t.start))} · ${t.weeks} weeks · starting at Block ${t.startBlock}. ` : ''}Parents go to <b>${esc(FAMILY_URL)}</b> and enter this code.</p>
+    <div class="btn-row"><button class="btn" data-act="copy-family">Copy message for parents</button><button class="btn ghost" data-tab="club">Update term dates</button></div>
+    <p class="note" id="copyNote" style="margin-top:8px"></p></div>`;
+}
+function familyModal(){
+  const t = S.club.recTerm || {start: new Date().toISOString().slice(0,10), weeks:14, startBlock:1};
+  const m = modal(`<h2>Term dates for families</h2>
+    <p class="muted">We use these to show parents this week's block. Update them at the start of each term.</p>
+    <form id="fform">
+      <div class="field"><label for="fs">First day of term</label><input class="input" id="fs" type="date" value="${esc(t.start)}" required></div>
+      <div class="field"><label for="fw">Term length (weeks)</label><input class="input" id="fw" type="number" min="4" max="16" value="${t.weeks}" required></div>
+      <div class="field"><label for="fb">Teaching block you start this term on</label><select class="input" id="fb">${[1,2,3,4,5,6].map(n => `<option value="${n}" ${n === +t.startBlock ? 'selected' : ''}>Block ${n}</option>`).join('')}</select></div>
+      <p class="note">Each block runs for two weeks. The last two weeks of term are always the assessment block. In a shorter term, start the next term on the block after the one you finished.</p>
+      <p class="error" id="ferr"></p>
+      <div class="btn-row"><button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-close>Cancel</button></div>
+    </form>`);
+  m.querySelector('#fform').addEventListener('submit', async e => {
+    e.preventDefault();
+    const term = {start: m.querySelector('#fs').value, weeks: +m.querySelector('#fw').value, startBlock: +m.querySelector('#fb').value};
+    const sb = e.target.querySelector('button[type=submit]'); sb.disabled = true; sb.textContent = 'Saving…';
+    try{ if(!S.content) S.content = await api.loadContent(); await api.saveFamily(term); m.remove(); show(); }
+    catch(err){ console.error(err); sb.disabled = false; sb.textContent = 'Save'; m.querySelector('#ferr').textContent = 'Couldn’t save. Please try again.'; }
+  });
+}
+function screenLocked(){
+  render(`<div class="card locked-card">
+    <p class="eyebrow">Recreational licence needed</p>
+    <h2>This part of the Hub opens with your Club Licence</h2>
+    <p class="muted">The lesson plans, warm-ups, award books and competition routines are for clubs with an active NGL Recreational licence.</p>
+    <div class="btn-row" style="justify-content:center"><button class="btn" data-tab="dashboard">Go to your dashboard</button></div>
+  </div>`);
+}
+
+function screenLicence(){
+  const vat = VAT_RATE ? ' + VAT' : '';
+  render(`
+  <p class="eyebrow">Licence &amp; pricing</p><h1>NGL Recreational licensing</h1>
+  <div class="card">
+    <h2>Club Licence, per year</h2>
+    <p class="muted">One yearly licence gives your coaches the full programme in this Hub and lets you order award books, medals and t-shirts. It runs for 12 months from the day it’s activated.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Club size</th><th class="num">Per year</th><th class="num">Award books per licence year</th></tr></thead>
+      <tbody>${CLUB_BANDS.map(b => `<tr ${S.club.rec && S.club.rec.band === b.key ? 'style="background:rgba(232,130,48,.12)"' : ''}><td>${b.label}</td><td class="num"><b>${gbp(b.price)}</b>${vat}</td><td class="num">${b.books == null ? 'No limit' : 'Up to ' + b.books}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="note" style="margin-top:10px">Growing? If you need more books than your band allows, upgrade to the next band at any time. You pay the difference between the two bands for the months left on your licence, and your renewal date stays the same.</p>
+  </div>
+  <div class="card">
+    <h2>Award books, medals and t-shirts</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Item</th><th class="num">Your price</th><th class="num">Suggested price to families</th></tr></thead>
+      <tbody>${SHOP.map(i => `<tr><td>${esc(i.name)}${i.note ? `<div class="note">${esc(i.note)}</div>` : ''}</td><td class="num">${gbp(i.price)}${vat}</td><td class="num">${esc(i.rrp)}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="note" style="margin-top:8px">At the suggested prices, a club with ${Math.ceil(CLUB_BANDS[0].price / (3 * (5 - SHOP[1].price) + (10 - SHOP[0].price)))} or more gymnasts covers its whole Club Licence from book and medal sales.</p>
+  </div>
+  ${pitchHTML(true)}`);
+}
+
+function screenOrders(){
+  const rows = S.orders.slice().reverse();
+  render(`<p class="eyebrow">Orders</p><h1>Orders and invoices</h1>
+  <div class="card">${rows.length ? `<div class="table-wrap"><table>
+    <thead><tr><th>Order</th><th>Date</th><th>For</th><th class="num">Total</th><th>Status</th><th></th></tr></thead>
+    <tbody>${rows.map(o => `<tr><td class="mono">${esc(o.id)}</td><td>${fmtDate(toDate(o.createdAt))}</td>
+      <td>${esc(orderFor(o))}</td>
+      <td class="num">${gbp(orderTotal(o))}</td>
+      <td>${o.status === 'paid' ? '<span class="tag ok">Paid</span>' : '<span class="tag wait">Awaiting payment</span>'}</td>
+      <td class="row-actions"><button class="btn ghost small" data-act="invoice" data-order="${esc(o.id)}">Invoice</button></td></tr>`).join('')}</tbody>
+  </table></div>` : `<p class="muted">No orders yet.</p><button class="btn" data-act="start">Start my licence</button>`}</div>`);
+}
+
+/* ---------- Order modals ---------- */
+// kind: 'start' (new licence + optional starter order), 'renew' (licence, can change band), 'shop' (books, medals, t-shirts)
+function orderModal(kind){
+  const withLicence = kind === 'start' || kind === 'renew';
+  const curBand = S.club.rec && S.club.rec.band;
+  const m = modal(`
+    <h2>${kind === 'start' ? 'Start your Recreational licence' : kind === 'renew' ? 'Renew your Club Licence' : 'Order books, medals and t-shirts'}</h2>
+    <form id="oform">
+      ${withLicence ? `<div class="field"><label for="ob">Club size (recreational gymnasts)</label><select class="input" id="ob">${CLUB_BANDS.map(b => `<option value="${b.key}" ${curBand === b.key ? 'selected' : ''}>${b.label}, ${gbp(b.price)} a year</option>`).join('')}</select></div>` : ''}
+      ${SHOP.map(i => `<div class="field"><label for="q_${i.kind}">${esc(i.name)}s <span class="note">${gbp(i.price)} each${i.note ? ' · ' + esc(i.note) : ''}</span></label><input class="input" id="q_${i.kind}" type="number" min="0" step="1" value="0" inputmode="numeric"></div>`).join('')}
+      <div id="oallow" class="note" style="margin:-4px 0 10px"></div>
+      <div id="osum"></div>
+      <div class="btn-row" style="margin-top:14px"><button class="btn" type="submit">Place order</button><button class="btn ghost" type="button" data-close>Cancel</button></div>
+    </form>`);
+  const q = id => m.querySelector('#' + id);
+  const qty = k => Math.max(0, parseInt(q('q_' + k).value) || 0);
+  let upgrade = false;
+  function state(){
+    // Allowance for the band this order will leave the club in
+    const bandKey = withLicence ? q('ob').value : curBand;
+    const band = CLUB_BANDS.find(b => b.key === bandKey) || CLUB_BANDS[0];
+    const used = kind === 'shop' ? bookAllowance(S.club, S.orders).used : 0;
+    const target = upgrade ? nextBand(bandKey) : band;
+    const over = band.books != null && used + qty('book') > band.books;
+    const fits = target.books == null || used + qty('book') <= target.books;
+    return {band, target, used, over, fits};
+  }
+  function lines(){
+    const st = state(), L = [];
+    if(withLicence) L.push({kind:'club', desc:`Recreational Club Licence, ${st.band.label.replace(' recreational', '')} (12 months)`, qty:1, unit:st.band.price});
+    if(kind === 'shop' && upgrade && st.over){ const mr = monthsRemaining(S.club.rec); L.push({kind:'club', desc:`Club Licence upgrade, ${st.band.short} to ${st.target.short} (${mr} month${mr === 1 ? '' : 's'} left on your licence)`, qty:1, unit:upgradeCost(st.band.key, st.target.key, S.club.rec)}); }
+    SHOP.forEach(i => { const n = qty(i.kind); if(n) L.push({kind:i.kind, desc:i.name + 's', qty:n, unit:i.price}); });
+    return withVat(L);
+  }
+  function sum(){
+    const st = state(), L = lines(), tot = L.reduce((a, l) => a + l.qty * l.unit, 0);
+    const lim = st.band.books;
+    let msg = lim == null ? 'No limit on award books for your club size.' : `Award books: ${st.used + qty('book')} of ${lim} for this licence year.`;
+    if(st.over){
+      const nb = nextBand(st.band.key);
+      msg = kind === 'shop'
+        ? `<b style="color:var(--ruby,#b00)">That’s more books than your band allows (${lim} a licence year, ${st.used} used).</b><br><label style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="oup" ${upgrade ? 'checked' : ''}> Upgrade to ${esc(nb.short)} gymnasts for ${gbp(upgradeCost(st.band.key, nb.key, S.club.rec))} (the difference for the ${monthsRemaining(S.club.rec)} month${monthsRemaining(S.club.rec) === 1 ? '' : 's'} left on your licence) and add it to this order</label>`
+        : `<b style="color:var(--ruby,#b00)">${lim} books is the most for this club size.</b> Choose a larger club size, or order fewer books.`;
+      if(upgrade && !st.fits) msg += `<br>Even after upgrading that’s more than ${nb.books} books. Please contact us.`;
+    }
+    q('oallow').innerHTML = msg;
+    const up = q('oup'); if(up) up.addEventListener('change', () => { upgrade = up.checked; sum(); });
+    q('osum').innerHTML = L.map(l => `<div class="sum"><span>${esc(l.desc)}${l.qty > 1 ? ` × ${l.qty}` : ''}</span><span>${gbp(l.qty * l.unit)}</span></div>`).join('')
+      + `<div class="sum total"><span>Total</span><span>${gbp(tot)}</span></div>`;
+  }
+  m.querySelectorAll('input[type=number]').forEach(i => i.addEventListener('input', sum));
+  m.querySelectorAll('select').forEach(s => s.addEventListener('change', sum));
+  sum();
+  q('oform').addEventListener('submit', async e => {
+    e.preventDefault();
+    const st = state(), L = lines();
+    if(!L.length){ q('osum').insertAdjacentHTML('beforeend', '<p class="error">Add something to order.</p>'); return; }
+    if(st.over && !(kind === 'shop' && upgrade && st.fits)){ q('osum').insertAdjacentHTML('beforeend', '<p class="error">Please sort out the book allowance above first.</p>'); return; }
+    const sb = e.target.querySelector('button[type=submit]'); sb.disabled = true; sb.textContent = 'Placing order…';
+    const order = {kind, season:S.season, term:currentTermKey(), band: withLicence ? q('ob').value : null, lines:L, total:L.reduce((a, l) => a + l.qty * l.unit, 0)};
+    if(kind === 'shop' && upgrade && st.over) order.upgradeTo = st.target.key;
+    let o;
+    try{ o = await api.placeOrder(order); }
+    catch(err){ console.error(err); sb.disabled = false; sb.textContent = 'Place order'; q('osum').insertAdjacentHTML('beforeend', '<p class="error">Couldn’t place the order. Please try again.</p>'); return; }
+    m.querySelector('.modal').innerHTML = `<h2>Order ${esc(o.id)} placed</h2>
+      <p class="muted">${gbp(orderTotal(o))}. Pay by bank transfer within ${INVOICE.termsDays} days quoting <b class="mono">${esc(o.id)}</b>.${withLicence ? ' Your programme unlocks as soon as payment is received.' : ''}</p>
+      <div class="btn-row"><button class="btn" data-act="invoice" data-order="${esc(o.id)}">View invoice</button><button class="btn ghost" data-close>Done</button></div>
+      <p class="note" id="mailNote" style="margin:12px 0 0">${FIREBASE_CONFIG ? 'Emailing your invoice to ' + esc(S.club.email || '') + '…' : 'Preview mode: no email sent.'}</p>`;
+    m.querySelector('[data-close]').addEventListener('click', () => show());
+    if(FIREBASE_CONFIG){
+      emailInvoice(o, S.club)
+        .then(() => { const n = document.getElementById('mailNote'); if(n){ n.style.color = 'var(--ok)'; n.textContent = '✓ Invoice emailed to ' + S.club.email + '.'; } })
+        .catch(err => { console.error(err); const n = document.getElementById('mailNote'); if(n) n.textContent = 'We couldn’t email the invoice just now, but you can view and download it from your Orders tab.'; });
+    }
+  });
+}
+
+/* ---------- Invoices ---------- */
+function invoiceHTML(o, club){
+  const issued = toDate(o.createdAt), due = new Date(issued.getTime() + INVOICE.termsDays * 86400000);
+  const total = orderTotal(o), paid = o.status === 'paid';
+  return `<div class="inv">
+    <div class="inv-top"><div class="inv-brand">National Gymnastics League<small>NGL RECREATIONAL</small></div>
+      <div class="inv-title"><div class="inv-h">INVOICE</div><div class="inv-no">${esc(o.id)}</div>${paid ? '<div class="inv-paid">PAID</div>' : ''}</div></div>
+    <div class="inv-cols">
+      <div><div class="inv-label">From</div><b>${esc(INVOICE.businessName)}</b><br>${INVOICE.addressLines.map(esc).join('<br>')}<br>${esc(INVOICE.email)}</div>
+      <div><div class="inv-label">Bill to</div><b>${esc(club.name || o.clubName || '')}</b><br>${club.contact ? esc(club.contact) + '<br>' : ''}${club.email ? esc(club.email) + '<br>' : ''}${club.bgNumber ? 'BG club no. ' + esc(club.bgNumber) : ''}</div>
+      <div><div class="inv-label">Invoice date</div>${fmtDate(issued)}<div class="inv-label" style="margin-top:10px">Payment due</div>${fmtDate(due)}</div>
+    </div>
+    <table class="inv-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
+      <tbody>${(o.lines || []).map(l => `<tr><td>${esc(l.desc)}</td><td class="num">${l.qty}</td><td class="num">${gbp(l.unit)}</td><td class="num">${gbp(l.qty * l.unit)}</td></tr>`).join('')}</tbody>
+      <tfoot>${INVOICE.vatNote ? `<tr><td colspan="3" class="num">${esc(INVOICE.vatNote)}</td><td></td></tr>` : ''}<tr class="inv-total"><td colspan="3" class="num">Total due</td><td class="num">${gbp(total)}</td></tr></tfoot></table>
+    <div class="inv-pay"><div class="inv-label">How to pay: bank transfer</div>
+      <table><tr><td>Account name</td><td><b>${esc(INVOICE.bank.accountName)}</b></td></tr><tr><td>Sort code</td><td><b>${esc(INVOICE.bank.sortCode)}</b></td></tr>
+      <tr><td>Account number</td><td><b>${esc(INVOICE.bank.accountNumber)}</b></td></tr><tr><td>Payment reference</td><td><b class="mono">${esc(o.id)}</b></td></tr></table>
+      <p>Please use the payment reference exactly as shown so we can match your payment.${o.kind === 'start' || o.kind === 'renew' ? ' Your Recreational programme unlocks as soon as payment is received.' : ''}</p></div>
+    <div class="inv-foot">${esc(INVOICE.businessName)} · ${esc(INVOICE.email)} · nglrecreational.co.uk</div></div>`;
+}
+function invoiceEmailHTML(o, club){
+  const total = orderTotal(o);
+  const td = 'padding:8px 10px;border-bottom:1px solid #e3e4ee;font-size:14px;color:#1c1f3a;';
+  return `<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f5fa;padding:20px 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;">
+<tr><td style="background:#E88230;padding:8px 24px;text-align:center;font-size:13px;font-weight:bold;color:#2a1405;">Recreational Awards Scheme · Club Hub</td></tr>
+<tr><td style="background:#2a245f;padding:16px 24px;color:#ffffff;font-size:20px;font-weight:bold;">NGL Recreational</td></tr>
+<tr><td style="padding:24px;">
+<p style="margin:0 0 14px;font-size:15px;color:#1c1f3a;">Hello${club.contact ? ' ' + esc(club.contact.split(' ')[0]) : ''},</p>
+<p style="margin:0 0 18px;font-size:15px;color:#1c1f3a;">Thank you for your NGL Recreational order. Invoice <b>${esc(o.id)}</b> is below.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:18px;">
+<tr style="background:#2a245f;color:#ffffff;font-size:11px;"><td style="padding:8px 10px;">DESCRIPTION</td><td align="right" style="padding:8px 10px;">QTY</td><td align="right" style="padding:8px 10px;">AMOUNT</td></tr>
+${(o.lines || []).map(l => `<tr><td style="${td}">${esc(l.desc)}</td><td align="right" style="${td}">${l.qty}</td><td align="right" style="${td}">${gbp(l.qty * l.unit)}</td></tr>`).join('')}
+<tr style="background:#fdebdc;font-size:16px;font-weight:bold;color:#1c1f3a;"><td colspan="2" align="right" style="padding:10px;">Total due</td><td align="right" style="padding:10px;">${gbp(total)}</td></tr>
+</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5fa;border-left:4px solid #E88230;"><tr><td style="padding:12px 14px;font-size:14px;color:#1c1f3a;">
+<b>Pay by bank transfer within ${INVOICE.termsDays} days</b><br>Account name: ${esc(INVOICE.bank.accountName)}<br>Sort code: ${esc(INVOICE.bank.sortCode)}<br>Account number: ${esc(INVOICE.bank.accountNumber)}<br>Reference: <b style="font-family:Consolas,Menlo,monospace;">${esc(o.id)}</b>
+</td></tr></table>
+<p style="margin:18px 0 0;font-size:13px;color:#4a4e6d;">You can download a PDF copy at any time from the Orders tab of your <a href="${SITE_URL}/" style="color:#2a245f;font-weight:bold;">NGL Recreational Club Hub</a>.</p>
+</td></tr>
+<tr><td style="padding:14px 24px;background:#f4f5fa;text-align:center;font-size:11px;color:#6b6f8f;">${esc(INVOICE.businessName)} · ${esc(INVOICE.email)} · nglrecreational.co.uk</td></tr>
+</table></div>`;
+}
+async function emailInvoice(o, club){
+  if(!club || !club.email) throw new Error('No email address for this club');
+  const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({service_id:EMAILJS.serviceId, template_id:EMAILJS.templateId, user_id:EMAILJS.publicKey,
+      template_params:{to_email:club.email, to_name:club.contact || club.name || '', subject:`NGL Recreational invoice ${o.id} – ${gbp(orderTotal(o))}`, invoice_html:invoiceEmailHTML(o, club)}})
+  });
+  if(!res.ok) throw new Error('Email failed: ' + res.status);
+}
+let CURRENT_INVOICE = null;
+function showInvoice(o, club){
+  CURRENT_INVOICE = {o, club};
+  const m = modal(`<div class="inv-screen">${invoiceHTML(o, club)}</div>
+    <div class="btn-row" style="margin-top:14px"><button class="btn" data-act="print-invoice">Download / print PDF</button><button class="btn ghost" data-act="email-invoice">Email invoice</button><button class="btn ghost" data-close>Close</button></div>
+    <p class="note" id="invMailNote" style="margin:10px 0 0;min-height:1em"></p>`);
+  m.querySelector('.modal').classList.add('modal-wide');
+}
+// Shrink any sheet that would spill onto a second page (A4, 8mm margins).
+function fitPages(pa, landscape){
+  const pages = pa.querySelectorAll('.onepage');
+  if(!pages.length) return;
+  const mm = 96 / 25.4, W = (landscape ? 281 : 194) * mm, H = (landscape ? 192 : 279) * mm;
+  pa.style.cssText = `display:block;position:absolute;left:-10000px;top:0;width:${W}px;`;
+  pages.forEach(pg => { pg.style.zoom = ''; const h = pg.scrollHeight; if(h > H * 0.95) pg.style.zoom = (H * 0.95 / h).toFixed(3); });
+  pa.style.cssText = '';
+}
+async function printHTML(html, landscape){
+  const pa = document.getElementById('print-area');
+  pa.innerHTML = html;
+  let st = document.getElementById('pageStyle');
+  if(!st){ st = document.createElement('style'); st.id = 'pageStyle'; document.head.appendChild(st); }
+  st.textContent = `@media print{@page{size:A4 ${landscape ? 'landscape' : 'portrait'};margin:8mm;}}`;
+  if(pa.querySelector('img[data-img]')){
+    const n = document.createElement('div'); n.className = 'print-wait'; n.textContent = 'Preparing photos for printing…'; document.body.appendChild(n);
+    try{ await hydrateImages(pa); await Promise.all([...pa.querySelectorAll('img')].map(i => i.decode ? i.decode().catch(() => {}) : null)); }
+    finally{ n.remove(); }
+  }
+  fitPages(pa, landscape);
+  window.print();
+}
+
+/* =====================================================================
+   PROGRAMME CONTENT
+   ===================================================================== */
+function chips(name, items, cur){
+  return items.map(([v, l, cls]) => `<button class="chip ${cls || ''} ${String(cur) === String(v) ? 'on' : ''}" data-ui="${name}" data-v="${esc(v)}" aria-pressed="${String(cur) === String(v)}">${l}</button>`).join('');
+}
+const LVL_CHIPS = [['all','All levels'], ...LEVELS.map((l, i) => [String(i), l.name, 'lv-' + l.key])];
+const bookOf = L => LEVELS[Math.ceil(L / 4) - 1];
+function marks(s, i, full){
+  const a = s.assess && s.assess[String(i)];
+  if(!a || !a.length) return '';
+  return `<div class="asm">${a.map(y => { const b = bookOf(y.L);
+    return `<span class="apill" style="--c:${b.color}" title="Award book ${b.name}, Level ${y.L} (${esc(y.p)}): ${esc(y.s)}"><i></i>L${y.L}${full ? ' · ' + esc(y.s) : ''}</span>`; }).join('')}</div>`;
+}
+function stationTable(p){
+  const lv = UI.level;
+  if(lv !== 'all'){
+    const i = +lv;
+    return `<table class="grid-st one"><tbody>${p.stations.map(s => `<tr><td class="n">${s.n}</td><td>${fmtStation(s.levels[i] || '—')}${s.changed && s.changed.includes(i) ? '<span class="chg">Updated</span>' : ''}${marks(s, i, true)}${thumbs(s, i)}</td></tr>`).join('')}</tbody></table>`;
+  }
+  return `<div class="table-wrap"><table class="grid-st"><thead><tr><th class="n">Stn</th>${LEVELS.map(l => `<th style="background:${l.color}">${l.name}</th>`).join('')}</tr></thead>
+    <tbody>${p.stations.map(s => `<tr><td class="n">${s.n}</td>${[0,1,2,3].map(i => `<td>${fmtStation(s.levels[i] || '—')}${s.changed && s.changed.includes(i) ? '<span class="chg">Updated</span>' : ''}${marks(s, i, false)}${thumbs(s, i)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+const IMG = {cache:{}, loaded:{}};
+async function hydrateImages(root){
+  const els = [...(root || document).querySelectorAll('img[data-img]:not([src])')];
+  if(!els.length || !S.content || !S.content.imgIndex) return;
+  const need = [...new Set(els.map(e => S.content.imgIndex[e.dataset.img]).filter(n => n !== undefined && !IMG.loaded[n]))];
+  await Promise.all(need.map(async n => { IMG.loaded[n] = true; try{ Object.assign(IMG.cache, await api.loadImgChunk(n)); }catch(e){ IMG.loaded[n] = false; } }));
+  els.forEach(e => { const d = IMG.cache[e.dataset.img]; if(d) e.src = d; });
+}
+function thumbs(s, i){
+  const ids = s.img && s.img[i];
+  if(!ids || !ids.length) return '';
+  return `<div class="thumbs">${ids.map(h => `<button class="thumb" data-act="photo" data-img-id="${h}" aria-label="Enlarge photo"><img data-img="${h}" alt="Station set-up photo"></button>`).join('')}</div>`;
+}
+const fmtStation = t => esc(t).replace(/FINAL SKILL:?/g, '<span class="final">Final skill:</span>').replace(/SUPPORTED/g, 'Supported');
+function introHTML(p){
+  if(!p.intro || !p.intro.length) return '';
+  if(p.intro.length === 1) return `<div class="intro"><b>Intro:</b> ${esc(p.intro[0])}</div>`;
+  return `<div class="intro"><b>Intro by level:</b> ${p.intro.map((t, i) => `<span style="color:${LEVELS[i] ? LEVELS[i].color : 'inherit'};font-weight:800">${LEVELS[i] ? LEVELS[i].name : ''}</span> ${esc(t)}`).join(' · ')}</div>`;
+}
+/* ---------- The club plan story: process, features, benefits ---------- */
+function planStoryHTML(inHub){
+  return `<div class="story">
+    <div class="story-hero">
+      <p class="eyebrow">Your club plan</p>
+      <h2>A lesson plan built around your club, that still gets every gymnast ready for assessment</h2>
+      <p class="lead-s">Every club is different: the apparatus you have, how long your term runs, how long your classes are. Tell the Hub once, and it builds a term of lesson plans that fits, while making sure every tested skill in the award books is coached before the assessment weeks, whatever the term length.</p>
+    </div>
+    <h3 class="story-h">How it works</h3>
+    <div class="story-steps">
+      <div class="story-step"><span>1</span><div><b>Tell us your set-up</b><p>Your apparatus, the number of weeks in your term, when it starts (and half term), and how long your classes are. Four quick screens, about two minutes.</p></div></div>
+      <div class="story-step"><span>2</span><div><b>The Hub builds your term</b><p>It starts from the full NGL plan and fits it to you. Every skill that is tested is placed in a fortnight before the assessment weeks, and you see a tick for each award book before you save.</p></div></div>
+      <div class="story-step"><span>3</span><div><b>Coaches follow it</b><p>On an iPad or phone, coaches pick their group’s books, tap this week and the apparatus, see the set-up photos, then the skill ladder for each station.</p></div></div>
+    </div>
+    <h3 class="story-h">What the Hub does for you</h3>
+    <div class="story-grid">
+      <div class="story-f"><b>Fits every tested skill into your term</b><p>10 to 14 weeks. In a shorter term, themes are combined and stations are moved between fortnights so each tested skill is still coached before assessment.</p></div>
+      <div class="story-f"><b>Works with the apparatus you have</b><p>No bars? Bars come out of the plan and the assessment, and Week B becomes two longer rotations. A floor beam or a vault block is used instead, and those skills are marked adapted.</p></div>
+      <div class="story-f"><b>Fits your class length</b><p>45, 60 or 75 minutes. Shorter classes drop extra progression stations first. Stations that prepare a tested skill are always kept.</p></div>
+      <div class="story-f"><b>Knows what week it is</b><p>Half term is skipped, so “This week” is always right for coaches and parents.</p></div>
+      <div class="story-f"><b>Shows you it works</b><p>Before you save, a tick for each book shows that every apparatus skill is taught in time, plus any warnings and a 2-piece competition recommendation if you need one.</p></div>
+      <div class="story-f"><b>Prints in colour</b><p>One branded page per apparatus with numbered set-up photos and all four rungs: the whole term, one apparatus for the term, or a single week.</p></div>
+      <div class="story-f"><b>Coaches see only their group</b><p>Pick Book 1 to Book 4 and everything else is hidden. Stations are ladders from Beginner to Advanced, with a star where a rung prepares a tested skill.</p></div>
+      <div class="story-f"><b>Parents follow along</b><p>With your family code, parents see what their child is learning this fortnight and how it links to their award book and the Recreational Competition.</p></div>
+    </div>
+    <h3 class="story-h">Why it matters</h3>
+    <ul class="ticks story-b">
+      <li><b>No gymnast is assessed on a skill they haven’t been coached.</b> Every tested skill is placed before the assessment weeks, and the Hub tells you straight away if anything won’t fit.</li>
+      <li><b>No planning time.</b> A full term of lesson plans in two minutes, and next term is just new dates.</li>
+      <li><b>The same quality from every coach.</b> New and young coaches follow the same set-ups and progressions as your most experienced.</li>
+      <li><b>Mixed groups made simple.</b> Every child works on the right rung of the same station.</li>
+      <li><b>Any club, any hall.</b> From a full gym to a school hall with a bench and a trampette.</li>
+      <li><b>Happier families.</b> Parents can see progress, which keeps gymnasts coming back.</li>
+    </ul>
+    ${inHub ? '' : `<div class="btn-row" style="margin-top:18px"><button class="btn" data-go="register">Register your club</button><button class="btn ghost" data-go="login">Club login</button></div>`}
+  </div>`;
+}
+
+/* =====================================================================
+   BUILD YOUR CLUB PLAN
+   ===================================================================== */
+const PIECE_NAMES = {FF:'Forward Floor', BF:'Backward Floor', VT:'Vault', BM:'Beam', BA:'Bars', FT:'Fast Track'};
+const CP_STEPS = ['Apparatus','Weeks','Dates','Class length'];
+function cpDraft(){ if(!UI.cdraft) UI.cdraft = planDefaults(S.club.recTerm); return UI.cdraft; }
+function cpProgress(n){
+  return `<div class="cp-prog">${CP_STEPS.map((x, i) => `<div class="cp-step ${i + 1 < n ? 'done' : ''} ${i + 1 === n ? 'on' : ''}"><span>${i + 1}</span>${x}</div>`).join('')}</div>`;
+}
+function cpNav(n, canNext){
+  return `<div class="cp-nav">${n > 1 ? `<button class="btn ghost" data-act="cp-step" data-n="${n - 1}">← Back</button>` : `<button class="btn ghost" data-act="cp-cancel">Cancel</button>`}
+    <button class="btn" data-act="cp-step" data-n="${n + 1}" ${canNext ? '' : 'disabled'}>${n === 4 ? 'Build my plan →' : 'Next →'}</button></div>`;
+}
+function screenClub(){
+  const t = S.club.recTerm;
+  if(UI.cstep) return clubWizard(UI.cstep);
+  if(!t || !t.custom){
+    render(`<div class="flow"><h1 class="flow-h">Build your club plan</h1>
+      <p class="flow-sub">Four quick questions about your apparatus, your term and your classes. The Hub then builds a lesson plan for your club that still teaches every tested skill before assessment.</p>
+      <button class="bigbtn wide go" data-act="cp-start"><span class="bb-t">Start →</span><span class="bb-k">About 2 minutes</span></button>
+      <p class="note" style="margin-top:14px">Until you do this, coaches see the standard NGL plan (14 weeks, 60-minute classes, all apparatus).</p>
+      ${planStoryHTML(true)}
+      <button class="bigbtn wide go" data-act="cp-start" style="margin-top:22px"><span class="bb-t">Build your club plan →</span><span class="bb-k">About 2 minutes</span></button></div>`);
+    return;
+  }
+  const plan = clubPlan(), st = plan.settings, W = st.weeks;
+  const pcs = [...WEEK_A, ...WEEK_B].filter(c => !plan.removed.includes(c));
+  render(`<div class="flow">
+    <h1 class="flow-h">Your club plan</h1>
+    <div class="cp-sum">
+      <div><span>Term</span><b>${W} weeks from ${esc(fmtDate(new Date(st.start + 'T00:00:00')))}</b>${st.halfTerm ? `<small>Half term w/c ${esc(fmtDate(new Date(st.halfTerm + 'T00:00:00')))}</small>` : ''}</div>
+      <div><span>Classes</span><b>${st.classLen} minutes</b><small>${plan.rule.warm} min warm-up · 3 × ${plan.rule.rot} min · ${plan.rule.cool} min cool-down</small></div>
+      <div><span>Apparatus</span><b>${pcs.map(c => PIECE_NAMES[c]).join(', ')}</b>${plan.removed.length ? `<small>Not used: ${plan.removed.map(c => PIECE_NAMES[c]).join(', ')}</small>` : ''}</div>
+    </div>
+    <div class="btn-row" style="margin-top:10px"><button class="btn ghost" data-act="cp-start">Change set-up</button><button class="btn ghost" data-act="cp-story">How your plan is built</button></div>
+    ${cpResultsHTML(plan)}
+    <h2 class="cp-h">Print your plan</h2>
+    <p class="flow-sub">One page per apparatus, with numbered photos. Tick “Background graphics” when you print.</p>
+    <button class="bigbtn wide" data-act="print-plan" data-scope="term"><span class="bb-t">Whole term</span><span class="bb-k">Every fortnight, every apparatus</span></button>
+    <p class="flow-l">Whole term, one apparatus</p>
+    <div class="bbgrid three">${pcs.map(c => `<button class="bigbtn" data-act="print-plan" data-scope="termPiece" data-arg="${c}"><span class="bb-t">${PIECE_NAMES[c]}</span><span class="bb-k">All fortnights</span></button>`).join('')}</div>
+    <p class="flow-l">One week</p>
+    <div class="weekgrid">${Array.from({length: W}, (_, i) => `<button class="wkbtn ${i + 1 > W - 2 ? 'assess' : ''}" data-act="print-plan" data-scope="week" data-arg="${i + 1}">Week ${i + 1}</button>`).join('')}</div>
+  </div>`);
+}
+function cpResultsHTML(plan){
+  const cov = plan.coverage || [];
+  return `<h2 class="cp-h">What your plan covers</h2>
+    <div class="cp-res">${cov.map((c, i) => { const l = LEVELS[i], ok = c.got === c.need;
+      return `<div class="cp-book ${ok ? 'ok' : 'warn'}" style="--c:${l.color}"><div class="cp-bk">Book ${l.book}<small>${l.name}</small></div>
+        <div class="cp-bt"><b>${ok ? '✓ Every checkpoint taught' : `${c.need - c.got} checkpoint${c.need - c.got === 1 ? '' : 's'} won’t fit`}</b><small>${c.got} of ${c.need} apparatus skills taught before assessment</small>
+        ${ok ? '' : `<ul>${c.missing.map(m => `<li>${esc(m.p)} L${m.L}: ${esc(m.s)}</li>`).join('')}</ul>`}</div></div>`; }).join('')}</div>
+    <p class="note">Physical Prep skills are covered in the warm-ups.</p>
+    ${cov.some(c => c.got < c.need) ? `<p class="note">To fit everything, choose 60-minute classes or a longer term, or cover these in a catch-up session.</p>` : ''}
+    ${plan.removed.length ? `<div class="cp-flag"><b>${plan.removed.map(c => PIECE_NAMES[c]).join(' and ')} removed</b> from the plan and from assessment.${plan.twoPiece ? ' We recommend your gymnasts compete <b>2-piece (Floor and Vault)</b>.' : ''}</div>` : ''}
+    ${plan.adapted.map(a => `<div class="cp-flag soft">${esc(a)}</div>`).join('')}`;
+}
+function clubWizard(n){
+  const d = cpDraft();
+  if(n === 1){
+    const row = code => `<div class="cp-q"><div class="cp-ql">${PIECE_NAMES[code]}</div><div class="cp-opts">${PIECE_OPTS[code].map(([v, l]) => `<button class="optbtn ${d.pieces[code] === v ? 'on' : ''}" data-act="cp-set" data-k="${code}" data-v="${v}">${l}</button>`).join('')}</div></div>`;
+    render(`<div class="flow">${cpProgress(1)}<h1 class="flow-h">Which apparatus do you have?</h1>
+      <p class="flow-sub">Floor is always included. Pick the best you have for each.</p>
+      ${['VT','BM','BA','FT'].map(row).join('')}${cpNav(1, true)}</div>`);
+  }else if(n === 2){
+    render(`<div class="flow">${cpProgress(2)}<h1 class="flow-h">How many weeks in the term?</h1>
+      <p class="flow-sub">Including the 2 assessment weeks at the end. Leave out half term.</p>
+      <div class="bbgrid five">${[10,11,12,13,14].map(w => `<button class="bigbtn ${d.weeks === w ? 'now' : ''}" data-act="cp-set" data-k="weeks" data-v="${w}"><span class="bb-t">${w}</span><span class="bb-k">weeks</span></button>`).join('')}</div>${cpNav(2, true)}</div>`);
+  }else if(n === 3){
+    render(`<div class="flow">${cpProgress(3)}<h1 class="flow-h">When does term start?</h1>
+      <div class="cp-date"><label for="cpStart">First week of term</label><input class="input big" id="cpStart" type="date" value="${esc(d.start)}"></div>
+      <div class="cp-date"><label for="cpHalf">Half-term week starts <span class="muted">(optional)</span></label><input class="input big" id="cpHalf" type="date" value="${esc(d.halfTerm)}"></div>
+      <p class="note">The Hub skips half term, so “This week” stays right all term.</p>${cpNav(3, !!d.start)}</div>`);
+  }else if(n === 4){
+    render(`<div class="flow">${cpProgress(4)}<h1 class="flow-h">How long are your classes?</h1>
+      <div class="bbgrid three">${[45,60,75].map(m => { const r = CLASS_RULES[m]; return `<button class="bigbtn ${d.classLen === m ? 'now' : ''}" data-act="cp-set" data-k="classLen" data-v="${m}"><span class="bb-t">${m} minutes</span><span class="bb-k">${r.warm} min warm-up · 3 × ${r.rot} min rotations · ${r.cool} min cool-down</span></button>`; }).join('')}</div>${cpNav(4, true)}</div>`);
+  }else{
+    const plan = buildClubPlan(S.content, Object.assign({}, d, {custom:true}));
+    render(`<div class="flow"><h1 class="flow-h">Your plan is ready</h1>
+      <p class="flow-sub">${d.weeks} weeks · ${d.classLen}-minute classes · ${plan.F} teaching fortnights${plan.odd ? ' and 1 single week' : ''}, then 2 assessment weeks</p>
+      ${cpResultsHTML(plan)}
+      <div class="cp-nav"><button class="btn ghost" data-act="cp-step" data-n="4">← Back</button><button class="btn" data-act="cp-save">Save and share with coaches</button></div>
+      <p class="note" id="cpNote"></p></div>`);
+  }
+}
+
+/* ---------- Coach lesson plan: weeks -> apparatus -> set-up -> ladders ---------- */
+const RUNGS = [
+  {name:'Beginner', age:'Guide 4–5 yrs'},
+  {name:'Development', age:'Guide 5–7 yrs'},
+  {name:'Proficient', age:'Guide 7–9 yrs'},
+  {name:'Advanced', age:'Guide 10+'}
+];
+const WEEK_A = ['FF','VT','BM'], WEEK_B = ['BF','BA','FT'];
+const PLAN_STORE = {
+  get(){ try{ return JSON.parse(localStorage.getItem('nglrec-plan') || 'null'); }catch(e){ return null; } },
+  set(v){ try{ localStorage.setItem('nglrec-plan', JSON.stringify(v)); }catch(e){} }
+};
+Object.assign(UI, {pstep:'weeks', piece:''}, (PLAN_STORE.get() || {}));
+let PLAN_CACHE = null;
+function clubPlan(){
+  const t = S.club && S.club.recTerm;
+  const key = JSON.stringify(t || null) + '|' + (S.content.version || '') + '|' + S.content.plan.blocks.length;
+  if(PLAN_CACHE && PLAN_CACHE.key === key) return PLAN_CACHE.plan;
+  const plan = t && t.custom ? buildClubPlan(S.content, t)
+    : {custom:false, settings: planDefaults(t), removed: [], adapted: [], coverage: null,
+       blocks: S.content.plan.blocks.map(b => Object.assign({}, b, {warm: b.assessment ? S.content.warmups.length - 1 : b.n - 1}))};
+  PLAN_CACHE = {key, plan}; return plan;
+}
+function planNow(){
+  const t = S.club && S.club.recTerm, plan = clubPlan(), blocks = plan.blocks;
+  if(!t || !t.start) return null;
+  if(t.custom){ const n = clubWeekNow(t, plan); return n && !n.outside && !n.half ? n : null; }
+  const start = new Date(t.start + 'T00:00:00');
+  const wk = Math.floor((Date.now() - start) / (7 * 86400000)) + 1, W = t.weeks || 14, sb = t.startBlock || 1;
+  if(wk < 1 || wk > W) return null;
+  const week = (wk - 1) % 2 === 0 ? 'A' : 'B';
+  if(wk > W - 2) return {block: blocks.find(x => x.assessment).n, week: wk === W - 1 ? 'A' : 'B', wk, W};
+  return {block: ((sb - 1) + Math.floor((wk - 1) / 2)) % 6 + 1, week, wk, W};
+}
+function planGo(o){ Object.assign(UI, o); PLAN_STORE.set({pstep:UI.pstep, block:UI.block, piece:UI.piece}); show(); window.scrollTo(0,0); }
+function backBar(label, to){ return `<button class="backbar" data-ui="pstep" data-v="${to}">← ${esc(label)}</button>`; }
+function stationPhotos(s){ return [...new Set((s.img || []).flat().filter(Boolean))]; }
+function starsHTML(s, i){
+  const a = (s.assess && s.assess[String(i)] || []).filter(y => inGroup(Math.ceil(y.L / 4) - 1));
+  if(!a.length) return '';
+  return `<div class="stars">${a.map(y => { const b = bookOf(y.L);
+    return `<span class="star" style="--c:${b.color}">★ ${b.name} L${y.L}<span class="sk"> · ${esc(y.s)}</span></span>`; }).join('')}</div>`;
+}
+/* ---------- Your group: which books, which rungs to show ---------- */
+const GROUP_STORE = {
+  get(){ try{ const v = JSON.parse(localStorage.getItem('nglrec-group') || 'null'); return Array.isArray(v) && v.length ? v : [0,1,2,3]; }catch(e){ return [0,1,2,3]; } },
+  set(v){ try{ localStorage.setItem('nglrec-group', JSON.stringify(v)); }catch(e){} }
+};
+UI.group = GROUP_STORE.get();
+const inGroup = i => UI.group.includes(i);
+const groupName = () => UI.group.length === 4 ? 'All books' : UI.group.map(i => `Book ${LEVELS[i].book} (${LEVELS[i].name})`).join(' · ');
+function groupPicker(compact){
+  const boxes = LEVELS.map((l, i) => `<button class="grpbox ${inGroup(i) ? 'on' : ''}" style="--c:${l.color}" data-act="grp" data-i="${i}" aria-pressed="${inGroup(i)}">
+      <span class="grp-tick">${inGroup(i) ? '✓' : ''}</span><span class="grp-name">Book ${l.book}</span><span class="grp-rung">${l.name}</span>${compact ? '' : `<span class="grp-sub">${RUNGS[i].name} rung</span>`}</button>`).join('');
+  if(compact) return `<div class="grprow compact" aria-label="Your group">${boxes}</div>`;
+  return `<div class="grpcard"><h2>Build your lesson plan for your group</h2>
+    <p class="muted">Which books is your group on? Tap one or more. Everything else is hidden.</p>
+    <div class="grprow">${boxes}</div></div>`;
+}
+function screenPlan(){
+  const blocks = clubPlan().blocks, now = planNow();
+  const b = blocks.find(x => x.n === UI.block) || blocks[0];
+  const piece = b.pieces.find(p => p.code === UI.piece);
+  if(UI.pstep === 'setup' && piece) return planSetup(b, piece);
+  if(UI.pstep === 'ladder' && piece) return planLadder(b, piece);
+  if(UI.pstep === 'app') return planApparatus(b, now);
+  // Step 1: which fortnight
+  render(`<div class="flow">
+    <div class="flow-hrow"><h1 class="flow-h">Lesson plan</h1><button class="btn ghost small" data-act="print-plan" data-scope="term">Print whole term</button></div>
+    ${groupPicker(false)}
+    ${fortnightButtons('pblock', now)}
+    ${now ? '' : `<p class="note" style="margin-top:14px">Set your term dates on the Dashboard and the Hub will open on this week.</p>`}
+  </div>`);
+}
+function planApparatus(b, now){
+  const tile = code => { const p = b.pieces.find(x => x.code === code); if(!p) return '';
+    const hot = now && now.block === b.n && (now.week === 'A' ? WEEK_A : WEEK_B).includes(code);
+    return `<button class="bigbtn ${hot ? 'now' : ''}" data-ui="pc" data-v="${code}"><span class="bb-t">${esc(p.piece)}</span><span class="bb-k">${esc(p.theme)}</span></button>`; };
+  render(`<div class="flow">
+    ${backBar('Fortnights', 'weeks')}
+    <div class="flow-hrow"><h1 class="flow-h">${esc(b.assessment ? 'Assessment fortnight' : b.weeks)}</h1><button class="btn ghost small" data-act="print-plan" data-scope="fortnight">Print fortnight</button></div>
+    ${b.assessment ? `<p class="flow-sub">Last 2 weeks of term. Run these stations while gymnasts are assessed.</p>` : ''}
+    <button class="bigbtn wide warm" data-act="plan-warmup"><span class="bb-t">Warm-up</span><span class="bb-k">10 min · same both weeks</span></button>
+    <p class="flow-l">Week A</p><div class="bbgrid three">${WEEK_A.map(tile).join('')}</div>
+    ${WEEK_B.some(c => b.pieces.find(x => x.code === c)) ? `<p class="flow-l">Week B</p><div class="bbgrid three">${WEEK_B.map(tile).join('')}</div>` : ''}
+  </div>`);
+}
+// "Show your class today's skill": one video per apparatus theme.
+// Videos live in the content file as videos["FF|Handstand Turns"] = YouTube id.
+function skillVideoHTML(p){
+  const vids = S.content.videos || {};
+  const themes = String(p.theme).split(' + ');
+  const id = themes.map(t => vids[p.code + '|' + t]).find(Boolean);
+  return `<div class="skillvid"><div class="skillvid-h">Show your class today’s skill</div>
+    ${id ? `<div class="skillvid-box"><iframe src="https://www.youtube-nocookie.com/embed/${esc(id)}?rel=0" title="${esc(p.theme)}" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`
+      : `<button class="skillvid-box empty" data-act="vid-soon" aria-label="Play the ${esc(p.theme)} video"><span class="skillvid-play"></span><span class="skillvid-soon">${esc(themes[0])} · video coming soon</span></button>`}
+  </div>`;
+}
+function planSetup(b, p){
+  render(`<div class="flow">
+    ${backBar(b.assessment ? 'Assessment fortnight' : b.weeks, 'app')}
+    <h1 class="flow-h">${esc(p.piece)}</h1>
+    <p class="flow-sub"><b>${esc(p.theme)}</b>${p.setup ? ' · ' + esc(p.setup) : ''} · ${p.stations.length} stations</p>
+    ${skillVideoHTML(p)}
+    <div class="setgrid">${p.stations.map(s => { const ph = stationPhotos(s);
+      return `<div class="setcard"><div class="setn">${s.n}</div>
+        ${ph.length ? `<button class="setphoto" data-act="photo" data-img-id="${ph[0]}" aria-label="Enlarge station ${s.n} photo"><img data-img="${ph[0]}" alt="Station ${s.n} set-up"></button>
+          ${ph.length > 1 ? `<div class="thumbs">${ph.slice(1).map(h => `<button class="thumb" data-act="photo" data-img-id="${h}" aria-label="Enlarge photo"><img data-img="${h}" alt="Station ${s.n} set-up"></button>`).join('')}</div>` : ''}`
+        : `<div class="setphoto empty">No photo yet</div>`}
+      </div>`; }).join('')}</div>
+    <button class="bigbtn wide go" data-ui="pstep" data-v="ladder"><span class="bb-t">Skills →</span><span class="bb-k">What each child does at each station</span></button>
+  </div>`);
+  hydrateImages($view);
+}
+function planLadder(b, p){
+  render(`<div class="flow">
+    ${backBar(p.piece + ' set-up', 'setup')}
+    <div class="flow-hrow"><h1 class="flow-h">${esc(p.piece)} skills</h1><button class="btn ghost small" data-act="print-plan">Print</button></div>
+    <p class="flow-sub"><b>${esc(p.theme)}</b> · start each child on the rung that suits them, from Beginner up</p>
+    ${groupPicker(true)}
+    ${p.stations.map(s => `<div class="ladder"><div class="ladder-h">Station ${s.n}</div>
+      ${[0,1,2,3].filter(inGroup).map(i => s.levels[i] ? `<div class="rung ${starsHTML(s, i) ? 'starred' : ''}">
+        <div class="rung-n">${RUNGS[i].name}<span>${RUNGS[i].age}</span></div>
+        <div class="rung-t">${fmtStation(s.levels[i])}</div>${starsHTML(s, i)}</div>` : '').join('')}
+    </div>`).join('')}
+    <p class="note">★ marks a rung that prepares an award-book checkpoint: the book colour and level it is assessed at.</p>
+  </div>`);
+}
+const RUNG_TINT = ['#FDEBDD','#F9D4B5','#F3B98C','#EC9C62'];
+function pieceSheetHTML(b, p, first){
+  const logo = (document.querySelector('.logo img') || {}).src || '';
+  const photos = p.stations.map(s => [s.n, stationPhotos(s)[0]]);
+  return `<div class="onepage brand" style="${first ? '' : 'page-break-before:always;'}">
+    <div class="ph-head">${logo ? `<img class="ph-logo" src="${logo}" alt="NGL Recreational">` : ''}
+      <div class="ph-title"><div class="ph-wk">${esc(b.assessment ? 'Assessment fortnight' : b.weeks)} · ${WEEK_A.includes(p.code) ? 'Week A' : 'Week B'}</div>
+        <div class="ph-pc">${esc(p.piece)}: ${esc(p.theme)}</div></div>
+      <div class="ph-meta">${esc(p.setup || '')}${p.setup ? '<br>' : ''}${p.stations.length} stations · ${esc(groupName())}${S.club ? '<br>' + esc(S.club.name) : ''}</div></div>
+    <div class="ph-strip" style="grid-template-columns:repeat(${photos.length},1fr)">${photos.map(([n, id]) => `<div class="ph-shot"><span class="ph-n">${n}</span>${id ? `<img data-img="${id}" alt="Station ${n}">` : '<div class="ph-none">No photo</div>'}</div>`).join('')}</div>
+    <table><thead><tr><th class="ph-stn">Stn</th>${RUNGS.map((r, i) => !inGroup(i) ? '' : `<th style="background:${RUNG_TINT[i]}">${r.name} <span>(${r.age.replace('Guide ','')})</span></th>`).join('')}</tr></thead>
+    <tbody>${p.stations.map(s => `<tr><td class="ph-stn"><span class="ph-n">${s.n}</span></td>${[0,1,2,3].filter(inGroup).map(i => `<td>${esc(s.levels[i] || '')}${(s.assess && s.assess[String(i)] || []).filter(y => inGroup(Math.ceil(y.L / 4) - 1)).map(y => { const bk = bookOf(y.L); return `<div class="st" style="border-color:var(--${bk.key});background:color-mix(in srgb, var(--${bk.key}) 14%, #fff)">★ ${bk.name} L${y.L}: ${esc(y.s)}</div>`; }).join('')}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    <div class="ph-foot"><span>★ This rung prepares an award-book checkpoint (book colour and level)</span><span>NGL Recreational · nglrecreational.co.uk</span></div></div>`;
+}
+function weekToBlock(w){
+  const plan = clubPlan(), blocks = plan.blocks, W = plan.settings.weeks || 14;
+  if(w > W - 2) return [blocks[blocks.length - 1], w === W - 1 ? 'A' : 'B'];
+  const b = blocks[Math.min(Math.floor((w - 1) / 2), blocks.length - 2)];
+  return [b, b.odd ? 'A' : ((w - 1) % 2 === 0 ? 'A' : 'B')];
+}
+function planPrintHTML(scope, arg){
+  const blocks = clubPlan().blocks;
+  let list = [];
+  const order = b => [...WEEK_A, ...WEEK_B].map(c => b.pieces.find(p => p.code === c)).filter(Boolean);
+  if(scope === 'term') blocks.forEach(b => order(b).forEach(p => list.push([b, p])));
+  else if(scope === 'termPiece') blocks.forEach(b => { const p = b.pieces.find(x => x.code === arg); if(p) list.push([b, p]); });
+  else if(scope === 'week'){ const [b, wk] = weekToBlock(+arg); (wk === 'A' ? WEEK_A : WEEK_B).forEach(c => { const p = b.pieces.find(x => x.code === c); if(p) list.push([b, p]); }); }
+  else { const b = blocks.find(x => x.n === UI.block) || blocks[0];
+    (scope === 'fortnight' ? order(b) : b.pieces.filter(p => p.code === UI.piece)).forEach(p => list.push([b, p])); }
+  return `<div class="sheet compact">${list.map(([b, p], k) => pieceSheetHTML(b, p, k === 0)).join('')}</div>`;
+}
+
+function fortnightButtons(key, now){
+  const blocks = clubPlan().blocks;
+  return `${now ? `<button class="bigbtn now" data-ui="${key}" data-v="${now.block}">
+      <span class="bb-k">This week · week ${now.wk} of ${now.W}</span>
+      <span class="bb-t">${esc(blocks.find(x => x.n === now.block).weeks)} · Week ${now.week}</span></button>` : ''}
+    <p class="flow-l">${now ? 'Or pick a fortnight' : 'Pick a fortnight'}</p>
+    <div class="bbgrid">${blocks.map(x => `<button class="bigbtn ${x.assessment ? 'assess' : ''}" data-ui="${key}" data-v="${x.n}">
+      <span class="bb-t">${esc(x.assessment ? 'Assessment' : x.weeks)}</span>
+      <span class="bb-k">${esc(x.assessment ? x.weeks : x.pieces.filter(p => WEEK_A.includes(p.code)).map(p => p.theme).join(' · '))}</span></button>`).join('')}</div>`;
+}
+function screenWarmups(){
+  const W = S.content.warmups, now = planNow();
+  if(!UI.fromPlan && UI.wstep !== 'show'){
+    render(`<div class="flow"><h1 class="flow-h">Warm-ups</h1><p class="flow-sub">10 minutes · the same warm-up both weeks of a fortnight</p>
+      ${groupPicker(false)}
+      ${fortnightButtons('wpick', now)}</div>`);
+    return;
+  }
+  const pblocks = clubPlan().blocks, blk = pblocks.find(x => x.n === UI.wblock) || pblocks[0];
+  const b = W[blk.warm];
+  const parts = [['pulse','Pulse raiser','3 min'],['mob','Mobility','3 min'],['str','Strength & shapes','4 min']];
+  render(`<div class="flow">
+    ${UI.fromPlan ? `<button class="backbar" data-act="to-plan">← ${esc(blk.assessment ? 'Assessment fortnight' : blk.weeks)}</button>` : `<button class="backbar" data-ui="wstep" data-v="weeks">← Fortnights</button>`}
+    <h1 class="flow-h">Warm-up · ${esc(blk.assessment ? 'Assessment' : blk.weeks)}</h1>
+    <p class="flow-sub">10 min · same both weeks · <b>Focus:</b> ${esc(b.focus)}</p>
+    ${groupPicker(true)}
+    ${b.assess ? `<div class="ladder"><div class="ladder-h">Assessment warm-up</div><div class="rung"><div class="rung-t">Pulse raiser for everyone: stretch, tuck and star jumps in connection (3 min). Then each gymnast runs the four Physical Prep skills from their own award-book level while coaches check them off (7 min).</div></div></div>` :
+    parts.map(([k, n, t]) => `<div class="ladder"><div class="ladder-h">${n} <span class="muted" style="font-weight:700;font-size:14px">· ${t}</span></div>
+      ${[0,1,2,3].filter(inGroup).map(c => (b.parts[k][c] || []).length ? `<div class="rung"><div class="rung-n">${RUNGS[c].name}<span>${RUNGS[c].age}</span></div>
+        <div class="rung-t">${b.parts[k][c].map(x => esc(x.txt)).join('<br>')}</div>
+        <div class="stars">${b.parts[k][c].map(x => { const bk = bookOf(x.L); return `<span class="star" style="--c:${bk.color}">★ ${bk.name} L${x.L}</span>`; }).join('')}</div></div>` : '').join('')}
+    </div>`).join('')}
+    <p class="note">The whole group warms up together, each child on the rung that suits them. ★ shows the award-book level each exercise comes from.</p>
+  </div>`);
+}
+
+const BOOK_PIECES = ['Floor','Vault','Beam','Bars','Rebound','Physical Prep'];
+function screenBooks(){
+  const bk = S.content.book, n = UI.book, L0 = (n - 1) * 4 + 1, lv = LEVELS[n - 1];
+  render(`
+  <div class="blockhead"><h1>Award books</h1><span class="muted">Book ${n} · ${lv.name} · Levels ${L0}–${L0 + 3}</span></div>
+  <div class="toolbar"><div class="chips"><span class="lbl">Book</span>${chips('book', LEVELS.map(l => [l.book, l.name, 'lv-' + l.key]), UI.book)}</div></div>
+  ${[0,1,2,3].map(k => { const L = L0 + k; return `
+    <div class="lvl-band"><span class="dot" style="background:${lv.color}"></span><h2>Level ${L}</h2><button class="btn ghost small" data-act="sheet" data-level="${L}" style="margin-left:auto">Assessment sheet</button></div>
+    <div class="bookgrid">${BOOK_PIECES.map(p => `<div class="card" style="margin:0"><h3>${p}</h3><ul class="skill-list">${(bk[p][String(L)] || []).map(x => `<li>${esc(x.skill)}</li>`).join('')}</ul></div>`).join('')}</div>`; }).join('')}
+  <p class="note" style="margin-top:16px">Gymnasts pass a level when they can do every skill on it. Assessment is in the last 2 weeks of term.</p>`);
+}
+function sheetHTML(L){
+  const bk = S.content.book, n = 12;
+  const lv = LEVELS[Math.ceil(L / 4) - 1];
+  return `<div class="sheet"><h2>NGL Recreational · ${lv.name} · Level ${L} assessment</h2>
+    <p>Club: ${esc(S.club ? S.club.name : '')} &nbsp;·&nbsp; Group: ____________________ &nbsp;·&nbsp; Coach: ____________________ &nbsp;·&nbsp; Date: ____________</p>
+    <table><thead><tr><th style="width:26%">Skill</th>${Array.from({length:n}, () => '<th style="height:60px"></th>').join('')}</tr></thead>
+    <tbody>${BOOK_PIECES.map(p => `<tr><td class="pc" colspan="${n + 1}">${p}</td></tr>${(bk[p][String(L)] || []).map(x => `<tr><td>${esc(x.skill)}</td>${'<td></td>'.repeat(n)}</tr>`).join('')}`).join('')}
+    <tr><td><b>Passed level</b></td>${'<td></td>'.repeat(n)}</tr></tbody></table>
+    <p style="margin-top:8px">Write gymnast names across the top. Tick each skill achieved. A gymnast passes the level when every skill is ticked.</p></div>`;
+}
+
+function screenCompetition(){
+  const c = S.content.competition;
+  const row = (t, xs) => `<h3 style="margin-top:12px">${t}</h3><ol style="margin:0;padding-left:20px">${xs.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
+  render(`
+  <div class="blockhead"><h1>Competition</h1><span class="muted">NGL Recreational club competitions</span></div>
+  <div class="grid4">${c.levels.map((l, i) => `<div class="card" style="border-top:6px solid ${LEVELS[i].color}">
+    <p class="eyebrow" style="color:${LEVELS[i].color}">Level ${l.n} · ${esc(l.tag)}</p><h2>${esc(l.name)}</h2>
+    ${row('Floor (strip)', l.floor)}${row('Vault', l.vault)}<p class="note">${esc(c.vaultNote[i])}</p>${row('Beam', l.beam)}${row('Bars', l.bars)}</div>`).join('')}</div>
+  <div class="card"><h2>Rules and format</h2><ul class="ticks">${c.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>`);
+}
+
+/* =====================================================================
+   NGL ADMIN
+   ===================================================================== */
+let ADM = {clubs:[], orders:[]};
+async function screenAdmin(){
+  setTop();
+  render(`<p class="muted">Loading…</p>`);
+  try{ ADM = await api.adminLoad(); }catch(e){ console.error(e); render('<p class="error">Couldn’t load admin data.</p>'); return; }
+  const recClubs = ADM.clubs.filter(c => c.rec || ADM.orders.some(o => o.clubId === c.id));
+  const waiting = ADM.orders.filter(o => o.status !== 'paid');
+  render(`<p class="eyebrow">NGL Admin</p><h1>Recreational admin</h1>
+  <div class="card"><h2>Orders awaiting payment (${waiting.length})</h2>${waiting.length ? `<div class="table-wrap"><table>
+    <thead><tr><th>Order</th><th>Club</th><th>For</th><th class="num">Total</th><th></th></tr></thead>
+    <tbody>${waiting.map(o => `<tr><td class="mono">${esc(o.id)}</td><td>${esc(o.clubName)}</td><td>${esc(orderFor(o))}</td><td class="num">${gbp(orderTotal(o))}</td>
+      <td class="row-actions"><button class="btn ghost small" data-act="adm-invoice" data-order="${esc(o.id)}">Invoice</button><button class="btn small" data-act="adm-paid" data-order="${esc(o.id)}">Mark paid</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Nothing outstanding.</p>'}</div>
+  <div class="card"><h2>Recreational clubs (${recClubs.length})</h2>${recClubs.length ? `<div class="table-wrap"><table>
+    <thead><tr><th>Club</th><th>Size</th><th>Licence until</th><th>Books used</th><th>Status</th><th></th></tr></thead>
+    <tbody>${recClubs.map(c => { const on = c.rec && c.rec.status === 'active'; return `<tr><td>${esc(c.name)}<div class="note">${esc(c.email || '')}</div></td><td>${c.rec ? esc(bandOf(c.rec.band).short) : '—'}</td><td>${c.rec && c.rec.expires ? fmtDate(new Date(toDate(c.rec.expires).getTime() - 86400000)) : '—'}</td><td>${(() => { if(!c.rec) return '—'; const a = bookAllowance(c, ADM.orders.filter(o => o.clubId === c.id)); return a.limit == null ? a.used : a.used + ' / ' + a.limit; })()}</td>
+      <td>${on ? '<span class="tag ok">Active</span>' : c.rec ? '<span class="tag off">Off</span>' : '<span class="tag wait">Not started</span>'}</td>
+      <td class="row-actions"><button class="btn ghost small" data-act="adm-status" data-club="${esc(c.id)}" data-to="${on ? 'inactive' : 'active'}">${on ? 'Switch off' : 'Switch on'}</button></td></tr>`; }).join('')}</tbody></table></div>` : '<p class="muted">No Recreational clubs yet.</p>'}</div>
+  <div class="card"><h2>Publish programme content</h2>
+    <p class="muted">Publishes the copy of <b>rec-content.json</b> kept on the website (the <b>content</b> folder in GitHub) to every licensed club. When the programme changes, replace that file in GitHub, wait a minute, then press the button.</p>
+    <p class="note" id="pubNote" style="margin-top:8px"></p>
+    <button class="btn" data-act="publish-site">Publish latest from website</button>
+    <details style="margin-top:12px"><summary class="note">Or publish a file from this computer</summary>
+      <input type="file" id="contentFile" accept="application/json,.json" class="input" style="margin-top:8px">
+      <button class="btn ghost small" data-act="publish" style="margin-top:8px">Publish file</button></details></div>`);
+}
+
+/* =====================================================================
+   EVENTS
+   ===================================================================== */
+document.addEventListener('input', e => {
+  if(e.target.id === 'cpStart' || e.target.id === 'cpHalf'){ const d = cpDraft(); d.start = document.getElementById('cpStart').value; d.halfTerm = document.getElementById('cpHalf').value;
+    const nx = document.querySelector('.cp-nav [data-n="4"]'); if(nx) nx.disabled = !d.start; }
+});
+document.addEventListener('click', async e => {
+  const t = e.target;
+  const go = t.closest('[data-go]');
+  if(go){ e.preventDefault(); const g = go.dataset.go;
+    if(g === 'home'){ if(signedIn){ tab = 'dashboard'; show(); } else screenLanding(); }
+    else if(g === 'login') screenLogin(); else if(g === 'register') screenRegister(); window.scrollTo(0,0); return; }
+  const nt = t.closest('[data-tab]');
+  if(nt){ tab = nt.dataset.tab; UI.fromPlan = false; UI.cstep = 0; if(tab === 'warmups') UI.wstep = 'weeks'; show(); window.scrollTo(0,0); return; }
+  const ui = t.closest('[data-ui]');
+  if(ui){
+    const k = ui.dataset.ui, v = ui.dataset.v;
+    if(k === 'pblock'){ planGo({block: +v, pstep:'app'}); return; }
+    if(k === 'pc'){ planGo({piece: v, pstep:'setup'}); return; }
+    if(k === 'pstep'){ planGo({pstep: v}); return; }
+    if(k === 'wpick'){ UI.wblock = +v; UI.wstep = 'show'; show(); window.scrollTo(0,0); return; }
+    if(k === 'wstep'){ UI.wstep = v; show(); window.scrollTo(0,0); return; }
+    if(k === 'block'){ UI.block = +v; UI.piece = 'all'; }
+    else if(k === 'wblock') UI.wblock = +v;
+    else if(k === 'book') UI.book = +v;
+    else UI[k] = v;
+    show(); return;
+  }
+  const act = t.closest('[data-act]');
+  if(!act) return;
+  const a = act.dataset.act;
+  if(a === 'signout'){ await api.signOut(); signedIn = false; S.club = null; S.isAdmin = false; S.content = null; screenLanding(); }
+  else if(a === 'start') orderModal('start');
+  else if(a === 'renew') orderModal('renew');
+  else if(a === 'shop-order'){ if(hasAccess()) orderModal('shop'); else show(); }
+  else if(a === 'reset'){
+    const em = (document.getElementById('em') || {}).value || '';
+    const err = document.getElementById('err');
+    if(!em.trim()){ if(err) err.textContent = 'Type your email above, then tap “Forgotten your password?” again.'; return; }
+    const r = await api.resetPassword(em.trim());
+    if(err){ err.style.color = r.ok ? 'var(--ok)' : ''; err.textContent = r.ok ? 'If there’s a club account for that email, a reset link is on its way.' : r.reason; }
+  }
+  else if(a === 'invoice'){ const o = S.orders.find(x => x.id === act.dataset.order); document.querySelectorAll('.modal-bg').forEach(m => m.remove()); if(o) showInvoice(o, S.club || {}); }
+  else if(a === 'adm-invoice'){ const o = ADM.orders.find(x => x.id === act.dataset.order); if(o) showInvoice(o, ADM.clubs.find(x => x.id === o.clubId) || {name:o.clubName}); }
+  else if(a === 'print-invoice' && CURRENT_INVOICE){ printHTML(invoiceHTML(CURRENT_INVOICE.o, CURRENT_INVOICE.club), false); }
+  else if(a === 'email-invoice' && CURRENT_INVOICE){
+    const n = document.getElementById('invMailNote'); const to = CURRENT_INVOICE.club.email;
+    if(!FIREBASE_CONFIG){ if(n) n.textContent = 'Preview mode: no email sent.'; return; }
+    act.disabled = true; if(n) n.textContent = 'Sending to ' + (to || '') + '…';
+    try{ await emailInvoice(CURRENT_INVOICE.o, CURRENT_INVOICE.club); if(n){ n.style.color = 'var(--ok)'; n.textContent = '✓ Emailed to ' + to + '.'; } }
+    catch(err){ console.error(err); if(n) n.textContent = 'Couldn’t send the email. Please try again later.'; }
+    act.disabled = false;
+  }
+  else if(a === 'cp-story'){ const m = modal(planStoryHTML(true) + '<div class="btn-row" style="margin-top:16px"><button class="btn" data-close>Close</button></div>'); m.querySelector('.modal').classList.add('modal-wide'); }
+  else if(a === 'cp-start'){ UI.cdraft = planDefaults(S.club.recTerm); UI.cstep = 1; show(); window.scrollTo(0,0); }
+  else if(a === 'cp-cancel'){ UI.cstep = 0; UI.cdraft = null; show(); window.scrollTo(0,0); }
+  else if(a === 'cp-set'){ const d = cpDraft(), k = act.dataset.k, v = act.dataset.v;
+    if(['VT','BM','BA','FT'].includes(k)) d.pieces[k] = v; else d[k] = +v; const y = window.scrollY; show(); window.scrollTo(0, y); }
+  else if(a === 'cp-step'){ const d = cpDraft();
+    if(UI.cstep === 3){ const sEl = document.getElementById('cpStart'), hEl = document.getElementById('cpHalf'); if(sEl) d.start = sEl.value; if(hEl) d.halfTerm = hEl.value; if(+act.dataset.n > 3 && !d.start) return; }
+    UI.cstep = +act.dataset.n; show(); window.scrollTo(0,0); }
+  else if(a === 'cp-save'){ const d = cpDraft(), n = document.getElementById('cpNote'); act.disabled = true; n.textContent = 'Saving…';
+    try{ await api.saveFamily(Object.assign({}, d, {custom:true, startBlock:1})); PLAN_CACHE = null; UI.cstep = 0; UI.cdraft = null; UI.pstep = 'weeks'; show(); window.scrollTo(0,0); }
+    catch(err){ console.error(err); act.disabled = false; n.textContent = 'Couldn’t save: ' + (err && (err.code || err.message) || 'unknown error') + '. Please try again, or send this message to NGL.'; } }
+  else if(a === 'vid-soon'){ const t = act.querySelector('.skillvid-soon'); if(t){ t.textContent = 'This video is coming soon'; } }
+  else if(a === 'grp'){ const i = +act.dataset.i; const g = inGroup(i) ? UI.group.filter(x => x !== i) : [...UI.group, i].sort(); if(!g.length) return; UI.group = g; GROUP_STORE.set(g); const y = window.scrollY; show(); window.scrollTo(0, y); }
+  else if(a === 'print-plan'){ printHTML(planPrintHTML(act.dataset.scope || 'piece', act.dataset.arg), true); }
+  else if(a === 'to-plan'){ UI.fromPlan = false; tab = 'plan'; show(); window.scrollTo(0,0); }
+  else if(a === 'plan-warmup'){ UI.wblock = UI.block; UI.fromPlan = true; tab = 'warmups'; show(); window.scrollTo(0,0); }
+  else if(a === 'photo'){ const d = IMG.cache[act.dataset.imgId]; if(d){ const m = modal(`<img src="${d}" alt="Station set-up photo" style="width:100%;border-radius:12px;display:block"><div class="btn-row" style="margin-top:12px"><button class="btn ghost" data-close>Close</button></div>`); m.querySelector('.modal').classList.add('modal-wide'); } }
+  else if(a === 'family') familyModal();
+  else if(a === 'copy-family'){ copyText(familyMessage(), 'Message copied. Paste it into your email, newsletter or WhatsApp.'); }
+  else if(a === 'sheet'){ printHTML(sheetHTML(+act.dataset.level), true); }
+  else if(a === 'adm-paid'){
+    const o = ADM.orders.find(x => x.id === act.dataset.order); if(!o) return;
+    const c = ADM.clubs.find(x => x.id === o.clubId) || {id:o.clubId};
+    act.disabled = true; act.textContent = 'Saving…';
+    try{ await api.adminMarkPaid(o, c); if(FIREBASE_CONFIG && o.clubId === S.uid) await loadClubData(S.uid); screenAdmin(); }
+    catch(err){ console.error(err); act.disabled = false; act.textContent = 'Failed, tap to retry'; }
+  }
+  else if(a === 'adm-status'){
+    const c = ADM.clubs.find(x => x.id === act.dataset.club); if(!c) return;
+    if(!act.dataset.armed){ act.dataset.armed = '1'; act.textContent = 'Tap again to confirm'; return; }
+    act.disabled = true;
+    try{ await api.adminSetStatus(c, act.dataset.to); if(FIREBASE_CONFIG && c.id === S.uid) await loadClubData(S.uid); screenAdmin(); }
+    catch(err){ console.error(err); act.disabled = false; act.textContent = 'Failed, retry'; }
+  }
+  else if(a === 'publish' || a === 'publish-site'){
+    const f = document.getElementById('contentFile'), n = document.getElementById('pubNote');
+    if(a === 'publish' && !f.files[0]){ n.textContent = 'Choose rec-content.json first.'; return; }
+    act.disabled = true; n.style.color = ''; n.textContent = a === 'publish-site' ? 'Fetching rec-content.json from the website…' : 'Publishing…';
+    try{ let c;
+      if(a === 'publish-site'){ const r = await fetch('content/rec-content.json?t=' + Date.now(), {cache:'no-store'}); if(!r.ok) throw new Error('content/rec-content.json not found on the website (' + r.status + '). Check it is uploaded to the content folder in GitHub.'); c = await r.json(); }
+      else c = JSON.parse(await f.files[0].text()); await api.adminPublish(c, msg => { n.textContent = msg; }); S.content = null; n.style.color = 'var(--ok)'; n.textContent = FIREBASE_CONFIG ? '✓ Published version ' + (c.version || '') + '. Licensed clubs will see it next time they open the Hub.' : 'File checked (version ' + (c.version || '') + '). Preview mode: nothing is published from here. Do this on nglrecreational.co.uk once it’s live.'; }
+    catch(err){ console.error(err); n.style.color = ''; n.textContent = 'Couldn’t publish: ' + err.message; }
+    act.disabled = false;
+  }
+});
+
+(async () => {
+  let restored = false;
+  try{ restored = await api.restore(); }catch(e){ console.error(e); }
+  if(restored){ signedIn = true; tab = S.club ? 'dashboard' : 'admin'; show(); }
+  else{
+    const go = new URLSearchParams(location.search).get('go');
+    if(go === 'register') screenRegister(); else if(go === 'login') screenLogin(); else screenLanding();
+  }
+})();
+
+</script>
+</body>
+</html>
