@@ -706,7 +706,8 @@
     <div class="quick-label">Know where you're going? Quick links</div>
     <div class="quick-row">
       <a class="quick-pill" href="https://nglschools.co.uk/" target="_blank" rel="noopener">Schools Hub</a>
-      <a class="quick-pill" href="https://nglrecreational.co.uk/" target="_blank" rel="noopener">Recreational Hub</a>
+      <a class="quick-pill" href="https://nglrecreational.co.uk/" target="_blank" rel="noopener">Recreational: Clubs</a>
+      <a class="quick-pill" href="https://nglrecreational.co.uk/families/" target="_blank" rel="noopener">Recreational: Families</a>
       <a class="quick-pill" href="https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" target="_top">National League Table</a>
       <a class="quick-pill" href="https://www.nationalgymnasticsleague.co.uk/league-schedule-4" target="_top">Book 2026 Competitions</a>
       <a class="quick-pill" href="https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" target="_top">Book 2027 Competitions</a>
@@ -1432,12 +1433,13 @@
       '<h3>Coaching built around your child</h3>' +
       '<p>Your child isn\'t following a generic plan. Their club\'s NGL Recreational lesson plan is built around the equipment in their gym and the length of their term, so every skill they need to pass their level is coached before they are assessed.</p>' +
       '<ul>' +
-        '<li><strong>Download the app and see what your child is learning each week.</strong> Add the Families page to your phone\'s home screen, enter your club\'s code once, and it opens on this week\'s skills.</li>' +
+        '<li><strong>Download the app and see what your child is learning each week.</strong> Add NGL Recreational Families to your phone\'s home screen, enter your club\'s code once, and it opens on this week\'s skills.</li>' +
         '<li><strong>Coached at their own level.</strong> Every station has steps from Beginner to Advanced, so your child works on the step that is right for them.</li>' +
         '<li><strong>Ready for assessment.</strong> The skills in their award book are practised in the weeks before assessment, not left to chance.</li>' +
         '<li><strong>Linked to their award book and competition.</strong> See how this fortnight\'s skills lead to their next level and their Recreational Competition routine.</li>' +
       '</ul>' +
-      '<div class="rec-btns"><a class="buy-btn" href="' + REC_FAMILIES_URL + '" target="_blank" rel="noopener">Open the Families page</a></div></div>';
+      '<div class="rec-btns"><a class="buy-btn" href="' + REC_FAMILIES_URL + '" target="_blank" rel="noopener">Open NGL Recreational Families</a></div>' +
+      '<p class="rec-small">You\'ll need your club\'s code: it\'s in the message your club sent you or on the QR poster at your club, or ask your coach.</p></div>';
     var cards = selectedAudience === 'club' ? club : selectedAudience === 'parent' ? family : club + family;
     var showGallery = selectedAudience !== 'parent';
     var install = '<div class="card rec-install"><div class="cta-tag">Save it to your phone</div>' +
@@ -1449,10 +1451,15 @@
   }
 
   function recreationalAwardsHTML(p){
+    if (selectedAudience === 'parent') return recHubCardsHTML() + recreationalAwardsBody(p);
+    return recreationalAwardsBody(p) + recHubCardsHTML();
+  }
+
+  function recreationalAwardsBody(p){
     return '<div class="card"><p class="lede">' + p.desc + '</p></div>' +
       '<div class="card"><div class="book-layout"><img src="' + COVER_IMAGE.recreational + '" alt="NGL Recreational Awards Book cover">' +
       '<div class="book-copy"><p>The Recreational Awards Programme is made up of <strong>4 books, each with 4 levels</strong>, covering every stage of development in Recreational Gymnastics.</p>' +
-      '<div class="coming-tag">' + COMING_TEXT.recreational + '</div></div></div></div>' + recHubCardsHTML();
+      '<div class="coming-tag">' + COMING_TEXT.recreational + '</div></div></div></div>';
   }
 
   // Recreational's Awards→Competitions tab: same in-place switch, since the
