@@ -178,6 +178,7 @@
   .ci-meta span { margin-right: 12px; }
   .comp-assign-row { border-top: 1px solid var(--border); padding: 13px 15px; background: #fdf6f5; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
   .comp-assign-row .fg { margin-bottom: 0; flex: 1; min-width: 140px; }
+  @media (max-width: 560px) { .how-grid { grid-template-columns: 1fr !important; } }
   .my-assign-pill { display: inline-flex; align-items: center; gap: 6px; background: #fdf6f5; border: 1px solid rgba(192,57,43,0.25); color: var(--navy); font-size: 0.73rem; font-weight: 700; padding: 4px 10px; border-radius: 12px; margin: 3px 6px 0 0; }
   .my-assign-pill button { background:none;border:none;color:var(--red);cursor:pointer;font-size:0.75rem;padding:0;font-weight:700; }
   .no-comps { text-align: center; padding: 56px 20px; color: var(--grey-mid); font-size: 0.86rem; background: var(--white); border: 1px solid var(--border); }
@@ -485,6 +486,17 @@
     <div class="eyebrow">2027 Season</div>
     <div class="sec-title">Judge a Competition</div>
     <div class="sec-sub">Pick a competition, choose the piece you'll judge, and it's added straight to the judging calendar.</div>
+
+    <div class="card" style="margin-bottom:18px;border-left:4px solid var(--gold)">
+      <div class="card-body" style="padding:14px 18px">
+        <div style="font-size:0.66rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--red);margin-bottom:8px">Before you apply &mdash; how judging works (Girls / WAG)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" class="how-grid">
+          <div style="font-size:0.82rem;line-height:1.5;color:var(--navy)"><strong>&#x1F4BB; Beam &amp; Floor &mdash; remote judging</strong><br>&pound;50 per competition, with 2 competitions in the day.</div>
+          <div style="font-size:0.82rem;line-height:1.5;color:var(--navy)"><strong>&#x1F3DF;&#xFE0F; Vault &amp; Uneven Bars &mdash; in person</strong><br>&pound;75 per competition (&pound;150 for the whole event).</div>
+        </div>
+        <div style="font-size:0.72rem;color:var(--grey-mid);margin-top:8px">Fees apply to Main Judge bookings. If you apply for more than one competition, please choose the same piece each time where you can &mdash; it keeps scoring consistent.</div>
+      </div>
+    </div>
 
     <div id="signup-gate" style="display:none">
       <div class="login-gate"><strong>Sign in to sign up</strong>You need to join the NGL Judging Pathway before you can pick a competition. Head to the "My Pathway" tab to register or sign in.</div>
@@ -1489,7 +1501,7 @@ function renderMyAssignments() {
     return '<div class="comp-card signed" style="margin-bottom:8px">' +
       '<div class="comp-card-header">' +
       '<div class="date-badge"><div class="dbday">' + (a.compDate ? new Date(a.compDate+'T00:00:00').getDate() : '-') + '</div><div class="dbmon">' + (a.compDate ? new Date(a.compDate+'T00:00:00').toLocaleString('en-GB',{month:'short'}).toUpperCase() : '') + '</div></div>' +
-      '<div><div class="ci-name">' + a.compName + ' ' + pillHtml + '</div><div class="ci-meta"><span>' + roleLabel + ' &middot; ' + a.piece + '</span>' + extraInfo + '</div></div>' +
+      '<div><div class="ci-name">' + a.compName + ' ' + pillHtml + '</div><div class="ci-meta"><span>' + roleLabel + ' &middot; ' + a.piece + (a.judgingMode ? ' &middot; ' + a.judgingMode : '') + '</span>' + extraInfo + '</div></div>' +
       '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +
       (status === 'confirmed' ? '<button class="btn btn-navy btn-small" onclick="window.downloadICS(\'' + a.id + '\')">+ My Calendar</button>' : '') +
       '<button class="btn btn-ghost btn-small" onclick="window.cancelAssignment(\'' + a.id + '\')">' + (status === 'confirmed' ? 'Cancel' : 'Withdraw') + '</button>' +
@@ -1512,6 +1524,34 @@ function renderNotifications(notifs) {
 }
 
 // ══ SIGN-UP TO JUDGE ══
+const PIECE_MODES = {
+  'Vault':       { mode: 'in person', fee: 75 },
+  'Uneven Bars': { mode: 'in person', fee: 75 },
+  'Beam':        { mode: 'remote',    fee: 50 },
+  'Floor':       { mode: 'remote',    fee: 50 }
+};
+// Mode and fee rules currently cover Main Judge bookings on the WAG pieces only.
+function pieceInfo(role, piece, discipline) {
+  if (role !== 'judge' || discipline !== 'WAG') return null;
+  return PIECE_MODES[piece] || null;
+}
+function pieceInfoText(info) {
+  return info.mode === 'remote'
+    ? '\u{1F4BB} Remote judging \u2014 \u00A350 per competition (2 competitions in the day).'
+    : '\u{1F3DF}\uFE0F In-person judging \u2014 \u00A375 per competition (\u00A3150 for the whole event).';
+}
+window.updatePieceInfo = function(compId) {
+  const el = document.getElementById('pinfo-' + compId);
+  if (!el) return;
+  const discSel = document.getElementById('disc-' + compId);
+  const comp = allComps.find(c => c.id === compId) || {};
+  const discipline = discSel ? discSel.value : (comp.gender === 'boys' ? 'MAG' : 'WAG');
+  const roleSel = document.getElementById('role-' + compId);
+  const info = pieceInfo(roleSel ? roleSel.value : '', document.getElementById('piece-' + compId).value, discipline);
+  if (info) { el.textContent = pieceInfoText(info); el.style.display = 'block'; }
+  else { el.textContent = ''; el.style.display = 'none'; }
+};
+
 function piecesFor(comp, discipline) {
   if (discipline === 'MAG') return MAG_PIECES;
   return WAG_PIECES;
@@ -1563,10 +1603,11 @@ function renderSignupList() {
 
     const assignRow = currentUser ? (
       '<div class="comp-assign-row">' +
-      '<div class="fg"><label>Role</label><select id="role-' + c.id + '">' + roleOptions + '</select></div>' +
+      '<div class="fg"><label>Role</label><select id="role-' + c.id + '" onchange="window.updatePieceInfo(\'' + c.id + '\')">' + roleOptions + '</select></div>' +
       disciplineControl +
-      '<div class="fg"><label>Piece</label><select id="piece-' + c.id + '">' + pieceOptions + '</select></div>' +
+      '<div class="fg"><label>Piece</label><select id="piece-' + c.id + '" onchange="window.updatePieceInfo(\'' + c.id + '\')">' + pieceOptions + '</select></div>' +
       '<button class="btn btn-primary" style="width:auto" onclick="window.signUpToJudge(\'' + c.id + '\')">Apply</button>' +
+      '<div id="pinfo-' + c.id + '" style="display:none;flex-basis:100%;font-size:0.78rem;font-weight:600;color:var(--navy);background:#fff8e8;border:1px solid var(--gold-light);border-radius:3px;padding:8px 10px"></div>' +
       '</div>'
     ) : '';
 
@@ -1580,6 +1621,7 @@ function renderSignupList() {
       assignRow +
       '</div>';
   }).join('');
+  upcoming.forEach(c => window.updatePieceInfo(c.id));
 }
 
 window.updatePieceOptions = function(compId) {
@@ -1587,6 +1629,7 @@ window.updatePieceOptions = function(compId) {
   const pieceSel = document.getElementById('piece-' + compId);
   const pieces = piecesFor(null, discSel.value);
   pieceSel.innerHTML = pieces.map(p => '<option value="' + p + '">' + p + '</option>').join('');
+  window.updatePieceInfo(compId);
 };
 
 window.signUpToJudge = async function(compId) {
@@ -1603,15 +1646,20 @@ window.signUpToJudge = async function(compId) {
   const already = allAssignments.find(a => a.judgeUid === currentUser.uid && a.compId === compId && a.piece === piece && a.discipline === discipline && a.role === role && a.status !== 'declined');
   if (already) { alert("You've already applied for that role/piece at this competition."); return; }
 
+  const info = pieceInfo(role, piece, discipline);
+  if (info && !confirm('You are applying to judge ' + piece + ' at ' + comp.name + '.\n\n' + pieceInfoText(info).replace(/^\S+\s/, '') + '\n\nContinue?')) return;
+
   try {
-    await addDoc(assignCol, {
+    const doc_ = {
       judgeUid: currentUser.uid,
       judgeName: currentProfile.name,
       compId, compName: comp.name, compDate: comp.date, compVenue: comp.venue || '',
       discipline, piece, role,
       status: 'pending',
       assignedAt: new Date().toISOString()
-    });
+    };
+    if (info) { doc_.judgingMode = info.mode; doc_.quotedFee = info.fee; }
+    await addDoc(assignCol, doc_);
   } catch (e) {
     alert('Could not save your application: ' + e.message);
   }
@@ -1715,7 +1763,7 @@ window.renderAdminApplications = function() {
     return '<div class="app-row">' +
       '<div><div class="aj-name">' + a.judgeName + '</div><div class="aj-meta">' + tierBadge + '</div></div>' +
       '<div>' + a.compName + '<div class="aj-meta">' + d + '</div></div>' +
-      '<div>' + (ROLES[a.role] ? ROLES[a.role].icon + ' ' + ROLES[a.role].label : '') + ' &middot; ' + a.piece + ' <span class="aj-meta">(' + a.discipline + ')</span></div>' +
+      '<div>' + (ROLES[a.role] ? ROLES[a.role].icon + ' ' + ROLES[a.role].label : '') + ' &middot; ' + a.piece + ' <span class="aj-meta">(' + a.discipline + ')</span>' + (a.judgingMode ? ' <span class="role-pill">' + a.judgingMode + '</span>' : '') + '</div>' +
       '<div><span class="status-pill ' + status + '">' + status + '</span></div>' +
       '<div style="display:flex;gap:6px">' + actions + '</div>' +
       '</div>';
@@ -1726,10 +1774,10 @@ window.openAcceptModal = function(id) {
   const a = allAssignments.find(x => x.id === id);
   if (!a) return;
   document.getElementById('accept-id').value = id;
-  document.getElementById('accept-summary').textContent = a.judgeName + ' \u2014 ' + (ROLES[a.role] ? ROLES[a.role].label : '') + ': ' + a.piece + ' (' + a.discipline + ') at ' + a.compName;
+  document.getElementById('accept-summary').textContent = a.judgeName + ' \u2014 ' + (ROLES[a.role] ? ROLES[a.role].label : '') + ': ' + a.piece + ' (' + a.discipline + ')' + (a.judgingMode ? ' \u2014 ' + a.judgingMode + ' judging' : '') + ' at ' + a.compName;
   const isEdit = a.status === 'confirmed';
   document.getElementById('accept-time').value = isEdit ? (a.confirmedTime || '') : '';
-  document.getElementById('accept-payment').value = (isEdit && a.payment != null) ? a.payment : 50;
+  document.getElementById('accept-payment').value = (isEdit && a.payment != null) ? a.payment : (a.quotedFee != null ? a.quotedFee : 50);
   document.getElementById('accept-modal-title').innerHTML = isEdit ? '&#x270F;&#xFE0F; Edit Judge Booking' : '&#x2705; Confirm Judge Booking';
   document.getElementById('accept-confirm-btn').textContent = isEdit ? 'Save & Notify Judge' : 'Confirm & Notify Judge';
   document.getElementById('accept-modal').classList.add('open');
@@ -1764,7 +1812,7 @@ window.confirmAcceptApplication = async function() {
       message: (isEdit
         ? 'Booking updated: your ' + roleLabel + ' booking for '
         : "You're booked! You've been confirmed as " + roleLabel + ' for ') +
-        a.piece + ' (' + a.discipline + ') at ' + a.compName +
+        a.piece + ' (' + a.discipline + ')' + (a.judgingMode ? ', ' + a.judgingMode + ' judging,' : '') + ' at ' + a.compName +
         '. Time: ' + confirmedTime + '. Payment: \u00A3' + payment + '.',
       createdAt: new Date().toISOString()
     });
