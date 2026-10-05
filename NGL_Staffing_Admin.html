@@ -220,6 +220,7 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
   </header>
 
   <main>
+    <div id="pwIssues" class="hidden" role="status" style="background:#fdf3d8;border:1px solid var(--gold);color:#5c4510;border-radius:6px;padding:12px 14px;margin-bottom:14px;font-size:14px"></div>
     <div id="loadErr" class="hidden" role="alert" style="background:#fbe3e5;border:1px solid var(--red);color:#7a121b;border-radius:6px;padding:12px 14px;margin-bottom:14px;font-size:14px"></div>
    <section id="overview">
     <div class="ov-head">
@@ -314,7 +315,7 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
       </div>
       <div class="panel">
         <h3>Start again</h3>
-        <p>Clears every role and assignment for this competition and rebuilds the standard template. Judge requests stay in the judging app.</p>
+        <p>Clears every role and assignment for this competition and rebuilds the standard template. Judge requests stay in the judging app, and confirmed Judging Pathway judges are filled in again.</p>
         <button class="btn danger" id="resetBtn">Reset this competition's staffing</button>
       </div>
     </section>
@@ -342,7 +343,9 @@ const CONFIG = {
   collections: {
     competitions: "ngl_competitions",
     staffing: "ngl_staffing",            // new: one doc per competition id
-    judgeSignups: "ngl_judge_signups"    // CHECK: the judging app's sign-up collection
+    judgeSignups: "ngl_judge_signups",   // CHECK: the judging app's sign-up collection
+    judgingAssignments: "ngl_judging_assignments",  // Judging Pathway bookings (confirmed ones fill the Judge slots)
+    judges: "ngl_judges"                 // Judging Pathway profiles (for mobile, email, club)
   },
   // Standalone competitions that aren't in ngl_competitions. Staffing for these
   // still saves to ngl_staffing under the id given here, so keep ids unchanged.
@@ -523,6 +526,7 @@ async function loadComps(){
   }
   S.comps.forEach(c=>{ if(!S.all[c.id]) S.all[c.id] = defaultStaffing(c); });
   renderOverview();
+  if(LIVE) subscribePathway();
 }
 
 function defaultStaffing(c){
@@ -530,6 +534,111 @@ function defaultStaffing(c){
   const disc = /\bboth\b/.test(c.discipline||"") ? "Both" : /mag|boys|\bmen/.test(d) ? "MAG" : "WAG";
   const st = {compId:c.id, compName:c.name, discipline:disc, customApparatus:"", judgesPerPiece:1, apparatus:apparatusFor(disc), unsaved:true};
   st.slots = templateSlots(st); return st;
+}
+
+/* ---------- Judging Pathway sync ----------
+   Confirmed main-judge bookings in ngl_judging_assignments fill the matching Judge slot here.
+   Slots filled this way carry source:"pathway". Cancelling or declining the booking empties the slot again.
+   Anything an admin clears or overwrites by hand is remembered in staffing.pwIgnored and not refilled. */
+const PW = { assigns:[], judges:{}, issues:[], ready:{a:false,j:false}, busy:false, again:false };
+const PW_PIECE = {"uneven bars":"Bars","pommel horse":"Pommel"};
+function pwApparatus(piece, disc){
+  const p = String(piece||"").trim(), base = PW_PIECE[p.toLowerCase()] || p, d = String(disc||"").toUpperCase();
+  return [d+" "+base, base, p].filter(Boolean).map(x=>x.toLowerCase());
+}
+function pwApply(st, compId){
+  const issues = []; let changed = false;
+  const ign = st.pwIgnored || [], slots = st.slots || [];
+  const mine = PW.assigns.filter(a=>a.compId===compId && a.status==="confirmed" && (a.role||"judge")==="judge" && !ign.includes(a.id));
+  const wanted = new Set(mine.map(a=>"pw:"+a.id));
+  // booking cancelled, declined or deleted: free the slot
+  slots.forEach(s=>{
+    if(s.source==="pathway" && !wanted.has(s.signupId)){
+      Object.assign(s,{name:"",email:"",phone:"",club:"",status:"vacant",source:"",signupId:"",pwName:""});
+      if(String(s.notes||"").startsWith("Judging Pathway")) s.notes = "";
+      changed = true;
+    }
+  });
+  mine.forEach(a=>{
+    const prof = PW.judges[a.judgeUid] || {};
+    const name = a.judgeName || prof.name || "Judge";
+    const note = "Judging Pathway" + (a.confirmedTime ? " · "+a.confirmedTime : "");
+    let s = slots.find(x=>x.signupId==="pw:"+a.id);
+    if(!s){
+      const cands = pwApparatus(a.piece, a.discipline);
+      const js = slots.filter(x=>isJudge(x) && x.group==="station" && cands.includes(String(x.apparatus||"").toLowerCase()));
+      s = js.find(x=>x.status==="vacant");
+      if(!s){
+        const held = js.map(x=>x.status==="na" ? "marked not needed" : x.name).filter(Boolean).join(", ");
+        issues.push({compId, judge:name, piece:a.piece,
+          reason: js.length ? `No free judge slot on ${js[0].apparatus} (${held}). Free one up or add another judge.` : `This competition has no judge slot for ${a.piece}.`});
+        return;
+      }
+      Object.assign(s,{name, email:prof.email||"", phone:prof.phone||"", club:prof.club||"", status:"confirmed", source:"pathway", signupId:"pw:"+a.id, pwName:name});
+      if(!s.notes) s.notes = note;
+      changed = true; return;
+    }
+    // already linked: keep in step with the booking, without trampling manual edits
+    if(s.name===s.pwName && s.name!==name){ s.name = name; s.pwName = name; changed = true; }
+    [["email",prof.email],["phone",prof.phone],["club",prof.club]].forEach(([k,v])=>{ if(!s[k] && v){ s[k] = v; changed = true; } });
+    if(!s.notes || String(s.notes).startsWith("Judging Pathway")){ if(s.notes!==note){ s.notes = note; changed = true; } }
+  });
+  return {changed, issues};
+}
+async function pwSyncComp(id){
+  const ref = db.collection(CONFIG.collections.staffing).doc(id);
+  const out = await db.runTransaction(async t=>{
+    const snap = await t.get(ref);
+    const data = snap.exists ? snap.data() : JSON.parse(JSON.stringify(S.all[id]));
+    delete data.unsaved;
+    const r = pwApply(data, id);
+    if(r.changed){ data.updatedAt = new Date().toISOString(); t.set(ref, data); }
+    return {data, r};
+  });
+  S.all[id] = out.data; if(S.compId===id) S.staffing = out.data;
+  PW.issues.push(...out.r.issues);
+}
+async function pwReconcile(){
+  if(!PW.ready.a || !PW.ready.j) return;
+  if($("#dlg").open){ setTimeout(pwReconcile, 3000); return; }   // don't swap data under an open dialog
+  if(PW.busy){ PW.again = true; return; }
+  PW.busy = true; PW.issues = [];
+  try{
+    const ids = new Set(PW.assigns.map(a=>a.compId));
+    Object.keys(S.all).forEach(id=>{ if((S.all[id].slots||[]).some(s=>s.source==="pathway")) ids.add(id); });
+    for(const id of ids){
+      if(!S.all[id]) continue;
+      const dry = JSON.parse(JSON.stringify(S.all[id])), r = pwApply(dry, id);
+      if(r.changed){ try{ await pwSyncComp(id); }catch(err){ console.error(err); showLoadErr("Couldn't update staffing from the Judging Pathway ("+(err.code||err.message)+")."); } }
+      else PW.issues.push(...r.issues);
+    }
+  } finally { PW.busy = false; }
+  renderPwIssues(); renderOverview();
+  if(S.staffing && !$("#detail").classList.contains("hidden")) render();
+  if(PW.again){ PW.again = false; pwReconcile(); }
+}
+function renderPwIssues(){
+  const el = $("#pwIssues"), list = PW.issues;
+  if(!list.length){ el.classList.add("hidden"); el.innerHTML = ""; return; }
+  el.classList.remove("hidden");
+  el.innerHTML = `<strong>Judging Pathway: ${list.length} confirmed judge${list.length>1?"s":""} couldn't be placed automatically</strong>` +
+    list.map(i=>{ const c = S.comps.find(x=>x.id===i.compId) || {};
+      return `<div style="margin-top:8px">${esc(i.judge)} (${esc(i.piece)}) for ${esc(c.name||"")}: ${esc(i.reason)} <button type="button" class="btn small ghost" data-open="${esc(i.compId)}">Open</button></div>`; }).join("");
+}
+function subscribePathway(){
+  db.collection(CONFIG.collections.judgingAssignments).onSnapshot(sn=>{
+    PW.assigns = sn.docs.map(d=>({id:d.id, ...d.data()})); PW.ready.a = true; pwReconcile();
+  }, err=>{ console.error(err); showLoadErr("Couldn't read Judging Pathway bookings ("+(err.code||err.message)+")."); });
+  db.collection(CONFIG.collections.judges).onSnapshot(sn=>{
+    PW.judges = {}; sn.docs.forEach(d=>{ PW.judges[d.id] = d.data(); }); PW.ready.j = true; pwReconcile();
+  }, err=>{ console.error(err); PW.ready.j = true; pwReconcile(); });
+}
+// an admin clearing or overwriting a pathway-filled slot by hand: remember it so the sync doesn't refill it
+function pwDetach(s){
+  if(s.source==="pathway" && String(s.signupId).startsWith("pw:")){
+    S.staffing.pwIgnored = S.staffing.pwIgnored || [];
+    S.staffing.pwIgnored.push(s.signupId.slice(3));
+  }
 }
 
 /* ---------- Overview ---------- */
@@ -573,6 +682,7 @@ $("#ovList").addEventListener("click", e=>{
   const r = e.target.closest("[data-slot]");
   if(r){ useComp(r.dataset.comp); editSlot(r.dataset.slot); }
 });
+$("#pwIssues").addEventListener("click", e=>{ const o = e.target.closest("[data-open]"); if(o) openComp(o.dataset.open); });
 $("#backBtn").addEventListener("click", ()=>{
   $("#detail").classList.add("hidden"); $("#overview").classList.remove("hidden");
   renderOverview(); window.scrollTo(0,0);
@@ -653,7 +763,7 @@ function slotHTML(s){
   const who = s.status==="vacant" ? "Vacant" : s.status==="na" ? "Not needed" : esc(s.name);
   const sub = (s.status==="vacant"||s.status==="na") ? "" : [s.club, s.status==="pending"?"Awaiting confirmation":""].filter(Boolean).map(esc).join(", ");
   return `<button type="button" class="slot owner-${s.owner} st-${s.status}" data-slot="${s.id}">
-    <div class="role">${esc(s.role)} <span class="own">${s.owner==="NGL"?"NGL":"Host"}</span>${s.source==="judging-app"?'<span class="src">Judging app</span>':""}<span class="dot"></span></div>
+    <div class="role">${esc(s.role)} <span class="own">${s.owner==="NGL"?"NGL":"Host"}</span>${s.source==="judging-app"?'<span class="src">Judging app</span>':s.source==="pathway"?'<span class="src">Judging Pathway</span>':""}<span class="dot"></span></div>
     <div class="who">${who}</div>${sub?`<div class="sub">${sub}</div>`:""}
   </button>`;
 }
@@ -755,16 +865,18 @@ function editSlot(id){
       <div><label for="f_status">Status</label><select id="f_status"><option value="pending">Awaiting confirmation</option><option value="confirmed">Confirmed</option></select></div>
     </div>
     <label for="f_notes">Notes</label><textarea id="f_notes">${esc(s.notes)}</textarea>
-    ${s.source==="judging-app"?`<p style="font-size:13px;color:var(--muted);margin-top:8px">Filled from the judging app. Clearing this role sends the judge back to waiting.</p>`:""}`,
+    ${s.source==="judging-app"?`<p style="font-size:13px;color:var(--muted);margin-top:8px">Filled from the judging app. Clearing this role sends the judge back to waiting.</p>`:""}
+    ${s.source==="pathway"?`<p style="font-size:13px;color:var(--muted);margin-top:8px">Filled automatically from a confirmed Judging Pathway booking. Change the time or fee there and it updates here. If you clear or replace this person by hand, it won't be filled again.</p>`:""}`,
   [
-    {label:"Remove role", cls:"danger", left:true, onClick:()=>{ if(!confirm(`Remove ${slotLabel(s)} from this competition?`)) return false; releaseSignup(s); S.staffing.slots = S.staffing.slots.filter(x=>x!==s); save(); render(); }},
+    {label:"Remove role", cls:"danger", left:true, onClick:()=>{ if(!confirm(`Remove ${slotLabel(s)} from this competition?`)) return false; pwDetach(s); releaseSignup(s); S.staffing.slots = S.staffing.slots.filter(x=>x!==s); save(); render(); }},
     s.status==="na"
       ? {label:"Mark as needed", left:true, onClick:()=>{ s.status="vacant"; save(); render(); toast("Marked as needed"); }}
-      : {label:"Not needed", cls:"green", left:true, onClick:()=>{ releaseSignup(s); Object.assign(s,{name:"",email:"",phone:"",club:"",status:"na",source:"",signupId:""}); save(); render(); toast("Marked not needed"); }},
-    {label:"Clear person", left:true, onClick:()=>{ releaseSignup(s); Object.assign(s,{name:"",email:"",phone:"",club:"",status:"vacant",source:"",signupId:""}); save(); render(); }},
+      : {label:"Not needed", cls:"green", left:true, onClick:()=>{ pwDetach(s); releaseSignup(s); Object.assign(s,{name:"",email:"",phone:"",club:"",status:"na",source:"",signupId:"",pwName:""}); save(); render(); toast("Marked not needed"); }},
+    {label:"Clear person", left:true, onClick:()=>{ pwDetach(s); releaseSignup(s); Object.assign(s,{name:"",email:"",phone:"",club:"",status:"vacant",source:"",signupId:"",pwName:""}); save(); render(); }},
     {label:"Cancel"},
     {label:"Save", cls:"primary", onClick:()=>{
       const name = val("f_name");
+      if(s.source==="pathway" && name!==s.pwName){ pwDetach(s); s.source=""; s.signupId=""; s.pwName=""; }
       Object.assign(s,{role:val("f_role")||s.role, owner:$("#f_owner").value, name, phone:val("f_phone"), email:val("f_email"), club:val("f_club"), notes:val("f_notes"),
         status: name ? $("#f_status").value : (s.status==="na" ? "na" : "vacant")});
       if(!name){ releaseSignup(s); s.source=""; s.signupId=""; }
@@ -883,8 +995,10 @@ $("#applyTpl").addEventListener("click", ()=>{
 $("#resetBtn").addEventListener("click", ()=>{
   if(!confirm("Clear every role and assignment for this competition?")) return;
   S.staffing.slots.forEach(releaseSignup);
+  S.staffing.pwIgnored = [];
   S.staffing.apparatus = apparatusFor(S.staffing.discipline, S.staffing.customApparatus);
-  S.staffing.slots = templateSlots(S.staffing); save(); render(); toast("Staffing reset");
+  S.staffing.slots = templateSlots(S.staffing); save(true); render(); toast("Staffing reset");
+  setTimeout(pwReconcile, 800);
 });
 
 /* ---------- Export ---------- */
@@ -910,7 +1024,7 @@ function sortedSlots(st){
 const HEAD = ["Area","Apparatus","Role","Responsibility","Name","Club","Mobile","Email","Status","Source","Notes"];
 function rows(){
   return sortedSlots().map(s=>[GROUP_NAME[s.group], s.apparatus, s.role, s.owner==="NGL"?"NGL":"Host club", s.name, s.club, s.phone, s.email,
-    s.status==="vacant"?"Vacant":s.status==="na"?"Not needed":s.status==="pending"?"Awaiting confirmation":"Confirmed", s.source==="judging-app"?"Judging app":"", s.notes]);
+    s.status==="vacant"?"Vacant":s.status==="na"?"Not needed":s.status==="pending"?"Awaiting confirmation":"Confirmed", s.source==="judging-app"?"Judging app":s.source==="pathway"?"Judging Pathway":"", s.notes]);
 }
 const fileBase = () => `NGL_Staffing_${(comp().name||"Competition").replace(/[^\w]+/g,"_")}`;
 
