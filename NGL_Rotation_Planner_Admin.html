@@ -440,26 +440,6 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .mob-empty{ text-align:center; padding:40px 20px; color:var(--muted); font-size:.85rem; }
 #mobileLiveLink{ display:none; align-items:center; justify-content:center; padding:8px 12px; background:var(--navy); flex:0 0 auto; }
 #mobileLiveLink a{ color:var(--gold); font-size:.78rem; font-weight:700; text-decoration:none; }
-
-.rc-wrap{max-width:900px;margin:0 auto;padding:18px;}
-.rc-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:14px;}
-.rc-card h2{color:var(--navy);font-size:1.1rem;margin-bottom:8px;}
-.rc-card p{font-size:.88rem;line-height:1.5;margin-bottom:10px;color:var(--ink);}
-.rc-note{font-size:.8rem!important;color:var(--muted)!important;}
-.rc-warn{color:var(--red);}
-.rc-btn{display:inline-block;background:var(--gold);color:var(--navy);border:none;padding:9px 16px;border-radius:6px;font-weight:700;font-size:.85rem;cursor:pointer;text-decoration:none;}
-.rc-slot{display:grid;grid-template-columns:1.4fr 1fr .8fr auto;gap:10px;align-items:end;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;background:var(--paper);}
-.rc-f label{display:block;font-size:.72rem;font-weight:700;color:var(--navy);margin-bottom:3px;}
-.rc-f select,.rc-f input,.rc-map select{width:100%;padding:8px 10px;border:2px solid var(--line);border-radius:6px;font-size:.86rem;background:#fff;}
-.rc-del{background:none;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.78rem;cursor:pointer;color:var(--muted);}
-.rc-names{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;}
-.rc-g{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;}
-.rc-g i{width:12px;height:12px;border-radius:50%;display:inline-block;}
-.rc-g input{border:none;width:90px;font-size:.82rem;outline:none;}
-.rc-g small{font-size:.68rem;color:var(--muted);font-weight:700;}
-.rc-slot .rc-note{grid-column:1/-1;margin:0;}
-.rc-map{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;align-items:center;margin-bottom:8px;font-size:.86rem;color:var(--navy);}
-@media(max-width:640px){.rc-slot{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
 <body>
@@ -476,7 +456,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
   </div>
   <div class="auth-box">
     <h2>Welcome <span>Back</span></h2>
-    <p class="sub">Sign in with your NGL club account, the same login as NGL Schools and NGL Recreational</p>
+    <p class="sub">Sign in to your club account</p>
     <div class="auth-error" id="loginError"></div>
     <div class="auth-field">
       <label>Email address</label>
@@ -500,7 +480,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
   </div>
   <div class="auth-box">
     <h2>Create <span>Account</span></h2>
-    <p class="sub">One free NGL club account for the Rotation Planner and all NGL programmes</p>
+    <p class="sub">Get your club set up in seconds</p>
     <div class="auth-error" id="signupError"></div>
     <div class="auth-field">
       <label>Club name</label>
@@ -549,8 +529,6 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
   <div class="tabs" id="tabs"></div>
 
   <div id="viewsContainer" style="flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column;">
-
-  <div class="view" id="recView" style="overflow-y:auto"></div>
 
   <!-- PLANNER VIEW -->
   <div class="view active" id="plannerView">
@@ -868,28 +846,24 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 <!-- Firebase Auth SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
 // ================================================================
 // FIREBASE CONFIG
 // ================================================================
-// NGL club accounts: the same login as NGL Schools and NGL Recreational
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyBK8gNFh4lYv6829YRFm-7Ia0tzh_RwMKQ",
-  authDomain: "ngl-schools.firebaseapp.com",
-  projectId: "ngl-schools",
-  storageBucket: "ngl-schools.firebasestorage.app",
-  messagingSenderId: "202087533031",
-  appId: "1:202087533031:web:a905eaa461925256b71542"
+  apiKey: "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
+  authDomain: "saadi-rotation.firebaseapp.com",
+  databaseURL: "https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "saadi-rotation",
+  storageBucket: "saadi-rotation.firebasestorage.app",
+  messagingSenderId: "1066734803675",
+  appId: "1:1066734803675:web:0188fd601adea7db08cafe"
 };
-// Sponsor logos (and the old planner's data) stay in the original database
-const SPONSOR_DB = "https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app";
-const DB_URL = SPONSOR_DB;
+const DB_URL = FIREBASE_CONFIG.databaseURL;
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
-const fsdb = firebase.firestore();
 
 // ================================================================
 // CONSTANTS
@@ -959,7 +933,7 @@ async function doLogin(){
   try{
     await auth.signInWithEmailAndPassword(email,pw);
   }catch(e){
-    showAuthError('loginError', /network/.test(e.code||'')?'We couldn’t connect. Please check your internet.':'Incorrect email or password. Use your NGL club account (the same as NGL Schools and Recreational). New here? Create one free below.');
+    showAuthError('loginError', e.code==='auth/user-not-found'||e.code==='auth/wrong-password'?'Incorrect email or password.':'Sign in failed: '+e.message);
   }
 }
 
@@ -973,248 +947,21 @@ async function doSignup(){
   try{
     const cred=await auth.createUserWithEmailAndPassword(email,pw);
     const uid=cred.user.uid;
-    let code = '';
-    for(let i = 0; i < 6 && !code; i++){
-      const c = newAccessCode(club), ref = fsdb.collection('accessCodes').doc(c);
-      if((await ref.get()).exists) continue;
-      await ref.set({clubId:uid, clubName:club, season:currentSeason(), status:'inactive', createdAt:firebase.firestore.FieldValue.serverTimestamp()}); code = c;
-    }
-    await fsdb.collection('clubs').doc(uid).set({name:club, contact:name, email, accessCode:code, source:'rotations', createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    CLUB = {name:club, contact:name, email};
-    document.getElementById('clubNameHeader').textContent='— '+club;
+    // store club profile
+    await dbPut(`clubs/${uid}/profile`, {clubName:club,contactName:name,email,createdAt:new Date().toISOString()});
+    await dbPut(`club_index/${uid}`, {clubName:club, createdAt:new Date().toISOString()});
+    // init empty data
+    await dbPut(`clubs/${uid}/rota`, {groups:[],locations:[],sessions:{}});
   }catch(e){
-    showAuthError('signupError', e.code==='auth/email-already-in-use'?'There’s already an NGL club account with this email (perhaps from NGL Schools or Recreational). Sign in with it instead.':'Sign up failed: '+e.message);
+    showAuthError('signupError', e.code==='auth/email-already-in-use'?'An account with this email already exists.':'Sign up failed: '+e.message);
   }
 }
 
 async function doLogout(){
   if(!confirm('Sign out?')) return;
-  if(rtUnsub) rtUnsub();
+  if(realtimeSource) realtimeSource.close();
   clearInterval(liveTimer);
   await auth.signOut();
-}
-
-
-// ================================================================
-// NGL RECREATIONAL: groups built from the club plan in the NGL Recreational Hub
-// ================================================================
-const REC_RULES = {45:{warm:8, cool:4}, 60:{warm:10, cool:5}, 75:{warm:10, cool:5}};
-const REC_WEEK_A = ['FF','VT','BM'], REC_WEEK_B = ['BF','BA','FT'];
-const REC_PIECES = {FF:'Forward floor', BF:'Backward floor', VT:'Vault', BM:'Beam', BA:'Bars', FT:'Fast Track'};
-const REC_COLOURS = [['Orange','#F28C28'],['Yellow','#F5C518'],['Blue','#2F80ED'],['Red','#E5383B'],['Green','#2EAD5B'],['Purple','#8E44AD']];
-const REC_LOCS = [['FLOOR','#4a90d9'],['FORWARD FLOOR','#4a90d9'],['BACKWARD FLOOR','#2c6fb8'],['VAULT','#5cb85c'],['BEAM','#e8914f'],['BARS','#7b68ee'],['FAST TRACK','#d9534f']];
-const REC_MAP = {warm:'FLOOR', FF:'FORWARD FLOOR', BF:'BACKWARD FLOOR', VT:'VAULT', BM:'BEAM', BA:'BARS', FT:'FAST TRACK'};
-const REC_MAX = 3;   // groups per rotation
-let CLUB = {};       // the club's NGL account record
-
-const recToDate = c => !c ? null : (typeof c.toDate === 'function' ? c.toDate() : (c.seconds ? new Date(c.seconds * 1000) : new Date(c)));
-function recActive(){ const r = CLUB && CLUB.rec; const e = r && recToDate(r.expires); return !!(r && r.status === 'active' && e && e > new Date()); }
-function recTerm(){
-  const t = (CLUB && CLUB.recTerm) || {};
-  return {start:t.start || '', weeks:+t.weeks || 14, halfTerm:t.halfTerm || '', classLen:+t.classLen || 60,
-    pieces:Object.assign({VT:'table', BM:'beam', BA:'bars', FT:'fasttrack'}, t.pieces || {})};
-}
-// Which week of the club's term is it? Half term doesn't count.
-function recWeekInfo(t, today){
-  today = today || new Date();
-  if(!t.start) return {letter:null, label:'Add your term dates in your club plan to switch weeks automatically'};
-  const day = 86400000, start = new Date(t.start + 'T00:00:00');
-  let wk = Math.floor((today - start) / (7 * day)) + 1;
-  if(t.halfTerm){
-    const hw = Math.floor((new Date(t.halfTerm + 'T00:00:00') - start) / (7 * day)) + 1;
-    if(wk === hw) return {letter:null, label:'Half term'};
-    if(wk > hw) wk -= 1;
-  }
-  if(wk < 1) return {letter:'A', label:'Term starts ' + start.toLocaleDateString('en-GB', {day:'numeric', month:'long'})};
-  if(wk > t.weeks) return {letter:null, label:'Term has finished'};
-  if(wk > t.weeks - 2) return {letter: wk === t.weeks - 1 ? 'A' : 'B', label:`Week ${wk} of ${t.weeks} (assessment)`};
-  return {letter: (wk - 1) % 2 === 0 ? 'A' : 'B', label:`Week ${wk} of ${t.weeks}`};
-}
-function recSettings(){
-  DATA.rec = DATA.rec || {};
-  DATA.rec.classes = DATA.rec.classes || [];
-  DATA.rec.map = Object.assign({...REC_MAP}, DATA.rec.map || {});
-  return DATA.rec;
-}
-function recEnsureLocations(){
-  const have = new Set(DATA.locations.map(l => l.name));
-  REC_LOCS.forEach(([n, c]) => { if(!have.has(n)) DATA.locations.push({id:genId(), name:n, category:n.includes('FLOOR') ? 'Floor' : 'Other', colour:c}); });
-}
-// Rebuild the Recreational groups and their sessions. Rotation A = Rotation Week 1 apparatus
-// in Week 1; Rotation B does the other set, and they swap each week (stored as locationB).
-function applyRec(){
-  DATA.groups = DATA.groups || []; DATA.sessions = DATA.sessions || {};
-  const old = new Set(DATA.groups.filter(g => g.rec).map(g => g.id));
-  DATA.groups = DATA.groups.filter(g => !g.rec);
-  DAYS.forEach(d => { DATA.sessions[d] = DATA.sessions[d] || {}; old.forEach(id => delete DATA.sessions[d][id]); });
-  if(!recActive()) return;
-  const R = recSettings(); if(!R.classes.length) return;
-  recEnsureLocations();
-  const t = recTerm(), rule = REC_RULES[t.classLen] || REC_RULES[60], map = R.map;
-  const has = c => !['VT','BM','BA'].includes(c) || t.pieces[c] !== 'none';
-  const setA = REC_WEEK_A.filter(has), setB = REC_WEEK_B.filter(has);
-  const rots = (set, j, start) => {
-    const teach = t.classLen - rule.warm - rule.cool, n = set.length, base = Math.floor(teach / n), out = [];
-    let at = start + rule.warm;
-    for(let r = 0; r < n; r++){ const d = r === n - 1 ? teach - base * (n - 1) : base; out.push({code:set[(j + r) % n], at, d}); at += d; }
-    return out;
-  };
-  R.classes.slice().sort((a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day) || a.start - b.start).forEach(c => {
-    for(let gi = 0; gi < Math.min(6, +c.groups || 0); gi++){
-      const [cname, hex] = REC_COLOURS[gi], rotA = gi < REC_MAX, j = rotA ? gi : gi - REC_MAX;
-      const id = `rec_${c.id}_${gi}`;
-      const nm = (c.names && c.names[gi]) || cname;
-      DATA.groups.push({id, name:`${nm} · ${fmtTime(c.start)}`, section:'recreational', colour:hex, days:[c.day], rec:true, rotation:rotA ? 'A' : 'B'});
-      const wk1 = rots(rotA ? setA : setB, j, c.start), wk2 = rots(rotA ? setB : setA, j, c.start);
-      const L = [{location:map.warm, start_min:c.start, duration:rule.warm, title:'Warm-up', shared:true}];
-      for(let r = 0; r < Math.max(wk1.length, wk2.length); r++){
-        const a = wk1[r] || wk1[wk1.length - 1], b = wk2[r] || wk2[wk2.length - 1];
-        // when the two weeks have different numbers of rotations (no bars, say) the timings differ: keep week 1's
-        const s = {location:map[a.code], start_min:a.at, duration:a.d, title:''};
-        if(map[b.code] !== map[a.code]) s.locationB = map[b.code];
-        L.push(s);
-      }
-      L.push({location:map.warm, start_min:c.start + t.classLen - rule.cool, duration:rule.cool, title:'Cool-down', shared:true});
-      DATA.sessions[c.day][id] = L;
-    }
-  });
-}
-function recGuard(groupId){
-  const g = groupId && getGroupById(groupId);
-  if(!g || !g.rec) return false;
-  showToast('This group is built from your Recreational classes');
-  openTab('rec');
-  return true;
-}
-function openTab(id){
-  currentTab = id; renderTabs();
-  document.querySelectorAll('.view').forEach(v => { v.classList.remove('active'); v.style.display = ''; });
-  const v = document.getElementById(id + 'View'); if(v) v.classList.add('active');
-  if(id === 'planner') renderWeekTable(); else if(id === 'settings') renderSettings(); else if(id === 'rec') renderRec(); else if(id === 'totals') renderWeeklyTotals();
-}
-// Week 1 / Week 2 follow the term dates for Recreational clubs
-function recAutoWeek(quiet){
-  if(!recActive() || !recSettings().classes.length) return;
-  const wi = recWeekInfo(recTerm());
-  if(!wi.letter || wi.letter === currentWeek) return;
-  currentWeek = wi.letter;
-  const a = document.getElementById('weekABtn'), b = document.getElementById('weekBBtn');
-  if(a) a.classList.toggle('active', currentWeek === 'A'); if(b) b.classList.toggle('active', currentWeek === 'B');
-  if(!quiet) showToast('This week is ' + weekName(currentWeek) + ' (from your term dates)');
-}
-function recEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function renderRec(){
-  const el = document.getElementById('recView');
-  if(!recActive()){
-    el.innerHTML = `<div class="rc-wrap"><div class="rc-card"><h2>NGL Recreational</h2>
-      <p>Clubs on the <b>NGL Recreational</b> programme can have their Recreational groups and rotations built here automatically from their club plan, switching Week 1 and Week 2 from their term dates.</p>
-      <p>Your other classes work exactly as before on the Weekly Planner.</p>
-      <p><a class="rc-btn" href="https://nglrecreational.co.uk" target="_blank" rel="noopener">Find out about NGL Recreational</a></p></div></div>`;
-    return;
-  }
-  const R = recSettings(), t = recTerm(), rule = REC_RULES[t.classLen] || REC_RULES[60], wi = recWeekInfo(t);
-  const locOpts = sel => DATA.locations.map(l => `<option ${l.name === sel ? 'selected' : ''}>${recEsc(l.name)}</option>`).join('');
-  const used = ['FF','BF','VT','BM','BA','FT'].filter(c => !['VT','BM','BA'].includes(c) || t.pieces[c] !== 'none');
-  const rows = R.classes.map(c => {
-    const end = c.start + t.classLen;
-    const clash = R.classes.find(o => o !== c && o.day === c.day && o.start < end && c.start < o.start + t.classLen);
-    const hh = String(Math.floor(c.start / 60)).padStart(2, '0') + ':' + String(c.start % 60).padStart(2, '0');
-    return `<div class="rc-slot" data-id="${c.id}">
-      <div class="rc-f"><label>Day</label><select data-rc="day">${DAYS.map(d => `<option ${d === c.day ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
-      <div class="rc-f"><label>Class starts</label><input type="time" step="300" data-rc="start" value="${hh}"></div>
-      <div class="rc-f"><label>Groups</label><select data-rc="groups">${[1,2,3,4,5,6].map(n => `<option ${n === +c.groups ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
-      <button class="rc-del" data-rc-del>Remove</button>
-      <div class="rc-names">${Array.from({length:+c.groups}, (_, gi) => `<span class="rc-g"><i style="background:${REC_COLOURS[gi][1]}"></i><input data-rc-name="${gi}" value="${recEsc((c.names && c.names[gi]) || '')}" placeholder="${REC_COLOURS[gi][0]}"><small>Rotation ${gi < REC_MAX ? 'A' : 'B'}</small></span>`).join('')}</div>
-      <p class="rc-note">${fmtTime(c.start)} to ${fmtTime(end)}${clash ? ` <b class="rc-warn">Overlaps the ${fmtTime(clash.start)} class</b>` : ''}</p></div>`;
-  }).join('');
-  el.innerHTML = `<div class="rc-wrap">
-    <div class="rc-card"><h2>Recreational classes</h2>
-      <p>Add a line for each Recreational class. The first 3 groups go on <b>Rotation A</b> and the rest on <b>Rotation B</b>. Each week the two rotations swap apparatus, and each group starts on a different piece. Groups are coloured Orange, Yellow, Blue, Red, Green, Purple; add names if you like.</p>
-      ${rows || '<p class="rc-note">No classes yet.</p>'}
-      <button class="rc-btn" data-rc-add>+ Add a class</button></div>
-    <div class="rc-card"><h2>From your club plan</h2>
-      <p>Classes are <b>${t.classLen} minutes</b>: ${rule.warm} minutes warm-up, rotations, ${rule.cool} minutes cool-down. <b>This week:</b> ${recEsc(wi.label)}${wi.letter ? ` · ${weekName(wi.letter)}` : ''}.</p>
-      <p class="rc-note">Week 1 and Week 2 switch on their own from your term dates. To change class length, apparatus or term dates, update your club plan in the <a href="https://nglrecreational.co.uk" target="_blank" rel="noopener">NGL Recreational Hub</a>.</p></div>
-    <div class="rc-card"><h2>Where each piece is in your hall</h2>
-      <p class="rc-note">Forward and backward floor run at the same time (one group from each rotation), so they need two areas of floor.</p>
-      <div class="rc-map"><b>Warm-up and cool-down</b><select data-rc-map="warm">${locOpts(R.map.warm)}</select></div>
-      ${used.map(c => `<div class="rc-map"><b>${REC_PIECES[c]}</b><select data-rc-map="${c}">${locOpts(R.map[c])}</select></div>`).join('')}</div>
-  </div>`;
-}
-function recChanged(){ applyRec(); recAutoWeek(true); scheduleAutoSave(); renderRec(); }
-document.addEventListener('change', e => {
-  const v = document.getElementById('recView'); if(!v || !v.contains(e.target)) return;
-  const R = recSettings(), slot = e.target.closest('.rc-slot');
-  if(e.target.dataset.rcMap){ R.map[e.target.dataset.rcMap] = e.target.value; return recChanged(); }
-  if(!slot) return;
-  const c = R.classes.find(x => x.id === slot.dataset.id); if(!c) return;
-  if(e.target.dataset.rc === 'day') c.day = e.target.value;
-  else if(e.target.dataset.rc === 'groups') c.groups = +e.target.value;
-  else if(e.target.dataset.rc === 'start'){ const [h, m] = e.target.value.split(':').map(Number); if(!isNaN(h)) c.start = h * 60 + (m || 0); }
-  else if(e.target.dataset.rcName != null){ c.names = c.names || []; c.names[+e.target.dataset.rcName] = e.target.value.trim(); }
-  recChanged();
-});
-document.addEventListener('click', e => {
-  const v = document.getElementById('recView'); if(!v || !v.contains(e.target)) return;
-  const R = recSettings();
-  if(e.target.closest('[data-rc-add]')){
-    const last = R.classes[R.classes.length - 1];
-    R.classes.push({id:genId(), day:last ? last.day : 'Monday', start:last ? last.start + recTerm().classLen : 16 * 60, groups:3});
-    recChanged();
-  }else if(e.target.closest('[data-rc-del]')){
-    const id = e.target.closest('.rc-slot').dataset.id;
-    if(!confirm('Remove this class and its groups?')) return;
-    R.classes = R.classes.filter(c => c.id !== id); recChanged();
-  }
-});
-
-// ================================================================
-// BRING DATA ACROSS FROM THE OLD PLANNER (old login, or an export file)
-// ================================================================
-const OLD_CONFIG = {apiKey:"AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4", authDomain:"saadi-rotation.firebaseapp.com", databaseURL:SPONSOR_DB, projectId:"saadi-rotation"};
-function openMoveModal(){
-  let m = document.getElementById('moveModal');
-  if(!m){
-    m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'moveModal';
-    m.innerHTML = `<div class="modal-box"><h3>Bring your rotations across</h3>
-      <p class="rc-note" style="margin-bottom:12px">Copy your groups, sessions and locations from the old NGL Rotation Planner. Nothing in the old planner changes. This replaces what’s on this page now (your Recreational classes are kept).</p>
-      <div class="mf"><label>Old planner email</label><input type="email" id="mv_em"></div>
-      <div class="mf"><label>Old planner password</label><input type="password" id="mv_pw"></div>
-      <div class="modal-actions"><button class="btn-save" id="mv_go">Bring across</button></div>
-      <p class="rc-note" style="margin:16px 0 6px">Or choose an exported file (from the old planner’s Export button):</p>
-      <input type="file" id="mv_file" accept=".json,application/json">
-      <p class="rc-warn" id="mv_err" style="margin-top:10px"></p>
-      <div class="modal-actions"><div class="ma-spacer"></div><button class="btn-cancel" onclick="closeModal('moveModal')">Close</button></div></div>`;
-    document.body.appendChild(m);
-    m.querySelector('#mv_go').onclick = async () => {
-      const err = m.querySelector('#mv_err'), btn = m.querySelector('#mv_go'); err.textContent = '';
-      btn.disabled = true; btn.textContent = 'Bringing across…';
-      try{
-        const app = firebase.apps.find(a => a.name === 'old') || firebase.initializeApp(OLD_CONFIG, 'old');
-        const cred = await app.auth().signInWithEmailAndPassword(m.querySelector('#mv_em').value.trim(), m.querySelector('#mv_pw').value);
-        const tok = await cred.user.getIdToken();
-        const r = await fetch(`${SPONSOR_DB}/clubs/${cred.user.uid}/rota.json?auth=${tok}`);
-        const old = await r.json(); await app.auth().signOut();
-        moveIn(old);
-      }catch(e){ console.error(e); err.textContent = 'That email and password didn’t work for the old planner.'; }
-      btn.disabled = false; btn.textContent = 'Bring across';
-    };
-    m.querySelector('#mv_file').onchange = async e => {
-      try{ moveIn(JSON.parse(await e.target.files[0].text())); }
-      catch(x){ m.querySelector('#mv_err').textContent = 'That doesn’t look like a rotation planner file.'; }
-    };
-  }
-  m.classList.add('open');
-}
-function moveIn(old){
-  if(!old || !Array.isArray(old.groups)) throw new Error('no data');
-  if(DATA.groups.some(g => !g.rec) && !confirm('Replace the groups and sessions on this page with the ones from the old planner?')) return;
-  const rec = DATA.rec;
-  DATA = {groups:old.groups.filter(g => !g.rec), locations:old.locations || [], sessions:old.sessions || {}};
-  if(rec) DATA.rec = rec;
-  DAYS.forEach(d => { if(!DATA.sessions[d]) DATA.sessions[d] = {}; });
-  applyRec(); scheduleAutoSave(); closeModal('moveModal'); openTab('planner');
-  showToast(`Brought across ${DATA.groups.filter(g => !g.rec).length} groups`);
 }
 
 // ================================================================
@@ -1227,8 +974,6 @@ auth.onAuthStateChanged(async user=>{
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('signupScreen').classList.add('hidden');
     await loadClubData();
-    applyRec(); recAutoWeek(false);
-    if(recActive() && recSettings().classes.length) scheduleAutoSave();   // keeps the live screen up to date with the club plan
     document.getElementById('app').classList.add('visible');
     startRealtimeListener();
     loadSponsors();
@@ -1263,41 +1008,20 @@ async function getAuthToken(){
   try{ return await currentUser.getIdToken(); }catch(e){ return null; }
 }
 async function dbGet(path){
-  if(path === 'sponsors'){ const r = await fetch(`${SPONSOR_DB}/sponsors.json`); return r.ok ? r.json() : null; }
-  const m = path.match(/^clubs\/([^/]+)\/(profile|rota)$/);
-  if(!m) return null;
-  const snap = await fsdb.collection('clubs').doc(m[1]).get();
-  const c = snap.exists ? snap.data() : {};
-  if(m[1] === currentClubId) CLUB = c;
-  if(m[2] === 'profile') return {clubName:c.name || '', contactName:c.contact || '', email:c.email || ''};
-  return c.rotaJson ? JSON.parse(c.rotaJson) : null;
+  const token=await getAuthToken();
+  const url=`${DB_URL}/${path}.json`+(token?`?auth=${token}`:'');
+  const res=await fetch(url);
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  return res.json();
 }
-async function dbPut(path, data){
-  const m = path.match(/^clubs\/([^/]+)\/(profile|rota)$/);
-  if(m && m[2] === 'profile'){
-    await fsdb.collection('clubs').doc(m[1]).set({name:data.clubName || '', contact:data.contactName || '', email:data.email || ''}, {merge:true});
-    CLUB = Object.assign(CLUB || {}, {name:data.clubName, contact:data.contactName, email:data.email});
-    return data;
-  }
-  if(m && m[2] === 'rota'){
-    const json = JSON.stringify(data);
-    await fsdb.collection('clubs').doc(m[1]).set({rotaJson:json, rotaUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()}, {merge:true});
-    // public copy for the live screen link
-    await fsdb.collection('rotaLive').doc(m[1]).set({json, clubName:(CLUB && CLUB.name) || '', term:recActive() ? JSON.stringify(recTerm()) : '', updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
-      .catch(e => console.warn('Live copy not saved', e));
-    return data;
-  }
-  if(path.startsWith('feedback/')){ await fsdb.collection('rotaFeedback').add(data); return data; }
-  return data;
+async function dbPut(path,data){
+  const token=await getAuthToken();
+  const url=`${DB_URL}/${path}.json`+(token?`?auth=${token}`:'');
+  const res=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  return res.json();
 }
-// NGL Schools needs every club to hold a (switched-off) Schools code
-const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
-function newAccessCode(name){
-  const w = String(name).toUpperCase().replace(/[^A-Z ]/g, '').split(/\s+/).filter(x => x && !['GYMNASTICS','GYMNASTIC','GYM','CLUB','THE','ACADEMY','OF','AND'].includes(x));
-  const r = new Uint32Array(4); crypto.getRandomValues(r);
-  return (w[0] || 'NGL').slice(0, 10).padEnd(2, 'X') + '-' + Array.from(r, x => CODE_ALPHABET[x % CODE_ALPHABET.length]).join('');
-}
-function currentSeason(d = new Date()){ const y = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1; return y + '/' + String(y + 1).slice(2); }
+
 async function loadClubData(){
   try{
     const profile=await dbGet(`clubs/${currentClubId}/profile`);
@@ -1340,22 +1064,30 @@ async function saveNow(){
   }
 }
 
-let rtUnsub = null;
 function startRealtimeListener(){
-  if(rtUnsub) rtUnsub();
-  rtUnsub = fsdb.collection('clubs').doc(currentClubId).onSnapshot(snap => {
-    if(snap.metadata.hasPendingWrites || Date.now() - lastSaveTime < 3000 || !snap.exists) return;
-    const c = snap.data(); CLUB = c;
-    if(!c.rotaJson) return;
-    DATA = JSON.parse(c.rotaJson); if(!DATA.sessions) DATA.sessions = {};
-    DAYS.forEach(d => { if(!DATA.sessions[d]) DATA.sessions[d] = {}; });
-    applyRec();
-    if(currentTab==='planner') renderWeekTable();
-    if(currentTab==='settings') renderSettings();
-    if(currentTab==='rec') renderRec();
-    if(liveMode) renderTimeline(getTodayName());
-    showToast('📡 Updated by another user');
-  }, err => console.warn('Sync stopped', err));
+  if(realtimeSource) realtimeSource.close();
+  getAuthToken().then(token=>{
+    const url=`${DB_URL}/clubs/${currentClubId}/rota.json`+(token?`?auth=${token}`:'');
+    try{
+      realtimeSource=new EventSource(url);
+    realtimeSource.addEventListener('put',e=>{
+      if(Date.now()-lastSaveTime<3000) return;
+      try{
+        const p=JSON.parse(e.data);
+        if(p&&p.data&&p.data.groups){
+          DATA=p.data;
+          if(!DATA.sessions) DATA.sessions={};
+          DAYS.forEach(d=>{ if(!DATA.sessions[d]) DATA.sessions[d]={}; });
+          if(currentTab==='planner') renderWeekTable();
+          if(currentTab==='settings') renderSettings();
+          if(liveMode) renderTimeline(getTodayName());
+          showToast('📡 Updated by another user');
+        }
+      }catch(err){}
+    });
+    realtimeSource.onerror=()=>{ realtimeSource.close(); setTimeout(startRealtimeListener,5000); };
+    }catch(e){}
+  });
 }
 
 // ================================================================
@@ -1386,11 +1118,11 @@ function getDayBounds(day){
 function getConflicts(day){
   if(!DATA.sessions||!DATA.sessions[day]) return new Set();
   const all=[];
-  DATA.groups.forEach(g=>{ const sessions=(DATA.sessions[day]&&DATA.sessions[day][g.id])||[]; sessions.forEach((s,i)=>all.push({gid:g.id,idx:i,loc:getSessionLocation(s),s:s.start_min,e:s.start_min+s.duration,sh:!!s.shared})); });
+  DATA.groups.forEach(g=>{ const sessions=(DATA.sessions[day]&&DATA.sessions[day][g.id])||[]; sessions.forEach((s,i)=>all.push({gid:g.id,idx:i,loc:getSessionLocation(s),s:s.start_min,e:s.start_min+s.duration})); });
   const keys=new Set();
   for(let i=0;i<all.length;i++) for(let j=i+1;j<all.length;j++){
     const a=all[i],b=all[j];
-    if((a.sh&&b.sh)||NO_CONFLICT.includes(a.loc)||NO_CONFLICT.includes(b.loc)||a.loc!==b.loc||a.s>=b.e||b.s>=a.e) continue;
+    if(NO_CONFLICT.includes(a.loc)||NO_CONFLICT.includes(b.loc)||a.loc!==b.loc||a.s>=b.e||b.s>=a.e) continue;
     keys.add(`${a.gid}:${a.idx}`); keys.add(`${b.gid}:${b.idx}`);
   }
   return keys;
@@ -1404,14 +1136,13 @@ function renderTabs(){
   const tabList=[
     {id:'planner',label:'📋 Weekly Planner'},
     {id:'settings',label:'⚙ Groups & Locations'},
-    {id:'totals',label:'📊 Weekly Totals'},
-    {id:'rec',label:'🏅 Recreational'}
+    {id:'totals',label:'📊 Weekly Totals'}
   ];
   if(adminUnlocked) tabList.push({id:'admin',label:'🔒 NGL Admin'});
   tabList.forEach(t=>{
     const b=document.createElement('button'); b.textContent=t.label;
     if(currentTab===t.id) b.className='active';
-    b.onclick=()=>{ currentTab=t.id; renderTabs(); document.querySelectorAll('.view').forEach(v=>{ v.classList.remove('active'); v.style.display=''; }); const vEl=document.getElementById(t.id+'View'); vEl.classList.add('active'); if(t.id==='admin') vEl.style.display='block'; if(t.id==='planner') renderWeekTable(); else if(t.id==='settings') renderSettings(); else if(t.id==='admin') renderAdmin(); else if(t.id==='totals') renderWeeklyTotals(); else if(t.id==='rec') renderRec(); };
+    b.onclick=()=>{ currentTab=t.id; renderTabs(); document.querySelectorAll('.view').forEach(v=>{ v.classList.remove('active'); v.style.display=''; }); const vEl=document.getElementById(t.id+'View'); vEl.classList.add('active'); if(t.id==='admin') vEl.style.display='block'; if(t.id==='planner') renderWeekTable(); else if(t.id==='settings') renderSettings(); else if(t.id==='admin') renderAdmin(); else if(t.id==='totals') renderWeeklyTotals(); };
     el.appendChild(b);
   });
   // small admin unlock link if not yet unlocked
@@ -1430,8 +1161,7 @@ function renderTabs(){
     link.onclick=()=>document.getElementById('adminGateModal').classList.add('open');
     link.onmouseover=()=>link.style.color='rgba(255,255,255,.7)';
     link.onmouseout=()=>link.style.color='rgba(255,255,255,.3)';
-    const mv=document.createElement('button'); mv.textContent='⤓ Bring data across'; mv.style.cssText=profile.style.cssText; mv.onclick=()=>openMoveModal();
-    el.appendChild(sep); el.appendChild(guide); el.appendChild(mv); el.appendChild(profile);
+    el.appendChild(sep); el.appendChild(guide); el.appendChild(profile); el.appendChild(link);
   } else {
     const sep=document.createElement('span'); sep.style.cssText='flex:1;';
     const guide=document.createElement('a'); guide.textContent='📖 Instructions'; guide.href='NGL_Rotation_Planner_Guide.html'; guide.target='_blank';
@@ -1547,7 +1277,6 @@ function renderSection(tbody,section,label){
 // SESSION MODAL
 // ================================================================
 function openSessionModal(day,groupId,sessionIdx){
-  if(recGuard(groupId)) return;
   editingSession={day,groupId,sessionIdx};
   const group=getGroupById(groupId);
   const isNew=sessionIdx===null;
@@ -1651,7 +1380,6 @@ let copyBlockState = null;
 let copyBlockTimes = [];
 
 function openCopyBlockModal(day, groupId){
-  if(recGuard(groupId)) return;
   const sessions = (DATA.sessions[day] && DATA.sessions[day][groupId]) || [];
   if(!sessions.length){ showToast('No sessions to copy'); return; }
   const group = getGroupById(groupId);
@@ -1738,7 +1466,6 @@ function doCopyBlock(){
 }
 
 function clearGroupDay(day, groupId){
-  if(recGuard(groupId)) return;
   const count=(DATA.sessions[day]&&DATA.sessions[day][groupId]||[]).length;
   if(!confirm(`Clear all ${count} session(s) for this group on ${day}?`)) return;
   if(DATA.sessions[day]) DATA.sessions[day][groupId]=[];
@@ -1747,7 +1474,6 @@ function clearGroupDay(day, groupId){
 }
 
 function copyGroupDay(groupId, fromDay, toDay){
-  if(recGuard(groupId)) return;
   const src=(DATA.sessions[fromDay]&&DATA.sessions[fromDay][groupId])||[];
   if(!src.length){ showToast('No sessions to copy'); return; }
   if(!confirm(`Copy ${src.length} session(s) from ${fromDay} to ${toDay}?`)) return;
@@ -1790,7 +1516,6 @@ function printPlanner(){
 }
 
 function quickDel(day,groupId,idx){
-  if(recGuard(groupId)) return;
   if(!confirm('Delete this session?')) return;
   DATA.sessions[day][groupId].splice(idx,1);
   renderWeekTable(); scheduleAutoSave();
@@ -1805,7 +1530,6 @@ function renderSwatches(containerId,current,onSelect){
 }
 
 function openGroupModal(id=null,defaultSection='squad'){
-  if(recGuard(id)) return;
   editingGroup=id;
   const g=id?getGroupById(id):null;
   document.getElementById('gmTitle').textContent=g?'Edit Group':'Add Group';
@@ -2142,7 +1866,7 @@ function sortTotals(col){
 // ================================================================
 function showStreamLink(){
   const baseUrl = window.location.href.replace(/\/[^\/]*$/, '/');
-  const url = `${baseUrl}NGL_Rotation_Live.html?c=${currentClubId}`;
+  const url = `${baseUrl}NGL_Live.html?c=${currentClubId}`;
   document.getElementById('streamUrl').textContent = url;
   // generate QR code using free API
   const qrDiv = document.getElementById('streamQR');
