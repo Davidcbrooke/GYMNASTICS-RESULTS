@@ -1062,11 +1062,14 @@ function applyRec(){
   R.classes.slice().sort((a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day) || a.start - b.start).forEach(c => {
     for(let gi = 0; gi < Math.min(6, +c.groups || 0); gi++){
       const [cname, hex] = REC_COLOURS[gi], rotA = gi < REC_MAX, j = rotA ? gi : gi - REC_MAX;
-      const id = `rec_${c.id}_${gi}`;
-      const nm = (c.names && c.names[gi]) || cname;
-      DATA.groups.push({id, name:`${nm} · ${fmtTime(c.start)}`, section:'recreational', colour:hex, days:[c.day], rec:true, rotation:rotA ? 'A' : 'B'});
+      // one row per colour: every class's Orange group sits on the Orange row, one after the other
+      const id = `rec_${gi}`;
+      let g = DATA.groups.find(x => x.id === id);
+      if(!g){ g = {id, name:cname, section:'recreational', colour:hex, days:[], rec:true, rotation:rotA ? 'A' : 'B'}; DATA.groups.push(g); }
+      if(!g.days.includes(c.day)) g.days.push(c.day);
+      const nm = (c.names && c.names[gi]) || '';
       const wk1 = rots(rotA ? setA : setB, j, c.start), wk2 = rots(rotA ? setB : setA, j, c.start);
-      const L = [{location:map.warm, start_min:c.start, duration:rule.warm, title:'Warm-up', shared:true}];
+      const L = [{location:map.warm, start_min:c.start, duration:rule.warm, title:nm ? nm + ' · Warm-up' : 'Warm-up', shared:true}];
       for(let r = 0; r < Math.max(wk1.length, wk2.length); r++){
         const a = wk1[r] || wk1[wk1.length - 1], b = wk2[r] || wk2[wk2.length - 1];
         // when the two weeks have different numbers of rotations (no bars, say) the timings differ: keep week 1's
@@ -1075,9 +1078,12 @@ function applyRec(){
         L.push(s);
       }
       L.push({location:map.warm, start_min:c.start + t.classLen - rule.cool, duration:rule.cool, title:'Cool-down', shared:true});
-      DATA.sessions[c.day][id] = L;
+      DATA.sessions[c.day][id] = (DATA.sessions[c.day][id] || []).concat(L).sort((a, b) => a.start_min - b.start_min);
     }
   });
+  const recG = DATA.groups.filter(g => g.rec).sort((a, b) => a.id.localeCompare(b.id));
+  DATA.groups = DATA.groups.filter(g => !g.rec).concat(recG);
+  recG.forEach(g => g.days.sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)));
 }
 function recGuard(groupId){
   const g = groupId && getGroupById(groupId);
@@ -1195,6 +1201,7 @@ function openMoveModal(){
         const tok = await cred.user.getIdToken();
         const r = await fetch(`${SPONSOR_DB}/clubs/${cred.user.uid}/rota.json?auth=${tok}`);
         const old = await r.json(); await app.auth().signOut();
+        if(!old || !Array.isArray(old.groups) || !old.groups.length){ err.textContent = 'That login worked, but there are no rotations saved in that account. Try another old login, or choose an exported file below.'; btn.disabled = false; btn.textContent = 'Bring across'; return; }
         moveIn(old);
       }catch(e){ console.error(e); err.textContent = 'That email and password didn’t work for the old planner.'; }
       btn.disabled = false; btn.textContent = 'Bring across';
