@@ -669,7 +669,7 @@
 <div class="modal-overlay" id="accept-modal">
   <div class="modal">
     <div class="modal-head">
-      &#x2705; Confirm Judge Booking
+      <span id="accept-modal-title">&#x2705; Confirm Judge Booking</span>
       <button class="modal-close" onclick="window.closeAcceptModal()">&#x2715;</button>
     </div>
     <div class="modal-body">
@@ -681,7 +681,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost btn-small" onclick="window.closeAcceptModal()">Cancel</button>
-      <button class="btn btn-primary" style="width:auto" onclick="window.confirmAcceptApplication()">Confirm &amp; Notify Judge</button>
+      <button class="btn btn-primary" style="width:auto" id="accept-confirm-btn" onclick="window.confirmAcceptApplication()">Confirm &amp; Notify Judge</button>
     </div>
   </div>
 </div>
@@ -1709,7 +1709,8 @@ window.renderAdminApplications = function() {
       ? '<button class="btn btn-navy btn-small" onclick="window.openAcceptModal(\'' + a.id + '\')">Accept</button>' +
         '<button class="btn btn-ghost btn-small" onclick="window.declineApplication(\'' + a.id + '\')">Decline</button>'
       : status === 'confirmed'
-        ? '<span style="color:var(--grey-mid);font-size:0.72rem">&pound;' + (a.payment!=null?a.payment:50) + ' &middot; ' + (a.confirmedTime||'') + '</span>'
+        ? '<span style="color:var(--grey-mid);font-size:0.72rem">&pound;' + (a.payment!=null?a.payment:50) + ' &middot; ' + (a.confirmedTime||'') + '</span>' +
+          '<button class="btn btn-ghost btn-small" onclick="window.openAcceptModal(\'' + a.id + '\')">Edit</button>'
         : '<span style="color:var(--grey-mid);font-size:0.72rem">Declined</span>';
     return '<div class="app-row">' +
       '<div><div class="aj-name">' + a.judgeName + '</div><div class="aj-meta">' + tierBadge + '</div></div>' +
@@ -1726,8 +1727,11 @@ window.openAcceptModal = function(id) {
   if (!a) return;
   document.getElementById('accept-id').value = id;
   document.getElementById('accept-summary').textContent = a.judgeName + ' \u2014 ' + (ROLES[a.role] ? ROLES[a.role].label : '') + ': ' + a.piece + ' (' + a.discipline + ') at ' + a.compName;
-  document.getElementById('accept-time').value = '';
-  document.getElementById('accept-payment').value = 50;
+  const isEdit = a.status === 'confirmed';
+  document.getElementById('accept-time').value = isEdit ? (a.confirmedTime || '') : '';
+  document.getElementById('accept-payment').value = (isEdit && a.payment != null) ? a.payment : 50;
+  document.getElementById('accept-modal-title').innerHTML = isEdit ? '&#x270F;&#xFE0F; Edit Judge Booking' : '&#x2705; Confirm Judge Booking';
+  document.getElementById('accept-confirm-btn').textContent = isEdit ? 'Save & Notify Judge' : 'Confirm & Notify Judge';
   document.getElementById('accept-modal').classList.add('open');
 };
 
@@ -1742,14 +1746,25 @@ window.confirmAcceptApplication = async function() {
   if (!confirmedTime) { alert('Please enter a confirmed time.'); return; }
   const a = allAssignments.find(x => x.id === id);
   if (!a) return;
+  const isEdit = a.status === 'confirmed';
+  const roleLabel = ROLES[a.role] ? ROLES[a.role].label : 'Judge';
   try {
-    await updateDoc(doc(db, 'ngl_judging_assignments', id), {
-      status: 'confirmed', confirmedTime, payment, confirmedAt: new Date().toISOString()
-    });
+    if (isEdit) {
+      await updateDoc(doc(db, 'ngl_judging_assignments', id), {
+        confirmedTime, payment, updatedAt: new Date().toISOString()
+      });
+    } else {
+      await updateDoc(doc(db, 'ngl_judging_assignments', id), {
+        status: 'confirmed', confirmedTime, payment, confirmedAt: new Date().toISOString()
+      });
+    }
     await addDoc(notifCol, {
       judgeUid: a.judgeUid,
       type: 'confirmed',
-      message: "You're booked! You've been confirmed as " + (ROLES[a.role] ? ROLES[a.role].label : 'Judge') + " for " + a.piece + ' (' + a.discipline + ') at ' + a.compName +
+      message: (isEdit
+        ? 'Booking updated: your ' + roleLabel + ' booking for '
+        : "You're booked! You've been confirmed as " + roleLabel + ' for ') +
+        a.piece + ' (' + a.discipline + ') at ' + a.compName +
         '. Time: ' + confirmedTime + '. Payment: \u00A3' + payment + '.',
       createdAt: new Date().toISOString()
     });
