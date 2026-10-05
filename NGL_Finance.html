@@ -663,15 +663,15 @@ const LIC_DEFAULTS = {
   recreational:{
     clubPrice:{small:500, mid:1000, large:1500},
     bookPrice:5, bookCost:2.5, booksPerGym:90,
-    medalPrice:2.5, medalCost:1.5, medalsPerTerm:1,
+    medalPrice:3, medalCost:1.5, medalsPerTerm:1,
     shirtPrice:12, shirtCost:10, shirtsPerClub:0,
-    postPerOrder:0, cardPct:0, cardFixed:0, hubYear:0
+    postPct:3, cardPct:0, cardFixed:0, hubYear:0
   }
 };
 let licView = "recreational";
 function licA(path){ A.lic = A.lic || {}; const d = JSON.parse(JSON.stringify(LIC_DEFAULTS[path])), cur = A.lic[path] || {};
   const m = Object.assign({}, d, cur); m.clubPrice = Object.assign({}, d.clubPrice, cur.clubPrice||{});
-  delete m.clubFounding; delete m.clubFull; delete m.gymMonthly; delete m.monthsPerTerm; delete m.newBooks; delete m.certCost; delete m.postPerClub; delete m.medalsPerGym;
+  delete m.clubFounding; delete m.clubFull; delete m.gymMonthly; delete m.monthsPerTerm; delete m.newBooks; delete m.certCost; delete m.postPerClub; delete m.postPerOrder; delete m.medalsPerGym;
   return m; }
 function licSetA(path, m){ A.lic = A.lic || {}; A.lic[path] = m; }
 function licClubs(path, s){ A.licClubs = A.licClubs || {}; const k = path+"_"+(s||season); return A.licClubs[k] || (A.licClubs[k] = []); }
@@ -767,7 +767,7 @@ function buildLicensing(path, s){
     ["Award books", F.books.map(n=>n*L.bookCost), L.bookCost?`£${L.bookCost} each`:"cost not set"],
     ["Medals", F.medals.map(n=>n*L.medalCost), `£${L.medalCost} each`],
     ["T-shirts", F.shirts.map(n=>n*L.shirtCost), `£${L.shirtCost} each`],
-    ["Postage", F.orders.map(n=>n*L.postPerOrder), L.postPerOrder?`£${L.postPerOrder} per order`:"cost not set"],
+    ["Postage", T.map(t=>(F.bookInc[t]+F.medalInc[t]+F.shirtInc[t])*L.postPct/100), L.postPct?`${L.postPct}% of goods value (Evri)`:"cost not set"],
     ["Payment fees", T.map(t=>TIt[t]*L.cardPct/100 + F.orders[t]*L.cardFixed), (L.cardPct||L.cardFixed)?`${L.cardPct}% + £${L.cardFixed} per order`:"bank transfer, no fee"],
     ["Hub and hosting", [L.hubYear,0,0], "yearly"]
   ];
@@ -775,7 +775,7 @@ function buildLicensing(path, s){
   const I = withYear(inc), C = withYear(cost);
   const TI = [0,1,2,3].map(i=>I.reduce((a,r)=>a+r[1][i],0)), TC = [0,1,2,3].map(i=>C.reduce((a,r)=>a+r[1][i],0));
   const NET = TI.map((x,i)=>x-TC[i]), MARGIN = TI.map((x,i)=>x?Math.round(NET[i]/x*100):null);
-  const flags = []; if(!L.postPerOrder) flags.push("Postage not set");
+  const flags = []; if(!L.postPct) flags.push("Postage not set");
   return {path, L, F, n:F.clubs, books:F.books, medals:F.medals, shirts:F.shirts, gyms:F.medals, inc:I, cost:C, TI, TC, NET, MARGIN, flags};
 }
 function licStmtHTML(r){
@@ -870,7 +870,7 @@ function renderLicAssump(){
     `<h4>Award books</h4>` + f("bookPrice","Price to clubs") + f("bookCost","Cost each",0.05) + f("booksPerGym","Planning: books per gymnast after year 1 (%)",5) +
     `<h4>Medals</h4>` + f("medalPrice","Price to clubs",0.05) + f("medalCost","Cost each",0.05) + f("medalsPerTerm","Planning: medals per gymnast per term",1) +
     `<h4>T-shirts</h4>` + f("shirtPrice","Price to clubs") + f("shirtCost","Cost each") + f("shirtsPerClub","Planning: t-shirts per club per year",1) +
-    `<h4>Other costs</h4>` + f("postPerOrder","Postage per order") + f("cardPct","Payment fee %",0.1) + f("cardFixed","Payment fee per order",0.05) + f("hubYear","Hub and hosting per year",10);
+    `<h4>Other costs</h4>` + f("postPct","Postage, % of books, medals and t-shirts",0.5) + f("cardPct","Payment fee %",0.1) + f("cardFixed","Payment fee per order",0.05) + f("hubYear","Hub and hosting per year",10);
 }
 $("#licSrc").addEventListener("click", e=>{
   const b = e.target.closest("[data-src]"); if(b){ licSource = b.dataset.src; try{ localStorage.setItem("ngl_lic_source", licSource); }catch(_){} renderLicensing(); renderOverview(); return; }
