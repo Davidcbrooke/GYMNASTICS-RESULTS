@@ -463,6 +463,40 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 </style>
 </head>
 <body>
+<div id="nglSplash" role="status" aria-label="Loading NGL Rotation Planner"><img class="nsl" alt="NGL Rotation Planner"><div class="nsm"></div><div class="nsh">One connected framework for British Gymnastics clubs: training, awards, competitions and club support, across seven pathways spanning every age and ability.</div><div class="nsg"></div><div class="nsb"><b></b></div><div class="nsx">Exclusively for British Gymnastics clubs</div></div><style>#nglSplash{position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 50% 35%,#26375e 0%,#1a2a4a 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .45s ease,transform .45s ease;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+#nglSplash.out{opacity:0;transform:scale(1.04);pointer-events:none}
+#nglSplash .nsl{width:min(240px,62vw);height:auto;min-height:40px;opacity:0;transform:scale(.7);animation:nslPop .6s cubic-bezier(.2,1.4,.4,1) .15s forwards}
+#nglSplash .nsl-t{color:#fff;font-weight:900;font-size:34px;letter-spacing:.02em}
+#nglSplash .nsm{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:80vw}
+#nglSplash .nsm i{width:30px;height:30px;border-radius:50%;border:3px solid rgba(255,255,255,.85);opacity:0;transform:translateY(-60px);animation:nslDrop .55s cubic-bezier(.3,1.6,.5,1) forwards,nslBob 1.2s ease-in-out infinite alternate}
+#nglSplash .nsh{color:rgba(255,255,255,.82);font-size:15px;line-height:1.45;text-align:center;max-width:340px;padding:0 20px;margin:-4px 0 4px;opacity:0;animation:nslFade .6s ease 1.2s forwards}
+#nglSplash .nsx{position:absolute;left:0;right:0;bottom:calc(26px + env(safe-area-inset-bottom,0px));text-align:center;color:rgba(255,255,255,.7);font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:0;animation:nslFade .6s ease .5s forwards}
+#nglSplash .nsx img{display:block;margin:0 auto 8px;height:34px;width:auto}
+@keyframes nslFade{to{opacity:1}}
+#nglSplash .nsg{color:#fff;font-weight:800;font-size:16px;letter-spacing:.02em;min-height:22px;opacity:.92}
+#nglSplash .nsb{width:180px;height:6px;border-radius:999px;background:rgba(255,255,255,.14);overflow:hidden}
+#nglSplash .nsb b{display:block;height:100%;width:30%;border-radius:999px;background:#c9a227;animation:nslRun 1.1s ease-in-out infinite}
+@keyframes nslPop{to{opacity:1;transform:scale(1)}}
+@keyframes nslDrop{to{opacity:1;transform:translateY(0)}}
+@keyframes nslBob{from{translate:0 0}to{translate:0 -6px}}
+@keyframes nslRun{0%{transform:translateX(-110%)}100%{transform:translateX(360%)}}
+@media (prefers-reduced-motion:reduce){#nglSplash .nsh,#nglSplash .nsx{animation:none;opacity:1}#nglSplash .nsl,#nglSplash .nsm i{animation:none;opacity:1;transform:none}#nglSplash .nsb b{animation:none;width:100%}}</style><script>(function(){
+  var C={"key": "rotation-planner", "title": "NGL Rotation Planner", "colours": ["#E84187", "#F8D438", "#E88230", "#0071B3", "#01AFB8", "#6AA525", "#90276A"], "lines": ["Setting up the hall\u2026", "Moving the mats\u2026", "Checking the rotations\u2026", "Starting the clock\u2026", "Rotate!"], "logo": false, "logoSel": ".auth-logo img"}, KEY='nglSplash-'+C.key, el=document.getElementById('nglSplash');
+  // Full animation on the first open of each visit; later page loads skip it
+  if(window.self!==window.top){ el.remove(); return; }   // not inside the admin app's frames
+  var seen=false; try{ seen=sessionStorage.getItem(KEY)==='1'; sessionStorage.setItem(KEY,'1'); }catch(e){}
+  if(seen){ el.remove(); return; }
+  var m=el.querySelector('.nsm'); C.colours.forEach(function(c,i){ var d=document.createElement('i'); d.style.background=c; d.style.animationDelay=(0.45+i*0.15)+'s,'+(1.1+i*0.15)+'s'; m.appendChild(d); });
+  var msg=el.querySelector('.nsg'), n=0; msg.textContent=C.lines[0];
+  var t=setInterval(function(){ n=Math.min(n+1,C.lines.length-1); msg.textContent=C.lines[n]; },650);
+  function logo(){ if(C.logo) return; var src=C.logoSel&&document.querySelector(C.logoSel); var im=el.querySelector('.nsl'); if(src&&src.src){ im.src=src.src; } else if(im && !im.getAttribute('src')){ im.outerHTML='<div class="nsl-t">'+C.title+'</div>'; } }
+  document.addEventListener('DOMContentLoaded',logo);
+  var start=Date.now(), done=false;
+  function finish(){ if(done) return; done=true; logo(); setTimeout(function(){ clearInterval(t); msg.textContent=C.lines[C.lines.length-1]; setTimeout(function(){ el.classList.add('out'); setTimeout(function(){ el.remove(); },500); },250); }, Math.max(0,2800-(Date.now()-start))); }
+  if(document.readyState==='complete') finish(); else window.addEventListener('load',finish);
+  setTimeout(finish,6000);   // never hold the app up on a slow connection
+})();</script>
+
 
 <!-- LOGIN SCREEN -->
 <div class="auth-screen" id="loginScreen">
