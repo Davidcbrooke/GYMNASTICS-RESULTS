@@ -320,6 +320,17 @@
     margin-bottom:16px;
   }
   .close-panel:hover{color:var(--white); border-color:var(--muted);}
+
+  /* Club Hub call to action */
+  .hub-cta{border:1px solid var(--gold);border-radius:16px;padding:22px 20px;margin:0 0 28px;text-align:center;background:rgba(242,169,0,0.06)}
+  .hub-cta-kicker{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+  .hub-cta-title{color:var(--white);font-size:21px;font-weight:800;margin:6px 0 8px;line-height:1.25}
+  .hub-cta p{color:var(--muted);font-size:14.5px;line-height:1.55;margin:0 auto 14px;max-width:620px}
+  .hub-partners{list-style:none;padding:0;margin:0 auto 18px;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:680px}
+  .hub-partners li{font-size:13px;font-weight:700;color:var(--white);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+  .hub-cta-btn{display:inline-block;background:var(--gold);color:var(--navy);font-weight:800;font-size:15px;text-decoration:none;border-radius:999px;padding:12px 22px}
+  .hub-cta-btn:hover{filter:brightness(1.07)}
+  .hub-cta-note{color:var(--muted);font-size:13px;margin-top:10px}
 </style>
 </head>
 <body>
@@ -382,207 +393,21 @@
   <hr class="section-div">
 
   <!-- ===================== QUICK LINKS (primary section) ===================== -->
-  <div class="section-title">What are you looking for?</div>
-  <div class="section-sub">Tap a card to see the partner behind it — or, if you're a business that could fill a gap below, we'd love to hear from you.</div>
+  <div class="hub-cta">
+    <div class="hub-cta-kicker">For NGL clubs</div>
+    <div class="hub-cta-title">Partner offers and tools are in the NGL Club Hub</div>
+    <p>Log in to see every partner under the five pillars and claim your club's offers, including free HR benchmarking, 12 months' free WWPIS membership for families and £50 off Elevate coaching courses.</p>
+    <ul class="hub-partners">
+      <li>JustGo</li><li>NGL Rotation Planner</li><li>Matt Jackson Consultancy</li><li>Elevate Volunteering</li><li>Growth Club</li><li>Impact HR</li><li>Working With Parents in Sport</li>
+    </ul>
+    <a class="hub-cta-btn" href="https://club.nationalgymnasticsleague.co.uk/#support" target="_top">Log in to the Club Hub →</a>
+    <div class="hub-cta-note">New to NGL? You can create your club account from the same page.</div>
+  </div>
+
+  <div class="section-title">Could your business help NGL clubs?</div>
+  <div class="section-sub">We're looking for trusted partners in these areas. If that's you, we'd love to hear from you.</div>
 
   <div class="link-grid" id="linkGrid">
-
-    <div class="link-card filled" data-target="coaching">
-      <div>
-        <span class="link-icon">🎓</span>
-        <div class="link-title">Coaching Expertise</div>
-        <div class="link-desc">High-performance coaching consultancy and mentorship for your club.</div>
-      </div>
-      <div class="link-cta">See partners ▾</div>
-    </div>
-
-    <div class="expand-panel" id="panel-coaching">
-    <button class="close-panel" data-close="coaching">✕ Close</button>
-
-    <div class="card">
-      <span class="eyebrow">Coach Better Partner</span>
-      <h3>Matt Jackson Gymnastics Consultancy</h3>
-      <img class="partner-photo" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/1fa2be9c-bf3c-4d46-b75e-f15ee539d88a/ChatGPT+Image+Jul+14%2C+2026%2C+12_08_11+PM.png" alt="Matt Jackson Gymnastics Consultancy">
-      <h4 style="margin-top:2px;">Who are we?</h4>
-      <p class="lede">Matt Jackson is a Level 5 High Performance Coach with 27 years of coaching experience. He has coached multiple British champions, coached at the 2018 Commonwealth Games and is the owner of Jacksons Gymnastics Consultancy.</p>
-      <h4>What we will do</h4>
-      <p class="lede">Supporting clubs to develop more confident coaches, stronger technical programmes and clearer gymnast pathways.</p>
-      <p class="lede">Matt Jackson and Jacksons Gymnastics Consultancy bring extensive high-performance coaching experience alongside a practical understanding of the challenges faced by gymnastics clubs.</p>
-      <p class="lede">Having worked strategically with Matt for more than five years, we have seen the impact that trusted external expertise can have on coaches, gymnasts and the wider club environment. Through the NGL, Matt will help clubs challenge their thinking, strengthen their coaching provision and continue raising standards.</p>
-      <div class="action-grid" style="grid-template-columns:1fr;">
-        <a class="action-card" href="mailto:infoatjgc@gmail.com?subject=NGL%20Referal" target="_blank" rel="noopener">
-          <span class="action-title">Contact Matt Today</span>
-          <span class="action-sub">infoatjgc@gmail.com</span>
-        </a>
-      </div>
-    </div>
-
-    <hr class="div">
-
-    <div class="card">
-      <span class="eyebrow">Coach Better Partner</span>
-      <h3>Reiss Beckford — Growth Club</h3>
-      <img class="partner-photo" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/d4a45273-43ad-41ca-a07f-e245347f3344/Screenshot+2026-08-03+105811.png" alt="Reiss Beckford - Growth Club">
-      <h4 style="margin-top:2px;">Who are we?</h4>
-      <p class="lede">Reiss Beckford is a visionary, strategist and people builder best known as the Founder of Growth Club, a mentorship and coaching platform built for athletes, both still competing and retired.</p>
-      <p class="lede">Through 23 years competing internationally, including European Championships, the Commonwealth Games and World Championships level, first with British Gymnastics and later representing Jamaica, Reiss has built a rare depth of first-hand experience inside elite gymnastics, from athlete to coach to educator.</p>
-      <p class="lede">In addition to Growth Club, Reiss works as a qualified strength and performance coach, sharing leadership, marketing, business and personal development insight through his own platform, built on over 14 years of experience in the space.</p>
-      <p class="lede">Above all, Reiss is a family man, a husband, son, brother, uncle, and friend. That same care shows up in how he mentors — he's focused on helping athletes become successful in their own way, by being themselves, rather than pushing everyone toward one version of what success should look like.</p>
-      <h4>What we will do</h4>
-      <p class="lede">Reiss Beckford helps current and retired athletes build a personal brand and business that doesn't disappear when their career does, by showing them how he built his own after twenty three years competing internationally. If you're ready to build what comes after the sport, you're in the right place.</p>
-      <div class="action-grid" style="grid-template-columns:1fr;">
-        <a class="action-card" href="https://www.growth-club.org/" target="_blank" rel="noopener">
-          <span class="action-title">Visit Website Here</span>
-          <span class="action-sub">growth-club.org</span>
-        </a>
-      </div>
-    </div>
-
-    <hr class="div">
-
-    <div class="card">
-      <span class="eyebrow">Coach Better Partner</span>
-      <h3>Elevate Volunteering</h3>
-      <img class="partner-photo" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/d392760e-9a6f-4068-97d6-183db0a68c75/Screenshot+2026-02-21+154249.png" alt="Elevate Volunteering">
-      <h4 style="margin-top:2px;">Who are we?</h4>
-      <p class="lede">My name is Gemma Wright and I am the founder of Elevate Volunteering. I have been a gymnastics coach since 2008, from volunteering to a full time career. I have been lucky enough to have a career in the sport I am so passionate about, working in a number of clubs in the East Region where I have been Recreational Manager, Competitive Coach, Events Coordinator, National Judge and Volunteer Leader. With Elevate I am looking forward to showing my love for the sport and sharing my knowledge and experiences with the next generation of coaches.</p>
-      <h4>What we will do</h4>
-      <p class="lede">Elevate Volunteering will work with your club to provide introductory courses to ensure a positive start to your coaching career, including:</p>
-      <ul>
-        <li><b>Introduction to Health and Safety / Wellbeing</b> — one of the most important aspects of coaching: how to deal with situations, who to go to when in need, and how to create safe set-ups in the settings your club provides.</li>
-        <li><b>Introduction to Recreational Gymnastics</b> — preparations and safe set-ups for all skills required for progressive gymnastics, using set-ups that have been used in a number of clubs and are easy to transfer.</li>
-        <li><b>Introduction to Judging</b> — the flip side to coaching: the basics of officiating a gymnastics competition, the roles a judge plays, and an introduction to the judging process.</li>
-      </ul>
-      <p class="lede">After the courses, Young Leaders are allocated a mentor from the Senior Leadership Team and attend a minimum of 2 hours each week working hands-on in a class, usually with their mentor. Each term they attend a YLVP review meeting to discuss what they have learnt and outline a plan for the next term.</p>
-      <div class="action-grid" style="grid-template-columns:1fr;">
-        <a class="action-card primary" href="mailto:admin@nationalgymnasticsleague.co.uk?subject=I%20would%20like%20the%20code%20for%20my%20%C2%A350%20OFF%20%20a%20Coaching%20Course%20will%20Elevate" target="_blank" rel="noopener">
-          <span class="action-title">Save £50 on a Course for 15 People</span>
-          <span class="action-sub">Email NGL for your discount code</span>
-        </a>
-      </div>
-    </div>
-  </div>
-
-    <div class="link-card filled" data-target="itsystems">
-      <div>
-        <span class="link-icon">⚙️</span>
-        <div class="link-title">Club Management Systems</div>
-        <div class="link-desc">JustGo class management, plus NGL's own Rotation Planner tool.</div>
-      </div>
-      <div class="link-cta">See partners ▾</div>
-    </div>
-
-    <div class="expand-panel" id="panel-itsystems">
-    <button class="close-panel" data-close="itsystems">✕ Close</button>
-
-    <div class="card">
-      <span class="eyebrow">NGL &amp; British Gymnastics Strategic Partner</span>
-      <h3>JustGo Ltd Class Management System</h3>
-      <img class="partner-photo" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/3bb427a6-2228-4eda-b81b-b73a924ae441/Screenshot+2026-02-05+191949.png" alt="JustGo class management system">
-      <p class="lede">JustGo are the nominated Club Management system used by British Gymnastics. They are also the Official Sponsor of the NGL. We have been working with JustGo for almost 2 years to develop a class management system that integrates seamlessly with the British Gymnastics membership system and it is now live!</p>
-      <ul>
-        <li><b>Set Up Recurring Classes</b> — display class details, timings, venue, pre-requisites, coach information and payment options.</li>
-        <li><b>Track Attendance</b> — monitor participation and note relevant details like injuries, absences or trial classes.</li>
-        <li><b>Streamline Payments</b> — secure one-time transactions or subscription plans for easier class management.</li>
-        <li><b>Easily Manage Waitlists</b> — members can join waitlists and be invited the moment a spot opens up.</li>
-        <li><b>Set Up Reminder Emails</b> — automated daily, weekly or monthly reminders using ready-made templates.</li>
-      </ul>
-      <div class="action-grid" style="grid-template-columns:1fr;">
-        <a class="action-card" href="https://justgo.com/book-a-demo/" target="_blank" rel="noopener">
-          <span class="action-title">Work With JustGo</span>
-          <span class="action-sub">Book a demo of the class management system</span>
-        </a>
-      </div>
-    </div>
-
-    <hr class="div">
-
-    <div class="card">
-      <span class="eyebrow">NGL Tool</span>
-      <h3>Rotation Planner</h3>
-      <p class="lede">A free digital tool for gymnastics clubs. Build your weekly session schedule once, then display it live on any screen in your gym. The planner automatically detects the current time and day — as the session progresses, the display moves in real time so coaches and gymnasts always know exactly where they should be.</p>
-
-      <div class="action-grid">
-        <a class="action-card primary" href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/NGL_Rotation_Planner.html" target="_blank" rel="noopener">
-          <span class="action-icon">🖥️</span>
-          <span class="action-title">Open Full-Screen for Your Gym Display</span>
-          <span class="action-sub">Opens on its own, ready to put up on a gym TV or monitor.</span>
-        </a>
-        <a class="action-card" href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/NGL_Rotation_Planner_Guide.html" target="_blank" rel="noopener">
-          <span class="action-icon">📖</span>
-          <span class="action-title">View Instructions Guide</span>
-          <span class="action-sub">How to build your schedule and get it on screen.</span>
-        </a>
-      </div>
-
-      <div class="tool-frame-wrap">
-        <iframe src="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/NGL_Rotation_Planner.html" loading="lazy" title="NGL Rotation Planner"></iframe>
-      </div>
-    </div>
-  </div>
-
-    <div class="link-card filled" data-target="hradvice">
-      <div>
-        <span class="link-icon">🛡️</span>
-        <div class="link-title">HR Advice</div>
-        <div class="link-desc">HR support and parent/athlete wellbeing guidance for clubs.</div>
-      </div>
-      <div class="link-cta">See partners ▾</div>
-    </div>
-
-    <div class="expand-panel" id="panel-hradvice">
-    <button class="close-panel" data-close="hradvice">✕ Close</button>
-
-    <div class="card">
-      <span class="eyebrow">Care Better Partner</span>
-      <h3>Impact HR</h3>
-      <img class="partner-photo" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/446ff434-1022-43a9-86b7-e1d45f73e717/Screenshot+2026-02-05+214757.png" alt="Impact HR">
-      <h4 style="margin-top:2px;">Who are we?</h4>
-      <p class="lede">Impact HR was created because too many SMEs were stuck with HR that was either too rigid or too reactive. We wanted to build something better — pragmatic, human, and truly impactful.</p>
-      <p class="lede">The team at Impact HR has extensive experience across hospitality, care, manufacturing, professional services, retail, technology, and the not-for-profit sector. We've walked alongside business leaders through every kind of people challenge — from compliance headaches to complex disputes — our support has always been rooted in clear, practical advice and a people-first approach.</p>
-      <p class="lede">Today, we support SMEs nationwide, but with regional teams focused on making an impact on the regions that they serve. Our promise is in our name: to make a real impact where it matters most — your people.</p>
-      <h4>What we do</h4>
-      <p class="lede">We provide HR outsourcing that adapts to your business needs — from small fixes to strategic leadership.</p>
-      <h4>Working with BG clubs for 5 years</h4>
-      <p class="lede">We've been working with British Gymnastics clubs for over 5 years. We understand the unique challenges that your business is under and can help you by taking the burden of responsibility off you in a number of key areas.</p>
-      <ul>
-        <li><b>Retained HR Support</b> — unlimited advice, proactive case management, and bespoke documentation, all for a fixed monthly fee.</li>
-        <li><b>On-Demand Advice</b> — call us when you need us, no ongoing contract.</li>
-        <li><b>Specialist Projects</b> — TUPE transfers, restructures, redundancies, investigations, culture change.</li>
-        <li><b>HR Documentation</b> — contracts, handbooks, and policies created for your business.</li>
-        <li><b>Add-On Services</b> — HR software (Breathe HR), payroll, recruitment support, e-learning, and employee engagement platforms like New Possible.</li>
-      </ul>
-      <div class="action-grid">
-        <a class="action-card" href="/s/National-Gymnastics-League-ImpactHR.pdf" target="_blank" rel="noopener">
-          <span class="action-title">Download the Special NGL Offer Pack</span>
-          <span class="action-sub">PDF download</span>
-        </a>
-        <a class="action-card" href="mailto:admin@nationalgymnasticsleague.co.uk?subject=SEND%20ME%20MY%20FREE%20BENCHMARK%20ASSESSMENT&body=I%20have%20entered%20my%20club%20into%20the%20NGL%20and%20would%20like%20to%20take%20advantage%20of%20this%20free%20offer." target="_blank" rel="noopener">
-          <span class="action-title">Get Your Free Benchmark Assessment</span>
-          <span class="action-sub">Email NGL to claim</span>
-        </a>
-      </div>
-    </div>
-
-    <hr class="div">
-
-    <div class="card">
-      <span class="eyebrow">Care Better Partner</span>
-      <h3>Working With Parents In Sport</h3>
-      <img class="partner-photo" src="https://images.squarespace-cdn.com/content/v1/681c79705f74a04800ddd8f4/b521ea02-d6cc-4080-aa02-31c78ecceb62/nationalgymnasticsleague-1768821948+%281%29.png" alt="Working With Parents In Sport">
-      <h4 style="margin-top:2px;">Service</h4>
-      <p class="lede">Flexible, expert advice when you need it. Working With Parents In Sport supports organisations, coaches, parents and children to work effectively together to help young people fulfil their potential both in and out of their sport.</p>
-      <p class="lede">We are a UK based company that works globally, providing unbiased information and support whilst recognising the difficulties that organisations, parents, coaches and young athletes face in today's world. We currently work with many organisations including football academies across the Premier League and Football League, British Gymnastics, Gymnastics Australia, British Sailing, British Shooting, Cricket Scotland, Scottish Hockey and Ulster Hockey, North Carolina Fusion, Badminton England, Sport Ireland, Sport Northern Ireland, Sport Cheer England and several Premiership and European Rugby Clubs.</p>
-      <h4>Free year's membership</h4>
-      <p class="lede">The NGL has partnered up with Working With Parents In Sport to bring you exclusive free membership of their platform for 12 months. This is a fantastic resource for parents with children taking part in competitive sport.</p>
-      <div class="action-grid" style="grid-template-columns:1fr;">
-        <a class="action-card primary" href="mailto:admin@nationalgymnasticsleague.co.uk?subject=I%20would%20like%20the%20code%20for%20my%201%20Year%20Free%20Membershpi&body=Dear%20NGL%0A%0AMy%20Name%20is%20%5Benter%20name%20here%5D%20and%20I%20have%20entered%20an%20NGL%20competition%20this%20season.%20Please%20send%20me%20my%20exclusive%20WWPIS%20Code%20for%201%20years%20free%20membership." target="_blank" rel="noopener">
-          <span class="action-title">1 Year Free Membership</span>
-          <span class="action-sub">Email NGL for your WWPIS code</span>
-        </a>
-      </div>
-    </div>
-  </div>
 
     <a class="link-card open" href="https://www.nationalgymnasticsleague.co.uk/get-in-touch">
       <div>
