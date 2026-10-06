@@ -7,8 +7,8 @@
   "background_color": "#29235c",
   "theme_color": "#29235c",
   "icons": [
-    { "src": "ngl-admin-icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "ngl-admin-icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "ngl-admin-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "ngl-admin-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "ngl-admin-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "ngl-admin-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
