@@ -463,6 +463,15 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .rc-day.on{background:var(--navy);border-color:var(--navy);color:#fff;}
 @media(max-width:640px){.rc-daysf{grid-column:1/-1;}}
 .rc-map{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;align-items:center;margin-bottom:8px;font-size:.86rem;color:var(--navy);}
+.rc-patwrap{overflow-x:auto;margin:10px 0;}
+.rc-pat{border-collapse:collapse;font-size:.84rem;min-width:760px;width:100%;}
+.rc-pat th{text-align:left;color:var(--navy);font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;padding:4px 4px;}
+.rc-pat .rc-sub th{font-weight:600;color:#888;text-transform:none;}
+.rc-pat td{padding:3px 4px;white-space:nowrap;}
+.rc-pat td.rc-wk2{border-left:3px solid var(--line);padding-left:8px;}
+.rc-pat select{width:100%;min-width:92px;padding:6px 6px;border:2px solid var(--line);border-radius:6px;font-size:.82rem;background:#fff;}
+.rc-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.rc-ghost{background:#fff !important;color:var(--navy) !important;border:2px solid var(--line) !important;}
 @media(max-width:640px){.rc-slot{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
@@ -1072,6 +1081,7 @@ function recSettings(){
   DATA.rec = DATA.rec || {};
   DATA.rec.classes = DATA.rec.classes || [];
   DATA.rec.map = Object.assign({...REC_MAP}, DATA.rec.map || {});
+  if(!DATA.rec.map.cool) DATA.rec.map.cool = DATA.rec.map.warm;
   return DATA.rec;
 }
 function recEnsureLocations(){
@@ -1106,8 +1116,11 @@ function applyRec(){
       if(!g){ g = {id, name:cname, section:'recreational', colour:hex, days:[], rec:true, rotation:rotA ? 'A' : 'B'}; DATA.groups.push(g); }
       if(!g.days.includes(day)) g.days.push(day);
       const nm = (c.names && c.names[gi]) || '';
-      const wk1 = rots(rotA ? setA : setB, j, c.start), wk2 = rots(rotA ? setB : setA, j, c.start);
-      const L = [{location:map.warm, start_min:c.start, duration:rule.warm, title:nm ? nm + ' · Warm-up' : 'Warm-up', shared:true}];
+      const pat = recPattern(gi, has);
+      const wk1 = pat ? rots(pat.A, 0, c.start) : rots(rotA ? setA : setB, j, c.start);
+      const wk2 = pat ? rots(pat.B, 0, c.start) : rots(rotA ? setB : setA, j, c.start);
+      const warmLoc = (R.warmBy && R.warmBy[gi]) || map.warm, coolLoc = map.cool || map.warm;
+      const L = [{location:warmLoc, start_min:c.start, duration:rule.warm, title:nm ? nm + ' · Warm-up' : 'Warm-up', shared:true}];
       for(let r = 0; r < Math.max(wk1.length, wk2.length); r++){
         const a = wk1[r] || wk1[wk1.length - 1], b = wk2[r] || wk2[wk2.length - 1];
         // when the two weeks have different numbers of rotations (no bars, say) the timings differ: keep week 1's
@@ -1115,13 +1128,52 @@ function applyRec(){
         if(map[b.code] !== map[a.code]) s.locationB = map[b.code];
         L.push(s);
       }
-      L.push({location:map.warm, start_min:c.start + t.classLen - rule.cool, duration:rule.cool, title:'Cool-down', shared:true});
+      L.push({location:coolLoc, start_min:c.start + t.classLen - rule.cool, duration:rule.cool, title:'Cool-down', shared:true});
       DATA.sessions[day][id] = (DATA.sessions[day][id] || []).concat(L).sort((a, b) => a.start_min - b.start_min);
     }
   }));
   const recG = DATA.groups.filter(g => g.rec).sort((a, b) => a.id.localeCompare(b.id));
   DATA.groups = DATA.groups.filter(g => !g.rec).concat(recG);
   recG.forEach(g => g.days.sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)));
+}
+// The club's own rotation pattern for a group (Week 1 and Week 2), if it has set one
+function recPattern(gi, has){
+  const p = DATA.rec && DATA.rec.pattern && DATA.rec.pattern[gi];
+  if(!p || !Array.isArray(p.A) || !Array.isArray(p.B)) return null;
+  const A = p.A.filter(c => REC_PIECES[c] && (!has || has(c))), B = p.B.filter(c => REC_PIECES[c] && (!has || has(c)));
+  return A.length && B.length ? {A, B} : null;
+}
+// The NGL standard pattern, for filling in the grid
+function recStdPattern(gi){
+  const rotA = gi < REC_MAX, j = rotA ? gi : gi - REC_MAX, turn = set => set.map((_, r) => set[(j + r) % set.length]);
+  return {A:turn(rotA ? REC_WEEK_A : REC_WEEK_B), B:turn(rotA ? REC_WEEK_B : REC_WEEK_A)};
+}
+const REC_KEYS = [['FORWARD','FF'],['BACKWARD','BF'],['VAULT','VT'],['BEAM','BM'],['BAR','BA'],['FAST','FT'],['TRACK','FT'],['TRAMP','FT']];
+const recCodeOf = loc => { const u = String(loc || '').toUpperCase(); const k = REC_KEYS.find(([w]) => u.includes(w)); return k ? k[1] : null; };
+// Rows brought across from the old planner that are named after a colour (ORANGE, YELLOW…)
+function recOldColourRows(){
+  return REC_COLOURS.map(([n], gi) => ({gi, g:DATA.groups.find(g => !g.rec && String(g.name).trim().toUpperCase() === n.toUpperCase())})).filter(x => x.g);
+}
+// Read the pattern, warm-up areas and piece locations from those rows
+function recCopyFromRows(){
+  const R = recSettings(), found = recOldColourRows(); let n = 0;
+  R.pattern = R.pattern || {}; R.warmBy = R.warmBy || {};
+  found.forEach(({gi, g}) => {
+    const day = DAYS.find(d => (DATA.sessions[d] && DATA.sessions[d][g.id] || []).length); if(!day) return;
+    const L = DATA.sessions[day][g.id].slice().sort((a, b) => a.start_min - b.start_min);
+    let i = 0; while(i < L.length && !recCodeOf(L[i].location)) i++;
+    if(i >= L.length) return;
+    if(i > 0) R.warmBy[gi] = L[i - 1].location;
+    const A = [], B = [];
+    for(; i < L.length && A.length < 3 && recCodeOf(L[i].location); i++){
+      const s = L[i], a = recCodeOf(s.location), b = recCodeOf(s.locationB || s.location);
+      A.push(a); B.push(b); R.map[a] = s.location; if(s.locationB) R.map[b] = s.locationB;
+    }
+    if(i < L.length && !recCodeOf(L[i].location) && L[i].start_min === L[i - 1].start_min + L[i - 1].duration) R.map.cool = L[i].location;
+    if(A.length){ R.pattern[gi] = {A, B}; n++; }
+  });
+  const w = Object.values(R.warmBy); if(w.length) R.map.warm = w[0];
+  return n;
 }
 // A class runs on one or more days (older saves had a single day)
 function cDays(c){ return (c.days && c.days.length ? c.days : [c.day || 'Monday']).slice().sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)); }
@@ -1173,17 +1225,48 @@ function renderRec(){
       <div class="rc-names">${Array.from({length:+c.groups}, (_, gi) => `<span class="rc-g"><i style="background:${REC_COLOURS[gi][1]}"></i><input data-rc-name="${gi}" value="${recEsc((c.names && c.names[gi]) || '')}" placeholder="${REC_COLOURS[gi][0]}"><small>Rotation ${gi < REC_MAX ? 'A' : 'B'}</small></span>`).join('')}</div>
       <p class="rc-note">${fmtTime(c.start)} to ${fmtTime(end)}${clash ? ` <b class="rc-warn">Overlaps the ${fmtTime(clash.start)} class</b>` : ''}</p></div>`;
   }).join('');
+  // Rotation pattern grid
+  const nG = Math.max(0, ...R.classes.map(c => +c.groups || 0));
+  const hasP = c => used.includes(c), cur = gi => recPattern(gi, hasP) || recStdPattern(gi);
+  const pOpts = sel => `<option value="">–</option>` + used.map(c => `<option value="${c}" ${c === sel ? 'selected' : ''}>${REC_PIECES[c]}</option>`).join('');
+  const warns = [];
+  for(let gi = 0; gi < nG; gi++){
+    const p = cur(gi), miss = used.filter(c => !p.A.includes(c) && !p.B.includes(c));
+    if(miss.length) warns.push(`${REC_COLOURS[gi][0]} never goes on ${miss.map(c => REC_PIECES[c]).join(', ')}`);
+  }
+  ['A','B'].forEach((w, wi) => [0,1,2].forEach(r => {
+    const seen = {};
+    for(let gi = 0; gi < nG; gi++){ const c = cur(gi)[w][r]; if(!c) continue;
+      if(seen[c] != null) warns.push(`Week ${wi + 1}, rotation ${r + 1}: ${REC_COLOURS[seen[c]][0]} and ${REC_COLOURS[gi][0]} are both on ${REC_PIECES[c]}`); else seen[c] = gi; }
+  }));
+  const oldRows = recOldColourRows(), custom = !!(R.pattern && Object.keys(R.pattern).length);
+  const patCard = nG ? `<div class="rc-card"><h2>Your rotation pattern</h2>
+      <p>Which piece each group goes to in each rotation. ${custom ? 'This is <b>your club’s own pattern</b>.' : 'This is the <b>NGL standard pattern</b>. Change any box to match what your club runs.'} The Weekly Planner, the live screen and <b>Run your class</b> in the Hub all follow it.</p>
+      <div class="rc-patwrap"><table class="rc-pat"><thead><tr><th>Group</th><th>Warm-up</th><th colspan="3">Week 1</th><th colspan="3">Week 2</th></tr>
+        <tr class="rc-sub"><th></th><th></th><th>1st</th><th>2nd</th><th>3rd</th><th>1st</th><th>2nd</th><th>3rd</th></tr></thead><tbody>
+        ${Array.from({length:nG}, (_, gi) => { const p = cur(gi); return `<tr><td><span class="rc-g"><i style="background:${REC_COLOURS[gi][1]}"></i>${REC_COLOURS[gi][0]}</span></td>
+          <td><select data-rc-warm="${gi}">${locOpts((R.warmBy && R.warmBy[gi]) || R.map.warm)}</select></td>
+          ${['A','B'].map(w => [0,1,2].map(r => `<td class="${w === 'B' && r === 0 ? 'rc-wk2' : ''}"><select data-rc-pat="${gi}|${w}|${r}">${pOpts(p[w][r])}</select></td>`).join('')).join('')}</tr>`; }).join('')}
+      </tbody></table></div>
+      ${warns.length ? `<p class="rc-warn">${warns.map(recEsc).join('<br>')}</p>` : '<p class="rc-note">✓ Every group does every piece, and no two groups are on the same piece at the same time.</p>'}
+      <div class="rc-btns">
+        ${oldRows.length ? `<button class="rc-btn" data-rc-copy>Copy from my ${oldRows.map(x => recEsc(x.g.name)).join(', ')} rows</button>` : ''}
+        ${custom ? `<button class="rc-btn rc-ghost" data-rc-std>Go back to the NGL standard pattern</button>` : ''}
+        ${oldRows.length && custom ? `<button class="rc-btn rc-ghost" data-rc-delold>Delete the old ${oldRows.length} colour rows</button>` : ''}
+      </div></div>` : '';
   el.innerHTML = `<div class="rc-wrap">
     <div class="rc-card"><h2>Recreational classes</h2>
       <p>Add a line for each class time, and tick the days it runs. The first 3 groups go on <b>Rotation A</b> and the rest on <b>Rotation B</b>. Each week the two rotations swap apparatus, and each group starts on a different piece. Groups are coloured Orange, Yellow, Blue, Red, Green, Purple; add names if you like.</p>
       ${rows || '<p class="rc-note">No classes yet.</p>'}
       <button class="rc-btn" data-rc-add>+ Add a class</button></div>
+    ${patCard}
     <div class="rc-card"><h2>From your club plan</h2>
       <p>Classes are <b>${t.classLen} minutes</b>: ${rule.warm} minutes warm-up, rotations, ${rule.cool} minutes cool-down. <b>This week:</b> ${recEsc(wi.label)}${wi.letter ? ` · ${weekName(wi.letter)}` : ''}.</p>
       <p class="rc-note">Week 1 and Week 2 switch on their own from your term dates. To change class length, apparatus or term dates, update your club plan in the <a href="https://nglrecreational.co.uk" target="_blank" rel="noopener">NGL Recreational Hub</a>.</p></div>
     <div class="rc-card"><h2>Where each piece is in your hall</h2>
       <p class="rc-note">Forward and backward floor run at the same time (one group from each rotation), so they need two areas of floor.</p>
-      <div class="rc-map"><b>Warm-up and cool-down</b><select data-rc-map="warm">${locOpts(R.map.warm)}</select></div>
+      <div class="rc-map"><b>Warm-up</b><select data-rc-map="warm">${locOpts(R.map.warm)}</select></div>
+      <div class="rc-map"><b>Cool-down</b><select data-rc-map="cool">${locOpts(R.map.cool)}</select></div>
       ${used.map(c => `<div class="rc-map"><b>${REC_PIECES[c]}</b><select data-rc-map="${c}">${locOpts(R.map[c])}</select></div>`).join('')}</div>
   </div>`;
 }
@@ -1191,7 +1274,17 @@ function recChanged(){ applyRec(); recAutoWeek(true); scheduleAutoSave(); render
 document.addEventListener('change', e => {
   const v = document.getElementById('recView'); if(!v || !v.contains(e.target)) return;
   const R = recSettings(), slot = e.target.closest('.rc-slot');
-  if(e.target.dataset.rcMap){ R.map[e.target.dataset.rcMap] = e.target.value; return recChanged(); }
+  if(e.target.dataset.rcMap){
+    if(e.target.dataset.rcMap === 'warm' && R.warmBy) R.warmBy = {};   // one warm-up area for everyone again
+    R.map[e.target.dataset.rcMap] = e.target.value; return recChanged(); }
+  if(e.target.dataset.rcWarm != null){ R.warmBy = R.warmBy || {}; R.warmBy[e.target.dataset.rcWarm] = e.target.value; return recChanged(); }
+  if(e.target.dataset.rcPat){
+    const [gi, w, r] = e.target.dataset.rcPat.split('|'), t = recTerm();
+    const has = c => !['VT','BM','BA'].includes(c) || t.pieces[c] !== 'none';
+    const p = recPattern(+gi, has) || recStdPattern(+gi), np = {A:p.A.slice(), B:p.B.slice()};
+    np[w][+r] = e.target.value; np[w] = np[w].filter(Boolean);
+    R.pattern = R.pattern || {}; R.pattern[gi] = np; return recChanged();
+  }
   if(!slot) return;
   const c = R.classes.find(x => x.id === slot.dataset.id); if(!c) return;
   if(e.target.dataset.rc === 'groups') c.groups = +e.target.value;
@@ -1209,6 +1302,22 @@ document.addEventListener('click', e => {
     c.days = cur.includes(d) ? cur.filter(x => x !== d) : [...cur, d];
     if(!c.days.length) c.days = [d];   // a class needs at least one day
     delete c.day; return recChanged();
+  }
+  if(e.target.closest('[data-rc-copy]')){
+    const n = recCopyFromRows(); recChanged();
+    return showToast(n ? `Copied the pattern for ${n} group${n === 1 ? '' : 's'}. Check the Weekly Planner, then delete the old rows.` : 'Couldn’t find a rotation in those rows');
+  }
+  if(e.target.closest('[data-rc-std]')){
+    if(!confirm('Go back to the NGL standard pattern? Your own pattern will be cleared.')) return;
+    delete R.pattern; delete R.warmBy; return recChanged();
+  }
+  if(e.target.closest('[data-rc-delold]')){
+    const rows = recOldColourRows();
+    if(!confirm(`Delete the old ${rows.map(x => x.g.name).join(', ')} rows from the Weekly Planner? Your Recreational groups built here stay.`)) return;
+    const ids = new Set(rows.map(x => x.g.id));
+    DATA.groups = DATA.groups.filter(g => !ids.has(g.id));
+    DAYS.forEach(d => { if(DATA.sessions[d]) ids.forEach(id => delete DATA.sessions[d][id]); });
+    recChanged(); return showToast('Old rows deleted');
   }
   if(e.target.closest('[data-rc-add]')){
     const last = R.classes[R.classes.length - 1];
