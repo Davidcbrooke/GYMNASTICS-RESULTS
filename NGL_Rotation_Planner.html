@@ -448,7 +448,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .rc-note{font-size:.8rem!important;color:var(--muted)!important;}
 .rc-warn{color:var(--red);}
 .rc-btn{display:inline-block;background:var(--gold);color:var(--navy);border:none;padding:9px 16px;border-radius:6px;font-weight:700;font-size:.85rem;cursor:pointer;text-decoration:none;}
-.rc-slot{display:grid;grid-template-columns:1.4fr 1fr .8fr auto;gap:10px;align-items:end;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;background:var(--paper);}
+.rc-slot{display:grid;grid-template-columns:2fr 1fr .8fr auto;gap:10px;align-items:end;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;background:var(--paper);}
 .rc-f label{display:block;font-size:.72rem;font-weight:700;color:var(--navy);margin-bottom:3px;}
 .rc-f select,.rc-f input,.rc-map select{width:100%;padding:8px 10px;border:2px solid var(--line);border-radius:6px;font-size:.86rem;background:#fff;}
 .rc-del{background:none;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.78rem;cursor:pointer;color:var(--muted);}
@@ -458,6 +458,10 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .rc-g input{border:none;width:90px;font-size:.82rem;outline:none;}
 .rc-g small{font-size:.68rem;color:var(--muted);font-weight:700;}
 .rc-slot .rc-note{grid-column:1/-1;margin:0;}
+.rc-days{display:flex;flex-wrap:wrap;gap:4px;}
+.rc-day{border:2px solid var(--line);background:#fff;border-radius:8px;padding:6px 8px;font-size:.78rem;font-weight:700;cursor:pointer;color:var(--navy);}
+.rc-day.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+@media(max-width:640px){.rc-daysf{grid-column:1/-1;}}
 .rc-map{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;align-items:center;margin-bottom:8px;font-size:.86rem;color:var(--navy);}
 @media(max-width:640px){.rc-slot{grid-template-columns:1fr 1fr;}}
 </style>
@@ -1093,14 +1097,14 @@ function applyRec(){
     for(let r = 0; r < n; r++){ const d = r === n - 1 ? teach - base * (n - 1) : base; out.push({code:set[(j + r) % n], at, d}); at += d; }
     return out;
   };
-  R.classes.slice().sort((a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day) || a.start - b.start).forEach(c => {
+  R.classes.slice().sort((a, b) => a.start - b.start).forEach(c => cDays(c).forEach(day => {
     for(let gi = 0; gi < Math.min(6, +c.groups || 0); gi++){
       const [cname, hex] = REC_COLOURS[gi], rotA = gi < REC_MAX, j = rotA ? gi : gi - REC_MAX;
       // one row per colour: every class's Orange group sits on the Orange row, one after the other
       const id = `rec_${gi}`;
       let g = DATA.groups.find(x => x.id === id);
       if(!g){ g = {id, name:cname, section:'recreational', colour:hex, days:[], rec:true, rotation:rotA ? 'A' : 'B'}; DATA.groups.push(g); }
-      if(!g.days.includes(c.day)) g.days.push(c.day);
+      if(!g.days.includes(day)) g.days.push(day);
       const nm = (c.names && c.names[gi]) || '';
       const wk1 = rots(rotA ? setA : setB, j, c.start), wk2 = rots(rotA ? setB : setA, j, c.start);
       const L = [{location:map.warm, start_min:c.start, duration:rule.warm, title:nm ? nm + ' · Warm-up' : 'Warm-up', shared:true}];
@@ -1112,13 +1116,15 @@ function applyRec(){
         L.push(s);
       }
       L.push({location:map.warm, start_min:c.start + t.classLen - rule.cool, duration:rule.cool, title:'Cool-down', shared:true});
-      DATA.sessions[c.day][id] = (DATA.sessions[c.day][id] || []).concat(L).sort((a, b) => a.start_min - b.start_min);
+      DATA.sessions[day][id] = (DATA.sessions[day][id] || []).concat(L).sort((a, b) => a.start_min - b.start_min);
     }
-  });
+  }));
   const recG = DATA.groups.filter(g => g.rec).sort((a, b) => a.id.localeCompare(b.id));
   DATA.groups = DATA.groups.filter(g => !g.rec).concat(recG);
   recG.forEach(g => g.days.sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)));
 }
+// A class runs on one or more days (older saves had a single day)
+function cDays(c){ return (c.days && c.days.length ? c.days : [c.day || 'Monday']).slice().sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)); }
 function recGuard(groupId){
   const g = groupId && getGroupById(groupId);
   if(!g || !g.rec) return false;
@@ -1157,10 +1163,10 @@ function renderRec(){
   const used = ['FF','BF','VT','BM','BA','FT'].filter(c => !['VT','BM','BA'].includes(c) || t.pieces[c] !== 'none');
   const rows = R.classes.map(c => {
     const end = c.start + t.classLen;
-    const clash = R.classes.find(o => o !== c && o.day === c.day && o.start < end && c.start < o.start + t.classLen);
+    const clash = R.classes.find(o => o !== c && cDays(o).some(d => cDays(c).includes(d)) && o.start < end && c.start < o.start + t.classLen);
     const hh = String(Math.floor(c.start / 60)).padStart(2, '0') + ':' + String(c.start % 60).padStart(2, '0');
     return `<div class="rc-slot" data-id="${c.id}">
-      <div class="rc-f"><label>Day</label><select data-rc="day">${DAYS.map(d => `<option ${d === c.day ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
+      <div class="rc-f rc-daysf"><label>Days</label><div class="rc-days">${DAYS.map(d => `<button type="button" class="rc-day ${cDays(c).includes(d) ? 'on' : ''}" data-rc-day="${d}">${d.slice(0,3)}</button>`).join('')}</div></div>
       <div class="rc-f"><label>Class starts</label><input type="time" step="300" data-rc="start" value="${hh}"></div>
       <div class="rc-f"><label>Groups</label><select data-rc="groups">${[1,2,3,4,5,6].map(n => `<option ${n === +c.groups ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
       <button class="rc-del" data-rc-del>Remove</button>
@@ -1169,7 +1175,7 @@ function renderRec(){
   }).join('');
   el.innerHTML = `<div class="rc-wrap">
     <div class="rc-card"><h2>Recreational classes</h2>
-      <p>Add a line for each Recreational class. The first 3 groups go on <b>Rotation A</b> and the rest on <b>Rotation B</b>. Each week the two rotations swap apparatus, and each group starts on a different piece. Groups are coloured Orange, Yellow, Blue, Red, Green, Purple; add names if you like.</p>
+      <p>Add a line for each class time, and tick the days it runs. The first 3 groups go on <b>Rotation A</b> and the rest on <b>Rotation B</b>. Each week the two rotations swap apparatus, and each group starts on a different piece. Groups are coloured Orange, Yellow, Blue, Red, Green, Purple; add names if you like.</p>
       ${rows || '<p class="rc-note">No classes yet.</p>'}
       <button class="rc-btn" data-rc-add>+ Add a class</button></div>
     <div class="rc-card"><h2>From your club plan</h2>
@@ -1188,8 +1194,7 @@ document.addEventListener('change', e => {
   if(e.target.dataset.rcMap){ R.map[e.target.dataset.rcMap] = e.target.value; return recChanged(); }
   if(!slot) return;
   const c = R.classes.find(x => x.id === slot.dataset.id); if(!c) return;
-  if(e.target.dataset.rc === 'day') c.day = e.target.value;
-  else if(e.target.dataset.rc === 'groups') c.groups = +e.target.value;
+  if(e.target.dataset.rc === 'groups') c.groups = +e.target.value;
   else if(e.target.dataset.rc === 'start'){ const [h, m] = e.target.value.split(':').map(Number); if(!isNaN(h)) c.start = h * 60 + (m || 0); }
   else if(e.target.dataset.rcName != null){ c.names = c.names || []; c.names[+e.target.dataset.rcName] = e.target.value.trim(); }
   recChanged();
@@ -1197,9 +1202,17 @@ document.addEventListener('change', e => {
 document.addEventListener('click', e => {
   const v = document.getElementById('recView'); if(!v || !v.contains(e.target)) return;
   const R = recSettings();
+  const dayBtn = e.target.closest('[data-rc-day]');
+  if(dayBtn){
+    const c = R.classes.find(x => x.id === dayBtn.closest('.rc-slot').dataset.id); if(!c) return;
+    const d = dayBtn.dataset.rcDay, cur = cDays(c);
+    c.days = cur.includes(d) ? cur.filter(x => x !== d) : [...cur, d];
+    if(!c.days.length) c.days = [d];   // a class needs at least one day
+    delete c.day; return recChanged();
+  }
   if(e.target.closest('[data-rc-add]')){
     const last = R.classes[R.classes.length - 1];
-    R.classes.push({id:genId(), day:last ? last.day : 'Monday', start:last ? last.start + recTerm().classLen : 16 * 60, groups:3});
+    R.classes.push({id:genId(), days:last ? cDays(last) : ['Monday','Tuesday','Wednesday','Thursday','Friday'], start:last ? last.start + recTerm().classLen : 16 * 60, groups:3});
     recChanged();
   }else if(e.target.closest('[data-rc-del]')){
     const id = e.target.closest('.rc-slot').dataset.id;
@@ -2548,12 +2561,17 @@ function renderTimeline(day){
     const nowMin=nowMinutes();
     const bufferPx = 10 * PX_PER_MIN;
     const targetVis = lblW + bufferPx;
-    const nowPx=lblW+(nowMin-min)*PX_PER_MIN;
+    const nowPx=lblW+(liveAnchor(nowMin)-min)*PX_PER_MIN;
     outer.scrollLeft=Math.max(0,nowPx-targetVis);
     updateNowLine();
   },100);
 }
 
+function liveAnchor(nowMin){
+  const day = getTodayName(), all = Object.values((DATA.sessions && DATA.sessions[day]) || {}).flat();
+  const first = all.length ? Math.min(...all.map(s => s.start_min)) : null;
+  return first != null && nowMin < first - 15 ? first - 10 : nowMin;
+}
 function updateNowLine(){
   if(!liveMode) return;
   const container=document.getElementById('tlContainer');
@@ -2567,7 +2585,8 @@ function updateNowLine(){
     // keep "now" just past the 10-min fade zone after the labels
     const bufferPx = 10 * PX_PER_MIN;
     const targetVis = lblW + bufferPx;
-    if(Math.abs(nowVis - targetVis) > 15) outer.scrollLeft = Math.max(0, nowPx - targetVis);
+    const anchorPx = lblW + (liveAnchor(nowMin) - min) * PX_PER_MIN;
+    if(Math.abs((anchorPx - outer.scrollLeft) - targetVis) > 15) outer.scrollLeft = Math.max(0, anchorPx - targetVis);
   } else { nowLine.style.display='none'; }
   document.querySelectorAll('.tl-block').forEach(b=>{ const s=parseInt(b.dataset.startMin),e=parseInt(b.dataset.endMin); b.classList.toggle('dim',!(nowMin>=s&&nowMin<e)); });
 }
