@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Music Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="ngl-music-data.js"></script>
+<style>
+:root{--navy:#14254a;--navy-2:#223a70;--red:#c8202f;--gold:#d9a521;--gold-soft:#fbf1d6;--paper:#f4f5f8;--ink:#16213a;--muted:#5d6782;--line:#d6dbe6;--ok:#1f7a4d;--ok-soft:#e3f3ea;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;--cond:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;font-family:var(--body);color:var(--ink);background:var(--paper);font-size:15px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hidden{display:none!important}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--red)}
+.hin{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hin h1{font-family:var(--cond);font-size:22px;margin:0;margin-right:auto;line-height:1.1}
+.hin h1 small{display:block;font-family:var(--body);font-size:12px;font-weight:500;opacity:.8}
+main{max-width:1100px;margin:0 auto;padding:16px 16px 48px}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs button{background:none;border:none;padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--navy);border-bottom-color:var(--red)}
+.btn{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:4px;padding:8px 13px;font-weight:600;font-size:14px}
+.btn.primary{background:var(--navy);color:#fff}.btn.ghost{border-color:var(--line);color:var(--ink)}.btn.small{padding:4px 9px;font-size:13px}
+.tally{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.tally div{background:#fff;border:1px solid var(--line);border-left:5px solid var(--navy);border-radius:4px;padding:6px 12px;min-width:120px}
+.tally b{font-family:var(--cond);font-size:22px;display:block;line-height:1}.tally span{font-size:12px;color:var(--muted)}
+.lv{background:#fff;border:1px solid var(--line);border-radius:6px;margin-bottom:18px;overflow:hidden}
+.lv>header{background:#fafbfd;border:none;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 14px;color:var(--ink)}
+.lv h2{font-family:var(--cond);font-size:24px;color:var(--navy);margin:0;margin-right:auto}
+.lv h2 small{font-family:var(--body);font-size:13px;font-weight:600;color:var(--muted);margin-left:6px}
+.lv h2 small.gap{color:var(--red)}
+.note{font-size:13px;color:#7a5a07;background:var(--gold-soft);padding:8px 14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 10px;border-bottom:1px solid #eef0f5;text-align:left;vertical-align:middle}
+th{font-size:12.5px;color:var(--muted);font-weight:600}
+td.n{width:40px;font-family:var(--cond);font-size:18px;color:var(--navy)}
+td.mv{width:74px;white-space:nowrap}
+.fl{width:12px;height:12px;border-radius:3px;display:inline-block;background:var(--red);vertical-align:middle;margin-right:6px}
+tr.ok .fl{background:var(--ok)}
+tr:not(.ok) .who{color:var(--red)}
+.who{font-weight:600}.club{color:var(--muted);font-size:13px}
+audio{height:30px;max-width:220px}
+.tablewrap{overflow-x:auto}
+.panel{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px;margin-bottom:14px}
+.panel h3{font-family:var(--cond);font-size:21px;margin:0 0 4px;color:var(--navy)}
+.panel p{color:var(--muted);font-size:14px;margin:0 0 10px}
+textarea{width:100%;min-height:220px;padding:10px;border:1px solid var(--line);border-radius:4px;font-size:14px}
+.crow{display:grid;grid-template-columns:1fr auto auto;gap:6px 12px;align-items:center;padding:8px 0;border-bottom:1px solid #eef0f5}
+.crow .c{font-weight:600}.crow .m{font-size:13px;color:var(--muted)}.crow .m.gap{color:var(--red)}
+code{background:var(--paper);padding:1px 6px;border-radius:3px;font-size:14px}
+dialog{border:none;border-radius:8px;padding:0;width:min(560px,calc(100% - 24px));box-shadow:0 20px 60px rgba(10,20,50,.35)}
+dialog::backdrop{background:rgba(12,22,48,.55)}
+.dh{background:var(--navy);color:#fff;padding:12px 16px;font-family:var(--cond);font-size:20px;border-bottom:3px solid var(--red)}
+.db{padding:12px 16px}.df{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:4px;font-size:14px;z-index:60;max-width:90vw}
+</style>
+</head>
+<body>
+<header><div class="hin"><h1 id="title">Floor music<small>Uploads, running order and downloads</small></h1><span id="saveState" style="font-size:12px;opacity:.8"></span></div></header>
+<main>
+  <section class="panel hidden" id="clubSignin" style="max-width:420px">
+    <h3>Connect to the Club Hub</h3>
+    <p>Music is stored with club accounts, so sign in once with your NGL Club Hub admin login. This device remembers it.</p>
+    <form id="csForm"><input id="csEmail" type="email" placeholder="Admin email" required style="width:100%;padding:9px;border:1px solid var(--line);border-radius:4px;margin-bottom:8px">
+      <input id="csPass" type="password" placeholder="Password" required style="width:100%;padding:9px;border:1px solid var(--line);border-radius:4px;margin-bottom:8px">
+      <button class="btn primary">Connect</button><div id="csErr" style="color:var(--red);font-size:14px;margin-top:8px"></div></form>
+  </section>
+  <div id="mainArea" class="hidden">
+  <div class="tally" id="tally"></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="order">Running order</button>
+    <button role="tab" aria-selected="false" data-tab="clubs">Clubs</button>
+  </nav>
+  <section id="tab-order"><div id="levels"></div></section>
+  <section id="tab-clubs" class="hidden">
+    <div class="panel">
+      <h3>Club Hub</h3>
+      <p id="pubState">Clubs upload in the Club Hub's Floor music tab. Publish the entries to switch it on (and again after any entry changes).</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="publish">Publish entries to Club Hub</button><button class="btn ghost" id="closeBtn">Close uploads</button></div>
+    </div>
+    <div class="panel"><h3>Clubs</h3><p>A club sees its gymnasts automatically when its Club Hub BG number matches Elevien's. Link any that don't.</p><div id="clubList"></div></div>
+  </section>
+  </div>
+</main>
+
+<dialog id="dlg"><div class="dh" id="dlgT"></div><div class="db" id="dlgB"></div><div class="df" id="dlgF"></div></dialog>
+
+<script>
+const FIREBASE = {          // NGL admin sign-in (hub)
+  apiKey:"AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4", authDomain:"saadi-rotation.firebaseapp.com",
+  projectId:"saadi-rotation", storageBucket:"saadi-rotation.firebasestorage.app",
+  messagingSenderId:"1066734803675", appId:"1:1066734803675:web:0188fd601adea7db08cafe"
+};
+const CLUBS_FB = {          // Club Hub accounts, music uploads (ngl-schools)
+  apiKey:"AIzaSyBK8gNFh4lYv6829YRFm-7Ia0tzh_RwMKQ", authDomain:"ngl-schools.firebaseapp.com",
+  projectId:"ngl-schools", storageBucket:"ngl-schools.firebasestorage.app",
+  messagingSenderId:"202087533031", appId:"1:202087533031:web:a905eaa461925256b71542"
+};
+const CLUB_HUB = "https://club.nationalgymnasticsleague.co.uk/#music";
+const D = window.NGL_MUSIC_DATA;
+const $ = s=>document.querySelector(s);
+const esc = v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+$("#title").firstChild.textContent = D.title + " floor music";
+
+let cdb, cauth, EV = null, UP = {}, ORDER = {}, ACCOUNTS = [];
+const G = {}; D.levels.forEach(L=>L.gymnasts.forEach(([id,name,club])=>G[id]={id,name,club,level:L.id}));
+const clubName = k => D.clubs[k]?.name || k;
+const orderFor = L => { const ids = L.gymnasts.map(g=>g[0]); const o = (ORDER[L.id]||[]).filter(id=>ids.includes(id)); return [...o, ...ids.filter(id=>!o.includes(id))]; };
+
+/* ---------- connect to the Club Hub project as an NGL admin ---------- */
+function start(){
+  const app = firebase.initializeApp(CLUBS_FB, "clubs");
+  cauth = app.auth(); cdb = app.firestore();
+  cauth.onAuthStateChanged(async u=>{
+    if(!u){ $("#clubSignin").classList.remove("hidden"); $("#mainArea").classList.add("hidden"); return; }
+    const a = await cdb.collection("admins").doc(u.uid).get().catch(()=>null);
+    if(!a || !a.exists){ $("#csErr").textContent = "That login isn't a Club Hub admin."; cauth.signOut(); return; }
+    $("#clubSignin").classList.add("hidden"); $("#mainArea").classList.remove("hidden");
+    watch();
+  });
+}
+$("#csForm").addEventListener("submit", async e=>{
+  e.preventDefault(); $("#csErr").textContent = "";
+  try{ await cauth.signInWithEmailAndPassword($("#csEmail").value.trim(), $("#csPass").value); }
+  catch(_){ $("#csErr").textContent = "Email or password isn't right."; }
+});
+function watch(){
+  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; render(); renderClubs(); }, e=>err(e,"the competition"));
+  cdb.collection("musicUploads").where("compKey","==",D.compKey).onSnapshot(s=>{ UP = {}; s.docs.forEach(d=>UP[d.data().gymnastId]=d.data()); render(); renderClubs(); }, e=>err(e,"uploads"));
+  cdb.collection("clubs").get().then(s=>{ ACCOUNTS = s.docs.map(d=>({uid:d.id, name:d.data().name||"", bg:String(d.data().bgNumber||"").trim(), email:d.data().email||""})).sort((a,b)=>a.name.localeCompare(b.name)); renderClubs(); }).catch(e=>err(e,"club accounts"));
+}
+function err(e, what){ console.error(e); toast(e.code==="permission-denied" ? `The database blocked ${what}. Add the music rules in the ngl-schools project.` : `Couldn't load ${what}.`); }
+
+/* ---------- running order ---------- */
+function render(){
+  const all = Object.keys(G).length, have = Object.keys(UP).filter(id=>G[id]).length;
+  $("#tally").innerHTML = `<div><b>${have}/${all}</b><span>Music uploaded</span></div>` +
+    D.levels.map(L=>{ const n=L.gymnasts.filter(g=>UP[g[0]]).length; return `<div style="border-left-color:${n===L.gymnasts.length?"var(--ok)":"var(--red)"}"><b>${n}/${L.gymnasts.length}</b><span>${esc(L.name)}</span></div>`; }).join("") +
+    `<div style="border-left-color:${EV&&EV.status==="open"?"var(--ok)":"var(--red)"}"><b>${EV ? (EV.status==="open"?"Open":"Closed") : "Not published"}</b><span>Club Hub uploads</span></div>`;
+  $("#levels").innerHTML = D.levels.map(L=>{
+    const ids = orderFor(L), n = ids.filter(id=>UP[id]).length, set = (ORDER[L.id]||[]).length>0;
+    return `<section class="lv"><header>
+        <h2>${esc(L.name)}<small class="${n<ids.length?"gap":""}">${n}/${ids.length} uploaded</small></h2>
+        <button class="btn small ghost" data-paste="${L.id}">Paste floor order</button>
+        <button class="btn small primary" data-zip="${L.id}">Download in floor order</button></header>
+      ${set?"":`<div class="note">Floor order not set yet: this is Elevien's entry order. Paste the floor running order from Elevien, or use the arrows.</div>`}
+      <div class="tablewrap"><table><thead><tr><th>#</th><th>Gymnast</th><th>Music</th><th></th></tr></thead><tbody>` +
+      ids.map((id,i)=>{ const g=G[id], u=UP[id];
+        return `<tr class="${u?"ok":""}"><td class="n">${i+1}</td>
+          <td><span class="fl"></span><span class="who">${esc(g.name)}</span><br><span class="club">${esc(clubName(g.club))}</span></td>
+          <td>${u?`<audio controls preload="none" src="${esc(u.url)}"></audio>`:`<span class="club" style="color:var(--red)">Not uploaded</span>`}</td>
+          <td class="mv"><button class="btn small ghost" data-mv="${L.id}|${i}|-1" aria-label="Move up">&uarr;</button> <button class="btn small ghost" data-mv="${L.id}|${i}|1" aria-label="Move down">&darr;</button></td></tr>`;
+      }).join("") + `</tbody></table></div></section>`;
+  }).join("");
+}
+async function saveOrder(levelId, ids){
+  if(!EV){ toast("Publish the entries to the Club Hub first (Clubs tab)."); return; }
+  ORDER[levelId] = ids; render(); $("#saveState").textContent = "Saving…";
+  try{ await cdb.collection("musicEvents").doc(D.compKey).set({order:ORDER}, {merge:true}); $("#saveState").textContent = "Saved"; }
+  catch(e){ err(e,"the running order"); $("#saveState").textContent = "Not saved"; }
+}
+$("#levels").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.mv){ const [lid,i,d] = b.dataset.mv.split("|"); const L = D.levels.find(x=>x.id===lid), ids = orderFor(L), j = +i + +d;
+    if(j<0||j>=ids.length) return; [ids[+i],ids[j]]=[ids[j],ids[+i]]; saveOrder(lid, ids); }
+  if(b.dataset.paste) pasteDlg(b.dataset.paste);
+  if(b.dataset.zip) downloadZip(b.dataset.zip);
+});
+
+/* paste names in floor order; matches loosely on name */
+const key = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z]/g,"");
+function pasteDlg(lid){
+  const L = D.levels.find(x=>x.id===lid);
+  openDlg(`${L.name}: floor running order`, `<p style="margin:0 0 8px;color:var(--muted);font-size:14px">Copy the floor start list from Elevien and paste it here, one gymnast per line. Club names, numbers and other text on each line are ignored.</p><textarea id="pasteBox"></textarea><div id="pasteRes" style="font-size:13px;margin-top:8px"></div>`,
+    [{l:"Cancel"},{l:"Apply order", cls:"primary", fn:()=>{
+      const lines = $("#pasteBox").value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+      const pool = L.gymnasts.map(g=>({id:g[0], k:key(g[1])})), used = new Set(), out = [], miss = [];
+      lines.forEach(line=>{ const lk = key(line); const m = pool.filter(p=>!used.has(p.id) && lk.includes(p.k)).sort((a,b)=>b.k.length-a.k.length)[0];
+        if(m){ used.add(m.id); out.push(m.id); } else if(/[a-z]{3,}/i.test(line)) miss.push(line); });
+      if(!out.length){ $("#pasteRes").innerHTML = `<span style="color:var(--red)">No names matched. Check you pasted the ${esc(L.name)} list.</span>`; return false; }
+      const left = L.gymnasts.map(g=>g[0]).filter(id=>!used.has(id));
+      saveOrder(lid, [...out, ...left]);
+      toast(`${out.length} matched` + (left.length?`, ${left.length} not in your list put at the end`:"") + (miss.length?`, ${miss.length} lines ignored`:""));
+    }}]);
+}
+
+/* ---------- zip download ---------- */
+const safe = s => s.replace(/[\\/:*?"<>|]/g,"").trim();
+async function downloadZip(lid){
+  const L = D.levels.find(x=>x.id===lid), ids = orderFor(L), zip = new JSZip();
+  const missing = ids.filter(id=>!UP[id]);
+  if(missing.length && !confirm(`${missing.length} gymnast${missing.length>1?"s have":" has"} no music yet. Download the rest anyway? Missing gymnasts keep their number so the order stays right.`)) return;
+  toast("Preparing the zip…");
+  let failed = 0;
+  for(let i=0;i<ids.length;i++){
+    const id = ids[i], g = G[id], u = UP[id], num = String(i+1).padStart(2,"0");
+    if(!u) continue;
+    try{ const r = await fetch(u.url); if(!r.ok) throw 0; zip.file(`${num} - ${safe(g.name)} - ${safe(clubName(g.club))}.mp3`, await r.blob()); }
+    catch(_){ failed++; }
+  }
+  zip.file("Running order.txt", ids.map((id,i)=>`${String(i+1).padStart(2,"0")}  ${G[id].name}  (${clubName(G[id].club)})${UP[id]?"":"  NO MUSIC"}`).join("\r\n"));
+  if(failed && failed===ids.length-missing.length){ toast("The browser couldn't fetch the files. The storage bucket needs its CORS setting (see the set-up note)."); return; }
+  const blob = await zip.generateAsync({type:"blob"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${D.title} - ${L.name} floor music.zip`; a.click();
+  if(failed) toast(`${failed} file${failed>1?"s":""} couldn't be downloaded.`);
+}
+
+/* ---------- publish + clubs ---------- */
+$("#publish").addEventListener("click", async ()=>{
+  const doc = { title:D.title, date:D.date, deadline:D.deadline, status:"open",
+    clubs:Object.fromEntries(Object.entries(D.clubs).map(([k,c])=>[k,{name:c.name, bg:c.bg||""}])),
+    levels:D.levels.map(L=>({id:L.id, name:L.name, session:L.session||"", gymnasts:L.gymnasts.map(([id,name,club])=>({id,name,club}))})),
+    gymClub:Object.fromEntries(Object.values(G).map(g=>[g.id, g.club])),   // lets the database rules check each upload
+    publishedAt:new Date().toISOString() };
+  try{ await cdb.collection("musicEvents").doc(D.compKey).set(doc, {merge:true}); toast("Published. Clubs will see a Floor music tab in the Club Hub."); }
+  catch(e){ err(e,"publishing"); }
+});
+$("#closeBtn").addEventListener("click", async ()=>{
+  if(!EV) return toast("Nothing published yet.");
+  const open = EV.status!=="open";
+  if(!open && !confirm("Close uploads? Clubs will no longer see the Floor music tab. Music already uploaded is kept.")) return;
+  try{ await cdb.collection("musicEvents").doc(D.compKey).set({status: open?"open":"closed"}, {merge:true}); toast(open?"Uploads reopened":"Uploads closed"); }
+  catch(e){ err(e,"changing the status"); }
+});
+function accountFor(k){
+  const link = EV && EV.links && EV.links[k];
+  if(link) return {a:ACCOUNTS.find(x=>x.uid===link), how:"linked"};
+  const bg = String(D.clubs[k].bg||"").trim(), a = bg && ACCOUNTS.find(x=>x.bg===bg);
+  return a ? {a, how:"bg"} : {a:null};
+}
+function renderClubs(){
+  $("#closeBtn").textContent = EV && EV.status!=="open" ? "Reopen uploads" : "Close uploads";
+  $("#pubState").textContent = EV ? `Published${EV.publishedAt?" "+new Date(EV.publishedAt).toLocaleString("en-GB"):""}. Uploads are ${EV.status==="open"?"open":"closed"}. Publish again after any entry changes.` : "Not published yet. Clubs upload in the Club Hub's Floor music tab once you publish.";
+  $("#clubList").innerHTML = Object.entries(D.clubs).sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([k,c])=>{
+    const mine = Object.values(G).filter(g=>g.club===k), done = mine.filter(g=>UP[g.id]).length, m = accountFor(k);
+    return `<div class="crow"><div><span class="c">${esc(c.name)}</span> <span class="m">BG ${esc(c.bg||"?")}</span><br>
+        <span class="m ${done<mine.length?"gap":""}">${done}/${mine.length} uploaded</span> ·
+        ${m.a ? `<span class="m" style="color:var(--ok)">Club Hub: ${esc(m.a.name)}${m.how==="linked"?" (linked by hand)":""}</span>` : `<span class="m gap">No matching Club Hub account</span>`}</div>
+      <div><select data-link="${k}" aria-label="Link ${esc(c.name)} to a Club Hub account" style="max-width:220px;padding:5px;border:1px solid var(--line);border-radius:4px">
+        <option value="">${m.a?"Change link…":"Link to account…"}</option>${ACCOUNTS.map(a=>`<option value="${a.uid}">${esc(a.name)}${a.bg?" ("+esc(a.bg)+")":""}</option>`).join("")}</select></div>
+      <div><button class="btn small ${done<mine.length?"primary":"ghost"}" data-email="${k}">Copy email</button></div></div>`;
+  }).join("");
+}
+$("#clubList").addEventListener("change", async e=>{
+  const k = e.target.dataset.link, uid = e.target.value; if(!k || !uid) return;
+  if(!EV){ toast("Publish the entries first."); e.target.value=""; return; }
+  try{ await cdb.collection("musicEvents").doc(D.compKey).set({links:{[k]:uid}}, {merge:true}); toast("Club linked"); }
+  catch(er){ err(er,"linking the club"); }
+});
+$("#clubList").addEventListener("click", async e=>{
+  const k = e.target.dataset.email; if(!k) return;
+  const mine = Object.values(G).filter(g=>g.club===k), miss = mine.filter(g=>!UP[g.id]), m = accountFor(k);
+  const text = `Hi,\n\nPlease upload floor music for your gymnasts competing at ${D.title} by ${D.deadline}.\n\n` +
+    (m.a ? `Log in to the NGL Club Hub and open the Floor music tab:\n${CLUB_HUB}\n\n` : `Register your club (free) or log in to the NGL Club Hub, then open the Floor music tab:\n${CLUB_HUB}\nUse your British Gymnastics club number ${D.clubs[k].bg||""} when you register so your gymnasts appear.\n\n`) +
+    (miss.length ? `Still needed:\n${miss.map(g=>`- ${g.name} (Level ${g.level})`).join("\n")}\n\n` : `All your music is in, thank you.\n\n`) +
+    `MP3 files only, up to 15MB each.\n\nThanks,\nNational Gymnastics League`;
+  try{ await navigator.clipboard.writeText(text); toast("Email copied. Paste it into a new message."); }
+  catch(_){ openDlg("Email to club", `<textarea>${esc(text)}</textarea>`, [{l:"Close", cls:"primary"}]); }
+});
+
+/* ---------- ui ---------- */
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  ["order","clubs"].forEach(t=>$("#tab-"+t).classList.toggle("hidden", t!==b.dataset.tab));
+}));
+function openDlg(t, body, btns){
+  $("#dlgT").textContent=t; $("#dlgB").innerHTML=body; $("#dlgF").innerHTML="";
+  btns.forEach(b=>{ const el=document.createElement("button"); el.className="btn "+(b.cls||"ghost"); el.textContent=b.l;
+    el.onclick=()=>{ if(!b.fn || b.fn()!==false) $("#dlg").close(); }; $("#dlgF").appendChild(el); });
+  $("#dlg").showModal();
+}
+
+firebase.initializeApp(FIREBASE);
+document.addEventListener("ngl-admin-ready", start, {once:true});
+const g = document.createElement("script"); g.src="ngl-admin-guard.js"; g.dataset.section="music"; document.head.appendChild(g);
+</script>
+</body>
+</html>
