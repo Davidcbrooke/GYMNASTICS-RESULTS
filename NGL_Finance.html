@@ -658,10 +658,14 @@ $("#exportCsv").addEventListener("click", ()=>{
 const LIC_PATHS = ["recreational"];
 const LIC_SOON  = ["preschool","schools","general","performance"];
 const LIC_TERMS = ["Autumn","Spring","Summer"];
-const LIC_BANDS = [["small","Under 100 gymnasts",110],["mid","100 to 399 gymnasts",440],["large","400+ gymnasts",null]];
+// Oct 2026: 7 bands, same keys as the Recreational Hub (s/m/l kept from the old 3-band model).
+const LIC_BANDS = [["xs","1 to 24 gymnasts",27],["sm","25 to 49 gymnasts",54],["s","50 to 99 gymnasts",109],["m","100 to 249 gymnasts",274],
+                   ["m2","250 to 399 gymnasts",439],["l","400 to 599 gymnasts",659],["xl","600+ gymnasts",null]];
+const LEGACY_BAND = {small:"s", mid:"m", large:"l"};
+const normBand = k => LEGACY_BAND[k] || (LIC_BANDS.some(b=>b[0]===k) ? k : "s");
 const LIC_DEFAULTS = {
   recreational:{
-    clubPrice:{small:500, mid:1000, large:1500},
+    clubPrice:{xs:200, sm:300, s:500, m:1000, m2:1250, l:1500, xl:2000},
     bookPrice:5, bookCost:2.5, booksPerGym:90,
     medalPrice:3, medalCost:1.5, medalsPerTerm:1,
     shirtPrice:12, shirtCost:10, shirtsPerClub:0,
@@ -670,13 +674,14 @@ const LIC_DEFAULTS = {
 };
 let licView = "recreational";
 function licA(path){ A.lic = A.lic || {}; const d = JSON.parse(JSON.stringify(LIC_DEFAULTS[path])), cur = A.lic[path] || {};
-  const m = Object.assign({}, d, cur); m.clubPrice = Object.assign({}, d.clubPrice, cur.clubPrice||{});
+  const cp = {}; Object.entries(cur.clubPrice||{}).forEach(([k,v]) => { if(!LEGACY_BAND[k]) cp[k] = v; });   // old small/mid/large overrides are dropped for the new price list
+  const m = Object.assign({}, d, cur); m.clubPrice = Object.assign({}, d.clubPrice, cp);
   delete m.clubFounding; delete m.clubFull; delete m.gymMonthly; delete m.monthsPerTerm; delete m.newBooks; delete m.certCost; delete m.postPerClub; delete m.postPerOrder; delete m.medalsPerGym;
   return m; }
 function licSetA(path, m){ A.lic = A.lic || {}; A.lic[path] = m; }
 function licClubs(path, s){ A.licClubs = A.licClubs || {}; const k = path+"_"+(s||season); return A.licClubs[k] || (A.licClubs[k] = []); }
 function licYearLabel(s){ const y=parseInt(s,10); return isNaN(y) ? "" : `Licence year Sept ${y-1} to Aug ${y}`; }
-const bandLimit = k => (LIC_BANDS.find(b=>b[0]===k)||LIC_BANDS[0])[2];
+const bandLimit = k => (LIC_BANDS.find(b=>b[0]===normBand(k))||LIC_BANDS[2])[2];
 const termOfDate = d => { const m = d.getMonth(); return m>=8 ? 0 : (m<=2 ? 1 : 2); };
 const toJsDate = c => !c ? new Date() : (typeof c.toDate==="function" ? c.toDate() : (c.seconds ? new Date(c.seconds*1000) : new Date(c)));
 
@@ -693,7 +698,7 @@ const SCHOOLS_FIREBASE = {
   messagingSenderId: "202087533031",
   appId: "1:202087533031:web:a905eaa461925256b71542"
 };
-const BAND_MAP = {s:"small", m:"mid", l:"large"};
+const BAND_MAP = Object.fromEntries(LIC_BANDS.map(b=>[b[0],b[0]]));
 const TERM_KEYS = ["autumn","spring","summer"];
 const LIC = {app:null, user:null, state:"off", error:"", orders:[], unsub:null};  // state: off|signin|loading|live|denied
 let licSource = "live";            // "live" (Hub orders) or "plan" (clubs typed in below)
@@ -745,7 +750,7 @@ function licFigures(path, s){
   const clubs = licClubs(path, s);
   clubs.forEach(c=>{
     const g = Math.max(0, parseInt(c.gyms ?? Math.max(0,...(c.g||[0])))||0), t0 = Math.max(0, TERM_KEYS.indexOf(c.start||"autumn"));
-    const band = c.band||"small", lim = bandLimit(band);
+    const band = normBand(c.band), lim = bandLimit(band);
     F.clubFee[t0] += L.clubPrice[band]||0; F.orders[t0]++;
     let bk = Math.round(g * (c.first ? 100 : L.booksPerGym) / 100); if(lim!=null) bk = Math.min(bk, lim);
     F.books[t0] += bk; F.bookInc[t0] += bk*L.bookPrice;
@@ -837,7 +842,7 @@ function renderLiveClubs(){
     (o.lines||[]).forEach(l=>{ if(l.kind in c && l.kind!=="orders") c[l.kind] += +l.qty||0; });
   });
   const list = Object.values(by).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
-  const bk = {s:"small", m:"mid", l:"large"}, band = k => ({s:"Under 100", m:"100 to 399", l:"400+"})[k] || "";
+  const bk = BAND_MAP, band = k => { const b = LIC_BANDS.find(x=>x[0]===normBand(k)); return k && b ? b[1].replace(" gymnasts","") : ""; };
   $("#licClubs").innerHTML = `<thead><tr><th>Club</th><th>Size band</th><th>Books (allowance)</th><th>Medals</th><th>T-shirts</th><th>Orders</th><th>Invoiced</th><th>Paid</th><th>Test</th></tr></thead><tbody>`+
     (list.length ? list.map(c=>{ const lim = c.band ? bandLimit(bk[c.band]) : null;
       return `<tr style="${ex[c.id]?"opacity:.45":""}"><td>${esc(c.name)}</td><td>${band(c.band)}</td><td>${c.book}${lim!=null?` / ${lim}`:""}</td><td>${c.medal}</td><td>${c.tshirt}</td><td>${c.orders}</td><td>${gbp(c.inv)}</td><td>${gbp(c.paid)}</td><td style="text-align:center"><input type="checkbox" data-excl="${esc(c.id)}"${ex[c.id]?" checked":""} title="Leave this club out of the P&L"></td></tr>`; }).join("")
@@ -848,7 +853,7 @@ function renderLicClubs(force){
   const clubs = licClubs(licView, season), L = licA(licView);
   const prev = String(parseInt(season,10)-1), prevClubs = (A.licClubs||{})[licView+"_"+prev] || [];
   $("#licClubs").innerHTML = `<thead><tr><th>Club</th><th>Size band</th><th>Gymnasts</th><th>Starts</th><th>First year</th><th>Club Licence</th><th>Book allowance</th><th></th></tr></thead><tbody>`+
-    (clubs.length ? clubs.map((c,i)=>{ const band=c.band||"small", lim=bandLimit(band), g=parseInt(c.gyms ?? Math.max(0,...(c.g||[0])))||0;
+    (clubs.length ? clubs.map((c,i)=>{ const band=normBand(c.band), lim=bandLimit(band), g=parseInt(c.gyms ?? Math.max(0,...(c.g||[0])))||0;
       return `<tr data-ci="${i}">
       <td><input type="text" class="lc-name" data-cf="name" value="${esc(c.name)}" placeholder="Club name"></td>
       <td><select data-cf="band">${LIC_BANDS.map(([v,t])=>`<option value="${v}"${band===v?" selected":""}>${t}</option>`).join("")}</select></td>
@@ -906,7 +911,7 @@ $("#licClubs").addEventListener("change", e=>{ if(e.target.matches("select,input
 $("#licClubs").addEventListener("click", e=>{ const d=e.target.dataset.cdel; if(d===undefined) return; const clubs=licClubs(licView, season), c=clubs[+d];
   if(!confirm(`Remove ${c.name||"this club"}?`)) return; clubs.splice(+d,1); save(); renderLicClubs(true); renderLicensing(); renderOverview(); });
 $("#licClubTools").addEventListener("click", e=>{
-  if(e.target.id==="licAddClub"){ licClubs(licView, season).push({name:"", band:"small", gyms:0, start:"autumn", first:true}); save(); renderLicClubs(true); renderLicensing(); const n=document.querySelectorAll(".lc-name"); if(n.length) n[n.length-1].focus(); }
+  if(e.target.id==="licAddClub"){ licClubs(licView, season).push({name:"", band:"s", gyms:0, start:"autumn", first:true}); save(); renderLicClubs(true); renderLicensing(); const n=document.querySelectorAll(".lc-name"); if(n.length) n[n.length-1].focus(); }
   if(e.target.id==="licCopyPrev"){ const prev=String(parseInt(season,10)-1); A.licClubs[licView+"_"+season] = JSON.parse(JSON.stringify(A.licClubs[licView+"_"+prev])); save(); renderLicClubs(true); renderLicensing(); renderOverview(); }
 });
 $("#licExport").addEventListener("click", ()=>{
