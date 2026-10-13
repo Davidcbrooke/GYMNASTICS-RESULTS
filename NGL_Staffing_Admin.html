@@ -339,7 +339,6 @@ const CONFIG = {
     appId: "1:1066734803675:web:0188fd601adea7db08cafe",
     measurementId: "G-K3V2BRCVF6"
   },
-  adminPassword: "ngl2026",
   collections: {
     competitions: "ngl_competitions",
     staffing: "ngl_staffing",            // new: one doc per competition id
@@ -476,7 +475,7 @@ async function updateSignup(id, patch){
 /* ---------- Boot ---------- */
 $("#loginForm").addEventListener("submit", e=>{
   e.preventDefault();
-  if($("#pw").value !== CONFIG.adminPassword){ $("#loginErr").textContent="That password isn't right. Check with the NGL office."; return; }
+  $("#loginErr").textContent="Staffing now uses your NGL Admin sign-in. Open it from NGL Admin."; return;
   try{ sessionStorage.setItem("ngl_staff_ok","1"); }catch(_){}
   start();
 });

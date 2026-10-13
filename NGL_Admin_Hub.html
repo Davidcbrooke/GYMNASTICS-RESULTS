@@ -248,7 +248,7 @@ const CONFIG = {
   sections: [
     {id:"competitions", name:"Competitions",   desc:"Competition dates, club bookings and the season calendar", colour:"#14254a", url:"ngl-booking-system.html?admin=1"},
     {id:"staffing",     name:"Staffing",       desc:"Who's working each competition, judge requests and staffing sheets", colour:"#c8202f", url:"NGL_Staffing_Admin.html"},
-    {id:"judging",      name:"Judging",        desc:"Judging Pathway registrations, tiers and approvals", colour:"#2c6e9b", url:"ngl-judging-pathway.html"},
+    {id:"judging",      name:"Judging",        desc:"Judging Pathway registrations, tiers and approvals", colour:"#2c6e9b", url:"ngl-judging-pathway.html?admin=1"},
     {id:"schools-lic",  name:"Schools licences", desc:"Schools Club Licences: invoices, mark paid, club codes and Graduations", colour:"#7b4fa0", url:"https://nglschools.co.uk/club/?admin"},
     {id:"rec-lic",      name:"Recreational licences", desc:"Recreational Club Licences: invoices, mark paid and book orders", colour:"#d9a521", url:"https://nglrecreational.co.uk/?admin"},
     {id:"finance",      name:"Finance",        desc:"League P&L: competitions now, judging and licensing next", colour:"#1f7a4d", url:"NGL_Finance.html"},
@@ -316,10 +316,13 @@ async function scanSources(){
   const add = f => { const cur = found[f.id]; if(!cur || (f.when && f.when < cur.when)) found[f.id] = {...(cur || {}), ...f, emails:[...new Set([...(cur ? cur.emails : []), ...f.emails])]}; else if(f.emails.length) cur.emails = [...new Set([...cur.emails, ...f.emails])]; };
 
   // Competitions: a club's first booking in each pathway
-  const [comps, books] = await Promise.all([db.collection("ngl_competitions").get(), db.collection("ngl_bookings").get()]);
+  const [comps, books, contacts] = await Promise.all([db.collection("ngl_competitions").get(), db.collection("ngl_bookings").get(),
+    db.collection("ngl_booking_contacts").get().catch(() => ({forEach(){}}))]);
   const compMap = {}; comps.forEach(d => compMap[d.id] = d.data());
+  const contactMap = {}; contacts.forEach(d => contactMap[d.id] = d.data());   // email/phone are admin-only now
   books.forEach(d => {
-    const b = d.data(); if(!b.club) return;
+    const b = {...d.data()}; if(!b.club) return;
+    if(!b.email && contactMap[d.id]) b.email = contactMap[d.id].email;
     const c = compMap[b.compId];
     const pathway = compPathwayOf(c || {name:b.compName});
     const key = nameKey(b.club);

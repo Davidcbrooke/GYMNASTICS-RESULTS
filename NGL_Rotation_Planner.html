@@ -805,11 +805,11 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 <div class="modal-overlay" id="adminGateModal">
   <div class="modal-box" style="max-width:360px;text-align:center;">
     <h3>🔒 NGL Admin Access</h3>
-    <p style="color:var(--muted);font-size:.83rem;margin-bottom:16px;">Enter the NGL admin password to access club management.</p>
-    <div class="mf"><input type="password" id="adminPwInput" placeholder="Admin password" onkeydown="if(event.key==='Enter')checkAdminPw()" style="text-align:center;letter-spacing:3px;"></div>
+    <p id="adminGateMsg" style="color:var(--muted);font-size:.83rem;margin-bottom:16px;">Club management uses your own NGL Admin account. Sign in to NGL Admin first, then come back here.</p>
+    <p style="margin:0 0 14px"><a href="NGL_Admin_Hub.html?section=rotation" target="_top" style="font-weight:600">Open NGL Admin &#8594;</a></p>
     <div class="modal-actions" style="justify-content:center;">
       <button class="btn-cancel" onclick="closeModal('adminGateModal')">Cancel</button>
-      <button class="btn-save" onclick="checkAdminPw()">Enter</button>
+      <button class="btn-save" onclick="checkAdminPw()">I'm signed in</button>
     </div>
   </div>
 </div>
@@ -1590,7 +1590,7 @@ function renderTabs(){
     profile.onmouseover=()=>profile.style.color='rgba(255,255,255,.8)';
     profile.onmouseout=()=>profile.style.color='rgba(255,255,255,.4)';
     const link=document.createElement('button'); link.textContent='🔑 Admin'; link.style.cssText='background:none;border:none;color:rgba(255,255,255,.3);font-size:.72rem;cursor:pointer;padding:10px 14px;';
-    link.onclick=()=>document.getElementById('adminGateModal').classList.add('open');
+    link.onclick=()=>{ document.getElementById('adminGateModal').classList.add('open'); checkAdminPw(); };
     link.onmouseover=()=>link.style.color='rgba(255,255,255,.7)';
     link.onmouseout=()=>link.style.color='rgba(255,255,255,.3)';
     const mv=document.createElement('button'); mv.textContent='⤓ Bring data across'; mv.style.cssText=profile.style.cssText; mv.onclick=()=>openMoveModal();
@@ -2964,15 +2964,24 @@ function checkFlash(){
 // ================================================================
 // ADMIN
 // ================================================================
-const ADMIN_PASSWORD = 'ngl2026';
 let importingClubId = null;
 let allClubs = [];
 
-function checkAdminPw(){
-  if(document.getElementById('adminPwInput').value === ADMIN_PASSWORD){
+// Admin access comes from the NGL Admin Hub sign-in (same Firebase project),
+// checked against ngl_admin_users. No shared password.
+async function checkAdminPw(){
+  const u = firebase.auth().currentUser;
+  let ok = false;
+  if(u && u.email){
+    try{
+      const d = await firebase.firestore().collection('ngl_admin_users').doc(u.email.toLowerCase()).get();
+      const r = d.exists ? d.data() : null;
+      ok = !!(r && (r.owner || (r.sections || []).includes('rotation')));
+    }catch(e){ ok = false; }
+  }
+  if(ok){
     adminUnlocked = true;
     closeModal('adminGateModal');
-    document.getElementById('adminPwInput').value='';
     currentTab='admin';
     renderTabs();
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -2980,9 +2989,10 @@ function checkAdminPw(){
     document.getElementById('adminView').style.display='block';
     renderAdmin();
   } else {
-    document.getElementById('adminPwInput').value='';
-    document.getElementById('adminPwInput').placeholder='Incorrect — try again';
-    setTimeout(()=>document.getElementById('adminPwInput').placeholder='Admin password',1500);
+    const m = document.getElementById('adminGateMsg');
+    if(m) m.textContent = u && u.email
+      ? 'Signed in as ' + u.email + ', which isn\u2019t an NGL Admin account with Rotation Planner access. Sign in to NGL Admin first.'
+      : 'Not signed in to NGL Admin. Open NGL Admin, sign in, then come back here.';
   }
 }
 

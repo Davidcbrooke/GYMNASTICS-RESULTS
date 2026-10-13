@@ -607,9 +607,9 @@
   <div class="admin-login-wrap" id="admin-login">
     <div class="al-head">&#x1F510; Admin Login<p>NGL Judging Pathway &mdash; Administrator Access</p></div>
     <div class="al-body">
-      <div class="fg"><label>Password</label><input type="password" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')window.adminLogin()"></div>
-      <button class="btn btn-navy btn-full" onclick="window.adminLogin()">Sign In</button>
-      <div class="al-err" id="al-err">Incorrect password. Please try again.</div>
+      <p style="font-size:0.85rem;margin:0 0 14px">Sign in through NGL Admin with your own account. Once you're signed in there, this page opens straight to the dashboard.</p>
+      <button class="btn btn-navy btn-full" onclick="window.adminLogin()">Sign in with NGL Admin &#8594;</button>
+      <div class="al-err" id="al-err"></div>
     </div>
   </div>
 
@@ -786,7 +786,8 @@ const assignCol  = collection(db, 'ngl_judging_assignments');
 const notifCol   = collection(db, 'ngl_judge_notifications');
 const resourcesCol = collection(db, 'ngl_resources');
 
-const ADMIN_PASSWORD = 'ngl2026';
+const HUB_URL = 'NGL_Admin_Hub.html';
+let adminUser = null;   // set when the signed-in account is an NGL admin with Judging access
 
 // ══ APPARATUS DEFINITIONS ══
 const WAG_PIECES = ['Vault', 'Uneven Bars', 'Beam', 'Floor'];
@@ -1309,25 +1310,38 @@ window.uploadPhoto = async function(input) {
 };
 
 // ══ ADMIN AUTH ══
-window.adminLogin = function() {
-  if (document.getElementById('admin-pw').value === ADMIN_PASSWORD) {
-    adminLoggedIn = true;
-    document.getElementById('admin-login').style.display = 'none';
-    document.getElementById('admin-dash').style.display = 'block';
-    loadAllJudges().then(() => { window.renderAdminApplications(); renderAdminJudgesList(); });
-    renderAdminResourceList();
-  } else {
-    document.getElementById('al-err').style.display = 'block';
-    document.getElementById('admin-pw').value = '';
-  }
-};
-
-window.adminLogout = function() {
+// Admin access comes from the NGL Admin Hub sign-in (same Firebase project), checked
+// against ngl_admin_users. Judges' own sign-in is unchanged. No shared password.
+function enterAdmin() {
+  adminLoggedIn = true;
+  document.getElementById('admin-login').style.display = 'none';
+  document.getElementById('admin-dash').style.display = 'block';
+  loadAllJudges().then(() => { window.renderAdminApplications(); renderAdminJudgesList(); });
+  renderAdminResourceList();
+}
+function leaveAdmin(msg) {
   adminLoggedIn = false;
+  allJudges = [];
   document.getElementById('admin-login').style.display = 'block';
   document.getElementById('admin-dash').style.display = 'none';
-  document.getElementById('admin-pw').value = '';
-  document.getElementById('al-err').style.display = 'none';
+  const err = document.getElementById('al-err');
+  if (err) { err.textContent = msg || ''; err.style.display = msg ? 'block' : 'none'; }
+}
+async function checkAdmin(user) {
+  if (!user || !user.email) return null;
+  try {
+    const d = await getDoc(doc(db, 'ngl_admin_users', user.email.toLowerCase()));
+    const r = d.exists() ? d.data() : null;
+    return (r && (r.owner || (r.sections || []).includes('judging'))) ? { email: user.email, name: r.name || user.email } : null;
+  } catch (e) { return null; }   // ordinary judges can't read the admin list: not an admin
+}
+
+window.adminLogin = function() {
+  window.top.location.href = HUB_URL + '?section=judging';
+};
+
+window.adminLogout = async function() {
+  try { await signOut(auth); } catch (e) { console.warn(e); }
 };
 
 async function loadAllJudges() {
@@ -1350,10 +1364,20 @@ function friendlyAuthError(e) {
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
   if (notifUnsub) { notifUnsub(); notifUnsub = null; }
+  adminUser = await checkAdmin(user);
+  if (adminUser) enterAdmin(); else leaveAdmin(user && new URLSearchParams(location.search).has('admin') ? 'Signed in as ' + user.email + ', but this account doesn\u2019t include Judging. Ask Dave to add it in NGL Admin.' : '');
+  if (adminUser && new URLSearchParams(location.search).has('admin')) window.showPanel('admin', null);
   if (user) {
     const snap = await getDoc(doc(db, 'ngl_judges', user.uid));
     currentProfile = snap.exists() ? snap.data() : null;
-    if (!currentProfile) {
+    if (!currentProfile && adminUser) {
+      // An NGL admin who isn't also a judge: don't ask them to complete a judge profile.
+      document.getElementById('complete-profile-area').style.display = 'none';
+      document.getElementById('no-login-forms').style.display = 'block';
+      document.getElementById('auth-area').style.display = 'none';
+      document.getElementById('passport-area').style.display = 'none';
+      document.getElementById('signup-gate').style.display = 'block';
+    } else if (!currentProfile) {
       QUAL_STATE.completeProfile = [{ discipline: 'Not Discipline-Specific', level: 'None' }];
       renderQualRows('completeProfile', 'cp-qual-rows');
       document.getElementById('complete-profile-area').style.display = 'block';

@@ -66,9 +66,8 @@ table tr:hover td{ background:#f8f8f8; }
 <div class="gate" id="gate">
   <div class="gate-box">
     <h2>NGL <span>Admin Panel</span></h2>
-    <p>Enter admin password to continue</p>
-    <input type="password" id="pwInput" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()">
-    <button onclick="checkPw()">Enter</button>
+    <p>Checking your NGL Admin sign-in&hellip;</p>
+    <button onclick="window.top.location.href='NGL_Admin_Hub.html?section=rotation'">Open NGL Admin</button>
   </div>
 </div>
 
@@ -110,23 +109,32 @@ table tr:hover td{ background:#f8f8f8; }
 
 <div id="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-const ADMIN_PASSWORD = 'ngl2026';
+firebase.initializeApp({
+  apiKey: "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
+  authDomain: "saadi-rotation.firebaseapp.com",
+  databaseURL: "https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "saadi-rotation",
+  storageBucket: "saadi-rotation.firebasestorage.app",
+  messagingSenderId: "1066734803675",
+  appId: "1:1066734803675:web:0188fd601adea7db08cafe"
+});
+// Access comes from the NGL Admin Hub sign-in via ngl-admin-guard.js (section "rotation"). No shared password.
+document.addEventListener("ngl-admin-ready", () => {
+  document.getElementById('gate').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  loadClubs();
+}, {once:true});
+</script>
+<script src="ngl-admin-guard.js" data-section="rotation"></script>
+<script>
 const DB_URL = 'https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app';
 let importingClubId = null;
 let allClubs = [];
 
-function checkPw(){
-  if(document.getElementById('pwInput').value === ADMIN_PASSWORD){
-    document.getElementById('gate').style.display='none';
-    document.getElementById('app').classList.add('visible');
-    loadClubs();
-  } else {
-    document.getElementById('pwInput').value='';
-    document.getElementById('pwInput').placeholder='Incorrect — try again';
-    setTimeout(()=>document.getElementById('pwInput').placeholder='Password',1500);
-  }
-}
 
 async function dbGet(path){ const r=await fetch(`${DB_URL}/${path}.json`); return r.json(); }
 async function dbPut(path,data){ const r=await fetch(`${DB_URL}/${path}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); return r.json(); }
