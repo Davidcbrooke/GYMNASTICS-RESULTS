@@ -101,7 +101,7 @@ function getSessionLoc(s, week){
 function detectWeek(){
   // Recreational clubs: from the club's term dates
   if(TERM && TERM.start){
-    var day=86400000, start=new Date(TERM.start+'T00:00:00'), wk=Math.floor((new Date()-start)/(7*day))+1;
+    var day=86400000, start=(function(x){var d=new Date(x);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;})(TERM.start+'T00:00:00'), wk=Math.floor((new Date()-start)/(7*day))+1;
     if(TERM.halfTerm){ var hw=Math.floor((new Date(TERM.halfTerm+'T00:00:00')-start)/(7*day))+1; if(wk>hw) wk-=1; }
     if(wk>=1 && wk<=TERM.weeks){ if(wk>TERM.weeks-2) return wk===TERM.weeks-1?'A':'B'; return (wk-1)%2===0?'A':'B'; }
   }

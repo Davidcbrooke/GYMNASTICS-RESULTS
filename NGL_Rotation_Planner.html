@@ -1061,11 +1061,12 @@ function recTerm(){
   return {start:t.start || '', weeks:+t.weeks || 14, halfTerm:t.halfTerm || '', classLen:+t.classLen || 60,
     pieces:Object.assign({VT:'table', BM:'beam', BA:'bars', FT:'fasttrack'}, t.pieces || {})};
 }
+const _mon = x => { const d = new Date(x); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d; };  // weeks run Monday to Sunday
 // Which week of the club's term is it? Half term doesn't count.
 function recWeekInfo(t, today){
   today = today || new Date();
   if(!t.start) return {letter:null, label:'Add your term dates in your club plan to switch weeks automatically'};
-  const day = 86400000, start = new Date(t.start + 'T00:00:00');
+  const day = 86400000, start = _mon(t.start + 'T00:00:00');
   let wk = Math.floor((today - start) / (7 * day)) + 1;
   if(t.halfTerm){
     const hw = Math.floor((new Date(t.halfTerm + 'T00:00:00') - start) / (7 * day)) + 1;
