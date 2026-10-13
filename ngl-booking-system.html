@@ -517,9 +517,9 @@
   <div class="admin-login-wrap" id="admin-login">
     <div class="al-head">&#x1F510; Admin Login<p>NGL Booking System &mdash; Administrator Access</p></div>
     <div class="al-body">
-      <div class="fg"><label>Password</label><input type="password" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')window.adminLogin()"></div>
-      <button class="btn-signin" onclick="window.adminLogin()">Sign In</button>
-      <div class="al-err" id="al-err">Incorrect password. Please try again.</div>
+      <p style="font-size:0.85rem;margin:0 0 14px">Sign in through NGL Admin with your own account. Once you're signed in there, this page opens straight to the dashboard.</p>
+      <button class="btn-signin" onclick="window.adminLogin()">Sign in with NGL Admin &#8594;</button>
+      <div class="al-err" id="al-err"></div>
     </div>
   </div>
 
@@ -531,6 +531,10 @@
         <button class="btn-logout" onclick="window.copyAllEmails()">&#x1F4CB; Copy Emails</button>
         <button class="btn-logout" onclick="window.adminLogout()">Sign Out</button>
       </div>
+    </div>
+    <div id="migrate-notice" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 16px;padding:12px 16px;border:1px solid #d9a521;background:#fff8e1;font-size:0.85rem">
+      <span><b><span id="migrate-count">0</span> booking(s)</b> still hold contact details in the public booking list. Move them to the admin-only contacts store.</span>
+      <button class="btn-add" id="migrate-btn" style="margin-top:0" onclick="window.migrateContacts()">Secure them now</button>
     </div>
 
     <div class="stats-row" id="stats-row">
@@ -745,7 +749,9 @@
 <script type="module">
 import { initializeApp }                            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, collection, doc, addDoc, deleteDoc, updateDoc,
-         onSnapshot, query, orderBy, getDocs }      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+         onSnapshot, query, orderBy, getDocs, getDoc, setDoc, where,
+         writeBatch, deleteField }                  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, onAuthStateChanged, signOut }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
@@ -762,9 +768,30 @@ const db  = getFirestore(app);
 const compsCol    = collection(db, 'ngl_competitions');
 const bookingsCol = collection(db, 'ngl_bookings');
 
-const ADMIN_PASSWORD = 'ngl2026';
+// Contact details (email, phone) live in ngl_booking_contacts, which only signed-in
+// NGL admins can read. Public booking records hold an emailHash instead, so clubs can
+// still find their own bookings and the Club Hub can match them, without exposing anyone's details.
+const contactsCol = collection(db, 'ngl_booking_contacts');
+const auth = getAuth(app);
+const HUB_URL = 'NGL_Admin_Hub.html';
 let allCompetitions = [];
-let allBookings     = [];
+let allBookings     = [];   // bookings, merged with contact details when an admin is signed in
+let rawBookings     = [];
+let contactsById    = {};
+let contactsUnsub   = null;
+let adminUser       = null;
+
+async function emailHash(e) {
+  const data = new TextEncoder().encode(String(e || '').trim().toLowerCase());
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function mergeBookings() {
+  allBookings = rawBookings.map(b => {
+    const c = contactsById[b.id];
+    return c ? { ...b, email: c.email || b.email || '', phone: c.phone || b.phone || '' } : b;
+  });
+}
 let adminLoggedIn   = false;
 let currentPathway  = null;
 
@@ -940,7 +967,8 @@ onSnapshot(query(compsCol, orderBy('date')), snap => {
 });
 
 onSnapshot(query(bookingsCol, orderBy('bookedAt', 'desc')), snap => {
-  allBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  rawBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  mergeBookings();
   renderCalendar();
   if (document.getElementById('panel-home').classList.contains('active')) renderPathwayCards();
   if (document.getElementById('panel-calendar').classList.contains('active')) renderFullCalendar();
@@ -1373,23 +1401,29 @@ window.submitBooking = async function() {
 
   const ref = 'NGL-' + Math.random().toString(36).substr(2,6).toUpperCase();
   try {
-    const promises = selIds.map(compId => {
+    const eh = await emailHash(email);
+    const bookedAt = new Date().toISOString();
+    const batch = writeBatch(db);
+    selIds.forEach(compId => {
       const comp    = allCompetitions.find(x => x.id === compId);
       const sel     = selections[compId];
       const isWait  = sel && sel.waitlist;
       const spaces  = isWait ? 0 : (sel || 1);
-      return addDoc(bookingsCol, {
+      const ref_    = doc(bookingsCol);
+      batch.set(ref_, {
         reference: ref,
         compId,
         compName:  comp.name,
         compDate:  comp.date,
         spaces,
         waitlist:  isWait || false,
-        club, region, email, phone,
-        bookedAt:  new Date().toISOString()
+        club, region,
+        emailHash: eh,
+        bookedAt
       });
+      batch.set(doc(contactsCol, ref_.id), { reference: ref, compId, club, email, phone, bookedAt });
     });
-    await Promise.all(promises);
+    await batch.commit();
 
     document.getElementById('booking-section').style.display = 'none';
     document.getElementById('success-screen').classList.add('show');
@@ -1430,26 +1464,91 @@ window.resetForm = function() {
   window.scrollTo({top:0,behavior:'smooth'});
 };
 
-window.adminLogin = function() {
-  if (document.getElementById('admin-pw').value === ADMIN_PASSWORD) {
-    adminLoggedIn = true;
-    document.getElementById('admin-login').style.display='none';
-    document.getElementById('admin-dash').style.display='block';
-    renderAdminComps();
-    renderBookingsTable();
-    updateStats();
-  } else {
-    document.getElementById('al-err').style.display='block';
-    document.getElementById('admin-pw').value='';
+// Admin access comes from the NGL Admin Hub sign-in (same site, same Firebase project),
+// checked against ngl_admin_users. No shared password.
+function enterAdmin() {
+  adminLoggedIn = true;
+  document.getElementById('admin-login').style.display='none';
+  document.getElementById('admin-dash').style.display='block';
+  const who = document.getElementById('al-who'); if (who) who.textContent = adminUser ? adminUser.email : '';
+  if (!contactsUnsub) {
+    contactsUnsub = onSnapshot(contactsCol, snap => {
+      contactsById = Object.fromEntries(snap.docs.map(d => [d.id, d.data()]));
+      mergeBookings();
+      if (adminLoggedIn) renderBookingsTable();
+      showMigrateNotice();
+    }, e => console.warn('Contacts not loaded', e));
   }
-};
-
-window.adminLogout = function() {
+  renderAdminComps();
+  renderBookingsTable();
+  updateStats();
+  showMigrateNotice();
+}
+function leaveAdmin(msg) {
   adminLoggedIn = false;
+  if (contactsUnsub) { contactsUnsub(); contactsUnsub = null; }
+  contactsById = {};
+  mergeBookings();
   document.getElementById('admin-login').style.display='block';
   document.getElementById('admin-dash').style.display='none';
-  document.getElementById('admin-pw').value='';
-  document.getElementById('al-err').style.display='none';
+  const err = document.getElementById('al-err');
+  if (err) { err.textContent = msg || ''; err.style.display = msg ? 'block' : 'none'; }
+}
+onAuthStateChanged(auth, async u => {
+  adminUser = null;
+  if (u && u.email) {
+    try {
+      const d = await getDoc(doc(db, 'ngl_admin_users', u.email.toLowerCase()));
+      const r = d.exists() ? d.data() : null;
+      if (r && (r.owner || (r.sections || []).includes('competitions'))) adminUser = { email: u.email, name: r.name || u.email };
+      else return leaveAdmin('Signed in as ' + u.email + ', but this account doesn\u2019t include Competitions. Ask Dave to add it in NGL Admin.');
+    } catch (e) { console.warn(e); return leaveAdmin('Couldn\u2019t check your access. Refresh to try again.'); }
+  }
+  adminUser ? enterAdmin() : leaveAdmin();
+});
+
+window.adminLogin = function() {
+  window.top.location.href = HUB_URL + '?section=competitions';
+};
+
+window.adminLogout = async function() {
+  try { await signOut(auth); } catch (e) { console.warn(e); }
+};
+
+// One-off: moves email/phone off any booking still holding them into the admin-only contacts collection.
+function bookingsNeedingMigration() { return rawBookings.filter(b => b.email || b.phone); }
+function showMigrateNotice() {
+  const el = document.getElementById('migrate-notice');
+  if (!el) return;
+  const n = adminLoggedIn ? bookingsNeedingMigration().length : 0;
+  el.style.display = n ? 'flex' : 'none';
+  const c = document.getElementById('migrate-count'); if (c) c.textContent = n;
+}
+window.migrateContacts = async function() {
+  const todo = bookingsNeedingMigration();
+  if (!todo.length) return showMigrateNotice();
+  const btn = document.getElementById('migrate-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Securing\u2026'; }
+  try {
+    for (let i = 0; i < todo.length; i += 200) {
+      const batch = writeBatch(db);
+      for (const b of todo.slice(i, i + 200)) {
+        const prev = contactsById[b.id] || {};
+        batch.set(doc(contactsCol, b.id), {
+          reference: b.reference || '', compId: b.compId || '', club: b.club || '',
+          email: b.email || prev.email || '', phone: b.phone || prev.phone || '', bookedAt: b.bookedAt || ''
+        }, { merge: true });
+        batch.update(doc(db, 'ngl_bookings', b.id), {
+          emailHash: await emailHash(b.email || prev.email || ''),
+          email: deleteField(), phone: deleteField()
+        });
+      }
+      await batch.commit();
+    }
+    alert(todo.length + ' booking(s) secured. Contact details are now admin-only.');
+  } catch (e) { alert('Error securing bookings: ' + e.message); }
+  if (btn) { btn.disabled = false; btn.textContent = 'Secure them now'; }
+  showMigrateNotice();
 };
 
 function buildIcons(c) {
@@ -1687,15 +1786,21 @@ window.closeBookingModal = function() {
 window.saveBookingEdit = async function() {
   const id = document.getElementById('eb-id').value;
   if (!id) return;
+  const club  = document.getElementById('eb-club').value.trim();
+  const email = document.getElementById('eb-email').value.trim();
+  const phone = document.getElementById('eb-phone').value.trim();
   const updated = {
-    club:    document.getElementById('eb-club').value.trim(),
+    club,
     region:  document.getElementById('eb-region').value,
     spaces:  parseInt(document.getElementById('eb-spaces').value) || 0,
-    email:   document.getElementById('eb-email').value.trim(),
-    phone:   document.getElementById('eb-phone').value.trim(),
+    emailHash: await emailHash(email),
+    email: deleteField(), phone: deleteField()
   };
   try {
-    await updateDoc(doc(db,'ngl_bookings',id), updated);
+    const batch = writeBatch(db);
+    batch.update(doc(db,'ngl_bookings',id), updated);
+    batch.set(doc(contactsCol,id), { club, email, phone }, { merge: true });
+    await batch.commit();
     closeBookingModal();
   } catch(e) { alert('Error saving: ' + e.message); }
 };
@@ -1705,7 +1810,10 @@ window.deleteBooking = async function(id) {
   if (!b) return;
   if (!confirm('Delete booking for ' + b.club + ' (' + (b.compName||'') + ')? This cannot be undone.')) return;
   try {
-    await deleteDoc(doc(db,'ngl_bookings',id));
+    const batch = writeBatch(db);
+    batch.delete(doc(db,'ngl_bookings',id));
+    batch.delete(doc(contactsCol,id));
+    await batch.commit();
   } catch(e) { alert('Error deleting: ' + e.message); }
 };
 
@@ -1775,9 +1883,8 @@ window.searchMyBookings = async function() {
   resultsEl.innerHTML = '<div class="loading-bar"><div class="spinner"></div> Looking up your bookings&hellip;</div>';
 
   try {
-    const snap = await getDocs(bookingsCol);
+    const snap = await getDocs(query(bookingsCol, where('emailHash', '==', await emailHash(emailInput))));
     const mine = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      .filter(b => (b.email || '').trim().toLowerCase() === emailInput)
       .sort((a,b) => (a.compDate||'').localeCompare(b.compDate||''));
 
     if (!mine.length) {
