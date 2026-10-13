@@ -1263,6 +1263,7 @@ function renderRec(){
     ${patCard}
     <div class="rc-card"><h2>From your club plan</h2>
       <p>Classes are <b>${t.classLen} minutes</b>: ${rule.warm} minutes warm-up, rotations, ${rule.cool} minutes cool-down. <b>This week:</b> ${recEsc(wi.label)}${wi.letter ? ` · ${weekName(wi.letter)}` : ''}.</p>
+      <div class="rc-btns" style="margin:4px 0 10px"><button class="rc-btn" onclick="recPrintSheet()">🖨 Print term sheet</button><span class="rc-note" style="margin-left:8px">Both rotation weeks, class times and the term calendar on one page. Save it as a PDF for a back-up.</span></div>
       <p class="rc-note">Week 1 and Week 2 switch on their own from your term dates. To change class length, apparatus or term dates, update your club plan in the <a href="https://nglrecreational.co.uk" target="_blank" rel="noopener">NGL Recreational Hub</a>.</p></div>
     <div class="rc-card"><h2>Where each piece is in your hall</h2>
       <p class="rc-note">Forward and backward floor run at the same time (one group from each rotation), so they need two areas of floor.</p>
@@ -1270,6 +1271,86 @@ function renderRec(){
       <div class="rc-map"><b>Cool-down</b><select data-rc-map="cool">${locOpts(R.map.cool)}</select></div>
       ${used.map(c => `<div class="rc-map"><b>${REC_PIECES[c]}</b><select data-rc-map="${c}">${locOpts(R.map[c])}</select></div>`).join('')}</div>
   </div>`;
+}
+// ================================================================
+// RECREATIONAL TERM SHEET: one A4 landscape page for the whole term
+// ================================================================
+function recPrintSheet(){
+  const R = recSettings(), t = recTerm(), rule = REC_RULES[t.classLen] || REC_RULES[60];
+  const used = ['FF','BF','VT','BM','BA','FT'].filter(c => !['VT','BM','BA'].includes(c) || t.pieces[c] !== 'none');
+  const hasP = c => used.includes(c), cur = gi => { const s = recStdPattern(gi); return recPattern(gi, hasP) || {A:s.A.filter(hasP), B:s.B.filter(hasP)}; };
+  const nG = Math.max(0, ...R.classes.map(c => +c.groups || 0));
+  if(!R.classes.length || !nG){ showToast('Add your Recreational classes first'); return; }
+  const PCOL = {FF:'#4a90d9', BF:'#2c6fb8', VT:'#5cb85c', BM:'#e8914f', BA:'#7b68ee', FT:'#d9534f'};
+  const nice = s => String(s || '').toLowerCase().replace(/\b\w/g, m => m.toUpperCase());
+  const hm = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  const nR = Math.max(...Array.from({length:nG}, (_, gi) => Math.max(cur(gi).A.length, cur(gi).B.length)));
+  const teach = t.classLen - rule.warm - rule.cool, base = Math.floor(teach / nR);
+  const slots = [['Warm-up', 0, rule.warm]];
+  for(let r = 0, at = rule.warm; r < nR; r++){ const d = r === nR - 1 ? teach - base * (nR - 1) : base; slots.push(['Rotation ' + (r + 1), at, at + d]); at += d; }
+  slots.push(['Cool-down', t.classLen - rule.cool, t.classLen]);
+  const table = w => `<div class="wk"><div class="wkh"><span class="badge ${w}">Week ${w === 'A' ? 1 : 2}</span></div><table class="rot"><thead><tr><th>Group</th>${slots.map(([n, a, b]) => `<th>${n}<small>${a}–${b} min</small></th>`).join('')}</tr></thead><tbody>${
+    Array.from({length:nG}, (_, gi) => { const p = cur(gi)[w];
+      return `<tr><th><i style="background:${REC_COLOURS[gi][1]}"></i>${REC_COLOURS[gi][0]}</th><td class="wm">${recEsc(nice((R.warmBy && R.warmBy[gi]) || R.map.warm))}</td>${
+        Array.from({length:nR}, (_, r) => p[r] ? `<td class="pc" style="background:${PCOL[p[r]]}">${REC_PIECES[p[r]]}</td>` : '<td class="wm">–</td>').join('')
+      }<td class="wm">${recEsc(nice(R.map.cool || R.map.warm))}</td></tr>`; }).join('')}</tbody></table></div>`;
+  // class times, grouped by the days they run
+  const span = ds => { const ix = ds.map(d => DAYS.indexOf(d)); return ds.length > 2 && ix.every((x, i) => !i || x === ix[i - 1] + 1) ? ds[0] + ' to ' + ds[ds.length - 1] : ds.join(', '); };
+  const byDays = {}; R.classes.slice().sort((a, b) => a.start - b.start).forEach(c => { const k = cDays(c).join(','); (byDays[k] = byDays[k] || []).push(c.start); });
+  const times = Object.entries(byDays).sort((a, b) => DAYS.indexOf(a[0].split(',')[0]) - DAYS.indexOf(b[0].split(',')[0]))
+    .map(([k, ss]) => `<tr><th>${recEsc(span(k.split(',')))}</th><td>${ss.map(hm).join(' &nbsp; ')}</td></tr>`).join('');
+  const first = Math.min(...R.classes.map(c => c.start));
+  const eg = slots.slice(1, -1).map(x => hm(first + x[1])).join(', ');
+  // term calendar, Monday to Sunday weeks, half term skipped
+  let cal = '', termLine = '';
+  if(t.start){
+    const day = 86400000, st = new Date(t.start + 'T00:00:00'), m0 = _mon(st);
+    const hw = t.halfTerm ? Math.floor((new Date(t.halfTerm + 'T00:00:00') - m0) / (7 * day)) + 1 : 0;
+    const fd = d => d.getDate() + ' ' + d.toLocaleDateString('en-GB', {month:'short'});
+    const cells = [];
+    for(let c = 1; c <= t.weeks + (hw ? 1 : 0); c++){
+      const a = new Date(m0), b = new Date(m0); a.setDate(a.getDate() + 7 * (c - 1)); b.setDate(b.getDate() + 7 * (c - 1) + 6); const from = a < st ? st : a;
+      if(c === hw){ cells.push(`<div class="cw ht"><b>HT</b><span>${fd(from)}–${fd(b)}</span><em>Half term</em></div>`); continue; }
+      const wk = hw && c > hw ? c - 1 : c, as = wk > t.weeks - 2, L = as ? (wk === t.weeks - 1 ? 1 : 2) : ((wk - 1) % 2 === 0 ? 1 : 2);
+      cells.push(`<div class="cw ${as ? 'as' : L === 1 ? 'A' : 'B'}"><b>Wk ${wk}</b><span>${fd(from)}–${fd(b)}</span><em>Week ${L}${as ? ' · Assess' : ''}</em></div>`);
+    }
+    cal = `<div class="calh">Term calendar <small>which rotation week to use · the last two weeks are assessment · weeks run Monday to Sunday</small></div><div class="cal" style="grid-template-columns:repeat(${cells.length},1fr)">${cells.join('')}</div>`;
+    const mo = st.getMonth(), season = mo >= 8 ? 'Autumn' : mo <= 2 ? 'Spring' : 'Summer';
+    termLine = `${season} term ${st.getFullYear()} · ${t.weeks} weeks from ${st.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'})} · `;
+  }
+  const club = recEsc((CLUB && CLUB.name) || (document.getElementById('clubNameHeader').textContent || '').replace(/^—\s*/, '') || 'Your club');
+  const areas = used.map(c => { const loc = nice(R.map[c]); return `<div><i style="background:${PCOL[c]}"></i>${REC_PIECES[c]}${loc.toLowerCase() === REC_PIECES[c].toLowerCase() ? '' : ' · ' + recEsc(loc)}</div>`; }).join('');
+  const w = window.open('', '_blank');
+  if(!w){ showToast('Allow pop-ups to print the term sheet'); return; }
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${club} · Recreational term sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>@page{size:A4 landscape;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Roboto,Arial,sans-serif;color:#1e1a4c;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pg{width:297mm;height:210mm;padding:8mm 9mm 7mm;display:flex;flex-direction:column;gap:3mm;overflow:hidden}
+.top{display:flex;align-items:center;gap:5mm;border-bottom:1.2mm solid #E88230;padding-bottom:2.5mm}.top img{height:14mm}
+h1{font-family:'Barlow Condensed',Arial,sans-serif;font-weight:700;font-size:22pt;margin:0;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.top>div:nth-child(2){min-width:0}.top p{margin:1mm 0 0;font-size:9.5pt;color:#555}.top .r{margin-left:auto;text-align:right;font-size:8.5pt;color:#555}
+.main{display:grid;grid-template-columns:1fr 64mm;gap:5mm;flex:1;min-height:0}.wk{margin-bottom:2mm}.wkh{margin-bottom:1mm}
+.badge{font-family:'Barlow Condensed',Arial,sans-serif;font-weight:700;color:#fff;border-radius:2mm;padding:.5mm 3mm;font-size:12pt}.badge.A{background:#1e1a4c}.badge.B{background:#E88230}
+table{border-collapse:separate;border-spacing:.8mm;width:100%}.rot{table-layout:fixed}.rot thead th:first-child{width:23mm}.rot thead th:nth-child(2),.rot thead th:last-child{width:22mm}.rot th,.rot td{font-size:8.6pt;padding:1.05mm 2mm;border-radius:1.2mm;text-align:left}
+.rot thead th{background:#ece9f5;font-family:'Barlow Condensed',Arial,sans-serif;font-size:10pt}.rot thead small{display:block;font-family:Roboto,Arial,sans-serif;font-weight:400;font-size:7.4pt;color:#666}
+.rot tbody th{width:23mm;font-family:'Barlow Condensed',Arial,sans-serif;font-size:10.5pt;background:#f6f5fa;white-space:nowrap}.rot tbody th i{display:inline-block;width:3.2mm;height:3.2mm;border-radius:50%;margin-right:1.6mm;vertical-align:-.5mm}
+.wm{background:#f6f5fa;color:#555;width:22mm}.pc{color:#fff;font-weight:500;font-size:9pt!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h2{font-family:'Barlow Condensed',Arial,sans-serif;font-size:12pt;margin:0 0 1mm}.box{background:#f6f5fa;border-radius:2mm;padding:2.5mm 3mm;margin-bottom:3mm;font-size:8.4pt;line-height:1.4}
+.times th,.times td{font-size:8.6pt;padding:.8mm 1mm;text-align:left;vertical-align:top}.times td{font-weight:500;white-space:nowrap}
+.key div{display:flex;align-items:center;gap:1.5mm;margin:.6mm 0}.key i{width:3.4mm;height:3.4mm;border-radius:.8mm;display:inline-block}
+.calh{font-family:'Barlow Condensed',Arial,sans-serif;font-weight:600;font-size:12pt;margin-bottom:1mm}.calh small{font-family:Roboto,Arial,sans-serif;font-weight:400;font-size:8pt;color:#666}
+.cal{display:grid;gap:.8mm}.cw{border-radius:1.4mm;padding:1.2mm 1mm;text-align:center;font-size:7pt;line-height:1.25;background:#f6f5fa}
+.cw b{display:block;font-family:'Barlow Condensed',Arial,sans-serif;font-size:9.5pt}.cw span{display:block;color:#555}.cw em{display:block;font-style:normal;font-weight:500;margin-top:.4mm}
+.cw.A{border-top:1.2mm solid #1e1a4c}.cw.B{border-top:1.2mm solid #E88230}.cw.as{background:#fff4d6;border-top:1.2mm solid #d9a521}.cw.ht{background:#e9e9e9;color:#777;border-top:1.2mm solid #aaa}
+.foot{font-size:7.4pt;color:#777;display:flex;justify-content:space-between}
+@media screen{body{background:#666}.pg{background:#fff;margin:10px auto;box-shadow:0 4px 20px rgba(0,0,0,.4)}}</style></head><body><div class="pg">
+<div class="top"><img src="https://nglrecreational.co.uk/icons/rec-logo.png" alt="" onerror="this.remove()"><div><h1>${club} · Recreational class rotations</h1><p>${termLine}${t.classLen}-minute classes · ${nG} groups</p></div><div class="r">NGL Rotation Planner<br>Printed ${new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'})}</div></div>
+<div class="main"><div>${table('A')}${table('B')}</div><div>
+<h2>Class times</h2><div class="box"><table class="times">${times}</table></div>
+<h2>Within each class</h2><div class="box">Warm-up ${rule.warm} min · ${nR} rotations of about ${base} min · cool-down ${rule.cool} min.<br>Example, ${hm(first)} class: rotations at ${eg}, cool-down ${hm(first + t.classLen - rule.cool)}.</div>
+<h2>Apparatus and areas</h2><div class="box key">${areas}</div></div></div>
+${cal}<div class="foot"><span>NGL Recreational · nglrecreational.co.uk</span><span>Choose “Save as PDF” in the print window to keep a copy.</span></div>
+</div><script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { const i = document.querySelector('img'); const go = () => setTimeout(() => window.print(), 150); if(i && !i.complete){ i.onload = i.onerror = go; } else go(); });<\/script></body></html>`);
+  w.document.close();
 }
 function recChanged(){ applyRec(); recAutoWeek(true); scheduleAutoSave(); renderRec(); }
 document.addEventListener('change', e => {
