@@ -1151,18 +1151,24 @@
       note: 'Based on the FIG Code of Points except where NGL changes are noted.'
     },
     'grades-prep-2027': {
-      title: 'Grades Preparation',
-      intro: 'NGL Grades Preparation competitions run to the British Gymnastics grade rules, so gymnasts can rehearse the exact grade they are working towards. The two BG documents are the rules for these competitions.',
-      keyPoint: '<strong>The NGL difference: enter any grade at any age.</strong> Gymnasts compete in the same NGL age bands as the rest of the league: <strong>6–8, 9–11, 12–14 and 15+</strong>. The NGL National League table is ranked within these age bands.',
-      links: [
-        { title:'Download the Preparation Grades rules', sub:'Preparation 1–3. Downloads the NGL rules sheet and opens the BG NDP Grades document in a new tab.', url:'grades-prep-2027/NGL_Performance_League_Preparation_Grades_2027.pdf', download:true, also:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf' },
-        { title:'Download the Development Grades rules', sub:'Development 1–4. Downloads the NGL rules sheet and opens the BG NDP Grades document in a new tab.', url:'grades-prep-2027/NGL_Performance_League_Development_Grades_2027.pdf', download:true, also:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf' },
-        { title:'Download the Performance Grades rules', sub:'Performance 1–4. Downloads the NGL rules sheet and opens the BG NDP Grades document in a new tab.', url:'grades-prep-2027/NGL_Performance_League_Performance_Grades_2027.pdf', download:true, also:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf' },
-        { title:'Download the Excel Grades rules', sub:'Pre-Excel and Excel 1–3. Downloads the NGL rules sheet and opens the BG Excel Grades document in a new tab.', url:'grades-prep-2027/NGL_Performance_League_Excel_Grades_2027.pdf', download:true, also:'https://www.southwag.com/_files/ugd/05ec96_2f43ebedbb0248a9b6139c1b253e6555.pdf' },
-        { title:'NDP Grades 2024–2027', sub:'Women\'s Artistic National Development Plan — Preparation, Development and Performance Grades (revised 7 Nov 2024 for 2025 onwards).', url:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf' },
-        { title:'Excel Grades 2026', sub:'Women\'s Artistic S.T.E.P. Framework — Pre-Excel and Excel Grades 1 to 3, 2026 onwards.', url:'https://www.southwag.com/_files/ugd/05ec96_2f43ebedbb0248a9b6139c1b253e6555.pdf' }
+      title: 'Grades Preparation 2027',
+      intro: 'NGL Grades Preparation competitions run to the British Gymnastics grade rules, so gymnasts can rehearse the exact grade they are working towards. The NGL sheets below cover how the competitions run; the routines and requirements are in the British Gymnastics documents.',
+      keyPoint: '<strong>The NGL difference: enter any grade at any age.</strong> Gymnasts compete in the same NGL age bands as the rest of the league: <strong>6–8, 9–11, 12–14 and 15+</strong>. The NGL Performance League table is ranked by grade within these age bands.',
+      pdf: 'grades-prep-2027/NGL_Performance_League_Grades_Preparation_Rules_2027.pdf',
+      pages: ['Competition rules', 'Judging and general rules'],
+      pageRatio: '1754/1242',
+      chooseLabel: 'Choose a grade group',
+      levels: [
+        { id:'Preparation', bg:'Grades', name:'Preparation Grades 1–3', files:['grades-prep-2027/pages/preparation-1.jpg', 'grades-prep-2027/pages/preparation-2.jpg'] },
+        { id:'Development', bg:'Grades', name:'Development Grades 1–4', files:['grades-prep-2027/pages/development-1.jpg', 'grades-prep-2027/pages/development-2.jpg'] },
+        { id:'Performance', bg:'Grades', name:'Performance Grades 1–4', files:['grades-prep-2027/pages/performance-1.jpg', 'grades-prep-2027/pages/performance-2.jpg'] },
+        { id:'Excel', bg:'Grades', name:'Pre-Excel and Excel Grades 1–3', files:['grades-prep-2027/pages/excel-1.jpg', 'grades-prep-2027/pages/excel-2.jpg'] }
       ],
-      note: 'The four NGL sheets cover how the competitions run. The routines, requirements and values are in the two British Gymnastics documents, opened from their published copies. NGL does not alter them.'
+      externals: [
+        { label:'BG NDP Grades 2024–2027', url:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf', sub:'Preparation, Development and Performance grades: routines and requirements.' },
+        { label:'BG Excel Grades 2026', url:'https://www.southwag.com/_files/ugd/05ec96_2f43ebedbb0248a9b6139c1b253e6555.pdf', sub:'Pre-Excel and Excel 1–3: routines and requirements.' }
+      ],
+      note: 'The routines, requirements and values are in the two British Gymnastics documents, opened from their published copies. NGL does not alter them.'
     },
     'recreational-2027': {
       title: 'Recreational Club Competition Rules 2027',
@@ -1218,7 +1224,7 @@
     }
     var levels = d.levels.map(function (lv, i) {
       return '<button type="button" class="rlevel" data-level="' + i + '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '">' +
-        '<span class="bg">Level</span><span class="l">' + lv.id + '</span></button>';
+        '<span class="bg">' + (lv.bg || 'Level') + '</span><span class="l"' + (lv.id.length > 3 ? ' style="font-size:15px"' : '') + '>' + lv.id + '</span></button>';
     }).join('');
     var pages = d.pages.map(function (name, i) {
       return '<div class="rpage"><div class="rpage-head"><span class="name">' + name + '</span>' +
@@ -1227,13 +1233,15 @@
     }).join('');
     var single = d.levels.length === 1;
     return '<p class="lede">' + d.intro + '</p>' +
+      (d.keyPoint ? '<div style="background:#e6f7f8;border-left:5px solid #01AFB8;border-radius:10px;padding:14px 18px;margin:14px 0 18px;line-height:1.55;color:#1d1a1f;">' + d.keyPoint + '</div>' : '') +
       '<div class="rules-actions">' +
         '<a class="buy-btn" href="' + d.pdf + '" download>Download the PDF</a>' +
         '<a class="rules-link" href="' + d.pdf + '" target="_blank" rel="noopener">Open PDF in a new tab</a>' +
         (d.external ? '<a class="rules-link" href="' + d.external.url + '" target="_blank" rel="noopener" title="' + (d.external.sub || '') + '">' + d.external.label + ' ↗</a>' : '') +
+        (d.externals ? d.externals.map(function (x) { return '<a class="rules-link" href="' + x.url + '" target="_blank" rel="noopener" title="' + (x.sub || '') + '">' + x.label + ' ↗</a>'; }).join('') : '') +
       '</div>' +
       (single ? (d.levels[0].id ? '<div class="rlevel-title" style="margin-top:18px;"><strong>Level ' + d.levels[0].id + '</strong></div>' : '<div style="height:18px"></div>') :
-        '<div class="gallery-label" style="margin-top:18px;">Choose a level</div>' +
+        '<div class="gallery-label" style="margin-top:18px;">' + (d.chooseLabel || 'Choose a level') + '</div>' +
         '<div class="rlevels" style="grid-template-columns:repeat(' + Math.min(d.levels.length, 6) + ',1fr);">' + levels + '</div>' +
         '<div class="rlevel-title"><strong data-level-name></strong></div>') +
       '<div class="rpages">' + pages + '</div>' +
@@ -1254,10 +1262,10 @@
     if (!lv) return;
     panel.querySelectorAll('.rlevel').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.level == index)); });
     var nameEl = panel.querySelector('[data-level-name]');
-    if (nameEl) nameEl.textContent = 'Level ' + lv.id;
+    if (nameEl) nameEl.textContent = lv.name || ('Level ' + lv.id);
     lv.files.forEach(function (src, i) {
       var img = panel.querySelector('img[data-page="' + i + '"]');
-      if (img) { img.src = src; img.alt = d.title + ' — Level ' + lv.id + ' ' + d.pages[i].toLowerCase(); }
+      if (img) { img.src = src; img.alt = d.title + ' — ' + (lv.name || ('Level ' + lv.id)) + ' ' + d.pages[i].toLowerCase(); }
       panel.querySelectorAll('a[data-page="' + i + '"]').forEach(function (a) { a.href = src; });
     });
   }
