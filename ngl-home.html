@@ -725,7 +725,10 @@
     <div class="quick-label">Know where you're going? Quick links</div>
     <div class="quick-row">
       <a class="quick-pill start" href="https://club.nationalgymnasticsleague.co.uk/" target="_top">Clubs: start here →</a>
-      <a class="quick-pill" href="https://nglschools.co.uk/" target="_blank" rel="noopener">Schools Hub</a>
+      <a class="quick-pill" href="https://club.nationalgymnasticsleague.co.uk/preschool/club/" target="_blank" rel="noopener">Pre-School Hub</a>
+      <a class="quick-pill" href="https://nglschools.co.uk/club/" target="_blank" rel="noopener">Schools Hub</a>
+      <a class="quick-pill" href="https://nglrecreational.co.uk/" target="_blank" rel="noopener">Recreational Hub</a>
+      <a class="quick-pill" href="https://club.nationalgymnasticsleague.co.uk/licences.html" target="_blank" rel="noopener">Licence fees</a>
       <a class="quick-pill" href="https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" target="_top">National League Table</a>
       <a class="quick-pill" href="https://www.nationalgymnasticsleague.co.uk/league-schedule-4" target="_top">Book 2026 Competitions</a>
       <a class="quick-pill" href="https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" target="_top">Book 2027 Competitions</a>
@@ -933,7 +936,7 @@
   var LIGHT_TEXT = '#ffffff';
 
   var PATHWAY_META = {
-    preschool:   { name:'Pre-School',         color:'#ef2891', text:LIGHT_TEXT, desc:"Early movement skills and confidence-building for young children beginning their gymnastics journey.", eventLabel:'Graduation Event' },
+    preschool:   { name:'Pre-School',         color:'#ef2891', text:LIGHT_TEXT, desc:"Early movement skills and confidence-building for young children beginning their gymnastics journey.", eventLabel:'Graduation Ceremony' },
     schools:     { name:'Schools',            color:'#f5d12f', text:DARK_TEXT,  desc:"Structured, curriculum-aligned gymnastics that builds fundamental physical skills for all pupils.", eventLabel:'Graduation Event' },
     recreational:{ name:'Recreational',       color:'#ea732c', text:DARK_TEXT,  desc:"Inclusive club-based gymnastics focused on enjoyment, progression and achievement at every level.", eventLabel:'Competitions' },
     general:     { name:'General League',     color:'#0f6bac', text:LIGHT_TEXT, desc:"Local competitions captured live through a National League Table leading to qualification to represent your Region at National Finals.", eventLabel:'Competitions' },
@@ -1389,20 +1392,40 @@
       '</div>';
   }
 
+  var PS_IMG = 'https://club.nationalgymnasticsleague.co.uk/preschool/img/';
+  var PS_HUB = 'https://club.nationalgymnasticsleague.co.uk/preschool/club/';
+  var PS_COUNTRIES = ['France','England','Egypt','Switzerland','Brazil','Australia','China','Japan','Canada','Iceland','America','Hawaii','The Bahamas','Greece','Italy','India','Scotland','Ireland','Wales','Spain'];
   function preschoolAwardsHTML(p){
-    var coming = COMING_TEXT.preschool;
-    return '<div class="card"><p class="lede">' + p.desc + '</p></div>' +
-      '<div class="card"><div class="book-layout"><img src="' + COVER_IMAGE.preschool + '" alt="Pre-School Awards Book cover">' +
-      '<div class="book-copy"><p>' + p.desc + '</p><ul>' +
-      '<li><strong>Around the World with Somi &amp; Flic</strong> &mdash; every young gymnast follows the NGL mascots on a round-the-world adventure as they build their first movement skills.</li>' +
-      '<li>Each gymnast gets their own <strong>NGL Passport</strong>, stamped along the way &mdash; with <strong>20 countries</strong> to visit across the programme.</li>' +
-      '<li><strong>20 exclusive medals</strong> to collect, one for every country, plus a big Journey Tracker poster to chart progress as they go.</li>' +
-      '</ul><div class="coming-tag">' + coming + '</div></div></div></div>';
+    var medals = PS_COUNTRIES.map(function (c, i) { var n = (i < 9 ? '0' : '') + (i + 1);
+      return '<div style="text-align:center;font-size:12px;opacity:.85"><img src="' + PS_IMG + 'medal' + n + '.png" alt="' + c + ' medal" loading="lazy" style="width:100%;max-width:72px;display:block;margin:0 auto 4px">' + c + '</div>'; }).join('');
+    var isClub = selectedAudience === 'club';
+    return '<div class="card"><p class="lede">Around the World with Somi &amp; Flic: the NGL Pre-School passport for ages 3–4, tried and tested for five years in a British Gymnastics club.</p></div>' +
+      '<div class="card"><div class="book-layout"><img src="' + PS_IMG + 'book-cover.jpg" alt="NGL Pre-School passport">' +
+      '<div class="book-copy"><ul>' +
+      '<li><strong>The Around the World passport</strong> &mdash; every gymnast gets their own passport and travels the world with Somi and Flic. Two books, 20 countries, eight skills in every country.</li>' +
+      '<li><strong>20 country medals</strong> &mdash; a new medal every four weeks, one for every country, plus the A1 journey poster for the gym wall.</li>' +
+      '<li><strong>Two stickers every week</strong> &mdash; coaches teach two passport skills each week, so children see their progress every single class. No assessment week.</li>' +
+      '<li><strong>40 themed lesson plans</strong> &mdash; Space, Pirates, Dinosaurs, Under the Sea and many more, one for every week of the passport, plus a Seasonal Pack for Christmas, Easter, Halloween and more.</li>' +
+      '<li><strong>Customised to your club</strong> &mdash; the term planner fits the programme to your term dates and half terms, and each term picks up where the last one finished.</li>' +
+      '<li><strong>Parents follow along</strong> &mdash; a family app shows this week\'s theme, their child\'s two sticker skills and the medals still to come.</li>' +
+      '<li><strong>Tried and tested</strong> &mdash; run for five years at SAADI Gymnastics, a British Gymnastics club, before being shared with clubs across the country.</li>' +
+      '</ul></div></div></div>' +
+      '<div class="card"><p class="lede" style="margin-bottom:12px">20 medals to collect</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:10px">' + medals + '</div></div>' +
+      '<div class="card"><p class="lede" style="margin-bottom:12px">A theme for every week</p><div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">' +
+      ['01_Alphabet','02_Space','03_Pirates','04_Under_the_Sea','11_Dinosaurs','08_Circus','14_Flight','33_Arctic'].map(function (f) { return '<img src="' + PS_IMG + 'post_' + f + '.jpg" alt="" loading="lazy" style="height:200px;border-radius:8px;flex:none">'; }).join('') + '</div></div>' +
+      '<div class="card"><p class="lede">' + (isClub ? 'Run NGL Pre-School at your club: the licence includes the poster, Lesson Plans 1–10, the term planner and the family app.' : 'Ask your club if they run NGL Pre-School, or tell them about it.') + '</p>' +
+      '<a class="buy-btn" href="' + PS_HUB + '" target="_blank" rel="noopener">Explore NGL Pre-School</a> ' +
+      (isClub ? '<a class="buy-btn" href="https://club.nationalgymnasticsleague.co.uk/licences.html" target="_blank" rel="noopener">Licence fees</a>' : '') + '</div>';
   }
 
   function preschoolEventHTML(){
-    return '<div class="card"><p class="lede">Graduation Event details for Pre-School are coming soon.</p>' +
-      comingSoonButtonHTML() + '</div>';
+    return '<div class="card"><p class="lede">There are no competitions in NGL Pre-School. Instead, every child\'s journey ends with a graduation ceremony to celebrate moving on.</p>' +
+      '<p>Graduation details are coming soon.</p></div>';
+  }
+
+  function graduationPanelHTML(id){
+    if (id === 'schools') return competitionsPanelHTML('schools');
+    return preschoolEventHTML();
   }
 
   // Awards-book copy for the performance-based pathways. The pathway's own
@@ -1727,6 +1750,9 @@
   var selectedPathwayId = null;
   var currentType = null;
 
+  // Pathways without competitions: their event is a graduation.
+  var GRADUATION = { preschool:'No competitions: a graduation to celebrate finishing the journey', schools:'No competitions: an end-of-year Graduation Performance' };
+
   function canHost(){ return selectedAudience === 'club' && selectedPathwayId === 'recreational'; }
 
   function buildChoiceRow(){
@@ -1736,10 +1762,15 @@
         '<span class="cc-title">Awards Scheme</span>' +
         '<span class="cc-sub">' + name + ' award scheme &amp; progress tracking</span>' +
       '</button>' +
+      (GRADUATION[selectedPathwayId] ?
+      '<button type="button" class="choice-card" data-type="graduation" aria-pressed="false">' +
+        '<span class="cc-title">Graduation Ceremony</span>' +
+        '<span class="cc-sub">' + GRADUATION[selectedPathwayId] + '</span>' +
+      '</button>' :
       '<button type="button" class="choice-card" data-type="competitions" aria-pressed="false">' +
         '<span class="cc-title">Competitions</span>' +
         '<span class="cc-sub">' + name + ' season dates, booking &amp; league table</span>' +
-      '</button>';
+      '</button>');
     if (canHost()) {
       html +=
         '<button type="button" class="choice-card choice-host" data-type="host" aria-pressed="false">' +
@@ -1789,10 +1820,10 @@
   function showStep4(id, type){
     var p = PATHWAY_META[id];
     currentType = type;
-    pwContent.innerHTML = (type === 'awards') ? awardsPanelHTML(id) : (type === 'host') ? hostPanelHTML() : competitionsPanelHTML(id);
+    pwContent.innerHTML = (type === 'awards') ? awardsPanelHTML(id) : (type === 'host') ? hostPanelHTML() : (type === 'graduation') ? graduationPanelHTML(id) : competitionsPanelHTML(id);
     pwContent.style.setProperty('--pathway-color', p.color);
     pwContent.style.setProperty('--pathway-text', p.text);
-    var label = (type === 'awards') ? 'Awards Scheme' : (type === 'host') ? 'Host a Competition' : 'Competitions';
+    var label = (type === 'awards') ? 'Awards Scheme' : (type === 'host') ? 'Host a Competition' : (type === 'graduation') ? 'Graduation Ceremony' : 'Competitions';
     step4Title.innerHTML = '<span class="hl">' + p.name + '</span> — ' + label;
     step4Wrap.style.display = 'block';
     reportHeight();
