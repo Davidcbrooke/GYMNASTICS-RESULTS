@@ -1153,6 +1153,7 @@
     'grades-prep-2027': {
       title: 'Grades Preparation',
       intro: 'NGL Grades Preparation competitions run to the British Gymnastics grade rules, so gymnasts can rehearse the exact grade they are working towards. The two BG documents are the rules for these competitions.',
+      keyPoint: '<strong>The NGL difference: enter any grade at any age.</strong> Gymnasts compete in the same NGL age bands as the rest of the league: <strong>6–8, 9–11, 12–14 and 15+</strong>. The NGL National League table is ranked within these age bands.',
       links: [
         { title:'NDP Grades 2024–2027', sub:'Women\'s Artistic National Development Plan — Preparation, Development and Performance Grades (revised 7 Nov 2024 for 2025 onwards).', url:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf' },
         { title:'Excel Grades 2026', sub:'Women\'s Artistic S.T.E.P. Framework — Pre-Excel and Excel Grades 1 to 3, 2026 onwards.', url:'https://www.southwag.com/_files/ugd/05ec96_2f43ebedbb0248a9b6139c1b253e6555.pdf' }
@@ -1202,6 +1203,7 @@
     if (!d) return '';
     if (d.links) {
       return '<p class="lede">' + d.intro + '</p>' +
+        (d.keyPoint ? '<div style="background:#e6f7f8;border-left:5px solid #01AFB8;border-radius:10px;padding:14px 18px;margin:14px 0 18px;line-height:1.55;color:#1d1a1f;">' + d.keyPoint + '</div>' : '') +
         '<div class="action-grid rules-links">' + d.links.map(function (l) {
           return '<a class="action-card" href="' + l.url + '" target="_blank" rel="noopener">' +
             '<span class="action-icon">📄</span><span class="action-title">' + l.title + ' ↗</span>' +
