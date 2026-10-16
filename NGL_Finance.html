@@ -655,14 +655,18 @@ $("#exportCsv").addEventListener("click", ()=>{
    Each band may buy books up to 10% above its top gymnast number per licence year, then upgrades
    for the difference. Columns are terms by order date (Autumn Sep-Dec, Spring Jan-Mar, Summer Apr-Aug).
    Season 2027 = Sept 2026 to Aug 2027. */
-const LIC_PATHS = ["recreational"];
-const LIC_SOON  = ["preschool","schools","general","performance"];
+const LIC_PATHS = ["recreational","preschool"];
+const LIC_SOON  = ["schools","general","performance"];
 const LIC_TERMS = ["Autumn","Spring","Summer"];
 // Oct 2026: 7 bands, same keys as the Recreational Hub (s/m/l kept from the old 3-band model).
 const LIC_BANDS = [["xs","1 to 24 gymnasts",27],["sm","25 to 49 gymnasts",54],["s","50 to 99 gymnasts",109],["m","100 to 249 gymnasts",274],
                    ["m2","250 to 399 gymnasts",439],["l","400 to 599 gymnasts",659],["xl","600+ gymnasts",null]];
 const LEGACY_BAND = {small:"s", mid:"m", large:"l"};
 const normBand = k => LEGACY_BAND[k] || (LIC_BANDS.some(b=>b[0]===k) ? k : "s");
+// Pre-School (Oct 2026): 4 bands, same keys as the Pre-School Hub; no book allowance
+const PS_BANDS = [["xs","1 to 24 children",null],["sm","25 to 49 children",null],["s","50 to 99 children",null],["m","100+ children",null]];
+const licBands = path => path==="preschool" ? PS_BANDS : LIC_BANDS;
+const HUB_NAME = {recreational:"Recreational Hub", preschool:"Pre-School Hub"};
 const LIC_DEFAULTS = {
   recreational:{
     clubPrice:{xs:200, sm:300, s:500, m:1000, m2:1250, l:1500, xl:2000},
@@ -670,6 +674,15 @@ const LIC_DEFAULTS = {
     medalPrice:3, medalCost:1.5, medalsPerTerm:1,
     shirtPrice:12, shirtCost:10, shirtsPerClub:0,
     postPct:3, cardPct:0, cardFixed:0, hubYear:0
+  },
+  // Pre-School: licence includes the A1 poster (posted free) and Lesson Plans 1-10; packs 11-20, 21-30, 31-40 £100, Seasonal £50;
+  // passports £5 and country medals £2, with postage charged on supplies orders (£4 / £8 / £12).
+  preschool:{
+    clubPrice:{xs:150, sm:250, s:400, m:750},
+    packPrice:100, seasonalPrice:50, packsPerClub:1, seasonalPct:50,
+    passportPrice:5, passportCost:2.5, passportsPerChild:100,
+    medalPrice:2, medalCost:1, medalsPerTerm:3,
+    posterCost:15, postCostPct:100, cardPct:0, cardFixed:0, hubYear:0
   }
 };
 let licView = "recreational";
@@ -682,6 +695,9 @@ function licSetA(path, m){ A.lic = A.lic || {}; A.lic[path] = m; }
 function licClubs(path, s){ A.licClubs = A.licClubs || {}; const k = path+"_"+(s||season); return A.licClubs[k] || (A.licClubs[k] = []); }
 function licYearLabel(s){ const y=parseInt(s,10); return isNaN(y) ? "" : `Licence year Sept ${y-1} to Aug ${y}`; }
 const bandLimit = k => (LIC_BANDS.find(b=>b[0]===normBand(k))||LIC_BANDS[2])[2];
+const seasonOfDate = d => { const y = d.getMonth()>=8 ? d.getFullYear() : d.getFullYear()-1; return y+"/"+String(y+1).slice(2); };
+const orderSeason = o => o.season || seasonOfDate(toJsDate(o.createdAt));
+const orderPath = o => o.pathway==="preschool" ? "preschool" : "recreational";
 const termOfDate = d => { const m = d.getMonth(); return m>=8 ? 0 : (m<=2 ? 1 : 2); };
 const toJsDate = c => !c ? new Date() : (typeof c.toDate==="function" ? c.toDate() : (c.seconds ? new Date(c.seconds*1000) : new Date(c)));
 
@@ -720,17 +736,18 @@ function licInit(){
 }
 const licExcluded = () => (A.licExclude = A.licExclude || {});
 // Orders for one season, optionally paid only, minus clubs ticked as test accounts
-function liveOrders(s){
+function liveOrders(s, path){
   const hs = hubSeason(s), ex = licExcluded();
-  return LIC.orders.filter(o => o.season===hs && !ex[o.clubId] && (!A.licPaidOnly || o.status==="paid"));
+  return LIC.orders.filter(o => orderPath(o)===(path||"recreational") && orderSeason(o)===hs && !ex[o.clubId] && (!A.licPaidOnly || o.status==="paid"));
 }
 // Normalise either source into per-term figures [autumn, spring, summer]
 function licFigures(path, s){
   const L = licA(path), T=[0,1,2], z=()=>[0,0,0];
-  const F = {clubFee:z(), gymFee:z(), bookInc:z(), medalInc:z(), shirtInc:z(), books:z(), medals:z(), shirts:z(), orders:z(), paid:z(), unpaid:z(), clubs:0};
+  const F = {clubFee:z(), gymFee:z(), bookInc:z(), medalInc:z(), shirtInc:z(), books:z(), medals:z(), shirts:z(), orders:z(), paid:z(), unpaid:z(), clubs:0,
+             packInc:z(), packs:z(), passInc:z(), passports:z(), postInc:z(), posters:z()};
   if(licSource==="live" && LIC.state==="live"){
     const clubs = new Set();
-    liveOrders(s).forEach(o=>{
+    liveOrders(s, path).forEach(o=>{
       const t = o.term && TERM_KEYS.includes(o.term) && o.kind!=="shop" ? TERM_KEYS.indexOf(o.term) : termOfDate(toJsDate(o.createdAt));
       clubs.add(o.clubId); F.orders[t]++;
       let net = 0;
@@ -740,6 +757,11 @@ function licFigures(path, s){
         else if(l.kind==="book"){ F.bookInc[t]+=v; F.books[t]+=q; }
         else if(l.kind==="medal"){ F.medalInc[t]+=v; F.medals[t]+=q; }
         else if(l.kind==="tshirt"){ F.shirtInc[t]+=v; F.shirts[t]+=q; }
+        else if(l.kind==="licence") F.clubFee[t]+=v;       // Pre-School Club Licence
+        else if(l.kind==="pack"){ F.packInc[t]+=v; F.packs[t]+=q; }
+        else if(l.kind==="passport"){ F.passInc[t]+=v; F.passports[t]+=q; }
+        else if(l.kind==="poster") F.posters[t]+=q;
+        else if(l.kind==="postage") F.postInc[t]+=v;
       });
       (o.status==="paid" ? F.paid : F.unpaid)[t] += net;
     });
@@ -748,6 +770,19 @@ function licFigures(path, s){
     return F;
   }
   const clubs = licClubs(path, s);
+  if(path==="preschool"){
+    clubs.forEach(c=>{
+      const g = Math.max(0, parseInt(c.gyms)||0), t0 = Math.max(0, TERM_KEYS.indexOf(c.start||"autumn")), band = normBand(c.band);
+      F.clubFee[t0] += L.clubPrice[band]||0; F.posters[t0]++; F.orders[t0]++;
+      const pk = L.packsPerClub, sp = L.seasonalPct/100;
+      F.packs[t0] += pk; F.packInc[t0] += pk*L.packPrice + sp*L.seasonalPrice;
+      const pp = Math.round(g*L.passportsPerChild/100); F.passports[t0] += pp; F.passInc[t0] += pp*L.passportPrice;
+      for(let t=t0; t<3; t++){ const m=g*L.medalsPerTerm; F.medals[t]+=m; F.medalInc[t]+=m*L.medalPrice; if(t>t0) F.orders[t]++; }
+      for(let t=t0; t<3; t++){ const items = (t===t0?pp:0) + g*L.medalsPerTerm; if(items) F.postInc[t] += items<=20?4:items<=100?8:12; }
+    });
+    F.clubs = clubs.length; F.source = "plan"; F.note = null; F.flags = [];
+    return F;
+  }
   clubs.forEach(c=>{
     const g = Math.max(0, parseInt(c.gyms ?? Math.max(0,...(c.g||[0])))||0), t0 = Math.max(0, TERM_KEYS.indexOf(c.start||"autumn"));
     const band = normBand(c.band), lim = bandLimit(band);
@@ -761,6 +796,7 @@ function licFigures(path, s){
   return F;
 }
 function buildLicensing(path, s){
+  if(path==="preschool") return buildPreschool(s);
   const L = licA(path), F = licFigures(path, s), T = [0,1,2], live = F.source==="live";
   const inc = [["Club Licence fees", F.clubFee, live ? "incl. band upgrades, from Hub orders" : "yearly, in the term each club starts"]];
   if(F.gymFee.some(v=>v)) inc.push(["Gymnast Licence fees", F.gymFee, "older orders"]);
@@ -781,16 +817,41 @@ function buildLicensing(path, s){
   const TI = [0,1,2,3].map(i=>I.reduce((a,r)=>a+r[1][i],0)), TC = [0,1,2,3].map(i=>C.reduce((a,r)=>a+r[1][i],0));
   const NET = TI.map((x,i)=>x-TC[i]), MARGIN = TI.map((x,i)=>x?Math.round(NET[i]/x*100):null);
   const flags = []; if(!L.postPct) flags.push("Postage not set");
-  return {path, L, F, n:F.clubs, books:F.books, medals:F.medals, shirts:F.shirts, gyms:F.medals, inc:I, cost:C, TI, TC, NET, MARGIN, flags};
+  return {path, L, F, n:F.clubs, books:F.books, medals:F.medals, shirts:F.shirts, gyms:F.medals, inc:I, cost:C, TI, TC, NET, MARGIN, flags,
+    info:[["Award books", F.books],["Medals", F.medals],["T-shirts", F.shirts]], summary:`${F.books.reduce((a,b)=>a+b,0)} books and ${F.medals.reduce((a,b)=>a+b,0)} medals`};
+}
+// Pre-School licensing P&L: kept separate from Recreational (orders tagged pathway "preschool" on the Pre-School Hub)
+function buildPreschool(s){
+  const path = "preschool", L = licA(path), F = licFigures(path, s), T = [0,1,2], live = F.source==="live";
+  const inc = [["Club Licence fees", F.clubFee, live ? "from Pre-School Hub orders" : "yearly, in the term each club starts"],
+    ["Lesson Plan Packs", F.packInc, live ? F.note : `£${L.packPrice} a pack, Seasonal £${L.seasonalPrice}`],
+    ["Passport sales", F.passInc, live ? F.note : `£${L.passportPrice} each`],
+    ["Medal sales", F.medalInc, live ? F.note : `£${L.medalPrice} each`],
+    ["Postage charged", F.postInc, "on supplies orders"]];
+  const TIt = T.map(t => inc.reduce((a,r)=>a+r[1][t],0));
+  const cost = [
+    ["Passports", F.passports.map(n=>n*L.passportCost), L.passportCost?`£${L.passportCost} each`:"cost not set"],
+    ["Medals", F.medals.map(n=>n*L.medalCost), L.medalCost?`£${L.medalCost} each`:"cost not set"],
+    ["A1 posters (free with licence)", F.posters.map(n=>n*L.posterCost), L.posterCost?`£${L.posterCost} each, print and post`:"cost not set"],
+    ["Postage", F.postInc.map(v=>v*L.postCostPct/100), `${L.postCostPct}% of postage charged`],
+    ["Payment fees", T.map(t=>TIt[t]*L.cardPct/100 + F.orders[t]*L.cardFixed), (L.cardPct||L.cardFixed)?`${L.cardPct}% + £${L.cardFixed} per order`:"bank transfer, no fee"],
+    ["Hub and hosting", [L.hubYear,0,0], "yearly"]
+  ];
+  const withYear = rows => rows.map(r => [r[0], [...r[1], r[1].reduce((a,b)=>a+b,0)], r[2]]);
+  const I = withYear(inc), C = withYear(cost);
+  const TI = [0,1,2,3].map(i=>I.reduce((a,r)=>a+r[1][i],0)), TC = [0,1,2,3].map(i=>C.reduce((a,r)=>a+r[1][i],0));
+  const NET = TI.map((x,i)=>x-TC[i]), MARGIN = TI.map((x,i)=>x?Math.round(NET[i]/x*100):null);
+  const sum = a => a.reduce((x,y)=>x+y,0);
+  return {path, L, F, n:F.clubs, books:F.passports, medals:F.medals, shirts:[0,0,0], gyms:F.medals, inc:I, cost:C, TI, TC, NET, MARGIN, flags:[],
+    info:[["Passports", F.passports],["Medals", F.medals],["Lesson Plan Packs", F.packs],["A1 posters sent", F.posters]],
+    summary:`${sum(F.packs)} pack${sum(F.packs)===1?"":"s"}, ${sum(F.passports)} passports and ${sum(F.medals)} medals`};
 }
 function licStmtHTML(r){
   const tr = (label, vals, cls, tag, fmt) => `<tr class="${cls||""}"><td>${esc(label)}${tag?`<span class="tag">${esc(tag)}</span>`:""}</td>${vals.map((v,i)=>`<td class="${i===3?"cur":""}">${fmt?fmt(v,i):money(v)}</td>`).join("")}</tr>`;
   const yr = arr => [...arr, arr.reduce((a,b)=>a+b,0)];
   return `<thead><tr><th>${esc(PATHWAYS[r.path].short)} licensing</th>${LIC_TERMS.map(t=>`<th><b>${t}</b><small>term</small></th>`).join("")}<th class="cur"><b>Year</b><small>${esc(licYearLabel(season))}</small></th></tr></thead><tbody>`+
     tr("Licensed clubs", [r.n,"","",r.n], "info", r.F.source==="live"?"with orders this year":"", x=>x) +
-    tr("Award books", yr(r.books), "info", "", x=>x) +
-    tr("Medals", yr(r.medals), "info", "", x=>x) +
-    tr("T-shirts", yr(r.shirts), "info", "", x=>x) +
+    r.info.map(([l,v])=>tr(l, yr(v), "info", "", x=>x)).join("") +
     `<tr class="sec"><td colspan="5">Income</td></tr>` + r.inc.map(([l,v,t])=>tr(l,v,"item",t)).join("") + tr("Total income", r.TI, "tot") +
     `<tr class="sec"><td colspan="5">Costs</td></tr>` + r.cost.map(([l,v,t])=>tr(l,v,"item",t)).join("") + tr("Total costs", r.TC, "tot") +
     tr("Net profit", r.NET, "netrow") +
@@ -802,12 +863,12 @@ let lastLic = null;
 function licSourceBar(){
   const st = LIC.state, who = LIC.user ? esc(LIC.user.email||"") : "";
   const status = licSource==="plan" ? "Planning: uses the clubs and numbers you type in below."
-    : st==="live" ? `Live from the Recreational Hub, signed in as ${who}. <button class="btn ghost sm" id="licSignOut">Sign out</button>`
-    : st==="loading" ? "Connecting to the Recreational Hub…"
-    : st==="denied" ? `Signed in as ${who}, but that account isn't an NGL admin on the Recreational Hub, so orders can't be read. <button class="btn ghost sm" id="licSignOut">Sign out</button>`
+    : st==="live" ? `Live from the ${HUB_NAME[licView]}, signed in as ${who}. <button class="btn ghost sm" id="licSignOut">Sign out</button>`
+    : st==="loading" ? "Connecting to the NGL Hubs…"
+    : st==="denied" ? `Signed in as ${who}, but that account isn't an NGL admin on the NGL Hubs, so orders can't be read. <button class="btn ghost sm" id="licSignOut">Sign out</button>`
     : st==="error" ? `Couldn't read Hub orders: ${esc(LIC.error)}`
-    : st==="off" ? "The Recreational Hub can't be reached from this page (demo mode)."
-    : "Sign in with your NGL admin account for the Recreational Hub (the one you use on its NGL Admin tab).";
+    : st==="off" ? "The NGL Hubs can't be reached from this page (demo mode)."
+    : "Sign in with your NGL admin account for the Hubs (the one you use on the Recreational or Pre-School Hub admin tab).";
   return `<div class="lic-src"><div class="seg"><button data-src="live" aria-pressed="${licSource==="live"}">Live orders</button><button data-src="plan" aria-pressed="${licSource==="plan"}">Planning</button></div>
     <div class="lic-status">${status}</div>
     ${licSource==="live" && st==="signin" ? `<form id="licLogin" class="lic-login"><input type="email" id="licEmail" placeholder="Admin email" autocomplete="username" required><input type="password" id="licPass" placeholder="Password" autocomplete="current-password" required><button class="btn primary" type="submit">Sign in</button><span id="licLoginErr" class="neg"></span></form>` : ""}
@@ -822,27 +883,36 @@ function renderLicensing(){
   const r = lastLic = buildLicensing(licView, season);
   const live = licSource==="live";
   $("#licStmt").innerHTML = r.n ? licStmtHTML(r)
-    : `<tbody><tr><td style="padding:20px;color:var(--muted)">${live ? (LIC.state==="live" ? `No Recreational orders for ${esc(hubSeason(season))} yet${Object.keys(licExcluded()).length?" (some clubs are hidden as test accounts)":""}.` : "Sign in above to see orders from the Recreational Hub.") : `No planned clubs for ${esc(licYearLabel(season))} yet. Add them below.`}</td></tr></tbody>`;
+    : `<tbody><tr><td style="padding:20px;color:var(--muted)">${live ? (LIC.state==="live" ? `No ${esc(PATHWAYS[licView].short)} orders for ${esc(hubSeason(season))} yet${Object.keys(licExcluded()).length?" (some clubs are hidden as test accounts)":""}.` : `Sign in above to see orders from the ${HUB_NAME[licView]}.`) : `No planned clubs for ${esc(licYearLabel(season))} yet. Add them below.`}</td></tr></tbody>`;
+  const ps = licView==="preschool";
   $("#licNotes").innerHTML = (live
-      ? "Income comes from the orders clubs place on the Recreational Hub, in the term each order is for. Unpaid orders are included unless you tick Paid orders only. Costs use the assumptions below."
-      : "Each club pays its yearly Club Licence in the term it starts, then buys medals every term and books for new gymnasts. Tick First year when every gymnast needs a book. Books are capped at the band's allowance.") +
+      ? (ps ? "Income comes from the orders clubs place on the Pre-School Hub (licences, Lesson Plan Packs, passports, medals and postage), in the term each order was placed. It is kept separate from Recreational. Unpaid orders are included unless you tick Paid orders only. Costs use the assumptions below."
+            : "Income comes from the orders clubs place on the Recreational Hub, in the term each order is for. Unpaid orders are included unless you tick Paid orders only. Costs use the assumptions below.")
+      : (ps ? "Each club pays its yearly Pre-School Club Licence in the term it starts and gets the A1 poster free. Packs, passports and medals use the planning assumptions below; postage follows the Hub's £4 / £8 / £12 scale."
+            : "Each club pays its yearly Club Licence in the term it starts, then buys medals every term and books for new gymnasts. Tick First year when every gymnast needs a book. Books are capped at the band's allowance.")) +
     (r.flags.length ? `<br><strong style="color:#b06000">&#x26A0; To set in assumptions:</strong> ${esc(r.flags.join(" · "))}` : "");
-  $("#licClubsHead").textContent = live ? "Clubs on the Recreational Hub" : "Planned clubs";
-  $("#licClubsSub").textContent = live ? "Tick Test to leave a club out of the P&L" : "Enter each club's gymnast numbers per term";
+  $("#licClubsHead").textContent = live ? `Clubs on the ${HUB_NAME[licView]}` : "Planned clubs";
+  $("#licClubsSub").textContent = live ? "Tick Test to leave a club out of the P&L" : (ps ? "Enter each club's Pre-School numbers" : "Enter each club's gymnast numbers per term");
   live ? renderLiveClubs() : renderLicClubs();
 }
 function renderLiveClubs(){
   const tools = $("#licClubTools"); tools.innerHTML = "";
   if(LIC.state!=="live"){ $("#licClubs").innerHTML = `<tbody><tr><td style="text-align:left;color:var(--muted);padding:14px">Clubs appear here once you're signed in.</td></tr></tbody>`; return; }
-  const hs = hubSeason(season), ex = licExcluded(), by = {};
-  LIC.orders.filter(o=>o.season===hs).forEach(o=>{
-    const c = by[o.clubId] = by[o.clubId] || {id:o.clubId, name:o.clubName||o.clubId, band:"", orders:0, inv:0, paid:0, book:0, medal:0, tshirt:0};
-    if(o.band) c.band = o.band; if(o.upgradeTo) c.band = o.upgradeTo; c.orders++;
+  const hs = hubSeason(season), ex = licExcluded(), by = {}, ps = licView==="preschool";
+  LIC.orders.filter(o=>orderPath(o)===licView && orderSeason(o)===hs).forEach(o=>{
+    const c = by[o.clubId] = by[o.clubId] || {id:o.clubId, name:o.clubName||o.clubId, band:"", orders:0, inv:0, paid:0, book:0, medal:0, tshirt:0, pack:0, passport:0};
+    if(ps){ if(o.psBand) c.band = o.psBand; } else { if(o.band) c.band = o.band; if(o.upgradeTo) c.band = o.upgradeTo; } c.orders++;
     const tot = (o.lines||[]).filter(l=>l.kind!=="vat").reduce((a,l)=>a+(+l.qty||0)*(+l.unit||0),0); c.inv += tot; if(o.status==="paid") c.paid += tot;
     (o.lines||[]).forEach(l=>{ if(l.kind in c && l.kind!=="orders") c[l.kind] += +l.qty||0; });
   });
   const list = Object.values(by).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
-  const bk = BAND_MAP, band = k => { const b = LIC_BANDS.find(x=>x[0]===normBand(k)); return k && b ? b[1].replace(" gymnasts","") : ""; };
+  const bk = BAND_MAP, band = k => { const b = licBands(licView).find(x=>x[0]===normBand(k)); return k && b ? b[1].replace(/ (gymnasts|children)/,"") : ""; };
+  if(ps){
+    $("#licClubs").innerHTML = `<thead><tr><th>Club</th><th>Size band</th><th>Packs</th><th>Passports</th><th>Medals</th><th>Orders</th><th>Invoiced</th><th>Paid</th><th>Test</th></tr></thead><tbody>`+
+      (list.length ? list.map(c=>`<tr style="${ex[c.id]?"opacity:.45":""}"><td>${esc(c.name)}</td><td>${band(c.band)}</td><td>${c.pack}</td><td>${c.passport}</td><td>${c.medal}</td><td>${c.orders}</td><td>${gbp(c.inv)}</td><td>${gbp(c.paid)}</td><td style="text-align:center"><input type="checkbox" data-excl="${esc(c.id)}"${ex[c.id]?" checked":""} title="Leave this club out of the P&L"></td></tr>`).join("")
+        : `<tr><td colspan="9" style="text-align:left;color:var(--muted);padding:14px">No Pre-School clubs have ordered for ${esc(hs)} yet.</td></tr>`) + "</tbody>";
+    return;
+  }
   $("#licClubs").innerHTML = `<thead><tr><th>Club</th><th>Size band</th><th>Books (allowance)</th><th>Medals</th><th>T-shirts</th><th>Orders</th><th>Invoiced</th><th>Paid</th><th>Test</th></tr></thead><tbody>`+
     (list.length ? list.map(c=>{ const lim = c.band ? bandLimit(bk[c.band]) : null;
       return `<tr style="${ex[c.id]?"opacity:.45":""}"><td>${esc(c.name)}</td><td>${band(c.band)}</td><td>${c.book}${lim!=null?` / ${lim}`:""}</td><td>${c.medal}</td><td>${c.tshirt}</td><td>${c.orders}</td><td>${gbp(c.inv)}</td><td>${gbp(c.paid)}</td><td style="text-align:center"><input type="checkbox" data-excl="${esc(c.id)}"${ex[c.id]?" checked":""} title="Leave this club out of the P&L"></td></tr>`; }).join("")
@@ -853,13 +923,13 @@ function renderLicClubs(force){
   const clubs = licClubs(licView, season), L = licA(licView);
   const prev = String(parseInt(season,10)-1), prevClubs = (A.licClubs||{})[licView+"_"+prev] || [];
   $("#licClubs").innerHTML = `<thead><tr><th>Club</th><th>Size band</th><th>Gymnasts</th><th>Starts</th><th>First year</th><th>Club Licence</th><th>Book allowance</th><th></th></tr></thead><tbody>`+
-    (clubs.length ? clubs.map((c,i)=>{ const band=normBand(c.band), lim=bandLimit(band), g=parseInt(c.gyms ?? Math.max(0,...(c.g||[0])))||0;
+    (clubs.length ? clubs.map((c,i)=>{ const band=normBand(c.band), lim=licView==="preschool"?null:bandLimit(band), g=parseInt(c.gyms ?? Math.max(0,...(c.g||[0])))||0;
       return `<tr data-ci="${i}">
       <td><input type="text" class="lc-name" data-cf="name" value="${esc(c.name)}" placeholder="Club name"></td>
-      <td><select data-cf="band">${LIC_BANDS.map(([v,t])=>`<option value="${v}"${band===v?" selected":""}>${t}</option>`).join("")}</select></td>
+      <td><select data-cf="band">${licBands(licView).map(([v,t])=>`<option value="${v}"${band===v?" selected":""}>${t}</option>`).join("")}</select></td>
       <td><input type="number" min="0" step="1" data-cf="gyms" value="${g}"></td>
       <td><select data-cf="start">${TERM_KEYS.map((k,j)=>`<option value="${k}"${(c.start||"autumn")===k?" selected":""}>${LIC_TERMS[j]}</option>`).join("")}</select></td>
-      <td style="text-align:center"><input type="checkbox" data-cf="first"${c.first?" checked":""} title="Every gymnast needs a book in a club's first year"></td>
+      <td style="text-align:center">${licView==="preschool"?"":`<input type="checkbox" data-cf="first"${c.first?" checked":""} title="Every gymnast needs a book in a club's first year">`}</td>
       <td>${gbp(L.clubPrice[band]||0)}</td>
       <td>${lim==null?"No limit":lim}</td>
       <td><button class="btn-del" data-cdel="${i}" title="Remove club">&#x2715;</button></td></tr>`; }).join("")
@@ -870,6 +940,13 @@ function renderLicClubs(force){
 function renderLicAssump(){
   const L = licA(licView);
   const f = (k,label,step) => `<label>${label}<input type="number" min="0" step="${step||0.5}" data-lk="${k}" value="${L[k]}"></label>`;
+  if(licView==="preschool"){ $("#licAssump").innerHTML =
+    `<h4>Pre-School Club Licence (per year, includes the A1 poster and Lesson Plans 1–10)</h4>` + PS_BANDS.map(([b,t])=>`<label>${t}<input type="number" min="0" step="50" data-lb="clubPrice.${b}" value="${L.clubPrice[b]}"></label>`).join("") +
+    `<h4>Lesson Plan Packs</h4>` + f("packPrice","Pack price (11–20, 21–30, 31–40)",10) + f("seasonalPrice","Seasonal Pack price",5) + f("packsPerClub","Planning: packs per club per year",1) + f("seasonalPct","Planning: clubs buying the Seasonal Pack (%)",5) +
+    `<h4>Passports</h4>` + f("passportPrice","Price to clubs") + f("passportCost","Cost each",0.05) + f("passportsPerChild","Planning: passports per child per year (%)",5) +
+    `<h4>Medals</h4>` + f("medalPrice","Price to clubs",0.05) + f("medalCost","Cost each",0.05) + f("medalsPerTerm","Planning: medals per child per term",1) +
+    `<h4>Other costs</h4>` + f("posterCost","A1 poster, print and post each",1) + f("postCostPct","Postage cost, % of postage charged",5) + f("cardPct","Payment fee %",0.1) + f("cardFixed","Payment fee per order",0.05) + f("hubYear","Hub and hosting per year",10);
+    return; }
   $("#licAssump").innerHTML =
     `<h4>Club Licence (per year)</h4>` + LIC_BANDS.map(([b,t,lim])=>`<label>${t}${lim?` (up to ${lim} books)`:""}<input type="number" min="0" step="50" data-lb="clubPrice.${b}" value="${L.clubPrice[b]}"></label>`).join("") +
     `<h4>Award books</h4>` + f("bookPrice","Price to clubs") + f("bookCost","Cost each",0.05) + f("booksPerGym","Planning: books per gymnast after year 1 (%)",5) +
@@ -942,10 +1019,10 @@ function renderOverview(force){
   $("#cats").innerHTML =
     c.per.map(({k,s})=>card(`${PATHWAYS[k].short}`, PATHWAYS[k].accent, s, k, `${s.n} competition${s.n===1?"":"s"}, ${s.B.gymnasts} of ${s.F.gymnasts} places booked. ${gbp(s.NET[3])} profit if full.`)).join("") +
     `<div class="cat" style="--c:#2c6e9b"><span class="bar"></span><div class="in"><h3>Judging</h3><div class="note">Not connected yet. Remote judging income and judge payments will show here.</div><button class="link" data-go="judging">What's needed</button></div></div>`+
-    LIC_PATHS.map(k=>{ const r=buildLicensing(k, season); return `<div class="cat" style="--c:#d9a521"><span class="bar"></span><div class="in"><h3>${PATHWAYS[k].short} licensing</h3>`+
-      (r.n ? `<div class="rows"><span class="k">Income</span><span class="v">${gbp(r.TI[3])}</span><span class="k">Costs</span><span class="v">${gbp(-r.TC[3])}</span><span class="k p">Profit</span><span class="v p ${r.NET[3]>=0?"pnl-pos":"pnl-neg"}">${gbp(r.NET[3])}</span></div><div class="note">${r.n} club${r.n===1?"":"s"}, ${r.books.reduce((a,b)=>a+b,0)} books and ${r.medals.reduce((a,b)=>a+b,0)} medals. ${r.F.source==="live"?"Live from Hub orders":"Planning figures"}, ${esc(licYearLabel(season))}.</div>`
-        : `<div class="note">${licSource==="live" && LIC.state!=="live" ? "Sign in on the Licensing tab to bring in Recreational Hub orders." : "No licensed clubs yet."}</div>`) +
-      `<button class="link" data-go="licensing">Open this P&amp;L</button></div></div>`; }).join("");
+    LIC_PATHS.map(k=>{ const r=buildLicensing(k, season); return `<div class="cat" style="--c:${k==="preschool"?PATHWAYS[k].accent:"#d9a521"}"><span class="bar"></span><div class="in"><h3>${PATHWAYS[k].short} licensing</h3>`+
+      (r.n ? `<div class="rows"><span class="k">Income</span><span class="v">${gbp(r.TI[3])}</span><span class="k">Costs</span><span class="v">${gbp(-r.TC[3])}</span><span class="k p">Profit</span><span class="v p ${r.NET[3]>=0?"pnl-pos":"pnl-neg"}">${gbp(r.NET[3])}</span></div><div class="note">${r.n} club${r.n===1?"":"s"}, ${r.summary}. ${r.F.source==="live"?"Live from Hub orders":"Planning figures"}, ${esc(licYearLabel(season))}.</div>`
+        : `<div class="note">${licSource==="live" && LIC.state!=="live" ? `Sign in on the Licensing tab to bring in ${HUB_NAME[k]} orders.` : "No licensed clubs yet."}</div>`) +
+      `<button class="link" data-go="licensing" data-lic-go="${k}">Open this P&amp;L</button></div></div>`; }).join("");
   $("#nglStmt").innerHTML = stmtHTML(c, `NGL ${season}`);
   renderAnnual(force);
 }
@@ -966,7 +1043,7 @@ $("#annualEditor").addEventListener("click", e=>{
   if(t.dataset.adda){ A.annual.push({id:"a"+Date.now().toString(36), name:"", type:t.dataset.adda, amount:0, basis:"month"}); save(); renderAll(true); }
   if(t.dataset.dela){ const l=A.annual.find(x=>x.id===t.dataset.dela); if(!confirm(`Remove "${(l&&l.name)||"Unnamed"}"?`)) return; A.annual=A.annual.filter(x=>x.id!==t.dataset.dela); save(); renderAll(true); }
 });
-$("#cats").addEventListener("click", e=>{ const g=e.target.dataset.go; if(!g) return; if(e.target.dataset.view){ compView=e.target.dataset.view; renderCompetitions(); if($("#pnl-assump").classList.contains("open")) renderAssump(); updateAssumpBtn(); } document.querySelector(`.tabs [data-tab="${g}"]`).click(); window.scrollTo(0,0); });
+$("#cats").addEventListener("click", e=>{ const g=e.target.dataset.go; if(!g) return; if(e.target.dataset.licGo){ licView=e.target.dataset.licGo; renderLicensing(); if($("#licAssump").classList.contains("open")) renderLicAssump(); } if(e.target.dataset.view){ compView=e.target.dataset.view; renderCompetitions(); if($("#pnl-assump").classList.contains("open")) renderAssump(); updateAssumpBtn(); } document.querySelector(`.tabs [data-tab="${g}"]`).click(); window.scrollTo(0,0); });
 
 /* ===== Tabs, season ===== */
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
