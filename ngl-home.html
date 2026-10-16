@@ -1155,10 +1155,10 @@
       intro: 'NGL Grades Preparation competitions run to the British Gymnastics grade rules, so gymnasts can rehearse the exact grade they are working towards. The two BG documents are the rules for these competitions.',
       keyPoint: '<strong>The NGL difference: enter any grade at any age.</strong> Gymnasts compete in the same NGL age bands as the rest of the league: <strong>6–8, 9–11, 12–14 and 15+</strong>. The NGL National League table is ranked within these age bands.',
       links: [
-        { title:'NGL Preparation Grades rules', sub:'NGL competition rules for Preparation 1–3: entry, age bands, scoring, medals and the league table.', url:'https://davidcbrooke.github.io/GYMNASTICS-RESULTS/grades-prep-2027/NGL_Performance_League_Preparation_Grades_2027.pdf' },
-        { title:'NGL Development Grades rules', sub:'NGL competition rules for Development 1–4.', url:'https://davidcbrooke.github.io/GYMNASTICS-RESULTS/grades-prep-2027/NGL_Performance_League_Development_Grades_2027.pdf' },
-        { title:'NGL Performance Grades rules', sub:'NGL competition rules for Performance 1–4.', url:'https://davidcbrooke.github.io/GYMNASTICS-RESULTS/grades-prep-2027/NGL_Performance_League_Performance_Grades_2027.pdf' },
-        { title:'NGL Excel Grades rules', sub:'NGL competition rules for Pre-Excel and Excel 1–3.', url:'https://davidcbrooke.github.io/GYMNASTICS-RESULTS/grades-prep-2027/NGL_Performance_League_Excel_Grades_2027.pdf' },
+        { title:'Download the Preparation Grades rules', sub:'Preparation 1–3. Downloads the NGL rules sheet and opens the BG NDP Grades document in a new tab.', url:'grades-prep-2027/NGL_Performance_League_Preparation_Grades_2027.pdf', download:true, also:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf' },
+        { title:'Download the Development Grades rules', sub:'Development 1–4. Downloads the NGL rules sheet and opens the BG NDP Grades document in a new tab.', url:'grades-prep-2027/NGL_Performance_League_Development_Grades_2027.pdf', download:true, also:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf' },
+        { title:'Download the Performance Grades rules', sub:'Performance 1–4. Downloads the NGL rules sheet and opens the BG NDP Grades document in a new tab.', url:'grades-prep-2027/NGL_Performance_League_Performance_Grades_2027.pdf', download:true, also:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf' },
+        { title:'Download the Excel Grades rules', sub:'Pre-Excel and Excel 1–3. Downloads the NGL rules sheet and opens the BG Excel Grades document in a new tab.', url:'grades-prep-2027/NGL_Performance_League_Excel_Grades_2027.pdf', download:true, also:'https://www.southwag.com/_files/ugd/05ec96_2f43ebedbb0248a9b6139c1b253e6555.pdf' },
         { title:'NDP Grades 2024–2027', sub:'Women\'s Artistic National Development Plan — Preparation, Development and Performance Grades (revised 7 Nov 2024 for 2025 onwards).', url:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf' },
         { title:'Excel Grades 2026', sub:'Women\'s Artistic S.T.E.P. Framework — Pre-Excel and Excel Grades 1 to 3, 2026 onwards.', url:'https://www.southwag.com/_files/ugd/05ec96_2f43ebedbb0248a9b6139c1b253e6555.pdf' }
       ],
@@ -1209,8 +1209,9 @@
       return '<p class="lede">' + d.intro + '</p>' +
         (d.keyPoint ? '<div style="background:#e6f7f8;border-left:5px solid #01AFB8;border-radius:10px;padding:14px 18px;margin:14px 0 18px;line-height:1.55;color:#1d1a1f;">' + d.keyPoint + '</div>' : '') +
         '<div class="action-grid rules-links">' + d.links.map(function (l) {
-          return '<a class="action-card" href="' + l.url + '" target="_blank" rel="noopener">' +
-            '<span class="action-icon">📄</span><span class="action-title">' + l.title + ' ↗</span>' +
+          return '<a class="action-card" href="' + l.url + '"' + (l.download ? ' download' : ' target="_blank" rel="noopener"') +
+            (l.also ? ' onclick="window.open(\'' + l.also + '\', \'_blank\', \'noopener\')"' : '') + '>' +
+            '<span class="action-icon">' + (l.download ? '⬇️' : '📄') + '</span><span class="action-title">' + l.title + ' ↗</span>' +
             '<span class="action-sub">' + l.sub + '</span></a>';
         }).join('') + '</div>' +
         (d.note ? '<p class="rules-note">' + d.note + '</p>' : '');
