@@ -384,9 +384,9 @@
   <div class="hero">
     <div class="hero-kicker">National Gymnastics League &middot; 2027 Season</div>
     <h1>Book <em>Now.</em> Pay Later.<br>Guarantee Your Place.</h1>
-    <p>Secure your club's spot in next season's competitions with no upfront payment. Final commitment confirmed October 2026.</p>
+    <p>Secure your club's spot in next season's competitions with no upfront payment. Payment is due 3 months before each event.</p>
     <div class="hero-badges">
-      <div class="hero-badge">&#x1F4C5; No payment until October 2026</div>
+      <div class="hero-badge">&#x1F4C5; Payment due 3 months before the event</div>
       <div class="hero-badge">&#x2705; Place guaranteed on booking</div>
       <div class="hero-badge">&#x1F3C6; Full season visibility</div>
     </div>
@@ -407,9 +407,9 @@
     <div class="path-hero-logo" id="path-hero-logo"></div>
     <div class="hero-kicker" id="path-kicker">National Gymnastics League &middot; 2027 Season</div>
     <h1 id="path-title">Book <em>Now.</em> Pay Later.<br>Guarantee Your Place.</h1>
-    <p id="path-sub">Secure your club's spot in next season's competitions with no upfront payment. Final commitment confirmed October 2026.</p>
+    <p id="path-sub">Secure your club's spot in next season's competitions with no upfront payment. Payment is due 3 months before each event.</p>
     <div class="hero-badges">
-      <div class="hero-badge">&#x1F4C5; No payment until October 2026</div>
+      <div class="hero-badge">&#x1F4C5; Payment due 3 months before the event</div>
       <div class="hero-badge">&#x2705; Place guaranteed on booking</div>
       <div class="hero-badge">&#x1F3C6; Full season visibility</div>
     </div>
@@ -429,7 +429,7 @@
       <div class="form-card">
         <div class="fc-head">
           <h2>Register Your Club</h2>
-          <p>Book now &mdash; no payment required until October 2026</p>
+          <p>Book now &mdash; payment due 3 months before the event</p>
         </div>
         <div class="fc-body">
           <div class="sel-summary" id="sel-summary">
@@ -461,7 +461,7 @@
           <div class="submit-error" id="submit-error"></div>
           <div class="guarantee-box">
             <span>&#x1F512;</span>
-            <div><strong>Booking guarantee:</strong> Your places are reserved the moment you submit. No payment taken now &mdash; final confirmation and invoicing in October 2026.</div>
+            <div><strong>Booking guarantee:</strong> Your places are reserved the moment you submit. No payment taken now &mdash; payment is due 3 months before the event.</div>
           </div>
         </div>
       </div>
@@ -473,7 +473,7 @@
       <div class="s-icon">&#x1F3C5;</div>
       <h2>You're on the list!</h2>
       <p>Your club has been registered for: <strong id="success-comps"></strong></p>
-      <p style="margin-top:8px" id="success-note">We'll be in touch ahead of October 2026 to confirm entries and arrange payment. If you have joined a waiting list, you will be contacted if a place becomes available.</p>
+      <p style="margin-top:8px" id="success-note">Payment is due 3 months before each event, and we'll be in touch to confirm entries and arrange it. If you have joined a waiting list, you will be contacted if a place becomes available.</p>
       <div class="success-ref" id="success-ref" style="margin-top:20px">NGL-XXXXXX</div>
       <p style="font-size:0.77rem;margin-bottom:24px;margin-top:12px">Keep your reference number safe. If you need to make changes, contact your NGL administrator quoting this reference. You can also check your bookings any time on the "My Bookings" tab using this email address.</p>
       <button class="btn-again" onclick="window.resetForm()">Make Another Booking</button>
@@ -743,7 +743,7 @@
 
 <div class="footer">
   <p><strong>National Gymnastics League</strong> &middot; Early Booking System 2027<br>
-  Book now &middot; Confirm October 2026 &middot; No upfront payment required</p>
+  Book now &middot; Payment due 3 months before the event &middot; No upfront payment required</p>
 </div>
 
 <script type="module">
@@ -848,7 +848,7 @@ window.selectPathway = function(key) {
   document.getElementById('path-hero-logo').innerHTML = pathwayLogoHtml(p);
   document.getElementById('path-kicker').textContent = p.label + ' \u00b7 2027 Season';
   document.getElementById('path-title').innerHTML = '2027 <em>Competitions.</em>';
-  document.getElementById('path-sub').textContent = p.sub + ' \u2014 book now, no payment required until October 2026.';
+  document.getElementById('path-sub').textContent = p.sub + ' \u2014 book now, payment due 3 months before the event.';
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('panel-home').classList.remove('active');
   document.getElementById('panel-public').classList.add('active');
@@ -1990,7 +1990,7 @@ function bookingToPaymentReminderEvent(b) {
   // Waitlisted spots aren't confirmed, so no payment is due for them yet
   if (b.waitlist || !b.compDate) return null;
   const compDate = parseDateStr(b.compDate);
-  const dueStart = addMonthsUTC(compDate, -4);
+  const dueStart = addMonthsUTC(compDate, -3);
   const dueEnd = addDaysUTC(dueStart, 1);
   const compDateDisplay = compDate.getUTCDate().toString().padStart(2,'0') + '/' + (compDate.getUTCMonth()+1).toString().padStart(2,'0') + '/' + compDate.getUTCFullYear();
   return [
