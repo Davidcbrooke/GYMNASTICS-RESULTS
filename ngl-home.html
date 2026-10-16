@@ -1373,11 +1373,11 @@
     return '<div class="section-tabs">' +
       '<div class="stab active" data-sec="awards">Awards Programme</div>' +
       '<div class="stab" data-sec="event">' + opts.eventLabel + '</div>' +
-      '<div class="stab" data-sec="videos">Videos</div>' +
+      (opts.noVideos ? '' : '<div class="stab" data-sec="videos">Videos</div>') +
       '</div>' +
       '<div class="section-panel active" data-sec="awards">' + opts.awardsHTML + '</div>' +
       '<div class="section-panel" data-sec="event">' + opts.eventHTML + '</div>' +
-      '<div class="section-panel" data-sec="videos">' + (opts.videosHTML || videoTabsHTML(opts.routinesHTML)) + '</div>';
+      (opts.noVideos ? '' : '<div class="section-panel" data-sec="videos">' + (opts.videosHTML || videoTabsHTML(opts.routinesHTML)) + '</div>');
   }
 
   function videoTabsHTML(routinesHTML){
@@ -1571,7 +1571,7 @@
       eventHTML = simpleEventHTML(p.eventLabel);
       routinesHTML = simpleRoutinesHTML();
     }
-    return pathwaySectionsHTML({ awardsHTML: awardsHTML, eventLabel: p.eventLabel, eventHTML: eventHTML, routinesHTML: routinesHTML });
+    return pathwaySectionsHTML({ awardsHTML: awardsHTML, eventLabel: p.eventLabel, eventHTML: eventHTML, routinesHTML: routinesHTML, noVideos: id === 'preschool' });
   }
 
 
