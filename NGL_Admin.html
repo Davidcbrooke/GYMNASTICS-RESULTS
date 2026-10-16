@@ -136,8 +136,10 @@ let importingClubId = null;
 let allClubs = [];
 
 
-async function dbGet(path){ const r=await fetch(`${DB_URL}/${path}.json`); return r.json(); }
-async function dbPut(path,data){ const r=await fetch(`${DB_URL}/${path}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); return r.json(); }
+// Send the signed-in admin's token so the Realtime Database rules can require sign-in.
+async function authQ(){ try{ const u=firebase.auth().currentUser; return u ? '?auth='+encodeURIComponent(await u.getIdToken()) : ''; }catch(e){ return ''; } }
+async function dbGet(path){ const r=await fetch(`${DB_URL}/${path}.json`+await authQ()); return r.json(); }
+async function dbPut(path,data){ const r=await fetch(`${DB_URL}/${path}.json`+await authQ(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); return r.json(); }
 
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2500); }
 
