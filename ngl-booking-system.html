@@ -956,8 +956,12 @@ function renderPathwayCards() {
     '</div></button>';
 }
 
+// ?pathway=schools (etc.) opens that pathway's dates straight away, e.g. from the NGL website
+let deepPathway = null;
+try { const q = new URLSearchParams(location.search).get('pathway'); if (q && PATHWAYS[q] && !PATHWAYS[q].comingSoon) deepPathway = q; } catch(e) {}
 onSnapshot(query(compsCol, orderBy('date')), snap => {
   allCompetitions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  if (deepPathway) { const k = deepPathway; deepPathway = null; setTimeout(() => window.selectPathway(k), 0); }
   renderCalendar();
   if (document.getElementById('panel-home').classList.contains('active')) renderPathwayCards();
   if (document.getElementById('panel-calendar').classList.contains('active')) renderFullCalendar();

@@ -754,8 +754,8 @@
         <div class="pathway-row" id="pathway-row">
           <button class="stage" style="--stage-color:#ef2891;" data-id="preschool" data-name="Pre-School" aria-pressed="false">
             <div class="stage-name">Pre-School</div>
-            <div class="stage-age">Ages 2-4</div>
-            <div class="stage-status">Live April 2027</div>
+            <div class="stage-age">Ages 3-4</div>
+            <div class="stage-status">Live 2027</div>
           </button>
           <button class="stage" style="--stage-color:#f5d12f;" data-id="schools" data-name="Schools" aria-pressed="false">
             <div class="stage-name">Schools</div>
@@ -766,7 +766,7 @@
             <div class="stage-name"><span class="full">Recreational</span><span class="short">Rec</span></div>
             <div class="stage-age">Ages 4-16</div>
             <div class="stage-hours">1-2 hrs/wk</div>
-            <div class="stage-status">Live Jan 2027</div>
+            <div class="stage-status">Live 2027</div>
           </button>
           <button class="stage" style="--stage-color:#0f6bac;" data-id="general" data-name="General League" aria-pressed="false">
             <div class="stage-name">General League</div>
@@ -958,8 +958,8 @@
   };
 
   var COMING_TEXT = {
-    preschool: 'Awards Book coming April 2027',
-    recreational: 'Awards Book coming January 2027',
+    preschool: 'Licences open for the 2027 year',
+    recreational: 'Licences open for the 2027 year',
     general: 'Awards Book coming soon',
     performance: 'Awards Book coming soon',
     university: 'Awards Book coming soon',
@@ -968,6 +968,7 @@
 
   var SCHOOLS_CLUB_HUB_URL = 'https://nglschools.co.uk/club/';
   var REC_HUB_URL = 'https://nglrecreational.co.uk/';
+  var BOOKING_URL = 'https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-booking-system.html';
   var LICENCES_URL = 'https://club.nationalgymnasticsleague.co.uk/licences.html';
   var SCHOOLS_PARENT_HUB_URL = 'https://nglschools.co.uk/';
 
@@ -1403,7 +1404,7 @@
     var medals = PS_COUNTRIES.map(function (c, i) { var n = (i < 9 ? '0' : '') + (i + 1);
       return '<div style="text-align:center;font-size:12px;opacity:.85"><img src="' + PS_IMG + 'medal' + n + '.png" alt="' + c + ' medal" loading="lazy" style="width:100%;max-width:72px;display:block;margin:0 auto 4px">' + c + '</div>'; }).join('');
     var isClub = selectedAudience === 'club';
-    return '<div class="card"><p class="lede">Around the World with Somi &amp; Flic: the NGL Pre-School passport for ages 2–4, tried and tested for five years in a British Gymnastics club.</p></div>' +
+    return '<div class="card"><p class="lede">Around the World with Somi &amp; Flic: the NGL Pre-School passport for ages 3–4, tried and tested for five years in a British Gymnastics club.</p></div>' +
       '<div class="card"><div class="book-layout"><img src="' + PS_IMG + 'book-cover.jpg" alt="NGL Pre-School passport">' +
       '<div class="book-copy"><ul>' +
       '<li><strong>The Around the World passport</strong> &mdash; every gymnast gets their own passport and travels the world with Somi and Flic. Two books, 20 countries, eight skills in every country.</li>' +
@@ -1413,7 +1414,7 @@
       '<li><strong>Customised to your club</strong> &mdash; the term planner fits the programme to your term dates and half terms, and each term picks up where the last one finished.</li>' +
       '<li><strong>Parents follow along</strong> &mdash; a family app shows this week\'s theme, their child\'s two sticker skills and the medals still to come.</li>' +
       '<li><strong>Tried and tested</strong> &mdash; run for five years at SAADI Gymnastics, a British Gymnastics club, before being shared with clubs across the country.</li>' +
-      '</ul></div></div></div>' +
+      '</ul><div class="coming-tag">' + COMING_TEXT.preschool + '</div></div></div></div>' +
       '<div class="card"><p class="lede" style="margin-bottom:12px">20 medals to collect</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:10px">' + medals + '</div></div>' +
       '<div class="card"><p class="lede" style="margin-bottom:12px">A theme for every week</p><div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">' +
       ['01_Alphabet','02_Space','03_Pirates','04_Under_the_Sea','11_Dinosaurs','08_Circus','14_Flight','33_Arctic'].map(function (f) { return '<img src="' + PS_IMG + 'post_' + f + '.jpg" alt="" loading="lazy" style="height:200px;border-radius:8px;flex:none">'; }).join('') + '</div></div>' +
@@ -1425,7 +1426,7 @@
 
   function preschoolEventHTML(){
     return '<div class="card"><p class="lede">There are no competitions in NGL Pre-School. Instead, every child\'s journey ends with a graduation ceremony to celebrate moving on.</p>' +
-      '<p>Graduation details are coming soon.</p></div>';
+      '<p>There\'s nothing to book: each child graduates in their last Pre-School class at their own club, with their coach and family there to celebrate.</p></div>';
   }
 
   function graduationPanelHTML(id){
@@ -1518,7 +1519,7 @@
       '<a class="buy-btn" href="' + SCHOOLS_CLUB_HUB_URL + '" target="_blank" rel="noopener">Explore NGL Schools</a> ' +
       '<a class="buy-btn" href="' + LICENCES_URL + '" target="_blank" rel="noopener">Licence fees</a></div>' +
       '<div class="card"><div class="cta-tag">For families</div><p>Got an NGL Schools code from your club or school? Watch the routines and practise at home.</p>' +
-      '<a class="buy-btn" href="' + SCHOOLS_PARENT_HUB_URL + '" target="_blank" rel="noopener">Open the Schools Hub</a></div>' +
+      '<a class="buy-btn" href="' + SCHOOLS_PARENT_HUB_URL + '" target="_blank" rel="noopener">Open the Schools family app</a></div>' +
       '</div>';
   }
 
@@ -1542,13 +1543,13 @@
         '<div class="event-row"><span class="event-icon">📍</span><span><strong>' + g.venue + '</strong></span></div>' +
       '</div>' +
       '<p class="lede" style="margin-top:16px;">The Graduation Performance brings every school on the programme together to show what they\'ve learned across the year, with Bronze, Silver and Gold certificates presented on the day.</p>' +
-      comingSoonButtonHTML() +
+      '<a class="buy-btn" href="' + BOOKING_URL + '?pathway=schools" target="_top">Book Now</a>' +
       '</div>';
   }
 
   function schoolsVideosHTML(){
-    return '<div class="card"><p class="lede">Routine videos for every Schools level are in the NGL Schools Hub — use the code from your club or school to open them.</p>' +
-      '<a class="buy-btn" href="' + SCHOOLS_PARENT_HUB_URL + '" target="_blank" rel="noopener">Open the Schools Hub</a></div>';
+    return '<div class="card"><p class="lede">Routine videos for every Schools level are in the NGL Schools family app — use the code from your club or school to open them.</p>' +
+      '<a class="buy-btn" href="' + SCHOOLS_PARENT_HUB_URL + '" target="_blank" rel="noopener">Open the Schools family app</a></div>';
   }
 
   function awardsPanelHTML(id){
