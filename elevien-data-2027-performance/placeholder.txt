@@ -1,0 +1,1 @@
+Performance League 2027 Elevien results (JSON) go in this folder. General League results go in elevien-data-2027.
