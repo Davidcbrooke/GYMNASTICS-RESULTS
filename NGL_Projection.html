@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Projected P&amp;L</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --navy:#14254a; --navy-2:#223a70; --red:#c8202f; --gold:#d9a521; --gold-soft:#fbf1d6;
+  --paper:#f4f5f8; --ink:#16213a; --muted:#5d6782; --line:#d6dbe6; --white:#fff; --ok:#1a7a43; --bad:#b3261e;
+  --ps:#E8559A; --sc:#F8D438; --rec:#E88230; --teal:#01AFB8;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --cond:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  box-sizing:border-box;
+}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;font-family:var(--body);color:var(--ink);background:var(--paper);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hidden{display:none!important}
+header.top{background:var(--navy);color:#fff;border-bottom:4px solid var(--red)}
+.top-inner{max-width:1280px;margin:0 auto;padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.brand{font-family:var(--cond);font-size:22px;margin-right:auto;line-height:1.1}
+.brand small{display:block;font-family:var(--body);font-size:12px;opacity:.75;font-weight:500}
+.top select,.top input{background:var(--navy-2);color:#fff;border:1px solid #3a5290;border-radius:4px;padding:7px 10px}
+.top input::placeholder{color:#b9c3dd}
+.mode{font-size:12px;padding:3px 8px;border-radius:3px;background:var(--gold);color:var(--navy);font-weight:600}
+#saveState{font-size:12px;opacity:.8;min-width:60px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:4px;padding:7px 12px;font-weight:600;color:var(--navy)}
+.btn.sm{padding:4px 9px;font-size:13px}
+.btn.dark{background:var(--navy-2);border-color:#3a5290;color:#fff}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.danger{color:var(--bad)}
+main{max-width:1280px;margin:0 auto;padding:16px}
+h2.sec{font-family:var(--cond);font-size:28px;color:var(--navy);margin:0 0 4px}
+p.lead{color:var(--muted);margin:0 0 14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.card .v{font-family:var(--cond);font-size:32px;line-height:1.05;color:var(--navy)}
+.card .v.neg{color:var(--bad)}
+.card .k{font-size:13px;color:var(--muted)}
+.panel{background:#fff;border:1px solid var(--line);border-radius:6px;margin-bottom:16px;overflow:hidden}
+.panel-h{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--navy);color:#fff}
+.panel-h h3{margin:0;font-family:var(--cond);font-size:20px;margin-right:auto}
+.panel-b{padding:14px 16px}
+.chart svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.tablewrap{overflow-x:auto}
+table.pl{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+table.pl th,table.pl td{padding:5px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid #eef0f5}
+table.pl th:first-child,table.pl td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:250px}
+table.pl thead th{background:var(--navy);color:#fff;position:sticky;top:0}
+table.pl thead th:first-child{background:var(--navy)}
+table.pl td.tot,table.pl th.tot{background:#f6f7fb;font-weight:700}
+table.pl tr.band td{font-weight:700;color:#fff;background:var(--c)}
+table.pl tr.band td:first-child{background:var(--c)}
+table.pl tr.band.dark td{color:var(--navy)}
+table.pl tr.b td{font-weight:700}
+table.pl tr.t td{border-top:1px solid #9aa3b8}
+table.pl tr.net td{font-weight:700;font-size:15px;border-top:2px solid var(--navy);background:#f1f4fb}
+table.pl tr.net td:first-child{background:#f1f4fb}
+table.pl tr.i td{color:var(--muted)}
+td.neg{color:var(--bad)}
+tr.sub td:first-child{padding-left:22px}
+/* Variables */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px}
+.vbox{border:1px solid var(--line);border-radius:6px;padding:12px}
+.vbox h4{margin:0 0 8px;font-family:var(--cond);font-size:19px;color:var(--navy)}
+.vrow{display:grid;grid-template-columns:1fr 120px;gap:8px;align-items:center;margin-bottom:6px;font-size:14px}
+.vrow small{display:block;color:var(--muted);font-size:12px;line-height:1.25}
+input.num{width:100%;text-align:right;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:#fffbe8}
+input.num:focus{background:#fff}
+.unit{position:relative}
+.unit span{position:absolute;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none}
+.unit.pre span{left:8px}.unit.pre input{padding-left:20px}
+.unit.suf span{right:8px}.unit.suf input{padding-right:24px}
+table.vt{border-collapse:collapse;width:100%;font-size:14px}
+table.vt th,table.vt td{padding:4px 6px;border-bottom:1px solid #eef0f5;text-align:right}
+table.vt th:first-child,table.vt td:first-child{text-align:left}
+table.vt td.lab{min-width:230px}
+table.vt td.lab small{display:block;color:var(--muted);font-size:12px;line-height:1.2}
+table.vt input.num{min-width:76px}
+table.vt th.p{color:#fff}
+.yrs{overflow-x:auto}
+.yrs table input.num{min-width:84px}
+.yrs table .unit.pre input.num{min-width:104px}
+.note{font-size:13px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:6px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+@media (max-width:700px){ .brand{width:100%} .top-inner{gap:8px} }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-inner">
+  <div class="brand">NGL Projected P&amp;L<small>Club Licences, books and medals: 10-year projection</small></div>
+  <span id="mode" class="mode hidden">Demo</span>
+  <label class="sr" for="scen" style="font-size:13px;opacity:.85">Scenario</label>
+  <select id="scen" aria-label="Scenario"></select>
+  <input id="newName" placeholder="New scenario name" aria-label="New scenario name" style="width:170px">
+  <button class="btn dark sm" id="saveAs">Save as new</button>
+  <button class="btn dark sm" id="delScen">Delete</button>
+  <span id="saveState"></span>
+</div></header>
+<main>
+  <h2 class="sec">Projected P&amp;L</h2>
+  <p class="lead">Change any yellow box under <b>Variables</b> and every figure updates straight away. Scenarios are saved for everyone with Finance access.</p>
+  <div class="cards" id="cards"></div>
+  <div class="panel"><div class="panel-h"><h3>Income and net profit by year</h3></div>
+    <div class="panel-b chart"><div id="chart"></div>
+      <div class="legend"><span><i style="background:#14254a"></i>Total income</span><span><i style="background:#01AFB8"></i>Net profit</span><span><i style="background:#E88230;height:3px;vertical-align:3px"></i>Licences (right scale)</span></div></div></div>
+  <div class="panel"><div class="panel-h"><h3>Variables</h3><button class="btn sm" id="resetBtn">Reset this scenario to the default figures</button><button class="btn sm" id="toggleVars">Hide</button></div>
+    <div class="panel-b" id="vars"></div></div>
+  <div class="panel"><div class="panel-h"><h3>10-year P&amp;L</h3><button class="btn sm" id="csvBtn">Export CSV</button></div>
+    <div class="panel-b tablewrap"><table class="pl" id="pl"></table>
+    <p class="note" style="margin-top:12px">Licences grow by the yearly growth rate until they reach the most clubs expected times the share of clubs running each pathway. One club can hold licences in several pathways. Schools and Pre-School gymnasts buy one book for their time (new gymnasts each year = growth plus replacing leavers); Recreational gymnasts buy one every 4 terms. Postage is charged to clubs on each supply order; the cost of posting is a running cost. Pre-School Lesson Plan Packs and the Seasonal Pack are not included. NGL is not VAT registered.</p></div></div>
+</main>
+<script>
+const CONFIG = {
+  firebase: {
+    apiKey: "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4",
+    authDomain: "saadi-rotation.firebaseapp.com",
+    projectId: "saadi-rotation",
+    storageBucket: "saadi-rotation.firebasestorage.app",
+    messagingSenderId: "1066734803675",
+    appId: "1:1066734803675:web:0188fd601adea7db08cafe"
+  },
+  collection: "ngl_finance", doc: "projection", localKey: "ngl_projection_demo"
+};
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const N = 10;
+function toast(m){ const t=document.createElement("div"); t.className="toast"; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),2800); }
+const gbp = n => (n < -0.5 ? "-" : "") + "£" + Math.round(Math.abs(n)).toLocaleString("en-GB");
+const num = (n, d=0) => (+n).toLocaleString("en-GB", {minimumFractionDigits:d, maximumFractionDigits:d});
+const pct = n => (Math.round(n*1000)/10).toLocaleString("en-GB") + "%";
+
+const PATHS = [
+  {k:'preschool', name:'Pre-School', c:'#E8559A', dark:false},
+  {k:'schools', name:'Schools', c:'#F8D438', dark:true},
+  {k:'recreational', name:'Recreational', c:'#E88230', dark:false}
+];
+/* Default figures (agreed Oct 2026 with Dave) */
+function defaults(){
+  return {
+    firstYear: 2027, maxClubs: 300, hosting: 3000,
+    growth: [0, 1, 1, 1, 1, 1, 0.2, 0.2, 0.2, 0.2],
+    oncost: 0.16, orders: 3, postIn: 8, postOut: 10, mktMin: 6000, mktPct: 0.03,
+    paths: {
+      preschool:    {y1:10, share:1,   gyms:50,  fee:400,  disc:0.05, bookPrice:5, bookCost:2.5, buyBook:0.95, booksNew:1, booksYear:0,    stay:2, medalPrice:2, medalCost:1,   medalsPer:10, buyMedal:0.5, poster:15},
+      schools:      {y1:10, share:0.3, gyms:200, fee:750,  disc:0.05, bookPrice:5, bookCost:2.5, buyBook:0.95, booksNew:1, booksYear:0,    stay:3, medalPrice:5, medalCost:1.5, medalsPer:1,  buyMedal:0.5, poster:0},
+      recreational: {y1:10, share:1,   gyms:300, fee:1250, disc:0,    bookPrice:5, bookCost:2.5, buyBook:0.95, booksNew:0, booksYear:0.75, stay:0, medalPrice:3, medalCost:1.5, medalsPer:3,  buyMedal:0.5, poster:0}
+    },
+    roles: [
+      {name:'Dave',                     pay:[24000, 36000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000]},
+      {name:'Second member of staff',   pay:[0, 0, 36000, 36000, 36000, 36000, 36000, 36000, 36000, 36000]},
+      {name:'Packing (part-time)',      pay:[0, 0, 0, 0, 24000, 24000, 24000, 24000, 24000, 24000]}
+    ]
+  };
+}
+const DEF_NAME = "Base case";
+let ST = {current: DEF_NAME, scenarios: {[DEF_NAME]: defaults()}};
+let LIVE = false, ref = null, saveTimer = null, lastWrite = 0;
+const S = () => ST.scenarios[ST.current];
+
+/* ===== Model ===== */
+function model(D){
+  const z = () => Array(N).fill(0), out = {paths:{}, years:[...Array(N)].map((_,t)=>D.firstYear+t)};
+  const T = {lic:z(), gyms:z(), licInc:z(), bookInc:z(), medalInc:z(), inc:z(), gp:z()};
+  for(const P of PATHS){
+    const p = D.paths[P.k], cap = D.maxClubs * p.share, r = {lic:z(), newLic:z(), gyms:z(), newG:z(), books:z(), medals:z(), licInc:z(), bookInc:z(), medalInc:z(), inc:z(), bookCost:z(), medalCost:z(), posterCost:z(), gp:z()};
+    for(let t=0;t<N;t++){
+      r.lic[t] = t===0 ? Math.min(p.y1, cap) : Math.min(r.lic[t-1]*(1+(+D.growth[t]||0)), cap);
+      r.newLic[t] = t===0 ? r.lic[t] : r.lic[t]-r.lic[t-1];
+      r.gyms[t] = r.lic[t]*p.gyms;
+      r.newG[t] = t===0 ? r.gyms[t] : (r.gyms[t]-r.gyms[t-1]) + (p.stay ? r.gyms[t-1]/p.stay : 0);
+      r.books[t] = (r.newG[t]*p.booksNew + r.gyms[t]*p.booksYear) * p.buyBook;
+      r.medals[t] = r.gyms[t]*p.buyMedal*p.medalsPer;
+      r.licInc[t] = r.lic[t]*p.fee*(1-p.disc);
+      r.bookInc[t] = r.books[t]*p.bookPrice;
+      r.medalInc[t] = r.medals[t]*p.medalPrice;
+      r.inc[t] = r.licInc[t]+r.bookInc[t]+r.medalInc[t];
+      r.bookCost[t] = r.books[t]*p.bookCost;
+      r.medalCost[t] = r.medals[t]*p.medalCost;
+      r.posterCost[t] = r.newLic[t]*p.poster;
+      r.gp[t] = r.inc[t]-r.bookCost[t]-r.medalCost[t]-r.posterCost[t];
+      for(const k of Object.keys(T)) T[k][t] += r[k][t];
+    }
+    out.paths[P.k] = r;
+  }
+  const clubs = z(), postIn = z(), totalInc = z(), staff = z(), post = z(), mkt = z(), host = z(), costs = z(), net = z(), cum = z();
+  for(let t=0;t<N;t++){
+    clubs[t] = Math.max(...PATHS.map(P=>out.paths[P.k].lic[t]));
+    postIn[t] = T.lic[t]*D.orders*D.postIn;
+    totalInc[t] = T.inc[t]+postIn[t];
+    staff[t] = D.roles.reduce((a,r)=>a+(+r.pay[t]||0),0)*(1+D.oncost);
+    post[t] = T.lic[t]*D.orders*D.postOut;
+    mkt[t] = Math.max(D.mktMin, totalInc[t]*D.mktPct);
+    host[t] = D.hosting;
+    costs[t] = staff[t]+post[t]+mkt[t]+host[t];
+    net[t] = T.gp[t]+postIn[t]-costs[t];
+    cum[t] = (t?cum[t-1]:0)+net[t];
+  }
+  Object.assign(out, {T, clubs, postIn, totalInc, staff, post, mkt, host, costs, net, cum});
+  return out;
+}
+const sum = a => a.reduce((x,y)=>x+y,0);
+
+/* ===== Render ===== */
+function renderCards(M){
+  const full = M.net[N-1], tot = sum(M.net), payback = M.cum.findIndex(v=>v>=0);
+  const c = (v,k,neg) => `<div class="card"><div class="v${neg?' neg':''}">${v}</div><div class="k">${k}</div></div>`;
+  $("#cards").innerHTML =
+    c(gbp(sum(M.totalInc)), "Total income over 10 years") +
+    c(gbp(tot), "Net profit over 10 years", tot<0) +
+    c(gbp(M.net[0]), `Net profit in ${M.years[0]} (year 1)`, M.net[0]<0) +
+    c(gbp(full), `Net profit in ${M.years[N-1]} (year 10)`, full<0) +
+    c(num(M.T.lic[N-1]) + " licences", `${num(M.clubs[N-1])} clubs at least, by ${M.years[N-1]}`) +
+    c(payback<0 ? "Not within 10 years" : (payback===0 ? "Year 1" : M.years[payback]), "Cumulative profit turns positive");
+}
+function renderChart(M){
+  const W=1100, H=320, L=70, R=60, Tp=16, B=36, iw=W-L-R, ih=H-Tp-B;
+  const maxV = Math.max(1, ...M.totalInc, ...M.net), minV = Math.min(0, ...M.net);
+  const step = niceStep((maxV-minV)/5), top = Math.ceil(maxV/step)*step, bot = Math.floor(minV/step)*step;
+  const y = v => Tp + ih*(top-v)/(top-bot);
+  const maxL = Math.max(1, ...M.T.lic), lstep = niceStep(maxL/5), ltop = Math.ceil(maxL/lstep)*lstep;
+  const yl = v => Tp + ih*(1 - v/ltop);
+  const gw = iw/N, bw = Math.min(34, gw*0.34);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Income and net profit by year">`;
+  for(let v=bot; v<=top+1e-6; v+=step){ s += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="${v===0?'#9aa3b8':'#e6e9f0'}"/><text x="${L-8}" y="${y(v)+4}" font-size="12" text-anchor="end" fill="#5d6782">${axisMoney(v)}</text>`; }
+  for(let v=0; v<=ltop+1e-6; v+=lstep) s += `<text x="${W-R+8}" y="${yl(v)+4}" font-size="12" fill="#E88230">${num(v)}</text>`;
+  M.years.forEach((yr,t)=>{
+    const cx = L + gw*t + gw/2;
+    const bar = (v, x, col, lab) => { const y0=y(Math.max(v,0)), h=Math.abs(y(v)-y(0)); return `<rect x="${x}" y="${y0}" width="${bw}" height="${Math.max(h,0.5)}" fill="${col}" rx="2"><title>${yr} ${lab}: ${gbp(v)}</title></rect>`; };
+    s += bar(M.totalInc[t], cx-bw-2, '#14254a', 'income') + bar(M.net[t], cx+2, M.net[t]<0?'#b3261e':'#01AFB8', 'net profit');
+    s += `<text x="${cx}" y="${H-12}" font-size="12" text-anchor="middle" fill="#5d6782">${yr}</text>`;
+  });
+  s += `<polyline fill="none" stroke="#E88230" stroke-width="3" points="${M.T.lic.map((v,t)=>`${L+gw*t+gw/2},${yl(v)}`).join(' ')}"/>`;
+  M.T.lic.forEach((v,t)=>{ s += `<circle cx="${L+gw*t+gw/2}" cy="${yl(v)}" r="4" fill="#E88230"><title>${M.years[t]}: ${num(v)} licences</title></circle>`; });
+  $("#chart").innerHTML = s + `</svg>`;
+}
+function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(raw||1))); const f = raw/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; }
+function axisMoney(v){ const a=Math.abs(v); return (v<0?"-":"")+"£"+(a>=1e6?(a/1e6).toLocaleString("en-GB",{maximumFractionDigits:1})+"m":a>=1e3?Math.round(a/1e3)+"k":a); }
+
+function renderTable(M){
+  const D = S(), rows = [];
+  const R = (label, arr, opt={}) => rows.push({label, arr, ...opt});
+  for(const P of PATHS){
+    const r = M.paths[P.k];
+    rows.push({band:P});
+    R('Licences', r.lic, {fmt:'n1', total:false});
+    R('New licences this year', r.newLic, {fmt:'n1', sub:true, cls:'i'});
+    R('Gymnasts', r.gyms, {fmt:'n', total:false});
+    R('New gymnasts (growth and replacing leavers)', r.newG, {fmt:'n', sub:true, cls:'i'});
+    R('Books sold', r.books, {fmt:'n'}); R('Medals sold', r.medals, {fmt:'n'});
+    R('Club Licence fees', r.licInc); R('Book sales', r.bookInc); R('Medal sales', r.medalInc);
+    R('Income', r.inc, {cls:'b t'});
+    R('Book costs', r.bookCost.map(v=>-v)); R('Medal costs', r.medalCost.map(v=>-v));
+    if(sum(r.posterCost)) R('Posters for new clubs', r.posterCost.map(v=>-v));
+    R(`${P.name} profit`, r.gp, {cls:'b t'});
+  }
+  rows.push({band:{name:'All pathways', c:'#14254a'}});
+  R('Licences (all three pathways)', M.T.lic, {fmt:'n1', total:false});
+  R('Clubs, at least', M.clubs, {fmt:'n1', total:false, cls:'i'});
+  R('Gymnasts', M.T.gyms, {fmt:'n', total:false});
+  R('Club Licence fees', M.T.licInc); R('Book sales', M.T.bookInc); R('Medal sales', M.T.medalInc);
+  R('Postage charged to clubs', M.postIn);
+  R('Total income', M.totalInc, {cls:'b t'});
+  R('Profit from licences, books and medals', M.T.gp);
+  rows.push({head:'Running costs'});
+  D.roles.forEach(ro => R(`Salary: ${ro.name}`, ro.pay.map(v=>-(+v||0)), {sub:true, cls:'i'}));
+  R('Staff costs (salaries and on-costs)', M.staff.map(v=>-v));
+  R('Postage and packing', M.post.map(v=>-v));
+  R('Marketing', M.mkt.map(v=>-v));
+  R('Hub, hosting and admin', M.host.map(v=>-v));
+  R('Total running costs', M.costs.map(v=>-v), {cls:'b t'});
+  R('NET PROFIT', M.net, {cls:'net'});
+  R('Net margin', M.net.map((v,t)=>M.totalInc[t]?v/M.totalInc[t]:0), {fmt:'pct', totalVal: sum(M.totalInc)?sum(M.net)/sum(M.totalInc):0});
+  R('Cumulative net profit', M.cum, {cls:'b', total:false});
+  const f = (v, fmt) => fmt==='n1' ? num(v,1) : fmt==='n' ? num(v) : fmt==='pct' ? pct(v) : (Math.abs(v) < 0.5 ? '–' : gbp(v));
+  let h = `<thead><tr><th>£</th>${M.years.map(y=>`<th>${y}</th>`).join('')}<th class="tot">10 years</th></tr></thead><tbody>`;
+  for(const r of rows){
+    if(r.band){ h += `<tr class="band${r.band.dark?' dark':''}" style="--c:${r.band.c}"><td>${esc(r.band.name.toUpperCase())}</td>${'<td></td>'.repeat(N+1)}</tr>`; continue; }
+    if(r.head){ h += `<tr class="b"><td style="padding-top:12px">${esc(r.head)}</td>${'<td></td>'.repeat(N+1)}</tr>`; continue; }
+    const tv = r.totalVal !== undefined ? r.totalVal : (r.total===false ? null : sum(r.arr));
+    const money = !r.fmt;
+    h += `<tr class="${r.cls||''}${r.sub?' sub':''}"><td>${esc(r.label)}</td>${r.arr.map(v=>`<td class="${money&&v<-0.5?'neg':''}">${f(v,r.fmt)}</td>`).join('')}<td class="tot ${money&&tv<-0.5?'neg':''}">${tv===null?'':f(tv,r.fmt)}</td></tr>`;
+  }
+  $("#pl").innerHTML = h + '</tbody>';
+  lastRows = {rows, years:M.years};
+}
+let lastRows = null;
+
+/* ===== Variables ===== */
+const PV = [
+  ['y1', 'Licences in year 1', 'n', ''],
+  ['share', 'Share of clubs running this pathway', 'pct', 'Licences stop growing at this share of the most clubs'],
+  ['gyms', 'Gymnasts per licence', 'n', ''],
+  ['fee', 'Club Licence fee per year', 'gbp', 'Band for that number of gymnasts'],
+  ['disc', 'Multi-pathway discount', 'pct', '5% off every licence except the club’s dearest'],
+  ['bookPrice', 'Book: price to clubs', 'gbp', ''],
+  ['bookCost', 'Book: cost to NGL', 'gbp', 'Print cost'],
+  ['buyBook', 'Gymnasts who buy the book', 'pct', ''],
+  ['booksNew', 'Books per new gymnast', 'n', 'Schools and Pre-School: 1 for their time'],
+  ['booksYear', 'Books per gymnast per year', 'n', 'Recreational: 1 every 4 terms = 0.75'],
+  ['stay', 'Average years a gymnast stays', 'n', 'Sets how many new gymnasts join each year (0 = not used)'],
+  ['medalPrice', 'Medal: price to clubs', 'gbp', ''],
+  ['medalCost', 'Medal: cost to NGL', 'gbp', ''],
+  ['medalsPer', 'Medals per gymnast per year', 'n', ''],
+  ['buyMedal', 'Gymnasts who buy medals', 'pct', ''],
+  ['poster', 'A1 poster per new licence (cost)', 'gbp', 'Pre-School only']
+];
+const GV = [
+  ['firstYear', 'First licence year', 'yr', 'Licence year from September'],
+  ['maxClubs', 'Most clubs NGL expects to sign up', 'n', 'BG lists about 1,000 clubs across all disciplines'],
+  ['hosting', 'Hub, hosting and admin per year', 'gbp', 'Firebase, domains, Squarespace, Brevo, Workspace, accounts, insurance']
+];
+const CV = [
+  ['oncost', 'Employer on-costs on salaries', 'pct', 'National Insurance and pension'],
+  ['orders', 'Supply orders per licence per year', 'n', 'One a term'],
+  ['postIn', 'Postage charged to the club per order', 'gbp', 'Hub scale: £4 / £8 / £12'],
+  ['postOut', 'Postage and packing cost per order', 'gbp', 'Courier parcel plus box'],
+  ['mktMin', 'Marketing: minimum per year', 'gbp', ''],
+  ['mktPct', 'Marketing: share of income', 'pct', 'Spend whichever is larger']
+];
+function inp(path, val, kind){
+  const shown = kind==='pct' ? +(val*100).toFixed(4) : val;
+  const step = kind==='pct' ? 1 : kind==='gbp' ? 0.5 : kind==='yr' ? 1 : 0.05;
+  const box = `<input class="num" type="number" step="${step}" data-path="${path}" data-kind="${kind}" value="${shown}">`;
+  return kind==='gbp' ? `<span class="unit pre"><span>£</span>${box}</span>` : kind==='pct' ? `<span class="unit suf">${box}<span>%</span></span>` : box;
+}
+function renderVars(){
+  const D = S();
+  const simple = (list) => list.map(([k,l,kind,n])=>`<div class="vrow"><label>${esc(l)}${n?`<small>${esc(n)}</small>`:''}</label>${inp(k, D[k], kind)}</div>`).join('');
+  let h = `<div class="vgrid"><div class="vbox"><h4>General</h4>${simple(GV)}</div><div class="vbox"><h4>Running costs</h4>${simple(CV)}</div></div>`;
+  h += `<div class="vbox" style="margin-top:14px"><h4>Licence growth on the year before</h4><div class="yrs"><table class="vt"><thead><tr><th></th>${[...Array(N)].map((_,t)=>`<th>${D.firstYear+t}</th>`).join('')}</tr></thead><tbody><tr><td class="lab">Growth<small>100% = doubles</small></td>${D.growth.map((g,t)=>`<td>${t===0?'<span class="note">start</span>':inp(`growth.${t}`, g, 'pct')}</td>`).join('')}</tr></tbody></table></div></div>`;
+  h += `<div class="vbox" style="margin-top:14px"><h4>Per pathway</h4><div class="yrs"><table class="vt"><thead><tr><th></th>${PATHS.map(P=>`<th class="p" style="background:${P.c};${P.dark?'color:#14254a':''}">${P.name}</th>`).join('')}</tr></thead><tbody>` +
+    PV.map(([k,l,kind,n])=>`<tr><td class="lab">${esc(l)}${n?`<small>${esc(n)}</small>`:''}</td>${PATHS.map(P=>`<td>${inp(`paths.${P.k}.${k}`, D.paths[P.k][k], kind)}</td>`).join('')}</tr>`).join('') + `</tbody></table></div></div>`;
+  h += `<div class="vbox" style="margin-top:14px"><h4>Staff salaries by year</h4><div class="yrs"><table class="vt"><thead><tr><th>Role</th>${[...Array(N)].map((_,t)=>`<th>${D.firstYear+t}</th>`).join('')}<th></th></tr></thead><tbody>` +
+    D.roles.map((r,i)=>`<tr><td class="lab"><input data-role="${i}" value="${esc(r.name)}" aria-label="Role name" style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:4px"></td>${r.pay.map((v,t)=>`<td>${inp(`roles.${i}.pay.${t}`, v, 'gbp')}</td>`).join('')}<td><button class="btn sm danger" data-delrole="${i}" title="Remove this role">&#x2715;</button></td></tr>`).join('') +
+    `</tbody></table></div><button class="btn sm" id="addRole" style="margin-top:8px">Add a role</button> <span class="note">Employer on-costs are added on top.</span></div>`;
+  $("#vars").innerHTML = h;
+}
+function setPath(obj, path, v){ const ks = path.split('.'); let o = obj; for(let i=0;i<ks.length-1;i++) o = o[ks[i]]; o[ks[ks.length-1]] = v; }
+$("#vars").addEventListener("input", e=>{
+  const t = e.target, D = S();
+  if(t.dataset.role !== undefined){ D.roles[+t.dataset.role].name = t.value; renderOut(); save(); return; }
+  if(!t.dataset.path) return;
+  let v = parseFloat(t.value); if(isNaN(v)) v = 0;
+  if(t.dataset.kind === 'pct') v = v/100;
+  setPath(D, t.dataset.path, v);
+  if(t.dataset.path === 'firstYear') { renderOut(); save(); return; }
+  renderOut(); save();
+});
+$("#vars").addEventListener("change", e=>{ if(e.target.dataset.path === 'firstYear') renderVars(); });
+$("#vars").addEventListener("click", e=>{
+  const D = S();
+  if(e.target.id === 'addRole'){ D.roles.push({name:'New role', pay:Array(N).fill(0)}); renderVars(); renderOut(); save(); }
+  const d = e.target.dataset.delrole; if(d !== undefined){ D.roles.splice(+d,1); renderVars(); renderOut(); save(); }
+});
+$("#toggleVars").addEventListener("click", ()=>{ const v=$("#vars"); v.classList.toggle("hidden"); $("#toggleVars").textContent = v.classList.contains("hidden") ? "Show" : "Hide"; });
+$("#resetBtn").addEventListener("click", ()=>{ ST.scenarios[ST.current] = defaults(); renderAll(); save(); toast("Reset to the default figures"); });
+
+/* ===== Scenarios ===== */
+function renderScen(){
+  $("#scen").innerHTML = Object.keys(ST.scenarios).map(n=>`<option${n===ST.current?' selected':''}>${esc(n)}</option>`).join('');
+  $("#delScen").disabled = Object.keys(ST.scenarios).length < 2;
+}
+$("#scen").addEventListener("change", e=>{ ST.current = e.target.value; renderAll(); save(); });
+$("#saveAs").addEventListener("click", ()=>{
+  const n = $("#newName").value.trim();
+  if(!n){ toast("Type a name for the new scenario first"); $("#newName").focus(); return; }
+  if(ST.scenarios[n]){ toast("A scenario with that name already exists"); return; }
+  ST.scenarios[n] = JSON.parse(JSON.stringify(S())); ST.current = n; $("#newName").value = '';
+  renderAll(); save(); toast(`Saved as “${n}”`);
+});
+$("#delScen").addEventListener("click", ()=>{
+  if(Object.keys(ST.scenarios).length < 2) return;
+  const btn = $("#delScen");
+  if(btn.dataset.confirm !== ST.current){ btn.dataset.confirm = ST.current; btn.textContent = "Tap again to delete"; setTimeout(()=>{ btn.dataset.confirm=''; btn.textContent='Delete'; }, 3000); return; }
+  delete ST.scenarios[ST.current]; ST.current = Object.keys(ST.scenarios)[0]; btn.dataset.confirm=''; btn.textContent='Delete';
+  renderAll(); save();
+});
+
+/* ===== CSV ===== */
+$("#csvBtn").addEventListener("click", ()=>{
+  if(!lastRows) return;
+  const q = v => '"' + String(v).replace(/"/g,'""') + '"';
+  const out = [[ST.current, ...lastRows.years, '10 years'].map(q).join(',')];
+  for(const r of lastRows.rows){
+    if(r.band){ out.push(q(r.band.name)); continue; }
+    if(r.head){ out.push(q(r.head)); continue; }
+    const tv = r.totalVal !== undefined ? r.totalVal : (r.total===false ? '' : sum(r.arr));
+    const fx = v => v==='' ? '' : (r.fmt==='pct' ? (v*100).toFixed(1)+'%' : (r.fmt==='n1' ? v.toFixed(1) : Math.round(v)));
+    out.push([q(r.label), ...r.arr.map(fx), fx(tv)].join(','));
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out.join('\n')], {type:'text/csv'}));
+  a.download = `NGL-Projected-PnL-${ST.current.replace(/[^\w-]+/g,'-')}-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+});
+
+/* ===== Save / load ===== */
+function normalise(st){
+  const d = defaults();
+  if(!st || !st.scenarios || !Object.keys(st.scenarios).length) return {current: DEF_NAME, scenarios: {[DEF_NAME]: d}};
+  for(const [n, sc] of Object.entries(st.scenarios)){
+    const m = Object.assign(defaults(), sc);
+    m.paths = {}; for(const P of PATHS) m.paths[P.k] = Object.assign({}, d.paths[P.k], (sc.paths||{})[P.k]);
+    m.growth = [...Array(N)].map((_,t)=> (sc.growth||[])[t] ?? d.growth[t]);
+    m.roles = (sc.roles || d.roles).map(r=>({name:r.name||'Role', pay:[...Array(N)].map((_,t)=> +((r.pay||[])[t]||0))}));
+    st.scenarios[n] = m;
+  }
+  if(!st.scenarios[st.current]) st.current = Object.keys(st.scenarios)[0];
+  return st;
+}
+function save(){
+  $("#saveState").textContent = "Saving…";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    if(!LIVE){ try{ localStorage.setItem(CONFIG.localKey, JSON.stringify(ST)); }catch(_){} $("#saveState").textContent = "Saved (demo)"; return; }
+    try{ lastWrite = Date.now(); await ref.set(JSON.parse(JSON.stringify(ST))); $("#saveState").textContent = "Saved"; }
+    catch(err){ console.error(err); $("#saveState").textContent = "Not saved"; toast(err.code==="permission-denied" ? "The database blocked saving: this needs Finance access." : "Couldn't save. Check your connection."); }
+  }, 600);
+}
+function renderOut(){ const M = model(S()); renderCards(M); renderChart(M); renderTable(M); }
+function renderAll(){ renderScen(); renderVars(); renderOut(); }
+
+function startLive(){
+  LIVE = true; ref = firebase.firestore().collection(CONFIG.collection).doc(CONFIG.doc);
+  ref.onSnapshot(doc=>{
+    if(Date.now()-lastWrite < 1500) return;
+    if(document.activeElement && document.activeElement.closest && document.activeElement.closest('#vars') && doc.exists){ return; }
+    ST = normalise(doc.exists ? doc.data() : null); renderAll();
+    if(!doc.exists) save();
+  }, err=>{ console.error(err); toast("Couldn't load saved scenarios (needs Finance access)."); renderAll(); });
+}
+function startDemo(){
+  $("#mode").classList.remove("hidden");
+  try{ ST = normalise(JSON.parse(localStorage.getItem(CONFIG.localKey) || 'null')); }catch(_){ ST = normalise(null); }
+  renderAll();
+}
+const DEMO = new URLSearchParams(location.search).has('demo');
+if(!DEMO && window.firebase && CONFIG.firebase.apiKey){
+  firebase.initializeApp(CONFIG.firebase);
+  document.addEventListener("ngl-admin-ready", startLive, {once:true});
+  const g = document.createElement("script"); g.src = "ngl-admin-guard.js"; g.dataset.section = "finance"; document.head.appendChild(g);
+} else startDemo();
+</script>
+</body>
+</html>
