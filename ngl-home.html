@@ -712,10 +712,10 @@
   <div class="hero">
     <h1>The National Gymnastics League</h1>
     <p>One connected framework for British Gymnastics clubs — training, awards, competitions and club support, across seven pathways spanning every age and ability.</p>
-    <!-- Update these figures as bookings grow -->
+    <!-- Club and gymnast figures load live from the booking system (same totals as the Admin booking dashboard). The numbers below are only a fallback. -->
     <div class="proof" aria-label="NGL in numbers">
-      <div><b>24</b><span>clubs already booked for the 2027 season</span></div>
-      <div><b>1,290+</b><span>gymnast places reserved for 2027</span></div>
+      <div><b id="liveClubs">27</b><span>clubs already booked for the 2027 season</span></div>
+      <div><b id="liveGyms">1,359</b><span>gymnast places reserved for 2027</span></div>
       <div><b>4</b><span>regional General League venues</span></div>
       <div><b>7</b><span>pathways, from Pre-School to Masters</span></div>
     </div>
@@ -2028,6 +2028,44 @@
     schedule();
     return schedule;
   })();
+</script>
+<script>
+/* Live NGL numbers: read the competitions and bookings from the booking system's
+   database and count them exactly as the Admin booking dashboard does:
+   clubs = different clubs with a booking for a competition still on the calendar;
+   places = booked places per competition (not waiting list), capped at its max places. */
+(function(){
+  var KEY = "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4";
+  var BASE = "https://firestore.googleapis.com/v1/projects/saadi-rotation/databases/(default)/documents/";
+  function val(f){ if(!f) return undefined; if("stringValue" in f) return f.stringValue; if("integerValue" in f) return +f.integerValue;
+    if("doubleValue" in f) return +f.doubleValue; if("booleanValue" in f) return f.booleanValue; return undefined; }
+  function all(col){
+    var out = [];
+    function page(tok){
+      return fetch(BASE + col + "?pageSize=300&key=" + KEY + (tok ? "&pageToken=" + encodeURIComponent(tok) : ""))
+        .then(function(r){ if(!r.ok) throw new Error(col + " " + r.status); return r.json(); })
+        .then(function(j){ (j.documents || []).forEach(function(d){ var o = {id:d.name.split("/").pop()}; for(var k in (d.fields || {})) o[k] = val(d.fields[k]); out.push(o); });
+          return j.nextPageToken ? page(j.nextPageToken) : out; });
+    }
+    return page();
+  }
+  Promise.all([all("ngl_competitions"), all("ngl_bookings")]).then(function(res){
+    var comps = res[0], books = res[1], ids = {};
+    comps.forEach(function(c){ ids[c.id] = true; });
+    var live = books.filter(function(b){ return ids[b.compId]; });
+    var clubs = {}; live.forEach(function(b){ if(b.club) clubs[b.club] = true; });
+    var places = 0;
+    comps.forEach(function(c){
+      var max = typeof c.maxPlaces === "number" && !isNaN(c.maxPlaces) ? c.maxPlaces : 20;
+      var booked = live.filter(function(b){ return b.compId === c.id && !b.waitlist; })
+                       .reduce(function(s, b){ return s + (parseInt(b.spaces, 10) || 1); }, 0);
+      places += Math.min(booked, max);
+    });
+    var nc = Object.keys(clubs).length;
+    if(nc) document.getElementById("liveClubs").textContent = nc.toLocaleString("en-GB");
+    if(places) document.getElementById("liveGyms").textContent = places.toLocaleString("en-GB");
+  }).catch(function(e){ console.warn("NGL live numbers not loaded, showing fallback figures", e); });
+})();
 </script>
 </body>
 </html>
