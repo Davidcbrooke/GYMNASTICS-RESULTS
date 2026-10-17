@@ -94,6 +94,7 @@ table.vt th.p{color:#fff}
 .note{font-size:13px;color:var(--muted)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:6px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 @media (max-width:700px){ .brand{width:100%} .top-inner{gap:8px} }
+.capnote{margin:10px 4px 0;font-size:13.5px;line-height:1.45;color:#5d6782}.capnote .ghost{color:#8a93ab}.capnote.warn{color:#c4621a;font-weight:600}
 </style>
 </head>
 <body>
@@ -113,7 +114,7 @@ table.vt th.p{color:#fff}
   <p class="lead">Change any yellow box under <b>Variables</b> and every figure updates straight away. Scenarios are saved for everyone with Finance access.</p>
   <div class="cards" id="cards"></div>
   <div class="panel"><div class="panel-h"><h3>Income and net profit by year</h3></div>
-    <div class="panel-b chart"><div id="chart"></div>
+    <div class="panel-b chart"><div id="chart"></div><p id="capNote" class="capnote"></p>
       <div class="legend"><span><i style="background:#14254a"></i>Total income</span><span><i style="background:#01AFB8"></i>Net profit</span><span><i style="background:#E88230;height:3px;vertical-align:3px"></i>Licences (right scale)</span></div></div></div>
   <div class="panel"><div class="panel-h"><h3>Variables</h3><button class="btn sm" id="resetBtn">Reset this scenario to the default figures</button><button class="btn sm" id="toggleVars">Hide</button></div>
     <div class="panel-b" id="vars"></div></div>
@@ -224,12 +225,20 @@ function renderCards(M){
     c(num(M.T.lic[N-1]) + " licences", `${num(M.clubs[N-1])} clubs at least, by ${M.years[N-1]}`) +
     c(payback<0 ? "Not within 10 years" : (payback===0 ? "Year 1" : M.years[payback]), "Cumulative profit turns positive");
 }
+function capInfo(D, M){
+  const cap = PATHS.reduce((a,P)=>a + D.maxClubs*D.paths[P.k].share, 0);
+  const at = M.T.lic.findIndex(v => v >= cap - 1e-6);
+  return {cap, at};
+}
 function renderChart(M){
+  const D = S(), C = capInfo(D, M);
+  let Bm = model(defaults());
+  if(Bm.totalInc.every((v,t)=>Math.abs(v-M.totalInc[t])<0.5) && Bm.net.every((v,t)=>Math.abs(v-M.net[t])<0.5)) Bm = null;   // default figures, drawn as outlines for comparison
   const W=1100, H=320, L=70, R=60, Tp=16, B=36, iw=W-L-R, ih=H-Tp-B;
-  const maxV = Math.max(1, ...M.totalInc, ...M.net), minV = Math.min(0, ...M.net);
+  const maxV = Math.max(1, ...M.totalInc, ...M.net, ...(Bm ? Bm.totalInc : [])), minV = Math.min(0, ...M.net, ...(Bm ? Bm.net : []));
   const step = niceStep((maxV-minV)/5), top = Math.ceil(maxV/step)*step, bot = Math.floor(minV/step)*step;
   const y = v => Tp + ih*(top-v)/(top-bot);
-  const maxL = Math.max(1, ...M.T.lic), lstep = niceStep(maxL/5), ltop = Math.ceil(maxL/lstep)*lstep;
+  const maxL = Math.max(1, ...M.T.lic, C.cap), lstep = niceStep(maxL/5), ltop = Math.ceil(maxL/lstep)*lstep;
   const yl = v => Tp + ih*(1 - v/ltop);
   const gw = iw/N, bw = Math.min(34, gw*0.34);
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Income and net profit by year">`;
@@ -239,11 +248,19 @@ function renderChart(M){
     const cx = L + gw*t + gw/2;
     const bar = (v, x, col, lab) => { const y0=y(Math.max(v,0)), h=Math.abs(y(v)-y(0)); return `<rect x="${x}" y="${y0}" width="${bw}" height="${Math.max(h,0.5)}" fill="${col}" rx="2"><title>${yr} ${lab}: ${gbp(v)}</title></rect>`; };
     s += bar(M.totalInc[t], cx-bw-2, '#14254a', 'income') + bar(M.net[t], cx+2, M.net[t]<0?'#b3261e':'#01AFB8', 'net profit');
+    if(Bm){ const ob = (v, x, lab) => `<rect x="${x}" y="${y(Math.max(v,0))}" width="${bw}" height="${Math.max(Math.abs(y(v)-y(0)),0.5)}" fill="none" stroke="#8a93ab" stroke-width="1.5" stroke-dasharray="4 3" rx="2"><title>${yr} ${lab} with the default figures: ${gbp(v)}</title></rect>`;
+      s += ob(Bm.totalInc[t], cx-bw-2, 'income') + ob(Bm.net[t], cx+2, 'net profit'); }
     s += `<text x="${cx}" y="${H-12}" font-size="12" text-anchor="middle" fill="#5d6782">${yr}</text>`;
   });
+  s += `<line x1="${L}" x2="${W-R}" y1="${yl(C.cap)}" y2="${yl(C.cap)}" stroke="#E88230" stroke-width="1.5" stroke-dasharray="6 5" opacity=".8"/><text x="${W-R-6}" y="${yl(C.cap)-6}" font-size="12" text-anchor="end" fill="#c4621a">Licence cap: ${num(C.cap)}</text>`;
   s += `<polyline fill="none" stroke="#E88230" stroke-width="3" points="${M.T.lic.map((v,t)=>`${L+gw*t+gw/2},${yl(v)}`).join(' ')}"/>`;
   M.T.lic.forEach((v,t)=>{ s += `<circle cx="${L+gw*t+gw/2}" cy="${yl(v)}" r="4" fill="#E88230"><title>${M.years[t]}: ${num(v)} licences</title></circle>`; });
   $("#chart").innerHTML = s + `</svg>`;
+  const capTxt = C.at >= 0 && C.at < N-1
+    ? `Licences reach the cap in ${M.years[C.at]}: ${num(D.maxClubs)} clubs × each pathway’s share = ${num(C.cap)} licences. From then on licences stay flat, so the growth figures for ${M.years[C.at+1]}–${M.years[N-1]} have no effect. To keep growing, raise “Most clubs NGL expects to sign up” or a pathway’s “Share of clubs”.`
+    : C.at === N-1 ? `Licences reach the cap of ${num(C.cap)} in ${M.years[N-1]}.` : `Licences stay under the cap of ${num(C.cap)} for all ten years.`;
+  $("#capNote").innerHTML = capTxt + (Bm ? ` <span class="ghost">Dashed outlines show the default figures, for comparison.</span>` : '');
+  const g = document.getElementById("growthNote"); if(g) g.textContent = C.at >= 0 && C.at < N-1 ? `Licences hit the cap in ${M.years[C.at]}, so growth after that year has no effect.` : '';
 }
 function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(raw||1))); const f = raw/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; }
 function axisMoney(v){ const a=Math.abs(v); return (v<0?"-":"")+"£"+(a>=1e6?(a/1e6).toLocaleString("en-GB",{maximumFractionDigits:1})+"m":a>=1e3?Math.round(a/1e3)+"k":a); }
@@ -339,7 +356,7 @@ function renderVars(){
   const D = S();
   const simple = (list) => list.map(([k,l,kind,n])=>`<div class="vrow"><label>${esc(l)}${n?`<small>${esc(n)}</small>`:''}</label>${inp(k, D[k], kind)}</div>`).join('');
   let h = `<div class="vgrid"><div class="vbox"><h4>General</h4>${simple(GV)}</div><div class="vbox"><h4>Running costs</h4>${simple(CV)}</div></div>`;
-  h += `<div class="vbox" style="margin-top:14px"><h4>Licence growth on the year before</h4><div class="yrs"><table class="vt"><thead><tr><th></th>${[...Array(N)].map((_,t)=>`<th>${D.firstYear+t}</th>`).join('')}</tr></thead><tbody><tr><td class="lab">Growth<small>100% = doubles</small></td>${D.growth.map((g,t)=>`<td>${t===0?'<span class="note">start</span>':inp(`growth.${t}`, g, 'pct')}</td>`).join('')}</tr></tbody></table></div></div>`;
+  h += `<div class="vbox" style="margin-top:14px"><h4>Licence growth on the year before</h4><div class="yrs"><table class="vt"><thead><tr><th></th>${[...Array(N)].map((_,t)=>`<th>${D.firstYear+t}</th>`).join('')}</tr></thead><tbody><tr><td class="lab">Growth<small>100% = doubles</small></td>${D.growth.map((g,t)=>`<td>${t===0?'<span class="note">start</span>':inp(`growth.${t}`, g, 'pct')}</td>`).join('')}</tr></tbody></table></div><p id="growthNote" class="capnote warn"></p></div>`;
   h += `<div class="vbox" style="margin-top:14px"><h4>Per pathway</h4><div class="yrs"><table class="vt"><thead><tr><th></th>${PATHS.map(P=>`<th class="p" style="background:${P.c};${P.dark?'color:#14254a':''}">${P.name}</th>`).join('')}</tr></thead><tbody>` +
     PV.map(([k,l,kind,n])=>`<tr><td class="lab">${esc(l)}${n?`<small>${esc(n)}</small>`:''}</td>${PATHS.map(P=>`<td>${inp(`paths.${P.k}.${k}`, D.paths[P.k][k], kind)}</td>`).join('')}</tr>`).join('') + `</tbody></table></div></div>`;
   h += `<div class="vbox" style="margin-top:14px"><h4>Staff salaries by year</h4><div class="yrs"><table class="vt"><thead><tr><th>Role</th>${[...Array(N)].map((_,t)=>`<th>${D.firstYear+t}</th>`).join('')}<th></th></tr></thead><tbody>` +
