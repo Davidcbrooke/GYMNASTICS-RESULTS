@@ -131,6 +131,7 @@ td input[type=checkbox]{width:18px;height:18px}
 .n-go{border-color:var(--c);color:var(--navy)}
 .n-note{font-size:13px;color:var(--muted);margin:0}
 @media (max-width:620px){#notifs{left:12px;right:12px;width:auto;top:calc(100px + env(safe-area-inset-top,0px))}}
+.ch-login{background:#f0f8f1;border:1px solid #cfe8d3;border-radius:10px;padding:10px 12px;margin:0 0 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ch-login p{margin:0 0 4px;font-size:13px;flex-basis:100%}.ch-login input{flex:1 1 140px;padding:7px 9px;border:1px solid #cfd5e1;border-radius:6px;font:inherit;font-size:13px}.ch-login .n-err{flex-basis:100%;font-size:12px}
 </style>
 </head>
 <body>
@@ -246,6 +247,7 @@ const CONFIG = {
   // Fill in each url with the existing admin page (same GitHub Pages site).
   // Blank url = shown as "Not linked yet".
   sections: [
+    {id:"clubs",        name:"Club registrations", desc:"Every club registered on the Club Hub: newest first, contact details, where they came from and licences", colour:"#3BAA4A", url:"https://club.nationalgymnasticsleague.co.uk/#admin"},
     {id:"competitions", name:"Competitions",   desc:"Competition dates, club bookings and the season calendar", colour:"#14254a", url:"ngl-booking-system.html?admin=1"},
     {id:"staffing",     name:"Staffing",       desc:"Who's working each competition, judge requests and staffing sheets", colour:"#c8202f", url:"NGL_Staffing_Admin.html"},
     {id:"judging",      name:"Judging",        desc:"Judging Pathway registrations, tiers and approvals", colour:"#2c6e9b", url:"ngl-judging-pathway.html?admin=1"},
@@ -282,6 +284,7 @@ const NOTIFY = {
   keepDays: 60,                       // how far back the panel looks
   refreshMs: 5 * 60 * 1000,
   pathways: {
+    clubhub:      {label:"Club registrations",            colour:"#3BAA4A", section:"clubs"},
     recreational: {label:"Recreational competitions",     colour:"#E88230", section:"competitions"},
     general:      {label:"General League competitions",   colour:"#0071B3", section:"competitions"},
     performance:  {label:"Performance League competitions",colour:"#01AFB8", section:"competitions"},
@@ -309,6 +312,34 @@ function compPathwayOf(c){
   if(c && c.pathway && NOTIFY.pathways[c.pathway] && NOTIFY.pathways[c.pathway].section === "competitions") return c.pathway;
   const looksRec = (((c && c.name) || "") + " " + ((c && c.level) || "")).toLowerCase().includes("rec");
   return looksRec ? "recreational" : "general";
+}
+
+/* Club Hub registrations live in the ngl-schools Firebase project, so reading them needs a
+   second sign-in with an NGL admin account on that project (the same one Finance uses; once
+   signed in on either page it is remembered). */
+const SCHOOLS_FIREBASE = {
+  apiKey: "AIzaSyBK8gNFh4lYv6829YRFm-7Ia0tzh_RwMKQ", authDomain: "ngl-schools.firebaseapp.com", projectId: "ngl-schools",
+  storageBucket: "ngl-schools.firebasestorage.app", messagingSenderId: "202087533031", appId: "1:202087533031:web:a905eaa461925256b71542"
+};
+const CH = {app:null, user:null, ready:false, state:"off"};   // state: off|signin|live|denied
+function chInit(){
+  if(CH.app || !window.firebase) return;
+  try{ CH.app = firebase.apps.find(a => a.name === "ngl-schools") || firebase.initializeApp(SCHOOLS_FIREBASE, "ngl-schools"); }catch(e){ console.error(e); return; }
+  CH.app.auth().onAuthStateChanged(u => { const first = !CH.ready; CH.user = u; CH.ready = true; CH.state = u ? "live" : "signin"; if(!first || u) refreshNotifications(); else renderNotifications(); });
+}
+const SRC_LABEL = {"email-campaign":"from an NGL email", clubhub:"on the Club Hub", recreational:"on the Recreational Hub", schools:"on the Schools Hub"};
+async function scanClubHub(add){
+  if(!CH.user) return;
+  try{
+    const snap = await CH.app.firestore().collection("clubs").get();
+    CH.state = "live";
+    snap.forEach(d => {
+      const c = d.data(); if(!c.name && !c.email) return;
+      add({id:regId("clubhub", d.id), pathway:"clubhub", kind:"club", club:c.name || c.email, nameKey:nameKey(c.name),
+           emails:c.email ? [String(c.email).toLowerCase()] : [], when:toMs(c.createdAt),
+           detail:`Registered ${SRC_LABEL[c.source] || "their club"}${c.contact ? " (contact: " + c.contact + ")" : ""}`, source:"ngl-schools:clubs"});
+    });
+  }catch(e){ console.warn("Club Hub clubs not read", e); CH.state = e.code === "permission-denied" ? "denied" : "live"; }
 }
 
 /* Read every source and return one entry per club per pathway. */
@@ -341,6 +372,9 @@ async function scanSources(){
          detail:`${j.name || "A judge"} joined the Judging Pathway${j.club ? " from " + j.club : ""}`, source:"ngl_judges"});
   });
 
+  // Club Hub: every club account
+  await scanClubHub(add);
+
   // Rotation Planner: clubs registered in the Realtime Database
   try{
     const base = CONFIG.firebase.databaseURL;
@@ -365,8 +399,16 @@ async function syncRegistry(found){
   const reg = {}, byEmail = {};
   snap.forEach(d => { if(d.id === "_meta") return; const r = d.data(); reg[d.id] = r; (r.emails || []).forEach(e => byEmail[r.pathway + "|" + e] = d.id); });
   const baseline = !meta.exists, now = Date.now(), writes = [];
+  const seenPaths = new Set(Object.values(reg).map(r => r.pathway));
   for(const f of found){
     if(reg[f.id]) continue;
+    if(!baseline && !seenPaths.has(f.pathway)){   // a newly watched source: only its last 7 days count as new
+      const old = !f.when || f.when < now - 7 * 864e5;
+      const rec = {pathway:f.pathway, section:NOTIFY.pathways[f.pathway].section, kind:f.kind, club:f.club || "", person:f.person || "",
+                   nameKey:f.nameKey || "", emails:f.emails, detail:f.detail, source:f.source, signedUpAt:f.when || null,
+                   firstSeen:f.when || now, baseline:old, emailed:old, by:"hub"};
+      reg[f.id] = rec; f.emails.forEach(e => byEmail[f.pathway + "|" + e] = f.id); writes.push([f.id, rec]); continue;
+    }
     if(f.kind === "club" && f.emails.some(e => byEmail[f.pathway + "|" + e])) continue;   // same club under a different spelling
     const rec = {pathway:f.pathway, section:NOTIFY.pathways[f.pathway].section, kind:f.kind, club:f.club || "", person:f.person || "",
                  nameKey:f.nameKey || "", emails:f.emails, detail:f.detail, source:f.source, signedUpAt:f.when || null,
@@ -428,13 +470,19 @@ function renderNotifications(){
   });
 
   const list = $("#notifList");
-  if(N.err){ list.innerHTML = `<p class="n-empty n-err">${esc(N.err)}</p>`; return; }
-  if(!N.loaded){ list.innerHTML = `<p class="n-empty">Checking for new sign-ups…</p>`; return; }
-  if(!items.length){ list.innerHTML = `<p class="n-empty">No new clubs or judges in the last ${NOTIFY.keepDays} days. You'll see them here as soon as they sign up.</p>`; return; }
+  const chBox = !LIVE || !can("clubs") ? "" :
+    CH.state === "signin" ? `<form id="chLogin" class="ch-login"><p><b>See club registrations here too.</b> Club Hub accounts are kept in a separate database, so sign in once with your NGL admin login for the Club Hub. It’s remembered after that.</p>
+      <input type="email" id="chEmail" placeholder="Club Hub admin email" autocomplete="username" required><input type="password" id="chPass" placeholder="Password" autocomplete="current-password" required>
+      <button class="btn small" type="submit">Connect</button><span id="chErr" class="n-err"></span></form>`
+    : CH.state === "denied" ? `<p class="n-empty n-err">This login can’t read Club Hub registrations. Sign in with an account that’s an NGL admin on the Club Hub. <button type="button" class="link" id="chOut">Use a different login</button></p>` : "";
+  const setList = h => { list.innerHTML = chBox + h; };
+  if(N.err){ setList(`<p class="n-empty n-err">${esc(N.err)}</p>`); return; }
+  if(!N.loaded){ setList(`<p class="n-empty">Checking for new sign-ups…</p>`); return; }
+  if(!items.length){ setList(`<p class="n-empty">No new clubs or judges in the last ${NOTIFY.keepDays} days. You'll see them here as soon as they sign up.</p>`); return; }
 
   const groups = [];
   items.forEach(i => { let g = groups.find(x => x.pathway === i.pathway); if(!g){ g = {pathway:i.pathway, items:[]}; groups.push(g); } g.items.push(i); });
-  list.innerHTML = groups.map(g => {
+  setList(groups.map(g => {
     const p = NOTIFY.pathways[g.pathway], s = CONFIG.sections.find(x => x.id === p.section) || {};
     const n = g.items.filter(i => i.isNew).length;
     return `<section class="n-group" style="--c:${p.colour}">
@@ -446,8 +494,15 @@ function renderNotifications(){
       ${s.url ? `<button type="button" class="btn small n-go" data-go="${esc(p.section)}" data-path="${esc(g.pathway)}">Go to ${esc(s.name)} →</button>`
               : `<p class="n-note">${esc(s.name || "This area")} isn't linked in the admin yet.</p>`}
     </section>`;
-  }).join("");
+  }).join(""));
 }
+$("#notifList").addEventListener("submit", async e => {
+  if(e.target.id !== "chLogin") return; e.preventDefault();
+  const err = $("#chErr"); err.textContent = "Connecting…";
+  try{ await CH.app.auth().signInWithEmailAndPassword($("#chEmail").value.trim(), $("#chPass").value); }
+  catch(x){ const c = x.code || ""; err.textContent = c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found") ? "That email and password don't match." : c.includes("too-many") ? "Too many attempts, try again shortly." : "Couldn't sign in."; }
+});
+$("#notifList").addEventListener("click", e => { if(e.target.id === "chOut" && CH.app) CH.app.auth().signOut(); });
 
 async function saveSeen(){
   if(!LIVE) return;
@@ -476,7 +531,7 @@ document.addEventListener("keydown", e => { if(e.key === "Escape" && N.open) tog
 document.addEventListener("visibilitychange", () => { if(!document.hidden && ME) refreshNotifications(); });
 
 function startNotifications(){
-  N.loaded = false; renderNotifications();
+  N.loaded = false; if(LIVE && can("clubs")) chInit(); renderNotifications();
   refreshNotifications();
   clearInterval(N.timer); N.timer = setInterval(refreshNotifications, NOTIFY.refreshMs);
 }
@@ -489,6 +544,7 @@ function demoRegistry(){
   return {
     a: r("recreational", "club", "Spalding Gymnastics", "", "Booked 8 places for NGL Recreational Competition, 29 Mar 2027", 3),
     b: r("general", "club", "Flipping Out", "", "Booked 15 places for South West Region 6–8 & 9–11", 20),
+    z: r("clubhub", "club", "Riverside Gymnastics", "", "Registered from an NGL email (contact: Jo Patel)", 1),
     c: r("judging", "judge", "K-Gym", "Sarah Collins", "Sarah Collins joined the Judging Pathway from K-Gym", 30),
     d: r("rotation", "club", "Gemini Gymnastics", "", "Registered for the Rotation Planner (contact: Amy Reid)", 50),
     e: r("performance", "club", "REACT Gymnastics", "", "Booked 6 places for NGL Performance Open", 400)
