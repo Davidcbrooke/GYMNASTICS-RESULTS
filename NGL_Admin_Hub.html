@@ -572,7 +572,12 @@ $("#signinForm").addEventListener("submit", async e=>{
     try{ sessionStorage.setItem("ngl_demo_user", email); }catch(_){}
     return loadMe(email);
   }
-  try{ await auth.signInWithEmailAndPassword(email, pw); await loadMe(email); }
+  try{
+    await auth.signInWithEmailAndPassword(email, pw);
+    // One login: if the same email and password also work on the Club Hub database, connect that too (quietly; the bell offers it otherwise)
+    try{ chInit(); if(CH.app && !CH.app.auth().currentUser) CH.app.auth().signInWithEmailAndPassword(email, pw).catch(() => {}); }catch(_){}
+    await loadMe(email);
+  }
   catch(err){ $("#err").textContent = /wrong-password|invalid-credential|user-not-found/.test(err.code) ? "Email or password isn't right." : "Couldn't sign in. Check your connection and try again."; }
 });
 /* First-run: create the owner sign-in. Owner rights only switch on once the
