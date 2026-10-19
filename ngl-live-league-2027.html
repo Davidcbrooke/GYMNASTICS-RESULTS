@@ -553,11 +553,12 @@ function renderCompResults(){
     else{entries=entries.slice().sort(function(a,b){return(parseFloat(b.score)||0)-(parseFloat(a.score)||0);});}
     totalVisible+=entries.length;
     html+='<div class="apparatus-section"><div class="apparatus-header"><span class="apparatus-name">'+esc(sh.apparatus)+'</span><span class="apparatus-count">'+entries.length+' results</span></div><table class="results-table"><thead><tr><th style="width:36px">#</th>'+cth(sh.apparatus,"memberId","Member ID")+cth(sh.apparatus,"name","Name")+cth(sh.apparatus,"club","Club")+cth(sh.apparatus,"ageCategory","Age Cat.")+cth(sh.apparatus,"level","Level")+cth(sh.apparatus,"region","Region")+cth(sh.apparatus,"trainingHrs","Training Hrs")+cth(sh.apparatus,"score","Score")+'</tr></thead><tbody>';
+    var cRanks=(!sk||sk==="score")?jointRanks(entries,function(x){var v=parseFloat(x.score);return isNaN(v)?null:Math.round(v*1000);}):null;
     entries.forEach(function(e,i){
-      var rank=i+1,rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
+      var rk=cRanks?cRanks[i]:{n:i+1,joint:false},rank=rk.n,rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
       var sv=parseFloat(e.score),sd=!isNaN(sv)?sv.toFixed(3):(e.score||"—");
       var name=getName(e.memberId);
-      html+='<tr><td class="rank-cell '+rc+'">'+rank+'</td>';
+      html+='<tr><td class="rank-cell '+rc+'">'+rankLabel(rk)+'</td>';
       html+='<td><button class="member-link" onclick="openProfile(\''+esc(e.memberId)+'\')">'+esc(e.memberId)+'</button></td>';
       html+='<td style="font-weight:600;font-size:13px;">'+esc(name||"—")+'</td>';
       html+='<td>'+esc(e.club||"—")+'</td><td><span class="badge">'+esc(e.ageCategory||"—")+'</span></td><td><span class="badge">'+esc(e.level||"—")+'</span></td><td>'+esc(e.region||"—")+'</td><td>'+esc(e.trainingHrs||"—")+'</td><td class="score-cell">'+sd+'</td></tr>';
@@ -609,6 +610,17 @@ function buildLeagueData(f){
   rows.forEach(function(g){g.total=0;allApparatus.forEach(function(a){g.total+=g.scores[a]||0;});g.total=Math.round(g.total*1000)/1000;});
   return{rows:rows,apparatus:allApparatus};
 }
+/* Joint places: gymnasts on the same score share a place ("=1"), and the next one down skips (1, =2, =2, 4). */
+function jointRanks(list, val){
+  var out=[], prevVal=null, prevRank=0;
+  list.forEach(function(item,i){
+    var v=val(item); var r=(i>0&&v===prevVal)?prevRank:i+1;
+    out.push({n:r, joint:false}); prevVal=v; prevRank=r;
+  });
+  out.forEach(function(o,i){ if((out[i-1]&&out[i-1].n===o.n)||(out[i+1]&&out[i+1].n===o.n)) o.joint=true; });
+  return out;
+}
+function rankLabel(o){ return (o.joint?"=":"")+o.n; }
 function renderLeague(){
   var main=document.getElementById("main");
   if(!competitions.length){showWelcome("No synced competitions yet","Ask Claude to sync results from Elevien for a tournament.");return;}
@@ -628,10 +640,12 @@ function renderLeague(){
     html+='<table class="results-table"><thead><tr><th style="width:36px">#</th>'+lth("memberId","Member ID")+lth("name","Name")+lth("club","Club")+lth("gender","Gender")+lth("ageCategory","Age Cat.")+lth("level","Level")+lth("region","Region")+lth("trainingHrs","Training Hrs");
     apparatus.forEach(function(a){html+=lth(a,a);});
     html+=lth("total","Total")+'</tr></thead><tbody>';
+    var lRanks=(leagueSortCol==="total"||apparatus.indexOf(leagueSortCol)>=0)?jointRanks(rows,function(x){return Math.round((leagueSortCol==="total"?x.total:(x.scores[leagueSortCol]||0))*1000);}):rows.map(function(_,i){return{n:i+1,joint:false};});
+    window._leagueRankLabels=lRanks.map(rankLabel);
     rows.forEach(function(g,i){
-      var rank=i+1,rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
+      var rk=lRanks[i],rank=rk.n,rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
       var name=getName(g.memberId);
-      html+='<tr><td class="rank-cell '+rc+'">'+rank+'</td>';
+      html+='<tr><td class="rank-cell '+rc+'">'+rankLabel(rk)+'</td>';
       html+='<td><button class="member-link" onclick="openProfile(\''+esc(g.memberId)+'\')">'+esc(g.memberId)+'</button></td>';
       html+='<td style="font-weight:600;font-size:13px;">'+esc(name||"—")+'</td>';
       html+='<td>'+esc(g.club||"—")+'</td><td><span class="badge">'+esc(g.gender||"—")+'</span></td><td><span class="badge">'+esc(g.ageCategory||"—")+'</span></td><td><span class="badge">'+esc(g.level||"—")+'</span></td><td>'+esc(g.region||"—")+'</td><td>'+esc(g.trainingHrs||"—")+'</td>';
@@ -654,7 +668,7 @@ function exportLeagueExcel(){
   var headers=["#","Member ID","Name","Club","Gender","Age Cat.","Level","Region","Training Hrs"].concat(apparatus).concat(["Total"]);
   var data=[headers];
   rows.forEach(function(g,i){
-    var row=[i+1,g.memberId,getName(g.memberId)||"—",g.club||"—",g.gender||"—",g.ageCategory||"—",g.level||"—",g.region||"—",g.trainingHrs||"—"];
+    var row=[(window._leagueRankLabels&&window._leagueRankLabels[i])||i+1,g.memberId,getName(g.memberId)||"—",g.club||"—",g.gender||"—",g.ageCategory||"—",g.level||"—",g.region||"—",g.trainingHrs||"—"];
     apparatus.forEach(function(a){row.push(g.scores[a]!==undefined?g.scores[a]:"");});
     row.push(g.total);
     data.push(row);
