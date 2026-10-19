@@ -258,7 +258,7 @@ var activeCompIdx = -1;
 var activeTab = "competitions";
 var compSortState = {apparatus:{},dir:1};
 var leagueSortCol = "total";
-var leagueSortDir = -1;
+var leagueSortDir = 1;   // 1 = highest score first (A–Z for text columns)
 var namesLookup = {};
 var corrections = {};
 var reassignments = {};
@@ -525,8 +525,8 @@ function renderCompResults(){
   if(!totalVisible){area.innerHTML='<div class="no-results"><strong>No results match your filters.</strong></div>';return;}
   area.innerHTML='<div class="results-summary">Showing <span>'+totalVisible+'</span> result'+(totalVisible!==1?'s':'')+'</div>'+html;
 }
-function cth(apparatus,col,label){var sorted=compSortState.apparatus[apparatus]===col;var icon=sorted?(compSortState.dir===1?" ↑":" ↓"):" ↕";return'<th class="'+(sorted?"sorted":"")+'" onclick="doCompSort(\''+apparatus+'\',\''+col+'\')">'+label+'<span class="sort-icon">'+icon+'</span></th>';}
-function doCompSort(apparatus,col){if(compSortState.apparatus[apparatus]===col)compSortState.dir=compSortState.dir===1?-1:1;else{compSortState.apparatus[apparatus]=col;compSortState.dir=col==="score"?-1:1;}renderCompResults();}
+function cth(apparatus,col,label){var sorted=compSortState.apparatus[apparatus]===col;var num=col==="score";var icon=sorted?((compSortState.dir===1)===num?" ↓":" ↑"):" ↕";return'<th class="'+(sorted?"sorted":"")+'" onclick="doCompSort(\''+apparatus+'\',\''+col+'\')">'+label+'<span class="sort-icon">'+icon+'</span></th>';}
+function doCompSort(apparatus,col){if(compSortState.apparatus[apparatus]===col)compSortState.dir=compSortState.dir===1?-1:1;else{compSortState.apparatus[apparatus]=col;compSortState.dir=1;}renderCompResults();}
 function setCompFilter(key,val){compFilters[key]=val;renderMain();}
 function clearCompFilters(){compFilters=freshFilters();renderMain();}
 function removeCompFilter(key){if(key==="memberSearch")compFilters.memberSearch="";else compFilters[key]="ALL";renderMain();}
@@ -581,8 +581,8 @@ function renderLeague(){
   if(!competitions.length){showWelcome("No synced competitions yet","Ask Claude to sync results from Elevien for a tournament.");return;}
   var opts=collectAllOptions();
   var data=buildLeagueData(leagueFilters);
-  var rows=data.rows,apparatus=data.apparatus;
-  rows.sort(function(a,b){var col=leagueSortCol,dir=leagueSortDir;if(col==="total")return (b.total-a.total)*(dir===-1?1:-1)*-1;if(apparatus.indexOf(col)>=0)return((b.scores[col]||0)-(a.scores[col]||0))*dir;return String(a[col]||"").localeCompare(String(b[col]||""))*dir;});
+  var rows=data.rows,apparatus=data.apparatus; window._leagueApp=apparatus;
+  rows.sort(function(a,b){var col=leagueSortCol,dir=leagueSortDir;if(col==="total")return (b.total-a.total)*dir;if(apparatus.indexOf(col)>=0)return((b.scores[col]||0)-(a.scores[col]||0))*dir;return String(a[col]||"").localeCompare(String(b[col]||""))*dir;});
   var html='<div class="main-header"><div class="main-title">National League Table</div><div class="main-meta">'+rows.length+' gymnasts · '+competitions.length+' competitions</div></div>';
   html+='<div class="filters-bar">'+fSelect("gender","Gender",opts.genders,leagueFilters.gender,"setLeagueFilter")+fSelect("apparatus","Apparatus",opts.apparatuses,leagueFilters.apparatus,"setLeagueFilter")+fSelect("ageCategory","Age Category",opts.ageCategories,leagueFilters.ageCategory,"setLeagueFilter")+fSelect("level","Level",opts.levels,leagueFilters.level,"setLeagueFilter")+fSelect("country","Country",opts.countries,leagueFilters.country,"setLeagueFilter")+fSelect("region","Region",opts.regions,leagueFilters.region,"setLeagueFilter")+fSelect("trainingHrs","Training Hrs",opts.trainingHrs,leagueFilters.trainingHrs,"setLeagueFilter");
   html+='<div class="filter-group"><label class="filter-label">Member ID</label><input class="filter-search" placeholder="Search ID..." value="'+esc(leagueFilters.memberSearch)+'" oninput="leagueFilters.memberSearch=this.value;renderLeague()"/></div>';
@@ -613,8 +613,8 @@ function renderLeague(){
   main.innerHTML=html;
   window._leagueRowsForExport=rows;window._leagueAppForExport=apparatus;
 }
-function lth(col,label){var sorted=leagueSortCol===col;var icon=sorted?(leagueSortDir===-1?" ↓":" ↑"):" ↕";return'<th class="'+(sorted?"sorted":"")+'" onclick="doLeagueSort(\''+col+'\')">'+esc(label)+'<span class="sort-icon">'+icon+'</span></th>';}
-function doLeagueSort(col){if(leagueSortCol===col)leagueSortDir=leagueSortDir===1?-1:1;else{leagueSortCol=col;leagueSortDir=-1;}renderLeague();}
+function lth(col,label){var sorted=leagueSortCol===col;var num=col==="total"||/^(Floor|Vault|Uneven Bars|Balance Beam|Pommel|Rings|Parallel|High Bar|Bars|Beam)/i.test(col)||(window._leagueApp&&window._leagueApp.indexOf(col)>=0);var icon=sorted?((leagueSortDir===1)===num?" ↓":" ↑"):" ↕";return'<th class="'+(sorted?"sorted":"")+'" onclick="doLeagueSort(\''+col+'\')">'+esc(label)+'<span class="sort-icon">'+icon+'</span></th>';}
+function doLeagueSort(col){if(leagueSortCol===col)leagueSortDir=leagueSortDir===1?-1:1;else{leagueSortCol=col;leagueSortDir=1;}renderLeague();}
 function setLeagueFilter(key,val){leagueFilters[key]=val;renderLeague();}
 function clearLeagueFilters(){leagueFilters=freshFilters();renderLeague();}
 function removeLeagueFilter(key){if(key==="memberSearch")leagueFilters.memberSearch="";else leagueFilters[key]="ALL";renderLeague();}
