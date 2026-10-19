@@ -260,7 +260,7 @@ var activeTab = "competitions";
 var champsGender = "Girls";
 var compSortState = {apparatus:{},dir:1};
 var leagueSortCol = "total";
-var leagueSortDir = -1;
+var leagueSortDir = 1;   // 1 = highest score first (A–Z for text columns)
 var namesLookup = {};
 var corrections = {};
 var reassignments = {};
@@ -668,13 +668,21 @@ function buildLeagueData(f){
   return{rows:rows,apparatus:allApparatus};
 }
 
+/* Joint places: gymnasts on the same score share a place ("=1"), and the next one down skips (1, =2, =2, 4). */
+function jointRanks(list, val){
+  var out=[], prevVal=null, prevRank=0;
+  list.forEach(function(item,i){ var v=val(item); var r=(i>0&&v===prevVal)?prevRank:i+1; out.push({n:r,joint:false}); prevVal=v; prevRank=r; });
+  out.forEach(function(o,i){ if((out[i-1]&&out[i-1].n===o.n)||(out[i+1]&&out[i+1].n===o.n)) o.joint=true; });
+  return out;
+}
+function rankLabel(o){ return (o.joint?"=":"")+o.n; }
 function renderLeague(){
   var main=document.getElementById("main");
   if(!competitions.length){showWelcome();return;}
   var opts=collectAllOptions();
   var data=buildLeagueData(leagueFilters);
-  var rows=data.rows,apparatus=data.apparatus;
-  rows.sort(function(a,b){var col=leagueSortCol,dir=leagueSortDir;if(col==="total")return b.total-a.total;if(apparatus.indexOf(col)>=0)return((b.scores[col]||0)-(a.scores[col]||0))*dir;return String(a[col]||"").localeCompare(String(b[col]||""))*dir;});
+  var rows=data.rows,apparatus=data.apparatus; window._leagueApp=apparatus;
+  rows.sort(function(a,b){var col=leagueSortCol,dir=leagueSortDir;if(col==="total")return (b.total-a.total)*dir;if(apparatus.indexOf(col)>=0)return((b.scores[col]||0)-(a.scores[col]||0))*dir;return String(a[col]||"").localeCompare(String(b[col]||""))*dir;});
   var html='<div class="main-header"><div class="main-title">National League Table</div><div class="main-meta">'+rows.length+' gymnasts · '+competitions.length+' competitions</div></div>';
   html+='<div class="filters-bar">'+fSelect("gender","Gender",opts.genders,leagueFilters.gender,"setLeagueFilter")+fSelect("apparatus","Apparatus",opts.apparatuses,leagueFilters.apparatus,"setLeagueFilter")+fSelect("ageCategory","Age Category",opts.ageCategories,leagueFilters.ageCategory,"setLeagueFilter")+fSelect("level","Level",opts.levels,leagueFilters.level,"setLeagueFilter")+fSelect("country","Country",opts.countries,leagueFilters.country,"setLeagueFilter")+fSelect("region","Region",opts.regions,leagueFilters.region,"setLeagueFilter")+fSelect("trainingHrs","Training Hrs",opts.trainingHrs,leagueFilters.trainingHrs,"setLeagueFilter");
   html+='<div class="filter-group"><label class="filter-label">Member ID</label><input class="filter-search" placeholder="Search ID..." value="'+esc(leagueFilters.memberSearch)+'" oninput="leagueFilters.memberSearch=this.value;renderLeague()"/></div>';
@@ -688,11 +696,13 @@ function renderLeague(){
     html+='<table class="results-table"><thead><tr><th style="width:36px">#</th>'+lth("memberId","Member ID")+lth("name","Name")+lth("club","Club")+lth("gender","Gender")+lth("ageCategory","Age Cat.")+lth("level","Level")+lth("country","Country")+lth("region","Region")+lth("trainingHrs","Training Hrs");
     apparatus.forEach(function(a){html+=lth(a,a);});
     html+=lth("total","Total")+'</tr></thead><tbody>';
+    var lRanks=(leagueSortCol==="total"||apparatus.indexOf(leagueSortCol)>=0)?jointRanks(rows,function(x){return Math.round((leagueSortCol==="total"?x.total:(x.scores[leagueSortCol]||0))*1000);}):rows.map(function(_,i){return{n:i+1,joint:false};});
+    window._leagueRankLabels=lRanks.map(rankLabel);
     rows.forEach(function(g,i){
-      var rank=i+1,rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
+      var rk=lRanks[i],rank=rk.n,rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
       var isHighlighted=leagueFilters.memberSearch&&leagueFilters.memberSearchMode==="highlight"&&g.memberId.toLowerCase().indexOf(leagueFilters.memberSearch.toLowerCase())>=0;
       var name=getName(g.memberId);
-      html+='<tr'+(isHighlighted?' class="highlighted-row"':'')+'><td class="rank-cell '+rc+'">'+rank+'</td>';
+      html+='<tr'+(isHighlighted?' class="highlighted-row"':'')+'><td class="rank-cell '+rc+'">'+rankLabel(rk)+'</td>';
       html+='<td><button class="member-link" onclick="openProfile(\''+esc(g.memberId)+'\')">'+esc(g.memberId)+'</button></td>';
       html+='<td style="font-weight:600;font-size:13px;">'+esc(name||"—")+'</td>';
       html+='<td>'+esc(g.club||"—")+'</td><td><span class="badge"><span>'+esc(g.gender||"—")+'</span></span></td><td><span class="badge"><span>'+esc(g.ageCategory||"—")+'</span></span></td><td><span class="badge"><span>'+esc(g.level||"—")+'</span></span></td><td>'+esc(g.country||"—")+'</td><td>'+esc(g.region||"—")+'</td><td>'+esc(g.trainingHrs||"—")+'</td>';
@@ -705,8 +715,8 @@ function renderLeague(){
   main.innerHTML=html;
 }
 
-function lth(col,label){var sorted=leagueSortCol===col;var icon=sorted?(leagueSortDir===-1?" ↓":" ↑"):" ↕";return'<th class="'+(sorted?"sorted":"")+'" onclick="doLeagueSort(\''+col+'\')">'+esc(label)+'<span class="sort-icon">'+icon+'</span></th>';}
-function doLeagueSort(col){if(leagueSortCol===col)leagueSortDir=leagueSortDir===1?-1:1;else{leagueSortCol=col;leagueSortDir=-1;}renderLeague();}
+function lth(col,label){var sorted=leagueSortCol===col;var num=col==="total"||(window._leagueApp&&window._leagueApp.indexOf(col)>=0);var icon=sorted?((leagueSortDir===1)===num?" ↓":" ↑"):" ↕";return'<th class="'+(sorted?"sorted":"")+'" onclick="doLeagueSort(\''+col+'\')">'+esc(label)+'<span class="sort-icon">'+icon+'</span></th>';}
+function doLeagueSort(col){if(leagueSortCol===col)leagueSortDir=leagueSortDir===1?-1:1;else{leagueSortCol=col;leagueSortDir=1;}renderLeague();}
 function setLeagueFilter(key,val){leagueFilters[key]=val;renderLeague();}
 function clearLeagueFilters(){leagueFilters=freshLeagueFilters();renderLeague();}
 function removeLeagueFilter(key){if(key==="memberSearch")leagueFilters.memberSearch="";else leagueFilters[key]="ALL";renderLeague();}
@@ -761,12 +771,13 @@ function renderCompResults(){
     totalVisible+=entries.length;
     var name;
     html+='<div class="apparatus-section"><div class="apparatus-header"><span class="apparatus-name">'+esc(sh.apparatus)+'</span><span class="apparatus-count">'+entries.length+' results</span></div><table class="results-table"><thead><tr><th style="width:36px">#</th>'+cth(sh.apparatus,"memberId","Member ID")+cth(sh.apparatus,"name","Name")+cth(sh.apparatus,"club","Club")+cth(sh.apparatus,"ageCategory","Age Cat.")+cth(sh.apparatus,"level","Level")+cth(sh.apparatus,"country","Country")+cth(sh.apparatus,"region","Region")+cth(sh.apparatus,"trainingHrs","Training Hrs")+cth(sh.apparatus,"score","Score")+'</tr></thead><tbody>';
+    var cRanks=(!sk||sk==="score")?jointRanks(entries,function(x){var v=parseFloat(x.score);return isNaN(v)?null:Math.round(v*1000);}):null;
     entries.forEach(function(e,i){
-      var rank=i+1,rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
+      var rk=cRanks?cRanks[i]:{n:i+1,joint:false},rank=rk.n,rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
       var sv=parseFloat(e.score),sd=!isNaN(sv)?sv.toFixed(3):(e.score||"—");
       var isHighlighted=compFilters.memberSearch&&compFilters.memberSearchMode==="highlight"&&e.memberId.toLowerCase().indexOf(compFilters.memberSearch.toLowerCase())>=0;
       name=getName(e.memberId);
-      html+='<tr'+(isHighlighted?' class="highlighted-row"':'')+'><td class="rank-cell '+rc+'">'+rank+'</td>';
+      html+='<tr'+(isHighlighted?' class="highlighted-row"':'')+'><td class="rank-cell '+rc+'">'+rankLabel(rk)+'</td>';
       html+='<td><button class="member-link" onclick="openProfile(\''+esc(e.memberId)+'\')">'+esc(e.memberId)+'</button></td>';
       html+='<td style="font-weight:600;font-size:13px;">'+esc(name||"—")+'</td>';
       html+='<td>'+esc(e.club||"—")+'</td><td><span class="badge"><span>'+esc(e.ageCategory||"—")+'</span></span></td><td><span class="badge"><span>'+esc(e.level||"—")+'</span></span></td><td>'+esc(e.country||"—")+'</td><td>'+esc(e.region||"—")+'</td><td>'+esc(e.trainingHrs||"—")+'</td><td class="score-cell">'+sd+'</td></tr>';
@@ -779,8 +790,8 @@ function renderCompResults(){
   area.innerHTML='<div class="results-summary">Showing <span>'+totalVisible+'</span> result'+(totalVisible!==1?'s':'')+'</div>'+html;
 }
 
-function cth(apparatus,col,label){var sorted=compSortState.apparatus[apparatus]===col;var icon=sorted?(compSortState.dir===1?" ↑":" ↓"):" ↕";return'<th class="'+(sorted?"sorted":"")+'" onclick="doCompSort(\''+apparatus+'\',\''+col+'\')">'+label+'<span class="sort-icon">'+icon+'</span></th>';}
-function doCompSort(apparatus,col){if(compSortState.apparatus[apparatus]===col)compSortState.dir=compSortState.dir===1?-1:1;else{compSortState.apparatus[apparatus]=col;compSortState.dir=col==="score"?-1:1;}renderCompResults();}
+function cth(apparatus,col,label){var sorted=compSortState.apparatus[apparatus]===col;var num=col==="score";var icon=sorted?((compSortState.dir===1)===num?" ↓":" ↑"):" ↕";return'<th class="'+(sorted?"sorted":"")+'" onclick="doCompSort(\''+apparatus+'\',\''+col+'\')">'+label+'<span class="sort-icon">'+icon+'</span></th>';}
+function doCompSort(apparatus,col){if(compSortState.apparatus[apparatus]===col)compSortState.dir=compSortState.dir===1?-1:1;else{compSortState.apparatus[apparatus]=col;compSortState.dir=1;}renderCompResults();}
 function setCompFilter(key,val){compFilters[key]=val;renderMain();}
 function clearCompFilters(){compFilters=freshCompFilters();renderMain();}
 function removeCompFilter(key){if(key==="memberSearch")compFilters.memberSearch="";else compFilters[key]="ALL";renderMain();}
