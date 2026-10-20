@@ -269,7 +269,7 @@ function renderDiff(){
 
 /* ---------- connect to the Club Hub project as an NGL admin ---------- */
 function start(){
-  const app = capp = firebase.initializeApp(CLUBS_FB, "clubs");
+  const app = capp = firebase.apps.find(a=>a.name==="ngl-schools") || firebase.initializeApp(CLUBS_FB, "ngl-schools");   // same name as the Admin Hub, so its Club Hub sign-in carries over
   cauth = app.auth(); cdb = app.firestore();
   cdb.enablePersistence({synchronizeTabs:true}).catch(()=>{});   // keeps working, and queues changes, if the hall Wi-Fi drops
   cauth.onAuthStateChanged(async u=>{
