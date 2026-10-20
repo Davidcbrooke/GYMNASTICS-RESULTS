@@ -29,6 +29,9 @@ KEEP = {
                 "levelNames": {"LEVEL A": "Level A", "LEVEL B": "Level B", "LEVEL C": "Level C"}},
 }
 
+# Competitions that never use floor music (matched on the Elevien title).
+NO_MUSIC = [r"recreational"]
+
 def load_js_obj(path, var):
     if not os.path.exists(path): return None
     s = open(path, encoding="utf-8").read()
@@ -103,6 +106,7 @@ def main():
     by_date = {}
     for t in index:
         if t["startDate"] < today and "--all" not in sys.argv: continue      # past competitions aren't needed
+        if any(re.search(p, t["title"], re.I) for p in NO_MUSIC): continue   # e.g. Recreational: no floor music
         by_date.setdefault((t["startDate"], base(t)), []).append(t)
     comps, report, missing = [], [], []
     for (date, _b), ts in sorted(by_date.items()):

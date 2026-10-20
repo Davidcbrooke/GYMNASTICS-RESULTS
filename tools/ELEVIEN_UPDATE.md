@@ -9,7 +9,8 @@ Triggered when Dave asks Claude: "Update the NGL competitions from Elevien".
    Large results are saved to tool-results files: put the path in the index as `events[].file`.
    Small results: save the Floor (W) track only to EVENT_DIR/<eventId>.json as
    {"body":{"apparatusTracks":[{"apparatusName":"Floor (W)","contestantSlots":[{"contestantId","displayName","clubName"}]}]}}.
-5. `python3 tools/elevien_music_import.py INDEX.json EVENT_DIR --out ngl-music-comps.js`
+5. (Recreational competitions are skipped: no floor music. See NO_MUSIC in the script.)
+   `python3 tools/elevien_music_import.py INDEX.json EVENT_DIR --out ngl-music-comps.js`
    It prints each competition with new/withdrawn counts. Commit and push ngl-music-comps.js.
 6. Tell Dave what changed and to click "Load latest" (Update from Elevien) on the Floor music page, then Publish on the Clubs tab for competitions open for uploads.
 
