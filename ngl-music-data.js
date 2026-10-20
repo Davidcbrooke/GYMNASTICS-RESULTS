@@ -7,7 +7,7 @@ window.NGL_MUSIC_DATA = {
   compKey: "finals2026",
   title: "NGL National Finals 2026",
   date: "2026-11-22",
-  deadline: "Friday 13 November 2026",   // CHECK: change to your real deadline
+  deadline: "Saturday 31 October 2026",
   clubs: {
     react:    {name:"React Trampoline & Gymnastics Club", bg:"CL094353"},
     prostar:  {name:"Pro-Star Gymnastics Academy", bg:"91164"},
