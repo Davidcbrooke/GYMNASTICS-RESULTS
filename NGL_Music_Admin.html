@@ -139,7 +139,8 @@ body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.p
     <p>Music is stored with club accounts, so sign in once with your NGL Club Hub admin login. This device remembers it.</p>
     <form id="csForm"><input id="csEmail" type="email" placeholder="Admin email" required style="width:100%;padding:9px;border:1px solid var(--line);border-radius:4px;margin-bottom:8px">
       <input id="csPass" type="password" placeholder="Password" required style="width:100%;padding:9px;border:1px solid var(--line);border-radius:4px;margin-bottom:8px">
-      <button class="btn primary">Connect</button><div id="csErr" style="color:var(--red);font-size:14px;margin-top:8px"></div></form>
+      <button class="btn primary">Connect</button> <button type="button" class="btn ghost" id="csCreate">First time? Create my music login</button><div id="csErr" style="color:var(--red);font-size:14px;margin-top:8px"></div>
+      <p style="font-size:13px;margin:10px 0 0">NGL staff: use the same email and password as your NGL admin sign-in.</p></form>
   </section>
   <div id="mainArea" class="hidden">
   <div id="diffTop"></div>
@@ -276,11 +277,32 @@ function start(){
   cauth.onAuthStateChanged(async u=>{
     if(!u){ $("#clubSignin").classList.remove("hidden"); $("#mainArea").classList.add("hidden"); return; }
     const a = await cdb.collection("admins").doc(u.uid).get().catch(()=>null);
-    if(!a || !a.exists){ $("#csErr").textContent = "That login isn't a Club Hub admin."; cauth.signOut(); return; }
+    if(!a || !a.exists){
+      // NGL staff given music access in the Admin Hub's Team access
+      const m = await cdb.collection("musicStaff").doc(String(u.email||"").toLowerCase()).get().catch(()=>null);
+      if(!m || !m.exists){ $("#csErr").textContent = "That login doesn't have music access. Ask Dave to tick Floor music or the music player for you."; cauth.signOut(); return; }
+      if(!u.emailVerified){ await u.reload().catch(()=>{}); }
+      if(!cauth.currentUser.emailVerified){ showVerify(cauth.currentUser); return; }
+      await u.getIdToken(true).catch(()=>{});   // so the database sees the confirmed email
+      if(m.data().level !== "full"){ document.body.classList.add("playonly"); if(location.hash!=="#play") location.hash = "#play"; }
+    }
     $("#clubSignin").classList.add("hidden"); $("#mainArea").classList.remove("hidden");
     watch();
     if(location.hash==="#play") document.querySelector('.tabs [data-tab="play"]').click();
   });
+}
+$("#csCreate") && $("#csCreate").addEventListener("click", async ()=>{
+  const em = $("#csEmail").value.trim(), pw = $("#csPass").value; $("#csErr").textContent = "";
+  if(!em || pw.length < 6){ $("#csErr").textContent = "Enter your email and your NGL admin password first."; return; }
+  try{ const c = await cauth.createUserWithEmailAndPassword(em, pw); await c.user.sendEmailVerification(); }
+  catch(er){ $("#csErr").textContent = er.code==="auth/email-already-in-use" ? "You already have a login here: use Connect. If the password is different, use your old one." : "Couldn't create the login. Check the email and try again."; }
+});
+function showVerify(u){
+  $("#clubSignin").classList.remove("hidden"); $("#mainArea").classList.add("hidden");
+  $("#clubSignin").innerHTML = `<h3>Confirm your music login</h3><p>We've sent an email to <b>${esc(u.email)}</b>. Click the link in it once, then come back here.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="vDone">I've confirmed it</button><button class="btn ghost" id="vAgain">Send the email again</button></div>`;
+  $("#vDone").onclick = ()=>location.reload();
+  $("#vAgain").onclick = ()=>u.sendEmailVerification().then(()=>toast("Email sent again.")).catch(()=>toast("Please wait a minute before asking again."));
 }
 $("#csForm").addEventListener("submit", async e=>{
   e.preventDefault(); $("#csErr").textContent = "";

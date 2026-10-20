@@ -326,7 +326,7 @@ const CH = {app:null, user:null, ready:false, state:"off"};   // state: off|sign
 function chInit(){
   if(CH.app || !window.firebase) return;
   try{ CH.app = firebase.apps.find(a => a.name === "ngl-schools") || firebase.initializeApp(SCHOOLS_FIREBASE, "ngl-schools"); }catch(e){ console.error(e); return; }
-  CH.app.auth().onAuthStateChanged(u => { const first = !CH.ready; CH.user = u; CH.ready = true; CH.state = u ? "live" : "signin"; if(!first || u) refreshNotifications(); else renderNotifications(); });
+  CH.app.auth().onAuthStateChanged(u => { const first = !CH.ready; CH.user = u; CH.ready = true; CH.state = u ? "live" : "signin"; if(u && ME && ME.owner) TEAM.forEach(syncMusicStaff); if(!first || u) refreshNotifications(); else renderNotifications(); });
 }
 const SRC_LABEL = {"email-campaign":"from an NGL email", clubhub:"on the Club Hub", recreational:"on the Recreational Hub", schools:"on the Schools Hub"};
 async function scanClubHub(add){
@@ -563,6 +563,32 @@ if(CONFIG.firebase.apiKey && window.firebase){
   saved ? loadMe(saved) : showSignin();
 }
 
+
+/* One login: sign in to the Club Hub database with the same email and password. Staff with a music tick
+   who have no login there yet get one created (same email and password) and confirm it once by email. */
+async function chConnect(email, pw){
+  try{ chInit(); }catch(_){}
+  if(!CH.app || CH.app.auth().currentUser) return;
+  const a = CH.app.auth();
+  try{ await a.signInWithEmailAndPassword(email, pw); return; }
+  catch(err){ if(!/user-not-found|invalid-credential|invalid-login/.test(err.code || "")) return; }
+  try{
+    const d = await db.collection(CONFIG.usersCollection).doc(email).get(), r = d.exists ? d.data() : null;
+    if(!r || r.owner || !(r.sections || []).some(x => x === "music" || x === "musicplayer")) return;
+    const cred = await a.createUserWithEmailAndPassword(email, pw);
+    await cred.user.sendEmailVerification();
+    toast("We've emailed you a link to confirm your music login. Click it once, then open Floor music.");
+  }catch(_){ /* email already used there with another password, or offline: the music page offers sign-in */ }
+}
+/* Keep the Club Hub database's music staff list in step with the Team access ticks (owners only). */
+async function syncMusicStaff(u){
+  if(!LIVE || !ME || !ME.owner || !CH.app || !CH.user || !u || u.owner) return;
+  const s = u.sections || [], level = s.includes("music") ? "full" : s.includes("musicplayer") ? "play" : null;
+  const ref = CH.app.firestore().collection("musicStaff").doc(String(u.email).toLowerCase());
+  try{ if(level) await ref.set({level, name:u.name || "", updatedAt:new Date().toISOString()}); else await ref.delete(); }
+  catch(e){ console.warn("Music staff not updated", e); }
+}
+
 function showSignin(){ stopNotifications(); $("#hub").classList.add("hidden"); $("#viewer").classList.add("hidden"); $("#signin").classList.remove("hidden"); }
 
 $("#signinForm").addEventListener("submit", async e=>{
@@ -576,7 +602,7 @@ $("#signinForm").addEventListener("submit", async e=>{
   try{
     await auth.signInWithEmailAndPassword(email, pw);
     // One login: if the same email and password also work on the Club Hub database, connect that too (quietly; the bell offers it otherwise)
-    try{ chInit(); if(CH.app && !CH.app.auth().currentUser) CH.app.auth().signInWithEmailAndPassword(email, pw).catch(() => {}); }catch(_){}
+    chConnect(email, pw);
     await loadMe(email);
   }
   catch(err){ $("#err").textContent = /wrong-password|invalid-credential|user-not-found/.test(err.code) ? "Email or password isn't right." : "Couldn't sign in. Check your connection and try again."; }
@@ -676,7 +702,7 @@ async function loadTeam(){
   if(LIVE){ const snap = await db.collection(CONFIG.usersCollection).get(); TEAM = snap.docs.map(d=>({email:d.id,...d.data()})); }
   else TEAM = Object.entries(DEMO_USERS).map(([email,v])=>({email,...v}));
   TEAM.sort((a,b)=>(b.owner-a.owner)||String(a.name).localeCompare(b.name));
-  renderTeam();
+  renderTeam(); TEAM.forEach(syncMusicStaff);
 }
 function renderPick(){
   const box = $("#nSections"); if(box.childElementCount) return;
@@ -695,13 +721,14 @@ $("#teamTable").addEventListener("change", async e=>{
   const u = TEAM.find(x=>x.email===cb.dataset.u);
   const set = new Set(u.sections||[]); cb.checked ? set.add(cb.dataset.s) : set.delete(cb.dataset.s);
   u.sections = [...set];
-  try{ if(LIVE) await db.collection(CONFIG.usersCollection).doc(u.email).update({sections:u.sections}); else DEMO_USERS[u.email].sections = u.sections; toast("Access updated"); }
+  try{ if(LIVE) await db.collection(CONFIG.usersCollection).doc(u.email).update({sections:u.sections}); else DEMO_USERS[u.email].sections = u.sections; toast("Access updated"); syncMusicStaff(u); }
   catch(_){ toast("Couldn't save. Try again."); cb.checked = !cb.checked; }
 });
 $("#teamTable").addEventListener("click", async e=>{
   const email = e.target.dataset?.remove; if(!email) return;
   if(!confirm(`Remove all admin access for ${email}?`)) return;
   if(LIVE) await db.collection(CONFIG.usersCollection).doc(email).delete(); else delete DEMO_USERS[email];
+  syncMusicStaff({email, sections:[]});
   toast("Access removed"); loadTeam();
 });
 $("#addForm").addEventListener("submit", async e=>{
@@ -720,7 +747,7 @@ $("#addForm").addEventListener("submit", async e=>{
       await auth.sendPasswordResetEmail(email);
       await db.collection(CONFIG.usersCollection).doc(email).set({name, owner:false, sections:picked});
     } else DEMO_USERS[email] = {name, owner:false, sections:picked};
-    $("#addForm").reset(); toast(`Invite sent to ${name}`); loadTeam();
+    $("#addForm").reset(); toast(`Invite sent to ${name}`); loadTeam();   // loadTeam also adds them to the music staff list if ticked
   }catch(err){ console.error(err); toast("Couldn't invite them. Check the email address."); }
 });
 </script>
