@@ -713,7 +713,8 @@ audio.addEventListener("error", ()=>{
 });
 async function requestWake(){ try{ if("wakeLock" in navigator && !PL.wake) { PL.wake = await navigator.wakeLock.request("screen"); PL.wake.addEventListener("release",()=>PL.wake=null); } }catch(_){} }
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && !$("#tab-play").classList.contains("hidden")) requestWake(); });
-window.addEventListener("beforeunload", e=>{ if(PL.playing || !$("#tab-play").classList.contains("hidden")){ e.preventDefault(); e.returnValue=""; } });
+// Only stop someone leaving while music is actually playing (a stray close mid-routine); otherwise leave freely.
+window.addEventListener("beforeunload", e=>{ if(PL.playing){ e.preventDefault(); e.returnValue=""; } });
 document.addEventListener("keydown", e=>{
   if($("#tab-play").classList.contains("hidden") || $("#dlg").open) return;
   if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && e.target.type!=="range") return;
