@@ -90,8 +90,7 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
 .nextup{background:#fff;border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:6px;padding:10px 14px;margin-bottom:12px}
 .nextup b{font-family:var(--cond);font-size:22px}
 .q{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.q button.qr{display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;background:#fff;border:none;border-bottom:1px solid #eef0f5;padding:8px 12px}
-.q button.qr:hover{background:#f7f8fb}
+.q .qr:hover{background:#f7f8fb}
 .q .qr.cur{background:#eef2fb;box-shadow:inset 5px 0 0 var(--navy)}
 .q .qr.done{opacity:.5}
 .q .qr .n{font-family:var(--cond);font-size:18px;color:var(--navy)}
@@ -99,6 +98,23 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
 .ann .t{flex:1;font-weight:600}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media (max-width:760px){.split{grid-template-columns:1fr}.now .nm{font-size:32px}}
+.rot{border-top:1px solid var(--line)}
+.rot .rh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;background:#f7f8fb;border-bottom:1px solid #eef0f5}
+.rot .rh b{font-family:var(--cond);font-size:19px;color:var(--navy)}.rot .rh small{color:var(--muted);font-size:13px}
+.rot.dropz,.q.dropz{outline:3px dashed var(--gold);outline-offset:-3px}
+td.grip,.qr .grip{cursor:grab;color:#9aa3b8;width:22px;font-size:16px;user-select:none}
+tr.dragging,.qr.dragging{opacity:.4}
+tr.dropb td,.qr.dropb{box-shadow:inset 0 3px 0 var(--gold)}
+tr.dropa td,.qr.dropa{box-shadow:inset 0 -3px 0 var(--gold)}
+tr.abs .who,.qr.abs b{text-decoration:line-through;color:var(--muted)}
+tr.empty td{color:var(--muted);font-size:13px;padding:12px 14px}
+.lvb{font-size:11px;font-weight:700;background:var(--paper);border:1px solid var(--line);border-radius:3px;padding:0 5px;color:var(--muted)}
+.rsel{padding:4px;border:1px solid var(--line);border-radius:4px;font-size:13px}
+.chip small{font-weight:500;opacity:.75;margin-left:4px}
+.q .qr{display:grid;grid-template-columns:22px 34px 1fr auto auto;gap:8px;align-items:center;width:100%;background:#fff;border-bottom:1px solid #eef0f5;padding:8px 12px;cursor:pointer}
+.q .qr .qc{display:flex;gap:6px;align-items:center}
+.q .qr .qc .btn{margin:0}
+@media (max-width:900px){.q .qr{grid-template-columns:22px 34px 1fr auto}.q .qr .qc{grid-column:3/-1}}
 </style>
 </head>
 <body>
@@ -148,9 +164,9 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
     </div>
     <div id="stage">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-        <div class="chips" id="sessChips" style="margin:0;margin-right:auto"></div>
+        <div class="chips" id="sessChips" style="margin:0;margin-right:auto;align-items:center"></div>
         <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px">Volume <input type="range" id="vol" min="0" max="100" value="100" style="width:120px"></label>
-        <button class="btn ghost small" id="resetSess">Reset session</button>
+        <button class="btn ghost small" id="resetSess">Reset rotation</button>
         <button class="btn small" id="fsBtn">Full screen</button>
       </div>
       <div class="now" id="nowCard"></div>
@@ -163,7 +179,7 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
       </div>
       <div class="nextup" id="nextUp"></div>
       <div class="q" id="queue"></div>
-      <p style="font-size:13px;color:var(--muted);margin-top:10px">Space plays the selected gymnast. While music is playing, Space does nothing, so a stray press can't stop a routine: use F to fade out. When a track finishes, the next gymnast is selected but doesn't start until you press Space.</p>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px">Space plays the selected gymnast. Absent gymnasts are skipped. Drag rows to change the order, or use the rotation box to move someone. While music is playing, Space does nothing, so a stray press can't stop a routine: use F to fade out. When a track finishes, the next gymnast is selected but doesn't start until you press Space.</p>
     </div>
   </section>
   </div>
@@ -198,6 +214,7 @@ const orderFor = L => { const ids = L.gymnasts.map(g=>g[0]); const o = (ORDER[L.
 function start(){
   const app = capp = firebase.initializeApp(CLUBS_FB, "clubs");
   cauth = app.auth(); cdb = app.firestore();
+  cdb.enablePersistence({synchronizeTabs:true}).catch(()=>{});   // keeps working, and queues changes, if the hall Wi-Fi drops
   cauth.onAuthStateChanged(async u=>{
     if(!u){ $("#clubSignin").classList.remove("hidden"); $("#mainArea").classList.add("hidden"); return; }
     const a = await cdb.collection("admins").doc(u.uid).get().catch(()=>null);
@@ -213,11 +230,52 @@ $("#csForm").addEventListener("submit", async e=>{
   catch(_){ $("#csErr").textContent = "Email or password isn't right."; }
 });
 function watch(){
-  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; render(); renderClubs(); renderPlayer(); }, e=>err(e,"the competition"));
+  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; ROT = (EV && EV.rot) || {}; ABS = (EV && EV.absent) || {}; render(); renderClubs(); renderPlayer(); }, e=>err(e,"the competition"));
   cdb.collection("musicUploads").where("compKey","==",D.compKey).onSnapshot(s=>{ UP = {}; s.docs.forEach(d=>UP[d.data().gymnastId]=d.data()); render(); renderClubs(); renderPlayer(); }, e=>err(e,"uploads"));
   cdb.collection("clubs").get().then(s=>{ ACCOUNTS = s.docs.map(d=>({uid:d.id, name:d.data().name||"", bg:String(d.data().bgNumber||"").trim(), email:d.data().email||""})).sort((a,b)=>a.name.localeCompare(b.name)); renderClubs(); }).catch(e=>err(e,"club accounts"));
 }
 function err(e, what){ console.error(e); toast(e.code==="permission-denied" ? `The database blocked ${what}. Add the music rules in the ngl-schools project.` : `Couldn't load ${what}.`); }
+
+/* ---------- sessions and floor rotations ----------
+   A session = the levels that compete together (from each level's `session` label).
+   Each session has NROT floor rotations. EV.rot[sessionKey][1..NROT] = ordered gymnast ids,
+   EV.absent[id] = true. Anyone not placed in a rotation sits in "Not in a rotation yet". */
+const NROT = D.floorRotations || 4;
+const SESS = [];
+D.levels.forEach(L=>{ const lab = L.session || L.name; let s = SESS.find(x=>x.label===lab);
+  if(!s){ s = {key:"s"+(SESS.length+1), label:lab, levels:[]}; SESS.push(s); } s.levels.push(L.id); });
+const sessName = s => s.label.split(" (")[0];
+const sessDesc = s => s.levels.map(id=>D.levels.find(L=>L.id===id).name).join(" & ");
+const sessOf = id => SESS.find(s=>s.levels.includes(G[id].level));
+let ROT = {}, ABS = {};
+const sessIds = s => s.levels.flatMap(lid=>orderFor(D.levels.find(L=>L.id===lid)));
+function rotOf(s){
+  const all = sessIds(s), raw = ROT[s.key]||{}, used = new Set(), out = {};
+  for(let r=1;r<=NROT;r++){ out[r] = (raw[r]||[]).filter(id=>all.includes(id) && !used.has(id)); out[r].forEach(id=>used.add(id)); }
+  out.u = all.filter(id=>!used.has(id)); return out;
+}
+const rotName = r => r==="u" ? "Not in a rotation yet" : "Rotation "+r;
+async function saveRot(s, o){
+  if(!EV){ toast("Publish the entries to the Club Hub first (Clubs tab)."); return; }
+  const clean = {}; for(let r=1;r<=NROT;r++) clean[r] = o[r];
+  ROT[s.key] = clean; render(); renderPlayer(); $("#saveState").textContent = "Saving…";
+  try{ await cdb.collection("musicEvents").doc(D.compKey).set({rot:{[s.key]:clean}}, {merge:true}); $("#saveState").textContent = "Saved"; }
+  catch(e){ err(e,"the running order"); $("#saveState").textContent = "Not saved"; }
+}
+function moveTo(id, r, beforeId, after){
+  const s = sessOf(id), o = rotOf(s);
+  for(let k=1;k<=NROT;k++) o[k] = o[k].filter(x=>x!==id);
+  if(r!=="u"){ const arr = o[r]; let i = beforeId ? arr.indexOf(beforeId) : -1; if(i>-1 && after) i++; if(i<0) arr.push(id); else arr.splice(i,0,id); }
+  saveRot(s, o);
+}
+async function setAbsent(id, on){
+  if(!EV){ toast("Publish the entries to the Club Hub first (Clubs tab)."); return; }
+  ABS[id] = on; render(); renderPlayer();
+  try{ await cdb.collection("musicEvents").doc(D.compKey).set({absent:{[id]:on}}, {merge:true}); }catch(e){ err(e,"the absence"); }
+}
+const rotSelect = (id, cur) => `<select data-rot="${id}" aria-label="Rotation for ${esc(G[id].name)}" class="rsel">
+  <option value="u"${cur==="u"?" selected":""}>No rotation</option>${Array.from({length:NROT},(_,i)=>`<option value="${i+1}"${String(cur)===String(i+1)?" selected":""}>Rotation ${i+1}</option>`).join("")}</select>`;
+const upLabel = id => `<label class="btn small ghost" style="margin-left:6px">${UP[id]?"Replace":"Upload"}<input type="file" accept=".mp3,audio/mpeg" data-aup="${id}" hidden></label>`;
 
 /* ---------- running order ---------- */
 function render(){
@@ -225,105 +283,124 @@ function render(){
   $("#tally").innerHTML = `<div><b>${have}/${all}</b><span>Music uploaded</span></div>` +
     D.levels.map(L=>{ const n=L.gymnasts.filter(g=>UP[g[0]]).length; return `<div style="border-left-color:${n===L.gymnasts.length?"var(--ok)":"var(--red)"}"><b>${n}/${L.gymnasts.length}</b><span>${esc(L.name)}</span></div>`; }).join("") +
     `<div style="border-left-color:${EV&&EV.status==="open"?"var(--ok)":"var(--red)"}"><b>${EV ? (EV.status==="open"?"Open":"Closed") : "Not published"}</b><span>Club Hub uploads</span></div>`;
-  $("#levels").innerHTML = D.levels.map(L=>{
-    const ids = orderFor(L), n = ids.filter(id=>UP[id]).length, set = (ORDER[L.id]||[]).length>0;
-    return `<section class="lv"><header>
-        <h2>${esc(L.name)}<small class="${n<ids.length?"gap":""}">${n}/${ids.length} uploaded</small></h2>
-        <button class="btn small ghost" data-paste="${L.id}">Paste floor order</button>
-        <button class="btn small primary" data-zip="${L.id}">Download in floor order</button></header>
-      ${set?"":`<div class="note">Floor order not set yet: this is Elevien's entry order. Paste the floor running order from Elevien, or use the arrows.</div>`}
-      <div class="tablewrap"><table><thead><tr><th>#</th><th>Gymnast</th><th>Music</th><th></th></tr></thead><tbody>` +
-      ids.map((id,i)=>{ const g=G[id], u=UP[id];
-        return `<tr class="${u?"ok":""}"><td class="n">${i+1}</td>
-          <td><span class="fl"></span><span class="who">${esc(g.name)}</span><br><span class="club">${esc(clubName(g.club))}</span></td>
-          <td>${u?`<audio controls preload="none" src="${esc(u.url)}"></audio>`:`<span class="club" style="color:var(--red)">Not uploaded</span>`}
-            <label class="btn small ghost" style="margin-left:6px">${u?"Replace":"Upload"}<input type="file" accept=".mp3,audio/mpeg" data-aup="${id}" hidden></label>
-            ${u&&u.uploadedBy==="admin"?`<span class="club"> · added by NGL</span>`:""}</td>
-          <td class="mv"><button class="btn small ghost" data-mv="${L.id}|${i}|-1" aria-label="Move up">&uarr;</button> <button class="btn small ghost" data-mv="${L.id}|${i}|1" aria-label="Move down">&darr;</button></td></tr>`;
-      }).join("") + `</tbody></table></div></section>`;
+  $("#levels").innerHTML = SESS.map(s=>{
+    const o = rotOf(s), ids = sessIds(s), n = ids.filter(id=>UP[id]).length;
+    const blocks = (o.u.length ? [["u",o.u]] : []).concat(Array.from({length:NROT},(_,i)=>[i+1,o[i+1]]));
+    return `<section class="lv"><header><h2>${esc(sessName(s))} session<small class="${n<ids.length?"gap":""}">${esc(sessDesc(s))} · ${n}/${ids.length} music uploaded</small></h2></header>
+      ${o.u.length ? `<div class="note">${o.u.length} gymnast${o.u.length>1?"s aren't":" isn't"} in a floor rotation yet. Use <b>Paste floor order</b> on each rotation, choose a rotation for each gymnast, or drag them into place.</div>` : ""}` +
+      blocks.map(([r,list])=>{ const up = list.filter(id=>UP[id]).length, ab = list.filter(id=>ABS[id]).length;
+        return `<div class="rot" data-s="${s.key}" data-r="${r}">
+          <div class="rh"><b>${rotName(r)}</b><small>${list.length} gymnast${list.length===1?"":"s"} · ${up} with music${ab?` · ${ab} absent`:""}</small>
+            ${r!=="u" ? `<span style="margin-left:auto;display:flex;gap:6px"><button class="btn small ghost" data-paste="${s.key}|${r}">Paste floor order</button><button class="btn small primary" data-zip="${s.key}|${r}">Download</button></span>` : ""}</div>
+          <div class="tablewrap"><table><tbody>` +
+          (list.length ? list.map((id,i)=>{ const g=G[id], u=UP[id];
+            return `<tr class="${u?"ok":""} ${ABS[id]?"abs":""}" draggable="true" data-id="${id}">
+              <td class="grip" title="Drag to move">&#10303;</td><td class="n">${r==="u"?"–":i+1}</td>
+              <td><span class="fl"></span><span class="who">${esc(g.name)}</span> <span class="lvb">${esc(g.level)}</span>${ABS[id]?' <span class="st none">Absent</span>':""}<br><span class="club">${esc(clubName(g.club))}</span></td>
+              <td>${u?`<audio controls preload="none" src="${esc(u.url)}"></audio>`:`<span class="club" style="color:var(--red)">Not uploaded</span>`}${upLabel(id)}${u&&u.uploadedBy==="admin"?`<span class="club"> · added by NGL</span>`:""}</td>
+              <td style="white-space:nowrap"><label class="club"><input type="checkbox" data-abs="${id}" ${ABS[id]?"checked":""}> Absent</label></td>
+              <td>${rotSelect(id, r)}</td>
+              <td class="mv">${r!=="u"?`<button class="btn small ghost" data-mv="${id}|-1" aria-label="Move up">&uarr;</button> <button class="btn small ghost" data-mv="${id}|1" aria-label="Move down">&darr;</button>`:""}</td></tr>`;
+          }).join("") : `<tr class="empty"><td colspan="7">Empty. Drag gymnasts here, or paste the floor order.</td></tr>`) +
+          `</tbody></table></div></div>`; }).join("") + `</section>`;
   }).join("");
-}
-async function saveOrder(levelId, ids){
-  if(!EV){ toast("Publish the entries to the Club Hub first (Clubs tab)."); return; }
-  ORDER[levelId] = ids; render(); $("#saveState").textContent = "Saving…";
-  try{ await cdb.collection("musicEvents").doc(D.compKey).set({order:ORDER}, {merge:true}); $("#saveState").textContent = "Saved"; }
-  catch(e){ err(e,"the running order"); $("#saveState").textContent = "Not saved"; }
 }
 $("#levels").addEventListener("click", e=>{
   const b = e.target.closest("button"); if(!b) return;
-  if(b.dataset.mv){ const [lid,i,d] = b.dataset.mv.split("|"); const L = D.levels.find(x=>x.id===lid), ids = orderFor(L), j = +i + +d;
-    if(j<0||j>=ids.length) return; [ids[+i],ids[j]]=[ids[j],ids[+i]]; saveOrder(lid, ids); }
-  if(b.dataset.paste) pasteDlg(b.dataset.paste);
-  if(b.dataset.zip) downloadZip(b.dataset.zip);
+  if(b.dataset.mv){ const [id,d] = b.dataset.mv.split("|"), s = sessOf(id), o = rotOf(s);
+    for(let r=1;r<=NROT;r++){ const i = o[r].indexOf(id); if(i<0) continue; const j = i + +d; if(j<0||j>=o[r].length) return; [o[r][i],o[r][j]]=[o[r][j],o[r][i]]; saveRot(s,o); return; } }
+  if(b.dataset.paste){ const [sk,r] = b.dataset.paste.split("|"); pasteDlg(SESS.find(x=>x.key===sk), +r); }
+  if(b.dataset.zip){ const [sk,r] = b.dataset.zip.split("|"); downloadZip(SESS.find(x=>x.key===sk), +r); }
 });
+document.addEventListener("change", e=>{
+  const t = e.target;
+  if(t.dataset && t.dataset.abs){ setAbsent(t.dataset.abs, t.checked); }
+  if(t.dataset && t.dataset.rot){ const v = t.value; moveTo(t.dataset.rot, v==="u"?"u":+v); t.blur(); }
+});
+/* drag and drop: rows in the running order and in the player queue */
+let DRAG = null;
+document.addEventListener("dragstart", e=>{ const tr = e.target.closest && e.target.closest("[data-id][draggable]"); if(!tr) return; DRAG = tr.dataset.id; e.dataTransfer.effectAllowed="move"; try{ e.dataTransfer.setData("text/plain", DRAG); }catch(_){} tr.classList.add("dragging"); });
+document.addEventListener("dragend", ()=>{ DRAG = null; document.querySelectorAll(".dragging,.dropb,.dropa,.dropz").forEach(x=>x.classList.remove("dragging","dropb","dropa","dropz")); });
+function dropTarget(e){
+  const zone = e.target.closest && e.target.closest("[data-r]"); if(!zone || !DRAG) return null;
+  const row = e.target.closest("[data-id]"), s = SESS.find(x=>x.key===zone.dataset.s);
+  if(!s || sessOf(DRAG)!==s) return {bad:true};
+  let after = false; if(row){ const rc = row.getBoundingClientRect(); after = e.clientY > rc.top + rc.height/2; }
+  return {zone, row, s, r: zone.dataset.r==="u" ? "u" : +zone.dataset.r, after};
+}
+document.addEventListener("dragover", e=>{ const t = dropTarget(e); if(!t || t.bad) return; e.preventDefault();
+  document.querySelectorAll(".dropb,.dropa,.dropz").forEach(x=>x.classList.remove("dropb","dropa","dropz"));
+  if(t.row && t.row.dataset.id!==DRAG) t.row.classList.add(t.after?"dropa":"dropb"); else if(!t.row) t.zone.classList.add("dropz"); });
+document.addEventListener("drop", e=>{ const t = dropTarget(e); if(!t) return; e.preventDefault();
+  if(t.bad){ toast("Gymnasts can only move within their own session."); return; }
+  const before = t.row && t.row.dataset.id!==DRAG ? t.row.dataset.id : null;
+  if(t.row && !before) return;
+  moveTo(DRAG, t.r, before, t.after); });
 
-/* paste names in floor order; matches loosely on name */
+/* paste a rotation's floor order: names matched loosely within the session */
 const key = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z]/g,"");
-function pasteDlg(lid){
-  const L = D.levels.find(x=>x.id===lid);
-  openDlg(`${L.name}: floor running order`, `<p style="margin:0 0 8px;color:var(--muted);font-size:14px">Copy the floor start list from Elevien and paste it here, one gymnast per line. Club names, numbers and other text on each line are ignored.</p><textarea id="pasteBox"></textarea><div id="pasteRes" style="font-size:13px;margin-top:8px"></div>`,
+function pasteDlg(s, r){
+  openDlg(`${sessName(s)} session · Rotation ${r}: floor order`, `<p style="margin:0 0 8px;color:var(--muted);font-size:14px">Copy the floor start list for this rotation from Elevien and paste it here, one gymnast per line. Club names, numbers and other text on each line are ignored. This replaces Rotation ${r}; anyone already in it who isn't in your list goes back to "Not in a rotation yet".</p><textarea id="pasteBox"></textarea><div id="pasteRes" style="font-size:13px;margin-top:8px"></div>`,
     [{l:"Cancel"},{l:"Apply order", cls:"primary", fn:()=>{
-      const lines = $("#pasteBox").value.split(/\n/).map(s=>s.trim()).filter(Boolean);
-      const pool = L.gymnasts.map(g=>({id:g[0], k:key(g[1])})), used = new Set(), out = [], miss = [];
+      const lines = $("#pasteBox").value.split(/\n/).map(x=>x.trim()).filter(Boolean);
+      const pool = sessIds(s).map(id=>({id, k:key(G[id].name)})), used = new Set(), out = [], miss = [];
       lines.forEach(line=>{ const lk = key(line); const m = pool.filter(p=>!used.has(p.id) && lk.includes(p.k)).sort((a,b)=>b.k.length-a.k.length)[0];
         if(m){ used.add(m.id); out.push(m.id); } else if(/[a-z]{3,}/i.test(line)) miss.push(line); });
-      if(!out.length){ $("#pasteRes").innerHTML = `<span style="color:var(--red)">No names matched. Check you pasted the ${esc(L.name)} list.</span>`; return false; }
-      const left = L.gymnasts.map(g=>g[0]).filter(id=>!used.has(id));
-      saveOrder(lid, [...out, ...left]);
-      toast(`${out.length} matched` + (left.length?`, ${left.length} not in your list put at the end`:"") + (miss.length?`, ${miss.length} lines ignored`:""));
+      if(!out.length){ $("#pasteRes").innerHTML = `<span style="color:var(--red)">No names matched gymnasts in the ${esc(sessName(s))} session.</span>`; return false; }
+      const o = rotOf(s); for(let k=1;k<=NROT;k++) if(k!==r) o[k] = o[k].filter(id=>!used.has(id));
+      o[r] = out; saveRot(s, o);
+      toast(`${out.length} placed in Rotation ${r}` + (miss.length?`; ${miss.length} line${miss.length>1?"s":""} didn't match: ${miss.slice(0,3).join(", ")}${miss.length>3?"…":""}`:""));
     }}]);
 }
 
-
 /* ---------- NGL admin uploads a track for a gymnast (e.g. a club emailed it) ----------
-   Same Storage path and musicUploads record the Club Hub uses, so the club sees it as done.
-   Needs the admin rules for music (see the set-up note). */
+   Same Storage path and musicUploads record the Club Hub uses, so the club sees it as done. */
 const ADMIN_MAX_MB = 15;
-$("#levels").addEventListener("change", async e=>{
+document.addEventListener("change", async e=>{
   const inp = e.target; if(!inp.dataset || !inp.dataset.aup) return;
   const id = inp.dataset.aup, f = inp.files && inp.files[0]; inp.value = ""; if(!f) return;
   const g = G[id];
   if(!/\.mp3$/i.test(f.name) && f.type!=="audio/mpeg"){ toast("Please choose an MP3 file."); return; }
   if(f.size > ADMIN_MAX_MB*1048576){ toast(`That file is over ${ADMIN_MAX_MB}MB. Please export a smaller MP3.`); return; }
   if(!EV){ toast("Publish the entries to the Club Hub first (Clubs tab)."); return; }
-  if(UP[id] && !confirm(`Replace the music for ${g.name}? The club's file will be overwritten.`)) return;
+  if(UP[id] && !confirm(`Replace the music for ${g.name}? The current file will be overwritten.`)) return;
+  if(PL.playing && PL.playing.id===id){ toast("That music is playing. Fade it out first."); return; }
   const m = accountFor(g.club), owner = m.a ? m.a.uid : "admin";
   const path = `music/${D.compKey}/${owner}/${id}.mp3`;
-  $("#saveState").textContent = `Uploading ${g.name}…`;
+  $("#saveState").textContent = `Uploading ${g.name}…`; toast(`Uploading music for ${g.name}…`);
   try{
     const ref = capp.storage().ref(path);
     const task = ref.put(f, {contentType:"audio/mpeg", customMetadata:{club:clubName(g.club), gymnast:g.name, by:"NGL admin"}});
-    task.on("state_changed", s=>{ $("#saveState").textContent = `Uploading ${g.name}… ${Math.round(s.bytesTransferred/s.totalBytes*100)}%`; });
+    task.on("state_changed", sn=>{ $("#saveState").textContent = `Uploading ${g.name}… ${Math.round(sn.bytesTransferred/sn.totalBytes*100)}%`; });
     await task;
     const url = await ref.getDownloadURL();
     await cdb.collection("musicUploads").doc(`${D.compKey}_${id}`).set({compKey:D.compKey, gymnastId:id, gymnastName:g.name, level:g.level,
       clubKey:g.club, clubName:m.a ? m.a.name : clubName(g.club), clubId:owner, fileName:f.name, size:f.size, path, url,
       uploadedAt:firebase.firestore.FieldValue.serverTimestamp(), uploadedBy:"admin", adminEmail:(cauth.currentUser&&cauth.currentUser.email)||""});
-    $("#saveState").textContent = "Saved"; toast(`Music added for ${g.name}.`);
+    // keep the player's saved copy in step straight away, so it works offline too
+    try{ const meas = await measure(f); const rec = {k:TK(id), id, url, fileName:f.name, blob:f, savedAt:Date.now(), ...meas};
+      await PDB.put("tracks", rec); PL.cache[id] = rec; if(PL.objUrls[id]){ URL.revokeObjectURL(PL.objUrls[id]); delete PL.objUrls[id]; } }catch(_){}
+    $("#saveState").textContent = "Saved"; toast(`Music added for ${g.name}.`); renderPlayer();
   }catch(er){
     console.error(er); $("#saveState").textContent = "Not saved";
-    toast(/unauthori[sz]ed|permission/i.test(er.code||er.message||"") ? "Admin uploads are blocked by the database rules. Add the admin music rules (see the set-up note)." : "The upload failed. Check the connection and try again.");
+    toast(/unauthori[sz]ed|permission/i.test(er.code||er.message||"") ? "Admin uploads are blocked by the database rules." : "The upload failed. Check the connection and try again.");
   }
 });
 
-/* ---------- zip download ---------- */
+/* ---------- zip download (one rotation, in floor order) ---------- */
 const safe = s => s.replace(/[\\/:*?"<>|]/g,"").trim();
-async function downloadZip(lid){
-  const L = D.levels.find(x=>x.id===lid), ids = orderFor(L), zip = new JSZip();
-  const missing = ids.filter(id=>!UP[id]);
+async function blobFor(id){ const c = PL.cache[id], u = UP[id]; if(c && u && c.url===u.url && !c.bad) return c.blob; const r = await fetch(u.url); if(!r.ok) throw 0; return r.blob(); }
+async function downloadZip(s, r){
+  const ids = rotOf(s)[r], zip = new JSZip(), missing = ids.filter(id=>!UP[id]);
+  if(!ids.length){ toast("This rotation is empty."); return; }
   if(missing.length && !confirm(`${missing.length} gymnast${missing.length>1?"s have":" has"} no music yet. Download the rest anyway? Missing gymnasts keep their number so the order stays right.`)) return;
-  toast("Preparing the zip…");
-  let failed = 0;
-  for(let i=0;i<ids.length;i++){
-    const id = ids[i], g = G[id], u = UP[id], num = String(i+1).padStart(2,"0");
-    if(!u) continue;
-    try{ const r = await fetch(u.url); if(!r.ok) throw 0; zip.file(`${num} - ${safe(g.name)} - ${safe(clubName(g.club))}.mp3`, await r.blob()); }
-    catch(_){ failed++; }
-  }
-  zip.file("Running order.txt", ids.map((id,i)=>`${String(i+1).padStart(2,"0")}  ${G[id].name}  (${clubName(G[id].club)})${UP[id]?"":"  NO MUSIC"}`).join("\r\n"));
-  if(failed && failed===ids.length-missing.length){ toast("The browser couldn't fetch the files. The storage bucket needs its CORS setting (see the set-up note)."); return; }
+  toast("Preparing the zip…"); let failed = 0;
+  for(let i=0;i<ids.length;i++){ const id = ids[i]; if(!UP[id]) continue;
+    try{ zip.file(`${String(i+1).padStart(2,"0")} - ${safe(G[id].name)} - ${safe(clubName(G[id].club))}${ABS[id]?" (ABSENT)":""}.mp3`, await blobFor(id)); }catch(_){ failed++; } }
+  zip.file("Running order.txt", ids.map((id,i)=>`${String(i+1).padStart(2,"0")}  ${G[id].name}  (${clubName(G[id].club)})${UP[id]?"":"  NO MUSIC"}${ABS[id]?"  ABSENT":""}`).join("\r\n"));
+  if(failed && failed===ids.length-missing.length){ toast("The browser couldn't fetch the files. The storage bucket needs its CORS setting."); return; }
   const blob = await zip.generateAsync({type:"blob"});
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${D.title} - ${L.name} floor music.zip`; a.click();
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${D.title} - ${sessName(s)} rotation ${r} floor music.zip`; a.click();
   if(failed) toast(`${failed} file${failed>1?"s":""} couldn't be downloaded.`);
 }
 
@@ -384,8 +461,8 @@ $("#clubList").addEventListener("click", async e=>{
 /* ---------- Play tab: offline competition player ----------
    Music is saved into this browser's IndexedDB (per laptop) so it plays without internet.
    A saved copy is reused only while its Storage URL matches the upload record, so a
-   replaced file is fetched again. Levels are matched down (never boosted) so loud tracks
-   don't blast the hall. */
+   replaced file is fetched again. Levels are matched down (never boosted).
+   The queue is one floor rotation of one session, in floor order; absent gymnasts are skipped. */
 const PDB = (()=>{ let dbp;
   const open = ()=> dbp || (dbp = new Promise((res,rej)=>{ const r = indexedDB.open("ngl-music-player",1);
     r.onupgradeneeded = ()=>{ const d=r.result; d.createObjectStore("tracks",{keyPath:"k"}); d.createObjectStore("ann",{keyPath:"k"}); };
@@ -393,15 +470,16 @@ const PDB = (()=>{ let dbp;
   const tx = async (st, mode, fn)=>{ const d = await open(); return new Promise((res,rej)=>{ const t=d.transaction(st,mode), o=t.objectStore(st); const out=fn(o); t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out); t.onerror=()=>rej(t.error); }); };
   return { get:(st,k)=>tx(st,"readonly",o=>o.get(k)), put:(st,v)=>tx(st,"readwrite",o=>o.put(v)), del:(st,k)=>tx(st,"readwrite",o=>o.delete(k)), all:st=>tx(st,"readonly",o=>o.getAll()) };
 })();
-const PL = { level:null, idx:0, played:{}, cache:{}, ann:[], playing:null, fading:false, vol:1, objUrls:{}, wake:null, ready:false };
+const PL = { sess:null, rot:1, cur:null, played:{}, cache:{}, ann:[], playing:null, fading:false, vol:1, objUrls:{}, wake:null, ready:false };
 const TK = id => `${D.compKey}:${id}`;
 const fmtT = s => !isFinite(s) ? "0:00" : `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
 const audio = new Audio(); audio.preload = "auto";
-function plSave(){ try{ localStorage.setItem("nglplay:"+D.compKey, JSON.stringify({level:PL.level, idx:PL.idx, played:PL.played, vol:PL.vol})); }catch(_){} }
-function plLoad(){ try{ const o = JSON.parse(localStorage.getItem("nglplay:"+D.compKey)||"null"); if(o){ PL.level=o.level; PL.idx=o.idx||0; PL.played=o.played||{}; PL.vol=o.vol??1; } }catch(_){} }
+function plSave(){ try{ localStorage.setItem("nglplay2:"+D.compKey, JSON.stringify({sess:PL.sess, rot:PL.rot, cur:PL.cur, played:PL.played, vol:PL.vol})); }catch(_){} }
+function plLoad(){ try{ const o = JSON.parse(localStorage.getItem("nglplay2:"+D.compKey)||"null"); if(o){ PL.sess=o.sess; PL.rot=o.rot||1; PL.cur=o.cur||null; PL.played=o.played||{}; PL.vol=o.vol??1; } }catch(_){} }
 async function plInit(){
   if(PL.ready) return; PL.ready = true; plLoad();
-  if(!D.levels.some(L=>L.id===PL.level)) PL.level = D.levels[0].id;
+  if(!SESS.some(s=>s.key===PL.sess)) PL.sess = SESS[0].key;
+  if(!(PL.rot>=1 && PL.rot<=NROT)) PL.rot = 1;
   $("#vol").value = Math.round(PL.vol*100);
   try{ (await PDB.all("tracks")).forEach(t=>{ if(t.k.startsWith(D.compKey+":")) PL.cache[t.id]=t; }); }catch(e){ console.warn(e); }
   try{ PL.ann = (await PDB.all("ann")).sort((a,b)=>a.order-b.order); }catch(_){ PL.ann = []; }
@@ -415,25 +493,36 @@ function status(id){
   return "online";
 }
 const ST_TXT = {saved:"On laptop", online:"Online only", none:"No music", bad:"Check file"};
-const levelIds = ()=> orderFor(D.levels.find(L=>L.id===PL.level));
+const curSess = ()=> SESS.find(s=>s.key===PL.sess) || SESS[0];
+const queue = ()=> rotOf(curSess())[PL.rot] || [];
+const firstUp = (ids, from=0)=> { for(let i=from;i<ids.length;i++) if(!ABS[ids[i]] && !PL.played[ids[i]]) return ids[i]; for(let i=from;i<ids.length;i++) if(!ABS[ids[i]]) return ids[i]; return null; };
+function nextAfter(id){ const ids = queue(), i = ids.indexOf(id); for(let j=i+1;j<ids.length;j++) if(!ABS[ids[j]]) return ids[j]; return null; }
 function renderPlayer(){
   if(!PL.ready) return;
-  const ids = levelIds(); PL.idx = Math.max(0, Math.min(PL.idx, ids.length-1));
-  const L = D.levels.find(x=>x.id===PL.level), played = PL.played[PL.level]||[];
-  $("#sessChips").innerHTML = D.levels.map(x=>`<button class="chip" data-lv="${x.id}" aria-pressed="${x.id===PL.level}">${esc(x.name)}</button>`).join("");
-  const cur = ids[PL.idx], g = G[cur], stt = status(cur), isAnn = PL.playing && PL.playing.kind==="ann";
-  $("#nowCard").innerHTML = isAnn
-    ? `<div class="lbl">Now playing · announcement</div><div class="nm">${esc(PL.playing.name)}</div><div class="cl">&nbsp;</div>`
-    : `<div class="lbl">${PL.playing?"Now playing":"Ready"} · ${esc(L.name)} · ${PL.idx+1} of ${ids.length}</div>
-       <div class="nm">${esc(g?g.name:"")}</div><div class="cl">${esc(g?clubName(g.club):"")} <span class="st ${stt}">${ST_TXT[stt]}</span>${PL.cache[cur]&&PL.cache[cur].gainDb<-0.5?` <span style="font-size:13px;opacity:.75">level ${PL.cache[cur].gainDb.toFixed(0)} dB</span>`:""}</div>`;
+  const s = curSess(), ids = queue();
+  if(!PL.playing && !ids.includes(PL.cur)) PL.cur = firstUp(ids) || ids[0] || null;
+  $("#sessChips").innerHTML = SESS.map(x=>`<button class="chip" data-ps="${x.key}" aria-pressed="${x.key===PL.sess}">${esc(sessName(x))} <small>${esc(sessDesc(x))}</small></button>`).join("") +
+    `<span style="width:12px"></span>` + Array.from({length:NROT},(_,i)=>{ const q = rotOf(s)[i+1], done = q.filter(id=>PL.played[id]||ABS[id]).length;
+      return `<button class="chip" data-pr="${i+1}" aria-pressed="${PL.rot===i+1}">Rotation ${i+1} <small>${done}/${q.length}</small></button>`; }).join("");
+  const isAnn = PL.playing && PL.playing.kind==="ann", cur = PL.playing && PL.playing.kind==="gym" ? PL.playing.id : PL.cur, g = cur && G[cur];
+  const pos = cur ? ids.indexOf(cur) : -1;
+  if(isAnn) $("#nowCard").innerHTML = `<div class="lbl">Now playing · announcement</div><div class="nm">${esc(PL.playing.name)}</div><div class="cl">&nbsp;</div>`;
+  else if(!g) $("#nowCard").innerHTML = `<div class="lbl">${esc(sessName(s))} session · Rotation ${PL.rot}</div><div class="nm">No gymnasts in this rotation</div><div class="cl">Set the floor order on the Running order tab.</div>`;
+  else { const stt = status(cur);
+    $("#nowCard").innerHTML = `<div class="lbl">${PL.playing?"Now playing":"Ready"} · ${esc(sessName(s))} · Rotation ${PL.rot} · ${pos+1} of ${ids.length}</div>
+      <div class="nm">${esc(g.name)}</div><div class="cl">${esc(clubName(g.club))} · Level ${esc(g.level)} <span class="st ${stt}">${ST_TXT[stt]}</span>${ABS[cur]?' <span class="st none">Marked absent</span>':""}${PL.cache[cur]&&PL.cache[cur].gainDb<-0.5?` <span style="font-size:13px;opacity:.75">level ${PL.cache[cur].gainDb.toFixed(0)} dB</span>`:""}</div>`; }
   $("#nowCard").innerHTML += `<div class="row"><div class="pbar"><i id="tBar"></i></div><div class="tm" id="tTime">0:00</div></div>`;
-  const nx = ids[PL.idx+1];
-  $("#nextUp").innerHTML = nx ? `<span style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Next up</span><br><b>${esc(G[nx].name)}</b> <span class="club">${esc(clubName(G[nx].club))}</span> <span class="st ${status(nx)}">${ST_TXT[status(nx)]}</span>`
-                            : `<span style="font-size:12px;color:var(--muted);font-weight:600">END OF ${esc(L.name.toUpperCase())}</span>`;
-  $("#queue").innerHTML = ids.map((id,i)=>{ const s=status(id);
-    return `<button class="qr ${i===PL.idx?"cur":""} ${played.includes(id)?"done":""}" data-qi="${i}"><span class="n">${i+1}</span>
-      <span><b>${esc(G[id].name)}</b> <span class="club">${esc(clubName(G[id].club))}</span>${played.includes(id)?' <span class="club">· played</span>':""}</span>
-      <span class="st ${s}">${ST_TXT[s]}</span></button>`; }).join("");
+  const nx = cur ? nextAfter(cur) : null;
+  $("#nextUp").innerHTML = nx ? `<span style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Next up</span><br><b>${esc(G[nx].name)}</b> <span class="club">${esc(clubName(G[nx].club))} · Level ${esc(G[nx].level)}</span> <span class="st ${status(nx)}">${ST_TXT[status(nx)]}</span>`
+                            : `<span style="font-size:12px;color:var(--muted);font-weight:600">END OF ROTATION ${PL.rot}${PL.rot<NROT?` · choose Rotation ${PL.rot+1} when floor is ready`:""}</span>`;
+  $("#queue").dataset.s = s.key; $("#queue").dataset.r = PL.rot;
+  $("#queue").innerHTML = ids.length ? ids.map((id,i)=>{ const st=status(id);
+    return `<div class="qr ${id===cur?"cur":""} ${PL.played[id]?"done":""} ${ABS[id]?"abs":""}" data-id="${id}" draggable="true" data-qid="${id}">
+      <span class="grip" title="Drag to move">&#10303;</span><span class="n">${i+1}</span>
+      <span class="qn"><b>${esc(G[id].name)}</b> <span class="club">${esc(clubName(G[id].club))} · ${esc(G[id].level)}</span>${PL.played[id]?' <span class="club">· played</span>':""}${ABS[id]?' <span class="st none">Absent</span>':""}</span>
+      <span class="st ${st}">${ST_TXT[st]}</span>
+      <span class="qc"><button class="btn small ghost" data-qabs="${id}">${ABS[id]?"Present":"Absent"}</button>${rotSelect(id, PL.rot)}${upLabel(id)}</span></div>`; }).join("")
+    : `<div class="qr empty" style="display:block">No gymnasts in this rotation yet. Drag them here from another rotation's list, or set the floor order on the Running order tab.</div>`;
   $("#goBtn").disabled = !!PL.playing;
   prepState(); tick();
 }
@@ -475,7 +564,7 @@ async function prepareAll(){
   }
   PL.prepping = false; $("#prepBtn").disabled = false; $("#prepBtn").textContent = "Save all music to this laptop";
   renderPlayer();
-  if(failed && !ok) toast("The browser couldn't fetch the music. The storage bucket needs its CORS setting (see the set-up note).");
+  if(failed && !ok) toast("The browser couldn't fetch the music. The storage bucket needs its CORS setting.");
   else toast(`${ok} track${ok===1?"":"s"} saved` + (failed?`, ${failed} failed: try again`:"") + ".");
 }
 function srcFor(id){
@@ -490,10 +579,11 @@ function startAudio(src, gain){
 }
 async function play(){
   if(PL.playing){ toast("Music is already playing. Press F to fade out."); return; }
-  const id = levelIds()[PL.idx]; if(!id) return;
+  const id = PL.cur; if(!id) return;
+  if(ABS[id] && !confirm(`${G[id].name} is marked absent. Play their music anyway?`)) return;
   const s = srcFor(id);
   if(!s){ toast(`No music uploaded for ${G[id].name}.`); return; }
-  PL.playing = {kind:"gym", id, level:PL.level, local:s.local};
+  PL.playing = {kind:"gym", id, local:s.local};
   try{ await startAudio(s.src, s.gain); requestWake(); }
   catch(e){ PL.playing = null; toast("Couldn't start the music. Press Space to try again, or use the backup."); }
   renderPlayer();
@@ -508,10 +598,7 @@ async function playAnn(k){
 }
 function finish(advance){
   const p = PL.playing; PL.playing = null; PL.fading = false; audio.pause();
-  if(p && p.kind==="gym"){
-    const arr = PL.played[p.level] = PL.played[p.level]||[]; if(!arr.includes(p.id)) arr.push(p.id);
-    if(advance && p.level===PL.level){ const ids = levelIds(), i = ids.indexOf(p.id); if(i>-1 && i<ids.length-1) PL.idx = i+1; }
-  }
+  if(p && p.kind==="gym"){ PL.played[p.id] = true; if(advance){ const nx = nextAfter(p.id); PL.cur = nx || p.id; } }
   plSave(); renderPlayer();
 }
 function fadeOut(){
@@ -526,14 +613,15 @@ function restart(){
 }
 function move(d){
   if(PL.playing){ toast("Fade out the music before moving on."); return; }
-  const n = levelIds().length; PL.idx = Math.max(0, Math.min(n-1, PL.idx+d)); plSave(); renderPlayer();
-  $("#queue .qr.cur")?.scrollIntoView({block:"nearest"});
+  const ids = queue(); let i = ids.indexOf(PL.cur);
+  for(let j=i+d; j>=0 && j<ids.length; j+=d){ if(!ABS[ids[j]]){ PL.cur = ids[j]; break; } }
+  plSave(); renderPlayer(); $("#queue .qr.cur")?.scrollIntoView({block:"nearest"});
 }
 function tick(){
   const b = $("#tBar"), t = $("#tTime"); if(!b) return;
   const d = audio.duration, c = audio.currentTime;
   if(PL.playing && isFinite(d)){ b.style.width = (c/d*100)+"%"; t.textContent = `${fmtT(c)} / ${fmtT(d)}`; }
-  else { b.style.width = "0"; const id = levelIds()[PL.idx], cd = PL.cache[id]; t.textContent = cd && cd.duration ? fmtT(cd.duration) : "0:00"; }
+  else { b.style.width = "0"; const cd = PL.cache[PL.cur]; t.textContent = cd && cd.duration ? fmtT(cd.duration) : "0:00"; }
 }
 audio.addEventListener("timeupdate", tick);
 audio.addEventListener("ended", ()=>{ if(PL.playing) finish(true); });
@@ -552,8 +640,8 @@ document.addEventListener("keydown", e=>{
   if(k===" "||k==="Spacebar"){ e.preventDefault(); e.stopPropagation(); play(); }
   else if(k==="f"||k==="F"){ e.preventDefault(); fadeOut(); }
   else if(k==="r"||k==="R"){ e.preventDefault(); restart(); }
-  else if(k==="ArrowRight"||k==="n"||k==="N"){ e.preventDefault(); move(1); }
-  else if(k==="ArrowLeft"||k==="p"||k==="P"){ e.preventDefault(); move(-1); }
+  else if(k==="ArrowRight"||k==="ArrowDown"||k==="n"||k==="N"){ e.preventDefault(); move(1); }
+  else if(k==="ArrowLeft"||k==="ArrowUp"||k==="p"||k==="P"){ e.preventDefault(); move(-1); }
 }, true);
 // buttons must not keep focus, or Space would also "click" the focused button
 $("#tab-play").addEventListener("mouseup", e=>{ const b=e.target.closest("button"); if(b) setTimeout(()=>b.blur(),0); });
@@ -561,9 +649,20 @@ $("#goBtn").onclick = play; $("#fadeBtn").onclick = fadeOut; $("#restartBtn").on
 $("#prevBtn").onclick = ()=>move(-1); $("#nextBtn").onclick = ()=>move(1);
 $("#prepBtn").onclick = prepareAll;
 $("#vol").oninput = e=>{ PL.vol = e.target.value/100; if(PL.playing && !PL.fading) audio.volume = Math.min(1, PL.vol*(PL.gain||1)); plSave(); };
-$("#sessChips").addEventListener("click", e=>{ const b=e.target.closest("[data-lv]"); if(!b) return; if(PL.playing){ toast("Fade out the music before changing session."); return; } PL.level=b.dataset.lv; PL.idx=0; const pl=PL.played[PL.level]||[], ids=levelIds(); const f=ids.findIndex(id=>!pl.includes(id)); PL.idx=f<0?0:f; plSave(); renderPlayer(); });
-$("#queue").addEventListener("click", e=>{ const b=e.target.closest("[data-qi]"); if(!b) return; if(PL.playing){ toast("Fade out the music before choosing another gymnast."); return; } PL.idx=+b.dataset.qi; plSave(); renderPlayer(); });
-$("#resetSess").onclick = ()=>{ if(PL.playing) return; if(!confirm("Clear the 'played' ticks for this session and go back to the first gymnast?")) return; PL.played[PL.level]=[]; PL.idx=0; plSave(); renderPlayer(); };
+$("#sessChips").addEventListener("click", e=>{
+  const b = e.target.closest("[data-ps],[data-pr]"); if(!b) return;
+  if(PL.playing){ toast("Fade out the music before changing session or rotation."); return; }
+  if(b.dataset.ps){ PL.sess = b.dataset.ps; PL.rot = 1; } else PL.rot = +b.dataset.pr;
+  PL.cur = firstUp(queue()); plSave(); renderPlayer();
+});
+$("#queue").addEventListener("click", e=>{
+  const ab = e.target.closest("[data-qabs]"); if(ab){ setAbsent(ab.dataset.qabs, !ABS[ab.dataset.qabs]); return; }
+  if(e.target.closest("select,label,input")) return;
+  const r = e.target.closest("[data-qid]"); if(!r) return;
+  if(PL.playing){ toast("Fade out the music before choosing another gymnast."); return; }
+  PL.cur = r.dataset.qid; plSave(); renderPlayer();
+});
+$("#resetSess").onclick = ()=>{ if(PL.playing) return; if(!confirm(`Clear the 'played' ticks for Rotation ${PL.rot} and go back to its first gymnast?`)) return; queue().forEach(id=>delete PL.played[id]); PL.cur = firstUp(queue()); plSave(); renderPlayer(); };
 $("#fsBtn").onclick = ()=>{ const st=$("#stage"); if(document.fullscreenElement) document.exitFullscreen(); else if(st.requestFullscreen) st.requestFullscreen().catch(()=>toast("Full screen isn't allowed here. Use 'Open in new tab' first.")); };
 document.addEventListener("fullscreenchange", ()=>{ $("#fsBtn").textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; });
 /* announcements */
@@ -587,18 +686,17 @@ $("#annList").addEventListener("click", async e=>{
   if(b.dataset.annx){ if(!confirm("Remove this announcement from this laptop?")) return; await PDB.del("ann", b.dataset.annx).catch(()=>{}); PL.ann = PL.ann.filter(a=>a.k!==b.dataset.annx); renderAnn(); }
   if(b.dataset.annu){ const i=+b.dataset.annu; if(i<1) return; [PL.ann[i-1],PL.ann[i]]=[PL.ann[i],PL.ann[i-1]]; PL.ann.forEach((a,j)=>{ a.order=j; PDB.put("ann",a).catch(()=>{}); }); renderAnn(); }
 });
-/* backup: every level in floor order, plus announcements, from saved copies where possible */
+/* backup: every session and rotation in floor order, plus announcements, from saved copies where possible */
 async function exportBackup(){
   const zip = new JSZip(); let n=0, failed=0; toast("Preparing the backup…");
   PL.ann.forEach((a,i)=>{ zip.file(`00 Announcements/${String(i+1).padStart(2,"0")} - ${safe(a.name)}.mp3`, a.blob); });
-  for(const L of D.levels){ const ids = orderFor(L);
-    for(let i=0;i<ids.length;i++){ const id=ids[i], u=UP[id]; if(!u) continue;
-      const name = `${safe(L.name)}/${String(i+1).padStart(2,"0")} - ${safe(G[id].name)} - ${safe(clubName(G[id].club))}.mp3`;
-      const c = PL.cache[id];
-      if(c && c.url===u.url){ zip.file(name, c.blob); n++; continue; }
-      try{ const r = await fetch(u.url); if(!r.ok) throw 0; zip.file(name, await r.blob()); n++; }catch(_){ failed++; } }
-    zip.file(`${safe(L.name)}/Running order.txt`, ids.map((id,i)=>`${String(i+1).padStart(2,"0")}  ${G[id].name}  (${clubName(G[id].club)})${UP[id]?"":"  NO MUSIC"}`).join("\r\n"));
-  }
+  for(const s of SESS){ const o = rotOf(s);
+    for(const r of [...Array.from({length:NROT},(_,i)=>i+1), "u"]){ const ids = o[r]; if(!ids.length) continue;
+      const dir = `${safe(sessName(s))} session/${r==="u"?"Not in a rotation":"Rotation "+r}`;
+      for(let i=0;i<ids.length;i++){ const id=ids[i]; if(!UP[id]) continue;
+        try{ zip.file(`${dir}/${String(i+1).padStart(2,"0")} - ${safe(G[id].name)} - ${safe(clubName(G[id].club))}${ABS[id]?" (ABSENT)":""}.mp3`, await blobFor(id)); n++; }catch(_){ failed++; } }
+      zip.file(`${dir}/Running order.txt`, ids.map((id,i)=>`${String(i+1).padStart(2,"0")}  ${G[id].name}  (${clubName(G[id].club)})${UP[id]?"":"  NO MUSIC"}${ABS[id]?"  ABSENT":""}`).join("\r\n"));
+    } }
   const blob = await zip.generateAsync({type:"blob"});
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${D.title} - floor music backup.zip`; a.click();
   toast(`Backup ready: ${n} tracks` + (failed?`, ${failed} couldn't be fetched`:"") + ".");
