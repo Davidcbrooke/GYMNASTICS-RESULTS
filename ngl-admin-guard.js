@@ -53,7 +53,9 @@
 (function () {
   var HUB_URL = "NGL_Admin_Hub.html";
   var USERS = "ngl_admin_users";
+  // data-section can list several ids ("music musicplayer"): any one of them gives access.
   var section = document.currentScript && document.currentScript.dataset.section;
+  var allowed = String(section || "").split(/\s+/).filter(Boolean);
 
   var hide = document.createElement("style");
   hide.textContent = "body{visibility:hidden}";
@@ -69,18 +71,19 @@
 
   firebase.auth().onAuthStateChanged(function (u) {
     if (!u) {
-      window.top.location.href = HUB_URL + (section ? "?section=" + section : "");
+      window.top.location.href = HUB_URL + (allowed[0] ? "?section=" + allowed[0] : "");
       return;
     }
     var email = u.email.toLowerCase();
     firebase.firestore().collection(USERS).doc(email).get().then(function (d) {
       var rec = d.exists ? d.data() : null;
-      if (!rec || !(rec.owner || (rec.sections || []).indexOf(section) > -1)) {
+      var mine = rec && rec.sections || [];
+      if (!rec || !(rec.owner || allowed.some(function (a) { return mine.indexOf(a) > -1; }))) {
         return block("Your account doesn't include this area. Ask Dave to add it.");
       }
       hide.remove();
       document.dispatchEvent(new CustomEvent("ngl-admin-ready", {
-        detail: { email: email, name: rec.name || email, owner: !!rec.owner }
+        detail: { email: email, name: rec.name || email, owner: !!rec.owner, sections: mine }
       }));
     }).catch(function () { block("Couldn't check your access. Refresh to try again."); });
   });

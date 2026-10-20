@@ -465,7 +465,7 @@ const DEMO = new URLSearchParams(location.search).has('demo');
 if(!DEMO && window.firebase && CONFIG.firebase.apiKey){
   firebase.initializeApp(CONFIG.firebase);
   document.addEventListener("ngl-admin-ready", startLive, {once:true});
-  const g = document.createElement("script"); g.src = "ngl-admin-guard.js"; g.dataset.section = "finance"; document.head.appendChild(g);
+  const g = document.createElement("script"); g.src = "ngl-admin-guard.js"; g.dataset.section = "finance projection"; document.head.appendChild(g);
 } else startDemo();
 </script>
 </body>

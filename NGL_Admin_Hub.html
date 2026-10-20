@@ -646,13 +646,14 @@ async function loadMeInner(email){
   startNotifications();
   if(ME.owner){ $("#team").classList.remove("hidden"); loadTeam(); } else $("#team").classList.add("hidden");
   const next = new URLSearchParams(location.search).get("section");
-  const nx = CONFIG.sections.find(s=>s.id===next); if(nx && can(nx.access||nx.id)) openSection(next);
+  const nx = CONFIG.sections.find(s=>s.id===next); if(nx && canSec(nx)) openSection(next);
 }
 
 const can = id => ME && (ME.owner || (ME.sections||[]).includes(id));
+const canSec = s => can(s.id) || (!!s.access && can(s.access));   // e.g. Floor music also opens the music player
 
 function renderSections(){
-  const mine = CONFIG.sections.filter(s=>can(s.access||s.id));
+  const mine = CONFIG.sections.filter(canSec);
   $("#helloSub").textContent = mine.length ? "Choose an area to manage." : "You don't have access to any areas yet. Ask Dave to add you.";
   $("#sections").innerHTML = mine.map(s=>`
     <button class="sec" data-sec="${s.id}" style="--c:${s.colour}" ${s.url?"":"disabled"}>
@@ -679,11 +680,11 @@ async function loadTeam(){
 }
 function renderPick(){
   const box = $("#nSections"); if(box.childElementCount) return;
-  box.innerHTML = CONFIG.sections.filter(s=>!s.access).map(s=>`<label><input type="checkbox" value="${s.id}">${esc(s.name)}</label>`).join("");
+  box.innerHTML = CONFIG.sections.map(s=>`<label><input type="checkbox" value="${s.id}">${esc(s.name)}</label>`).join("");
 }
 function renderTeam(){
   renderPick();
-  const secs = CONFIG.sections.filter(s=>!s.access);   // linked areas (access:) follow their parent area's tick
+  const secs = CONFIG.sections;   // every area has its own tick; linked areas (access:) are also open to the parent area's tick
   $("#teamTable").innerHTML = `<thead><tr><th>Person</th>${secs.map(s=>`<th class="c">${esc(s.name)}</th>`).join("")}<th></th></tr></thead><tbody>` +
     TEAM.map(u=>`<tr><td><b>${esc(u.name||u.email)}</b>${u.owner?'<span class="owner-tag">Owner</span>':""}<br><span style="font-size:12.5px;color:var(--muted)">${esc(u.email)}</span></td>` +
       secs.map(s=>`<td class="c"><input type="checkbox" aria-label="${esc((u.name||u.email)+" – "+s.name)}" data-u="${esc(u.email)}" data-s="${s.id}" ${u.owner||(u.sections||[]).includes(s.id)?"checked":""} ${u.owner?"disabled":""}></td>`).join("") +

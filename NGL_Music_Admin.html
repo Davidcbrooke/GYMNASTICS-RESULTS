@@ -126,6 +126,7 @@ tr.empty td{color:var(--muted);font-size:13px;padding:12px 14px}
 .q .qr .qc{display:flex;gap:6px;align-items:center}
 .q .qr .qc .btn{margin:0}
 @media (max-width:900px){.q .qr{grid-template-columns:22px 34px 1fr auto}.q .qr .qc{grid-column:3/-1}}
+body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.playonly #updBtn,body.playonly #diffTop,body.playonly .qc label,body.playonly #backupBtn+*{display:none!important}
 </style>
 </head>
 <body>
@@ -775,8 +776,13 @@ function openDlg(t, body, btns){
 }
 
 firebase.initializeApp(FIREBASE);
-document.addEventListener("ngl-admin-ready", start, {once:true});
-const g = document.createElement("script"); g.src="ngl-admin-guard.js"; g.dataset.section="music"; document.head.appendChild(g);
+document.addEventListener("ngl-admin-ready", e=>{
+  // "Competition music player" only (no Floor music tick): just the Play tab, no uploads or club settings
+  const d = e.detail || {};
+  if(!d.owner && !(d.sections||[]).includes("music")){ document.body.classList.add("playonly"); location.hash = "#play"; }
+  start();
+}, {once:true});
+const g = document.createElement("script"); g.src="ngl-admin-guard.js"; g.dataset.section="music musicplayer"; document.head.appendChild(g);
 </script>
 </body>
 </html>
