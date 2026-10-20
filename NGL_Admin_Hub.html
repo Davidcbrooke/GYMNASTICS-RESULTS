@@ -226,7 +226,7 @@ td input[type=checkbox]{width:18px;height:18px}
     <strong id="vTitle"></strong>
     <button class="btn small" id="newTab">Open in new tab</button>
   </div>
-  <iframe id="frame" title="Admin section"></iframe>
+  <iframe id="frame" title="Admin section" allow="fullscreen; screen-wake-lock; autoplay; clipboard-write" allowfullscreen></iframe>
 </div>
 
 <script>
@@ -256,6 +256,7 @@ const CONFIG = {
     {id:"finance",      name:"Finance",        desc:"League P&L: competitions now, judging and licensing next", colour:"#1f7a4d", url:"NGL_Finance.html"},
     {id:"projection",   access:"finance", name:"Projected P&L", desc:"10-year licensing projection: change the variables and save scenarios", colour:"#01AFB8", url:"NGL_Projection.html"},
     {id:"music",        name:"Floor music",    desc:"Club music uploads and downloads in floor running order", colour:"#c8202f", url:"NGL_Music_Admin.html"},
+    {id:"musicplayer",  access:"music", name:"Competition music player", desc:"Play floor music in running order on the day, offline, with announcements", colour:"#14254a", url:"NGL_Music_Admin.html#play"},
     {id:"results",      name:"Results",        desc:"Result corrections and data quality", colour:"#5b4a9e", url:"admin-corrections.html"},
     {id:"rotation",     name:"Rotation Planner clubs", desc:"Registered clubs and data imports for the Rotation Planner", colour:"#7a8090", url:"NGL_Admin.html"}
   ]

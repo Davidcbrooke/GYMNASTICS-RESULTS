@@ -62,6 +62,42 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
 .dh{background:var(--navy);color:#fff;padding:12px 16px;font-family:var(--cond);font-size:20px;border-bottom:3px solid var(--red)}
 .db{padding:12px 16px}.df{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--line)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:4px;font-size:14px;z-index:60;max-width:90vw}
+
+/* ---------- Play tab ---------- */
+.pbar{height:8px;background:#e7eaf1;border-radius:4px;overflow:hidden}.pbar i{display:block;height:100%;width:0;background:var(--navy);transition:width .2s}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font-weight:600}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+#stage{background:var(--paper)}
+#stage:fullscreen{padding:24px;overflow:auto}
+.now{background:var(--navy);color:#fff;border-radius:8px;padding:18px 20px;border-bottom:5px solid var(--red)}
+.now .lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;font-weight:600}
+.now .nm{font-family:var(--cond);font-size:44px;line-height:1.05;margin:4px 0 2px}
+.now .cl{font-size:18px;opacity:.9}
+.now .row{display:flex;align-items:center;gap:10px;margin-top:14px}
+.now .tm{font-family:var(--cond);font-size:22px;min-width:120px;text-align:right}
+.now .pbar{flex:1;height:12px;background:rgba(255,255,255,.2)}.now .pbar i{background:#fff}
+.st{display:inline-block;font-size:12px;font-weight:700;border-radius:3px;padding:2px 7px;vertical-align:middle}
+.st.saved{background:var(--ok-soft);color:var(--ok)}.st.online{background:var(--gold-soft);color:#7a5a07}.st.none,.st.bad{background:#fde7e9;color:var(--red)}
+.now .st{font-size:13px}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.ctl .btn{padding:12px 18px;font-size:16px}
+.ctl .go{background:var(--ok);border-color:var(--ok);color:#fff;font-size:18px;padding:12px 28px}
+.ctl .fade{background:var(--red);border-color:var(--red);color:#fff}
+.ctl .btn:disabled{opacity:.4;cursor:not-allowed}
+.ctl kbd{font-family:var(--body);font-size:11px;opacity:.8;margin-left:6px;border:1px solid currentColor;border-radius:3px;padding:0 4px}
+.nextup{background:#fff;border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:6px;padding:10px 14px;margin-bottom:12px}
+.nextup b{font-family:var(--cond);font-size:22px}
+.q{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.q button.qr{display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;background:#fff;border:none;border-bottom:1px solid #eef0f5;padding:8px 12px}
+.q button.qr:hover{background:#f7f8fb}
+.q .qr.cur{background:#eef2fb;box-shadow:inset 5px 0 0 var(--navy)}
+.q .qr.done{opacity:.5}
+.q .qr .n{font-family:var(--cond);font-size:18px;color:var(--navy)}
+.ann{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eef0f5}
+.ann .t{flex:1;font-weight:600}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.split{grid-template-columns:1fr}.now .nm{font-size:32px}}
 </style>
 </head>
 <body>
@@ -79,6 +115,7 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="order">Running order</button>
     <button role="tab" aria-selected="false" data-tab="clubs">Clubs</button>
+    <button role="tab" aria-selected="false" data-tab="play">Play</button>
   </nav>
   <section id="tab-order"><div id="levels"></div></section>
   <section id="tab-clubs" class="hidden">
@@ -88,6 +125,45 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="publish">Publish entries to Club Hub</button><button class="btn ghost" id="closeBtn">Close uploads</button></div>
     </div>
     <div class="panel"><h3>Clubs</h3><p>A club sees its gymnasts automatically when its Club Hub BG number matches Elevien's. Link any that don't.</p><div id="clubList"></div></div>
+  </section>
+  <section id="tab-play" class="hidden">
+    <div class="split">
+      <div class="panel">
+        <h3>1. Prepare this laptop</h3>
+        <p id="prepState">Checking what's saved on this laptop…</p>
+        <div class="pbar" style="margin-bottom:10px"><i id="prepBar"></i></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="prepBtn">Save all music to this laptop</button>
+          <button class="btn ghost" id="backupBtn">Export backup (zip)</button>
+        </div>
+        <p style="margin:10px 0 0;font-size:13px">Do this the day before, then again on the morning if any music has changed. Once saved, the player works without internet.</p>
+      </div>
+      <div class="panel">
+        <h3>2. Announcements</h3>
+        <p>Saved on this laptop only. Play them from here at the start of each session.</p>
+        <div id="annList"></div>
+        <label class="btn ghost small" style="display:inline-block;margin-top:8px">Add announcement MP3<input type="file" id="annFile" accept="audio/*" multiple hidden></label>
+      </div>
+    </div>
+    <div id="stage">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <div class="chips" id="sessChips" style="margin:0;margin-right:auto"></div>
+        <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px">Volume <input type="range" id="vol" min="0" max="100" value="100" style="width:120px"></label>
+        <button class="btn ghost small" id="resetSess">Reset session</button>
+        <button class="btn small" id="fsBtn">Full screen</button>
+      </div>
+      <div class="now" id="nowCard"></div>
+      <div class="ctl">
+        <button class="btn go" id="goBtn">&#9654; Play<kbd>Space</kbd></button>
+        <button class="btn fade" id="fadeBtn">Fade out<kbd>F</kbd></button>
+        <button class="btn" id="restartBtn">Restart<kbd>R</kbd></button>
+        <button class="btn ghost" id="prevBtn">&larr; Previous</button>
+        <button class="btn ghost" id="nextBtn">Next &rarr;</button>
+      </div>
+      <div class="nextup" id="nextUp"></div>
+      <div class="q" id="queue"></div>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px">Space plays the selected gymnast. While music is playing, Space does nothing, so a stray press can't stop a routine: use F to fade out. When a track finishes, the next gymnast is selected but doesn't start until you press Space.</p>
+    </div>
   </section>
   </div>
 </main>
@@ -127,6 +203,7 @@ function start(){
     if(!a || !a.exists){ $("#csErr").textContent = "That login isn't a Club Hub admin."; cauth.signOut(); return; }
     $("#clubSignin").classList.add("hidden"); $("#mainArea").classList.remove("hidden");
     watch();
+    if(location.hash==="#play") document.querySelector('.tabs [data-tab="play"]').click();
   });
 }
 $("#csForm").addEventListener("submit", async e=>{
@@ -135,8 +212,8 @@ $("#csForm").addEventListener("submit", async e=>{
   catch(_){ $("#csErr").textContent = "Email or password isn't right."; }
 });
 function watch(){
-  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; render(); renderClubs(); }, e=>err(e,"the competition"));
-  cdb.collection("musicUploads").where("compKey","==",D.compKey).onSnapshot(s=>{ UP = {}; s.docs.forEach(d=>UP[d.data().gymnastId]=d.data()); render(); renderClubs(); }, e=>err(e,"uploads"));
+  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; render(); renderClubs(); renderPlayer(); }, e=>err(e,"the competition"));
+  cdb.collection("musicUploads").where("compKey","==",D.compKey).onSnapshot(s=>{ UP = {}; s.docs.forEach(d=>UP[d.data().gymnastId]=d.data()); render(); renderClubs(); renderPlayer(); }, e=>err(e,"uploads"));
   cdb.collection("clubs").get().then(s=>{ ACCOUNTS = s.docs.map(d=>({uid:d.id, name:d.data().name||"", bg:String(d.data().bgNumber||"").trim(), email:d.data().email||""})).sort((a,b)=>a.name.localeCompare(b.name)); renderClubs(); }).catch(e=>err(e,"club accounts"));
 }
 function err(e, what){ console.error(e); toast(e.code==="permission-denied" ? `The database blocked ${what}. Add the music rules in the ngl-schools project.` : `Couldn't load ${what}.`); }
@@ -268,10 +345,236 @@ $("#clubList").addEventListener("click", async e=>{
   catch(_){ openDlg("Email to club", `<textarea>${esc(text)}</textarea>`, [{l:"Close", cls:"primary"}]); }
 });
 
+
+/* ---------- Play tab: offline competition player ----------
+   Music is saved into this browser's IndexedDB (per laptop) so it plays without internet.
+   A saved copy is reused only while its Storage URL matches the upload record, so a
+   replaced file is fetched again. Levels are matched down (never boosted) so loud tracks
+   don't blast the hall. */
+const PDB = (()=>{ let dbp;
+  const open = ()=> dbp || (dbp = new Promise((res,rej)=>{ const r = indexedDB.open("ngl-music-player",1);
+    r.onupgradeneeded = ()=>{ const d=r.result; d.createObjectStore("tracks",{keyPath:"k"}); d.createObjectStore("ann",{keyPath:"k"}); };
+    r.onsuccess = ()=>res(r.result); r.onerror = ()=>rej(r.error); }));
+  const tx = async (st, mode, fn)=>{ const d = await open(); return new Promise((res,rej)=>{ const t=d.transaction(st,mode), o=t.objectStore(st); const out=fn(o); t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out); t.onerror=()=>rej(t.error); }); };
+  return { get:(st,k)=>tx(st,"readonly",o=>o.get(k)), put:(st,v)=>tx(st,"readwrite",o=>o.put(v)), del:(st,k)=>tx(st,"readwrite",o=>o.delete(k)), all:st=>tx(st,"readonly",o=>o.getAll()) };
+})();
+const PL = { level:null, idx:0, played:{}, cache:{}, ann:[], playing:null, fading:false, vol:1, objUrls:{}, wake:null, ready:false };
+const TK = id => `${D.compKey}:${id}`;
+const fmtT = s => !isFinite(s) ? "0:00" : `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+const audio = new Audio(); audio.preload = "auto";
+function plSave(){ try{ localStorage.setItem("nglplay:"+D.compKey, JSON.stringify({level:PL.level, idx:PL.idx, played:PL.played, vol:PL.vol})); }catch(_){} }
+function plLoad(){ try{ const o = JSON.parse(localStorage.getItem("nglplay:"+D.compKey)||"null"); if(o){ PL.level=o.level; PL.idx=o.idx||0; PL.played=o.played||{}; PL.vol=o.vol??1; } }catch(_){} }
+async function plInit(){
+  if(PL.ready) return; PL.ready = true; plLoad();
+  if(!D.levels.some(L=>L.id===PL.level)) PL.level = D.levels[0].id;
+  $("#vol").value = Math.round(PL.vol*100);
+  try{ (await PDB.all("tracks")).forEach(t=>{ if(t.k.startsWith(D.compKey+":")) PL.cache[t.id]=t; }); }catch(e){ console.warn(e); }
+  try{ PL.ann = (await PDB.all("ann")).sort((a,b)=>a.order-b.order); }catch(_){ PL.ann = []; }
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(_){}
+  renderPlayer(); renderAnn();
+}
+function status(id){
+  const u = UP[id], c = PL.cache[id];
+  if(!u) return "none";
+  if(c && c.url===u.url) return c.bad ? "bad" : "saved";
+  return "online";
+}
+const ST_TXT = {saved:"On laptop", online:"Online only", none:"No music", bad:"Check file"};
+const levelIds = ()=> orderFor(D.levels.find(L=>L.id===PL.level));
+function renderPlayer(){
+  if(!PL.ready) return;
+  const ids = levelIds(); PL.idx = Math.max(0, Math.min(PL.idx, ids.length-1));
+  const L = D.levels.find(x=>x.id===PL.level), played = PL.played[PL.level]||[];
+  $("#sessChips").innerHTML = D.levels.map(x=>`<button class="chip" data-lv="${x.id}" aria-pressed="${x.id===PL.level}">${esc(x.name)}</button>`).join("");
+  const cur = ids[PL.idx], g = G[cur], stt = status(cur), isAnn = PL.playing && PL.playing.kind==="ann";
+  $("#nowCard").innerHTML = isAnn
+    ? `<div class="lbl">Now playing · announcement</div><div class="nm">${esc(PL.playing.name)}</div><div class="cl">&nbsp;</div>`
+    : `<div class="lbl">${PL.playing?"Now playing":"Ready"} · ${esc(L.name)} · ${PL.idx+1} of ${ids.length}</div>
+       <div class="nm">${esc(g?g.name:"")}</div><div class="cl">${esc(g?clubName(g.club):"")} <span class="st ${stt}">${ST_TXT[stt]}</span>${PL.cache[cur]&&PL.cache[cur].gainDb<-0.5?` <span style="font-size:13px;opacity:.75">level ${PL.cache[cur].gainDb.toFixed(0)} dB</span>`:""}</div>`;
+  $("#nowCard").innerHTML += `<div class="row"><div class="pbar"><i id="tBar"></i></div><div class="tm" id="tTime">0:00</div></div>`;
+  const nx = ids[PL.idx+1];
+  $("#nextUp").innerHTML = nx ? `<span style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Next up</span><br><b>${esc(G[nx].name)}</b> <span class="club">${esc(clubName(G[nx].club))}</span> <span class="st ${status(nx)}">${ST_TXT[status(nx)]}</span>`
+                            : `<span style="font-size:12px;color:var(--muted);font-weight:600">END OF ${esc(L.name.toUpperCase())}</span>`;
+  $("#queue").innerHTML = ids.map((id,i)=>{ const s=status(id);
+    return `<button class="qr ${i===PL.idx?"cur":""} ${played.includes(id)?"done":""}" data-qi="${i}"><span class="n">${i+1}</span>
+      <span><b>${esc(G[id].name)}</b> <span class="club">${esc(clubName(G[id].club))}</span>${played.includes(id)?' <span class="club">· played</span>':""}</span>
+      <span class="st ${s}">${ST_TXT[s]}</span></button>`; }).join("");
+  $("#goBtn").disabled = !!PL.playing;
+  prepState(); tick();
+}
+function prepState(){
+  const ids = Object.keys(G).filter(id=>UP[id]), saved = ids.filter(id=>status(id)==="saved").length, bad = ids.filter(id=>status(id)==="bad").length;
+  const all = Object.keys(G).length, none = all-ids.length;
+  $("#prepState").innerHTML = `<b>${saved} of ${ids.length}</b> uploaded tracks saved on this laptop.` +
+    (ids.length-saved-bad ? ` <span style="color:#7a5a07">${ids.length-saved-bad} still to save.</span>` : (ids.length?` <span style="color:var(--ok)">Nothing left to save.</span>`:"")) +
+    (bad ? ` <span style="color:var(--red)">${bad} file${bad>1?"s need":" needs"} checking (silent, very short or unreadable): listen to it and ask the club to upload again if it's wrong.</span>` : "") +
+    (none ? ` ${none} gymnast${none>1?"s have":" has"} no music uploaded.` : "");
+  if(!PL.prepping) $("#prepBar").style.width = ids.length ? (saved/ids.length*100)+"%" : "0";
+}
+async function measure(blob){
+  const Ctx = window.AudioContext||window.webkitAudioContext, ctx = new Ctx();
+  try{
+    const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+    let sum=0, n=0; const step = Math.max(1, Math.floor(buf.sampleRate/4000));
+    for(let c=0;c<buf.numberOfChannels;c++){ const d=buf.getChannelData(c); for(let i=0;i<d.length;i+=step){ const v=d[i]; if(Math.abs(v)>0.003){ sum+=v*v; n++; } } }
+    const rms = n ? 10*Math.log10(sum/n) : -99, target = -18;
+    if(buf.duration < 5 || rms < -60) return {bad:true, duration:buf.duration, gainDb:0};
+    return {duration:buf.duration, gainDb: Math.min(0, target-rms)};
+  }catch(_){ return {bad:true, duration:0, gainDb:0}; }
+  finally{ try{ ctx.close(); }catch(_){} }
+}
+async function prepareAll(){
+  const ids = Object.keys(G).filter(id=>UP[id] && status(id)!=="saved" && status(id)!=="bad");
+  if(!ids.length){ toast("Everything uploaded is already saved on this laptop."); return; }
+  PL.prepping = true; $("#prepBtn").disabled = true; let ok=0, failed=0;
+  for(let i=0;i<ids.length;i++){
+    const id = ids[i], u = UP[id];
+    $("#prepBtn").textContent = `Saving ${i+1} of ${ids.length}…`; $("#prepBar").style.width = (i/ids.length*100)+"%";
+    try{
+      const r = await fetch(u.url); if(!r.ok) throw new Error(r.status); const blob = await r.blob();
+      const m = await measure(blob);
+      const rec = {k:TK(id), id, url:u.url, fileName:u.fileName||"", blob, savedAt:Date.now(), ...m};
+      await PDB.put("tracks", rec); PL.cache[id] = rec; if(PL.objUrls[id]){ URL.revokeObjectURL(PL.objUrls[id]); delete PL.objUrls[id]; }
+      ok++;
+    }catch(e){ console.warn(id, e); failed++; }
+  }
+  PL.prepping = false; $("#prepBtn").disabled = false; $("#prepBtn").textContent = "Save all music to this laptop";
+  renderPlayer();
+  if(failed && !ok) toast("The browser couldn't fetch the music. The storage bucket needs its CORS setting (see the set-up note).");
+  else toast(`${ok} track${ok===1?"":"s"} saved` + (failed?`, ${failed} failed: try again`:"") + ".");
+}
+function srcFor(id){
+  const c = PL.cache[id], u = UP[id];
+  if(c && u && c.url===u.url && !c.bad){ if(!PL.objUrls[id]) PL.objUrls[id] = URL.createObjectURL(c.blob); return {src:PL.objUrls[id], gain:Math.pow(10,(c.gainDb||0)/20), local:true}; }
+  return u ? {src:u.url, gain:1, local:false} : null;
+}
+function startAudio(src, gain){
+  audio.pause(); PL.fading=false; audio.src = src; audio.currentTime = 0; PL.gain = gain;
+  audio.volume = Math.min(1, PL.vol*gain);
+  return audio.play();
+}
+async function play(){
+  if(PL.playing){ toast("Music is already playing. Press F to fade out."); return; }
+  const id = levelIds()[PL.idx]; if(!id) return;
+  const s = srcFor(id);
+  if(!s){ toast(`No music uploaded for ${G[id].name}.`); return; }
+  PL.playing = {kind:"gym", id, level:PL.level, local:s.local};
+  try{ await startAudio(s.src, s.gain); requestWake(); }
+  catch(e){ PL.playing = null; toast("Couldn't start the music. Press Space to try again, or use the backup."); }
+  renderPlayer();
+}
+async function playAnn(k){
+  if(PL.playing){ toast("Music is already playing. Press F to fade out first."); return; }
+  const a = PL.ann.find(x=>x.k===k); if(!a) return;
+  if(!PL.objUrls["ann:"+k]) PL.objUrls["ann:"+k] = URL.createObjectURL(a.blob);
+  PL.playing = {kind:"ann", k, name:a.name};
+  try{ await startAudio(PL.objUrls["ann:"+k], 1); requestWake(); }catch(_){ PL.playing=null; toast("Couldn't play that announcement."); }
+  renderPlayer();
+}
+function finish(advance){
+  const p = PL.playing; PL.playing = null; PL.fading = false; audio.pause();
+  if(p && p.kind==="gym"){
+    const arr = PL.played[p.level] = PL.played[p.level]||[]; if(!arr.includes(p.id)) arr.push(p.id);
+    if(advance && p.level===PL.level){ const ids = levelIds(), i = ids.indexOf(p.id); if(i>-1 && i<ids.length-1) PL.idx = i+1; }
+  }
+  plSave(); renderPlayer();
+}
+function fadeOut(){
+  if(!PL.playing || PL.fading) return; PL.fading = true;
+  const v0 = audio.volume, t0 = performance.now(), dur = 2500;
+  const step = now=>{ if(!PL.fading) return; const f = Math.min(1,(now-t0)/dur); audio.volume = v0*(1-f); if(f<1) requestAnimationFrame(step); else finish(true); };
+  requestAnimationFrame(step);
+}
+function restart(){
+  if(!PL.playing){ play(); return; }
+  PL.fading = false; audio.currentTime = 0; audio.volume = Math.min(1, PL.vol*(PL.gain||1)); audio.play().catch(()=>{});
+}
+function move(d){
+  if(PL.playing){ toast("Fade out the music before moving on."); return; }
+  const n = levelIds().length; PL.idx = Math.max(0, Math.min(n-1, PL.idx+d)); plSave(); renderPlayer();
+  $("#queue .qr.cur")?.scrollIntoView({block:"nearest"});
+}
+function tick(){
+  const b = $("#tBar"), t = $("#tTime"); if(!b) return;
+  const d = audio.duration, c = audio.currentTime;
+  if(PL.playing && isFinite(d)){ b.style.width = (c/d*100)+"%"; t.textContent = `${fmtT(c)} / ${fmtT(d)}`; }
+  else { b.style.width = "0"; const id = levelIds()[PL.idx], cd = PL.cache[id]; t.textContent = cd && cd.duration ? fmtT(cd.duration) : "0:00"; }
+}
+audio.addEventListener("timeupdate", tick);
+audio.addEventListener("ended", ()=>{ if(PL.playing) finish(true); });
+audio.addEventListener("error", ()=>{
+  const p = PL.playing; if(!p) return;
+  if(p.kind==="gym" && p.local && UP[p.id] && navigator.onLine){ p.local=false; startAudio(UP[p.id].url, 1).catch(()=>{}); toast("Saved copy failed, playing the online copy."); return; }
+  PL.playing = null; renderPlayer(); toast("This music won't play. Use the backup copy for this gymnast.");
+});
+async function requestWake(){ try{ if("wakeLock" in navigator && !PL.wake) { PL.wake = await navigator.wakeLock.request("screen"); PL.wake.addEventListener("release",()=>PL.wake=null); } }catch(_){} }
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && !$("#tab-play").classList.contains("hidden")) requestWake(); });
+window.addEventListener("beforeunload", e=>{ if(PL.playing || !$("#tab-play").classList.contains("hidden")){ e.preventDefault(); e.returnValue=""; } });
+document.addEventListener("keydown", e=>{
+  if($("#tab-play").classList.contains("hidden") || $("#dlg").open) return;
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && e.target.type!=="range") return;
+  const k = e.key;
+  if(k===" "||k==="Spacebar"){ e.preventDefault(); e.stopPropagation(); play(); }
+  else if(k==="f"||k==="F"){ e.preventDefault(); fadeOut(); }
+  else if(k==="r"||k==="R"){ e.preventDefault(); restart(); }
+  else if(k==="ArrowRight"||k==="n"||k==="N"){ e.preventDefault(); move(1); }
+  else if(k==="ArrowLeft"||k==="p"||k==="P"){ e.preventDefault(); move(-1); }
+}, true);
+// buttons must not keep focus, or Space would also "click" the focused button
+$("#tab-play").addEventListener("mouseup", e=>{ const b=e.target.closest("button"); if(b) setTimeout(()=>b.blur(),0); });
+$("#goBtn").onclick = play; $("#fadeBtn").onclick = fadeOut; $("#restartBtn").onclick = restart;
+$("#prevBtn").onclick = ()=>move(-1); $("#nextBtn").onclick = ()=>move(1);
+$("#prepBtn").onclick = prepareAll;
+$("#vol").oninput = e=>{ PL.vol = e.target.value/100; if(PL.playing && !PL.fading) audio.volume = Math.min(1, PL.vol*(PL.gain||1)); plSave(); };
+$("#sessChips").addEventListener("click", e=>{ const b=e.target.closest("[data-lv]"); if(!b) return; if(PL.playing){ toast("Fade out the music before changing session."); return; } PL.level=b.dataset.lv; PL.idx=0; const pl=PL.played[PL.level]||[], ids=levelIds(); const f=ids.findIndex(id=>!pl.includes(id)); PL.idx=f<0?0:f; plSave(); renderPlayer(); });
+$("#queue").addEventListener("click", e=>{ const b=e.target.closest("[data-qi]"); if(!b) return; if(PL.playing){ toast("Fade out the music before choosing another gymnast."); return; } PL.idx=+b.dataset.qi; plSave(); renderPlayer(); });
+$("#resetSess").onclick = ()=>{ if(PL.playing) return; if(!confirm("Clear the 'played' ticks for this session and go back to the first gymnast?")) return; PL.played[PL.level]=[]; PL.idx=0; plSave(); renderPlayer(); };
+$("#fsBtn").onclick = ()=>{ const st=$("#stage"); if(document.fullscreenElement) document.exitFullscreen(); else if(st.requestFullscreen) st.requestFullscreen().catch(()=>toast("Full screen isn't allowed here. Use 'Open in new tab' first.")); };
+document.addEventListener("fullscreenchange", ()=>{ $("#fsBtn").textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; });
+/* announcements */
+function renderAnn(){
+  $("#annList").innerHTML = PL.ann.length ? PL.ann.map((a,i)=>`<div class="ann"><span class="t">${esc(a.name)}</span>
+      <button class="btn small primary" data-annp="${a.k}">&#9654; Play</button>
+      <button class="btn small ghost" data-annu="${i}" aria-label="Move up">&uarr;</button>
+      <button class="btn small ghost" data-annx="${a.k}">Remove</button></div>`).join("")
+    : `<p style="margin:0">None added yet. Add the safety and welcome tracks here.</p>`;
+}
+$("#annFile").onchange = async e=>{
+  const files = [...e.target.files]; e.target.value = "";
+  for(const f of files){ const k = "a"+Date.now()+Math.random().toString(36).slice(2,6);
+    const rec = {k, name:f.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," "), blob:f, order:(PL.ann.at(-1)?.order||0)+1};
+    try{ await PDB.put("ann", rec); PL.ann.push(rec); }catch(_){ toast("Couldn't save that file on this laptop."); } }
+  renderAnn();
+};
+$("#annList").addEventListener("click", async e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.annp) playAnn(b.dataset.annp);
+  if(b.dataset.annx){ if(!confirm("Remove this announcement from this laptop?")) return; await PDB.del("ann", b.dataset.annx).catch(()=>{}); PL.ann = PL.ann.filter(a=>a.k!==b.dataset.annx); renderAnn(); }
+  if(b.dataset.annu){ const i=+b.dataset.annu; if(i<1) return; [PL.ann[i-1],PL.ann[i]]=[PL.ann[i],PL.ann[i-1]]; PL.ann.forEach((a,j)=>{ a.order=j; PDB.put("ann",a).catch(()=>{}); }); renderAnn(); }
+});
+/* backup: every level in floor order, plus announcements, from saved copies where possible */
+async function exportBackup(){
+  const zip = new JSZip(); let n=0, failed=0; toast("Preparing the backup…");
+  PL.ann.forEach((a,i)=>{ zip.file(`00 Announcements/${String(i+1).padStart(2,"0")} - ${safe(a.name)}.mp3`, a.blob); });
+  for(const L of D.levels){ const ids = orderFor(L);
+    for(let i=0;i<ids.length;i++){ const id=ids[i], u=UP[id]; if(!u) continue;
+      const name = `${safe(L.name)}/${String(i+1).padStart(2,"0")} - ${safe(G[id].name)} - ${safe(clubName(G[id].club))}.mp3`;
+      const c = PL.cache[id];
+      if(c && c.url===u.url){ zip.file(name, c.blob); n++; continue; }
+      try{ const r = await fetch(u.url); if(!r.ok) throw 0; zip.file(name, await r.blob()); n++; }catch(_){ failed++; } }
+    zip.file(`${safe(L.name)}/Running order.txt`, ids.map((id,i)=>`${String(i+1).padStart(2,"0")}  ${G[id].name}  (${clubName(G[id].club)})${UP[id]?"":"  NO MUSIC"}`).join("\r\n"));
+  }
+  const blob = await zip.generateAsync({type:"blob"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${D.title} - floor music backup.zip`; a.click();
+  toast(`Backup ready: ${n} tracks` + (failed?`, ${failed} couldn't be fetched`:"") + ".");
+}
+$("#backupBtn").onclick = exportBackup;
+
 /* ---------- ui ---------- */
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
-  ["order","clubs"].forEach(t=>$("#tab-"+t).classList.toggle("hidden", t!==b.dataset.tab));
+  ["order","clubs","play"].forEach(t=>$("#tab-"+t).classList.toggle("hidden", t!==b.dataset.tab));
+  if(b.dataset.tab==="play"){ plInit(); requestWake(); }
 }));
 function openDlg(t, body, btns){
   $("#dlgT").textContent=t; $("#dlgB").innerHTML=body; $("#dlgF").innerHTML="";
