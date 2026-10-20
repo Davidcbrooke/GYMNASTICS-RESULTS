@@ -44,8 +44,10 @@ def old_finals_clubs(repo):
     return out
 
 def club_split(club_name):
-    m = re.match(r"^(.*?)\s*\(([^()]*)\)\s*$", club_name or "")
-    return (m.group(1).strip(), m.group(2).strip()) if m else ((club_name or "").strip(), "")
+    """'Club A (123)' -> ('Club A','123'). Joint entries 'Club A (123),Club B (456)' -> the first club."""
+    pairs = re.findall(r"\s*([^,()][^()]*?)\s*\(([^()]*)\)", club_name or "")
+    if pairs: return pairs[0][0].strip(" ,"), pairs[0][1].strip()
+    return (club_name or "").strip(), ""
 
 def slug(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
@@ -57,7 +59,7 @@ def title_case(s):
                     (w.lower() if w.lower() in small else w.capitalize()) for w in s.split())
 
 def common_title(titles):
-    if len(titles) == 1: return titles[0].strip()
+    if len(titles) == 1: return re.sub(r",?\s*OPEN TO ALL REGIONS\s*$", "", titles[0].strip(), flags=re.I)
     pre = os.path.commonprefix(titles)
     pre = re.sub(r"[\s,\-|]+$", "", pre[:pre.rfind(",")] if "," in pre else pre)
     return pre.strip() or titles[0].strip()
@@ -79,8 +81,10 @@ def deadline_for(date):
 def read_slots(ev, event_dir):
     for p in [os.path.join(event_dir, f"{ev['eventId']}.json"), ev.get("file") or ""]:
         if p and os.path.exists(p):
-            s = open(p, encoding="utf-8").read(); i = s.find("{")
-            d = json.loads(s[i:]); return d.get("body", d)
+            s = open(p, encoding="utf-8").read().strip()
+            if s.startswith("["):                       # saved tool result: [{"type":"text","text":"{...}"}]
+                s = "".join(x.get("text", "") for x in json.loads(s) if isinstance(x, dict))
+            i = s.find("{"); d = json.loads(s[i:]); return d.get("body", d)
     return None
 
 def main():
@@ -92,12 +96,18 @@ def main():
     prev_by = {c["compKey"]: c for c in prev["comps"]}
     finals_keys = old_finals_clubs(repo)
 
+    today = datetime.date.today().isoformat()
+    def base(t):
+        b = re.sub(r"\s*\|\s*LEVEL.*$", "", t["title"].split(",")[0], flags=re.I)
+        return re.sub(r"\s+", " ", b).strip().upper()
     by_date = {}
-    for t in index: by_date.setdefault(t["startDate"], []).append(t)
+    for t in index:
+        if t["startDate"] < today and "--all" not in sys.argv: continue      # past competitions aren't needed
+        by_date.setdefault((t["startDate"], base(t)), []).append(t)
     comps, report, missing = [], [], []
-    for date, ts in sorted(by_date.items()):
+    for (date, _b), ts in sorted(by_date.items()):
         ts.sort(key=lambda t: (t.get("startTime") or "", t["tournamentId"]))
-        wag = [t for t in ts if any(d["name"] == "WAG" for d in t["disciplines"])]
+        wag = [t for t in ts if any(d.get("name") == "WAG" for d in t["disciplines"])]
         if not wag: continue
         ids = ",".join(sorted(t["tournamentId"] for t in wag))
         keep = KEEP.get(ids, {})
@@ -107,15 +117,16 @@ def main():
         for si, t in enumerate(wag):
             sess = keep.get("sessions", {}).get(t["tournamentId"]) or session_label(t, wag, si, len(wag))
             for d in t["disciplines"]:
-                if d["name"] != "WAG": continue
-                for pr in d["programs"]:
+                if d.get("name") != "WAG": continue
+                for pr in d.get("programs") or []:
                     for ev in pr["events"]:
                         body = read_slots(ev, event_dir)
                         if body is None:
                             if ev.get("floorSlots", 1): missing.append(ev["eventId"])
                             continue
+                        if not pr.get("name"): pr["name"] = "Level"
                         floor = next((a for a in body.get("apparatusTracks", []) if a["apparatusName"] == "Floor (W)"), None)
-                        if not floor: continue
+                        if not floor or not floor["contestantSlots"]: continue
                         multi = len(pr["events"]) > 1
                         lid = keep.get("levelIds", {}).get(pr["name"]) or ("e" + ev["eventId"])
                         lname = keep.get("levelNames", {}).get(pr["name"]) or (title_case(pr["name"]) + (f" · {title_case(ev['name'])}" if multi else ""))
@@ -128,7 +139,7 @@ def main():
                             gyms.append([str(sl["contestantId"]), sl.get("displayName") or f"{sl.get('firstName','')} {sl.get('lastName','')}".strip(), ck])
                         levels.append({"id": lid, "name": lname, "session": sess, "eventId": ev["eventId"], "gymnasts": gyms})
         n = sum(len(L["gymnasts"]) for L in levels)
-        comp = {"compKey": key, "title": keep.get("title") or old.get("title") or common_title([t["title"] for t in wag]),
+        comp = {"compKey": key, "title": keep.get("title") or common_title([t["title"] for t in wag]),
                 "date": date, "deadline": old.get("deadline") or deadline_for(date), "floorRotations": old.get("floorRotations", 4),
                 "elevien": [t["tournamentId"] for t in wag], "clubs": clubs, "levels": levels}
         if key == "finals2026": comp["deadline"] = old.get("deadline") or "Saturday 31 October 2026"
