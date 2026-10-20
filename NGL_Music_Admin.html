@@ -11,7 +11,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="ngl-music-data.js"></script>
+<script>document.write('<script src="ngl-music-comps.js?v='+Date.now()+'"><\/script>');</script>
+<script>
+/* Pick the competition: ?comp=key, else the last one used on this device, else the next upcoming one with entries. */
+(function(){
+  const C = window.NGL_MUSIC_COMPS || {comps:[]}, today = new Date().toISOString().slice(0,10);
+  let k = new URLSearchParams(location.search).get("comp"); try{ if(!k) k = localStorage.getItem("nglmusic:comp"); }catch(_){}
+  const has = c => c.levels.some(L=>L.gymnasts.length);
+  let d = C.comps.find(c=>c.compKey===k);
+  if(!d) d = C.comps.filter(c=>c.date>=today && has(c)).sort((a,b)=>a.date.localeCompare(b.date))[0] || C.comps.filter(has)[0] || C.comps[0];
+  window.NGL_MUSIC_DATA = d;
+})();
+</script>
 <style>
 :root{--navy:#14254a;--navy-2:#223a70;--red:#c8202f;--gold:#d9a521;--gold-soft:#fbf1d6;--paper:#f4f5f8;--ink:#16213a;--muted:#5d6782;--line:#d6dbe6;--ok:#1f7a4d;--ok-soft:#e3f3ea;
   --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;--cond:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
@@ -118,7 +129,9 @@ tr.empty td{color:var(--muted);font-size:13px;padding:12px 14px}
 </style>
 </head>
 <body>
-<header><div class="hin"><h1 id="title">Floor music<small>Uploads, running order and downloads</small></h1><span id="saveState" style="font-size:12px;opacity:.8"></span></div></header>
+<header><div class="hin"><h1 id="title">Floor music<small>Uploads, running order and downloads</small></h1><span id="saveState" style="font-size:12px;opacity:.8"></span>
+  <select id="compSel" aria-label="Competition" style="max-width:min(420px,100%);padding:6px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.4);background:#fff;color:var(--ink);font-weight:600"></select>
+  <button class="btn small" id="updBtn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.6)">Update from Elevien</button></div></header>
 <main>
   <section class="panel hidden" id="clubSignin" style="max-width:420px">
     <h3>Connect to the Club Hub</h3>
@@ -128,6 +141,7 @@ tr.empty td{color:var(--muted);font-size:13px;padding:12px 14px}
       <button class="btn primary">Connect</button><div id="csErr" style="color:var(--red);font-size:14px;margin-top:8px"></div></form>
   </section>
   <div id="mainArea" class="hidden">
+  <div id="diffTop"></div>
   <div class="tally" id="tally"></div>
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="order">Running order</button>
@@ -139,7 +153,10 @@ tr.empty td{color:var(--muted);font-size:13px;padding:12px 14px}
     <div class="panel">
       <h3>Club Hub</h3>
       <p id="pubState">Clubs upload in the Club Hub's Floor music tab. Publish the entries to switch it on (and again after any entry changes).</p>
+      <label style="display:block;font-size:14px;font-weight:600;margin:0 0 10px">Upload deadline shown to clubs
+        <input id="dlInput" style="display:block;width:min(320px,100%);padding:7px 9px;border:1px solid var(--line);border-radius:4px;margin-top:4px;font-weight:400"></label>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="publish">Publish entries to Club Hub</button><button class="btn ghost" id="closeBtn">Close uploads</button></div>
+      <div id="diffNote" style="margin-top:10px"></div>
     </div>
     <div class="panel"><h3>Clubs</h3><p>A club sees its gymnasts automatically when its Club Hub BG number matches Elevien's. Link any that don't.</p><div id="clubList"></div></div>
   </section>
@@ -204,11 +221,51 @@ const $ = s=>document.querySelector(s);
 const esc = v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
 $("#title").firstChild.textContent = D.title + " floor music";
+$("#dlInput").value = D.deadline || ""; $("#dlInput").addEventListener("input", e=>e.target.dataset.touched = "1");
 
 let capp, cdb, cauth, EV = null, UP = {}, ORDER = {}, ACCOUNTS = [];
 const G = {}; D.levels.forEach(L=>L.gymnasts.forEach(([id,name,club])=>G[id]={id,name,club,level:L.id}));
 const clubName = k => D.clubs[k]?.name || k;
 const orderFor = L => { const ids = L.gymnasts.map(g=>g[0]); const o = (ORDER[L.id]||[]).filter(id=>ids.includes(id)); return [...o, ...ids.filter(id=>!o.includes(id))]; };
+
+
+/* ---------- competitions from Elevien ---------- */
+const COMPS = (window.NGL_MUSIC_COMPS && window.NGL_MUSIC_COMPS.comps) || [];
+const fmtDate = d => new Date(d+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short", day:"numeric", month:"short", year:"numeric"});
+const deadline = () => ($("#dlInput") && $("#dlInput").value.trim()) || (EV && EV.deadline) || D.deadline || "";
+(function(){
+  const today = new Date().toISOString().slice(0,10), n = c => c.levels.reduce((a,L)=>a+L.gymnasts.length,0);
+  $("#compSel").innerHTML = COMPS.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(c=>
+    `<option value="${esc(c.compKey)}" ${c.compKey===D.compKey?"selected":""}>${c.date<today?"(past) ":""}${esc(fmtDate(c.date))} · ${esc(c.title)} · ${n(c)?n(c)+" gymnasts":"no entries yet"}</option>`).join("");
+  $("#compSel").onchange = e=>{ if(PL && PL.playing){ toast("Fade out the music before changing competition."); e.target.value = D.compKey; return; }
+    try{ localStorage.setItem("nglmusic:comp", e.target.value); }catch(_){}
+    location.href = location.pathname + "?comp=" + encodeURIComponent(e.target.value) + location.hash; };
+  $("#updBtn").onclick = ()=>{
+    const at = window.NGL_MUSIC_COMPS && window.NGL_MUSIC_COMPS.updatedAt;
+    openDlg("Update from Elevien", `<p style="margin:0 0 10px">Competitions and entries were last pulled from Elevien <b>${at?esc(new Date(at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})):"not yet"}</b>.</p>
+      <p style="margin:0 0 10px">To pull the latest, ask Claude: <b>"Update the NGL competitions from Elevien."</b> New competitions are added, and new or withdrawn gymnasts are updated. Rotations, absences and uploaded music are kept.</p>
+      <p style="margin:0;color:var(--muted);font-size:14px">Then click <b>Load latest</b> here. Anything that has changed since you last published is listed at the top of the page, ready to publish to the Club Hub.</p>`,
+      [{l:"Close"},{l:"Load latest", cls:"primary", fn:()=>{ location.reload(); }}]);
+  };
+  if(!D.levels.some(L=>L.gymnasts.length)){
+    $("#levels").innerHTML = `<div class="panel"><h3>No entries yet</h3><p>Elevien has no gymnasts entered for ${esc(D.title)} yet. Once entries are in, ask Claude to update the competitions from Elevien.</p></div>`;
+  }
+})();
+/* what has changed in Elevien since the entries were last published to the Club Hub */
+function renderDiff(){
+  if(!EV || !EV.gymClub){ $("#diffTop").innerHTML = ""; $("#diffNote").innerHTML = ""; return; }
+  const pubNames = {}; (EV.levels||[]).forEach(L=>(L.gymnasts||[]).forEach(g=>pubNames[g.id]=g.name));
+  const added = Object.keys(G).filter(id=>!(id in EV.gymClub)), gone = Object.keys(EV.gymClub).filter(id=>!G[id]);
+  const moved = Object.keys(G).filter(id=>(id in EV.gymClub) && EV.gymClub[id]!==G[id].club);
+  if(!added.length && !gone.length && !moved.length){ $("#diffTop").innerHTML = ""; $("#diffNote").innerHTML = `<span class="st saved">Club Hub is up to date with Elevien</span>`; return; }
+  const list = (ids, f) => ids.slice(0,6).map(f).join(", ") + (ids.length>6?` and ${ids.length-6} more`:"");
+  const html = `<div class="note" style="border-radius:6px;margin-bottom:12px"><b>Changed in Elevien since you last published:</b>
+    ${added.length?` ${added.length} new (${esc(list(added,id=>G[id].name))}).`:""}
+    ${gone.length?` ${gone.length} withdrawn (${esc(list(gone,id=>pubNames[id]||id))})${gone.some(id=>UP[id])?", some already uploaded music":""}.`:""}
+    ${moved.length?` ${moved.length} changed club.`:""}
+    New gymnasts start in "Not in a rotation yet". <b>Publish again</b> on the Clubs tab so clubs see the change.</div>`;
+  $("#diffTop").innerHTML = html; $("#diffNote").innerHTML = html;
+}
 
 /* ---------- connect to the Club Hub project as an NGL admin ---------- */
 function start(){
@@ -230,8 +287,8 @@ $("#csForm").addEventListener("submit", async e=>{
   catch(_){ $("#csErr").textContent = "Email or password isn't right."; }
 });
 function watch(){
-  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; ROT = (EV && EV.rot) || {}; ABS = (EV && EV.absent) || {}; render(); renderClubs(); renderPlayer(); }, e=>err(e,"the competition"));
-  cdb.collection("musicUploads").where("compKey","==",D.compKey).onSnapshot(s=>{ UP = {}; s.docs.forEach(d=>UP[d.data().gymnastId]=d.data()); render(); renderClubs(); renderPlayer(); }, e=>err(e,"uploads"));
+  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; ROT = (EV && EV.rot) || {}; ABS = (EV && EV.absent) || {}; if(!$("#dlInput").dataset.touched) $("#dlInput").value = (EV && EV.deadline) || D.deadline || ""; renderDiff(); render(); renderClubs(); renderPlayer(); }, e=>err(e,"the competition"));
+  cdb.collection("musicUploads").where("compKey","==",D.compKey).onSnapshot(s=>{ UP = {}; s.docs.forEach(d=>UP[d.data().gymnastId]=d.data()); renderDiff(); render(); renderClubs(); renderPlayer(); }, e=>err(e,"uploads"));
   cdb.collection("clubs").get().then(s=>{ ACCOUNTS = s.docs.map(d=>({uid:d.id, name:d.data().name||"", bg:String(d.data().bgNumber||"").trim(), email:d.data().email||""})).sort((a,b)=>a.name.localeCompare(b.name)); renderClubs(); }).catch(e=>err(e,"club accounts"));
 }
 function err(e, what){ console.error(e); toast(e.code==="permission-denied" ? `The database blocked ${what}. Add the music rules in the ngl-schools project.` : `Couldn't load ${what}.`); }
@@ -279,6 +336,7 @@ const upLabel = id => `<label class="btn small ghost" style="margin-left:6px">${
 
 /* ---------- running order ---------- */
 function render(){
+  if(!Object.keys(G).length){ $("#tally").innerHTML = ""; return; }   // no entries yet: keep the "No entries yet" panel
   const all = Object.keys(G).length, have = Object.keys(UP).filter(id=>G[id]).length;
   $("#tally").innerHTML = `<div><b>${have}/${all}</b><span>Music uploaded</span></div>` +
     D.levels.map(L=>{ const n=L.gymnasts.filter(g=>UP[g[0]]).length; return `<div style="border-left-color:${n===L.gymnasts.length?"var(--ok)":"var(--red)"}"><b>${n}/${L.gymnasts.length}</b><span>${esc(L.name)}</span></div>`; }).join("") +
@@ -406,7 +464,7 @@ async function downloadZip(s, r){
 
 /* ---------- publish + clubs ---------- */
 $("#publish").addEventListener("click", async ()=>{
-  const doc = { title:D.title, date:D.date, deadline:D.deadline, status:"open",
+  const doc = { title:D.title, date:D.date, deadline:deadline(), status:"open",
     clubs:Object.fromEntries(Object.entries(D.clubs).map(([k,c])=>[k,{name:c.name, bg:c.bg||""}])),
     levels:D.levels.map(L=>({id:L.id, name:L.name, session:L.session||"", gymnasts:L.gymnasts.map(([id,name,club])=>({id,name,club}))})),
     gymClub:Object.fromEntries(Object.values(G).map(g=>[g.id, g.club])),   // lets the database rules check each upload
@@ -449,7 +507,7 @@ $("#clubList").addEventListener("change", async e=>{
 $("#clubList").addEventListener("click", async e=>{
   const k = e.target.dataset.email; if(!k) return;
   const mine = Object.values(G).filter(g=>g.club===k), miss = mine.filter(g=>!UP[g.id]), m = accountFor(k);
-  const text = `Hi,\n\nPlease upload floor music for your gymnasts competing at ${D.title} by ${D.deadline}.\n\n` +
+  const text = `Hi,\n\nPlease upload floor music for your gymnasts competing at ${D.title} by ${deadline()}.\n\n` +
     (m.a ? `Log in to the NGL Club Hub and open the Floor music tab:\n${CLUB_HUB}\n\n` : `Register your club (free) or log in to the NGL Club Hub, then open the Floor music tab:\n${CLUB_HUB}\nUse your British Gymnastics club number ${D.clubs[k].bg||""} when you register so your gymnasts appear.\n\n`) +
     (miss.length ? `Still needed:\n${miss.map(g=>`- ${g.name} (Level ${g.level})`).join("\n")}\n\n` : `All your music is in, thank you.\n\n`) +
     `MP3 files only, up to 15MB each.\n\nThanks,\nNational Gymnastics League`;
@@ -477,7 +535,7 @@ const audio = new Audio(); audio.preload = "auto";
 function plSave(){ try{ localStorage.setItem("nglplay2:"+D.compKey, JSON.stringify({sess:PL.sess, rot:PL.rot, cur:PL.cur, played:PL.played, vol:PL.vol})); }catch(_){} }
 function plLoad(){ try{ const o = JSON.parse(localStorage.getItem("nglplay2:"+D.compKey)||"null"); if(o){ PL.sess=o.sess; PL.rot=o.rot||1; PL.cur=o.cur||null; PL.played=o.played||{}; PL.vol=o.vol??1; } }catch(_){} }
 async function plInit(){
-  if(PL.ready) return; PL.ready = true; plLoad();
+  if(PL.ready || !SESS.length) return; PL.ready = true; plLoad();
   if(!SESS.some(s=>s.key===PL.sess)) PL.sess = SESS[0].key;
   if(!(PL.rot>=1 && PL.rot<=NROT)) PL.rot = 1;
   $("#vol").value = Math.round(PL.vol*100);
