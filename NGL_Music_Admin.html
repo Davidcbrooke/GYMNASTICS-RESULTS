@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="ngl-music-data.js"></script>
 <style>
@@ -188,14 +189,14 @@ const esc = v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
 $("#title").firstChild.textContent = D.title + " floor music";
 
-let cdb, cauth, EV = null, UP = {}, ORDER = {}, ACCOUNTS = [];
+let capp, cdb, cauth, EV = null, UP = {}, ORDER = {}, ACCOUNTS = [];
 const G = {}; D.levels.forEach(L=>L.gymnasts.forEach(([id,name,club])=>G[id]={id,name,club,level:L.id}));
 const clubName = k => D.clubs[k]?.name || k;
 const orderFor = L => { const ids = L.gymnasts.map(g=>g[0]); const o = (ORDER[L.id]||[]).filter(id=>ids.includes(id)); return [...o, ...ids.filter(id=>!o.includes(id))]; };
 
 /* ---------- connect to the Club Hub project as an NGL admin ---------- */
 function start(){
-  const app = firebase.initializeApp(CLUBS_FB, "clubs");
+  const app = capp = firebase.initializeApp(CLUBS_FB, "clubs");
   cauth = app.auth(); cdb = app.firestore();
   cauth.onAuthStateChanged(async u=>{
     if(!u){ $("#clubSignin").classList.remove("hidden"); $("#mainArea").classList.add("hidden"); return; }
@@ -235,7 +236,9 @@ function render(){
       ids.map((id,i)=>{ const g=G[id], u=UP[id];
         return `<tr class="${u?"ok":""}"><td class="n">${i+1}</td>
           <td><span class="fl"></span><span class="who">${esc(g.name)}</span><br><span class="club">${esc(clubName(g.club))}</span></td>
-          <td>${u?`<audio controls preload="none" src="${esc(u.url)}"></audio>`:`<span class="club" style="color:var(--red)">Not uploaded</span>`}</td>
+          <td>${u?`<audio controls preload="none" src="${esc(u.url)}"></audio>`:`<span class="club" style="color:var(--red)">Not uploaded</span>`}
+            <label class="btn small ghost" style="margin-left:6px">${u?"Replace":"Upload"}<input type="file" accept=".mp3,audio/mpeg" data-aup="${id}" hidden></label>
+            ${u&&u.uploadedBy==="admin"?`<span class="club"> · added by NGL</span>`:""}</td>
           <td class="mv"><button class="btn small ghost" data-mv="${L.id}|${i}|-1" aria-label="Move up">&uarr;</button> <button class="btn small ghost" data-mv="${L.id}|${i}|1" aria-label="Move down">&darr;</button></td></tr>`;
       }).join("") + `</tbody></table></div></section>`;
   }).join("");
@@ -270,6 +273,38 @@ function pasteDlg(lid){
       toast(`${out.length} matched` + (left.length?`, ${left.length} not in your list put at the end`:"") + (miss.length?`, ${miss.length} lines ignored`:""));
     }}]);
 }
+
+
+/* ---------- NGL admin uploads a track for a gymnast (e.g. a club emailed it) ----------
+   Same Storage path and musicUploads record the Club Hub uses, so the club sees it as done.
+   Needs the admin rules for music (see the set-up note). */
+const ADMIN_MAX_MB = 15;
+$("#levels").addEventListener("change", async e=>{
+  const inp = e.target; if(!inp.dataset || !inp.dataset.aup) return;
+  const id = inp.dataset.aup, f = inp.files && inp.files[0]; inp.value = ""; if(!f) return;
+  const g = G[id];
+  if(!/\.mp3$/i.test(f.name) && f.type!=="audio/mpeg"){ toast("Please choose an MP3 file."); return; }
+  if(f.size > ADMIN_MAX_MB*1048576){ toast(`That file is over ${ADMIN_MAX_MB}MB. Please export a smaller MP3.`); return; }
+  if(!EV){ toast("Publish the entries to the Club Hub first (Clubs tab)."); return; }
+  if(UP[id] && !confirm(`Replace the music for ${g.name}? The club's file will be overwritten.`)) return;
+  const m = accountFor(g.club), owner = m.a ? m.a.uid : "admin";
+  const path = `music/${D.compKey}/${owner}/${id}.mp3`;
+  $("#saveState").textContent = `Uploading ${g.name}…`;
+  try{
+    const ref = capp.storage().ref(path);
+    const task = ref.put(f, {contentType:"audio/mpeg", customMetadata:{club:clubName(g.club), gymnast:g.name, by:"NGL admin"}});
+    task.on("state_changed", s=>{ $("#saveState").textContent = `Uploading ${g.name}… ${Math.round(s.bytesTransferred/s.totalBytes*100)}%`; });
+    await task;
+    const url = await ref.getDownloadURL();
+    await cdb.collection("musicUploads").doc(`${D.compKey}_${id}`).set({compKey:D.compKey, gymnastId:id, gymnastName:g.name, level:g.level,
+      clubKey:g.club, clubName:m.a ? m.a.name : clubName(g.club), clubId:owner, fileName:f.name, size:f.size, path, url,
+      uploadedAt:firebase.firestore.FieldValue.serverTimestamp(), uploadedBy:"admin", adminEmail:(cauth.currentUser&&cauth.currentUser.email)||""});
+    $("#saveState").textContent = "Saved"; toast(`Music added for ${g.name}.`);
+  }catch(er){
+    console.error(er); $("#saveState").textContent = "Not saved";
+    toast(/unauthori[sz]ed|permission/i.test(er.code||er.message||"") ? "Admin uploads are blocked by the database rules. Add the admin music rules (see the set-up note)." : "The upload failed. Check the connection and try again.");
+  }
+});
 
 /* ---------- zip download ---------- */
 const safe = s => s.replace(/[\\/:*?"<>|]/g,"").trim();
