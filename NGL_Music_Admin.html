@@ -270,7 +270,23 @@ function renderDiff(){
 }
 
 /* ---------- connect to the Club Hub project as an NGL admin ---------- */
+/* Emails clubs gave when reserving competition places (booking system, admins only).
+   Used when a club has no NGL Club Hub account yet. Matched by club name. */
+let BOOK = {};
+const clubKeyName = n => String(n||"").toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9 ]+/g," ")
+  .split(/\s+/).filter(w=>w && !["gymnastics","gymnastic","gym","club","the","academy","of","and","gc","ltd"].includes(w)).join(" ");
+function loadBookingEmails(){
+  firebase.firestore().collection("ngl_booking_contacts").get().then(snap=>{
+    const m = {};
+    snap.forEach(d=>{ const c = d.data(), k = clubKeyName(c.club), e = String(c.email||"").trim();
+      if(!k || !e.includes("@")) return;
+      if(!m[k] || String(c.bookedAt||"") > String(m[k].bookedAt||"")) m[k] = {email:e, club:c.club, bookedAt:c.bookedAt||""}; });
+    BOOK = m; try{ renderClubs(); }catch(_){}
+  }).catch(e=>console.warn("Reservation emails not readable", e));
+}
+const bookingFor = k => BOOK[clubKeyName(D.clubs[k].name)] || null;
 function start(){
+  loadBookingEmails();
   const app = capp = firebase.apps.find(a=>a.name==="ngl-schools") || firebase.initializeApp(CLUBS_FB, "ngl-schools");   // same name as the Admin Hub, so its Club Hub sign-in carries over
   cauth = app.auth(); cdb = app.firestore();
   cdb.enablePersistence({synchronizeTabs:true}).catch(()=>{});   // keeps working, and queues changes, if the hall Wi-Fi drops
@@ -515,10 +531,10 @@ function renderClubs(){
     const mine = Object.values(G).filter(g=>g.club===k), done = mine.filter(g=>UP[g.id]).length, m = accountFor(k);
     return `<div class="crow"><div><span class="c">${esc(c.name)}</span> <span class="m">BG ${esc(c.bg||"?")}</span><br>
         <span class="m ${done<mine.length?"gap":""}">${done}/${mine.length} uploaded</span> ·
-        ${m.a ? `<span class="m" style="color:var(--ok)">NGL Club Hub: ${esc(m.a.name)}${m.how==="linked"?" (linked by hand)":""}</span>` : `<span class="m gap">No matching NGL Club Hub account</span>`}</div>
+        ${m.a ? `<span class="m" style="color:var(--ok)">NGL Club Hub: ${esc(m.a.name)}${m.how==="linked"?" (linked by hand)":""}</span>` : `<span class="m gap">No matching NGL Club Hub account</span>${bookingFor(k) ? `<br><span class="m">Reservation email: ${esc(bookingFor(k).email)}</span>` : ""}`}</div>
       <div><select data-link="${k}" aria-label="Link ${esc(c.name)} to an NGL Club Hub account" style="max-width:220px;padding:5px;border:1px solid var(--line);border-radius:4px">
         <option value="">${m.a?"Change link…":"Link to account…"}</option>${ACCOUNTS.map(a=>`<option value="${a.uid}">${esc(a.name)}${a.bg?" ("+esc(a.bg)+")":""}</option>`).join("")}</select></div>
-      <div style="display:flex;gap:6px"><button class="btn small ${done<mine.length?"primary":"ghost"}" data-email="${k}" data-how="send" title="${m.a&&m.a.email?"Opens an email to "+esc(m.a.email):"No NGL Club Hub account yet, so add their address yourself"}">Send email</button><button class="btn small ghost" data-email="${k}" data-how="copy">Copy</button></div></div>`;
+      <div style="display:flex;gap:6px"><button class="btn small ${done<mine.length?"primary":"ghost"}" data-email="${k}" data-how="send" title="${m.a&&m.a.email?"Opens an email to "+esc(m.a.email):bookingFor(k)?"Opens an email to their reservation address, "+esc(bookingFor(k).email):"No email address on file, so add it yourself"}">Send email</button><button class="btn small ghost" data-email="${k}" data-how="copy">Copy</button></div></div>`;
   }).join("");
 }
 $("#clubList").addEventListener("change", async e=>{
@@ -531,13 +547,13 @@ $("#clubList").addEventListener("click", async e=>{
   const k = e.target.dataset.email; if(!k) return;
   const mine = Object.values(G).filter(g=>g.club===k), miss = mine.filter(g=>!UP[g.id]), m = accountFor(k);
   const text = `Hi,\n\nPlease upload floor music for your gymnasts competing at ${D.title} by ${deadline()}.\n\n` +
-    (m.a ? `Log in to the NGL Club Hub and open the Floor music tab:\n${CLUB_HUB}\n${m.a.email ? `Your login is this email address: ${m.a.email}\n` : ""}\n` : `Register your club (free) or log in to the NGL Club Hub, then open the Floor music tab:\n${CLUB_HUB}\nUse your British Gymnastics club number ${D.clubs[k].bg||""} when you register so your gymnasts appear.\n\n`) +
+    (m.a ? `Log in to the NGL Club Hub and open the Floor music tab:\n${CLUB_HUB}\n${m.a.email ? `Your login is this email address: ${m.a.email}\n` : ""}\n` : `Register your club (free) or log in to the NGL Club Hub, then open the Floor music tab:\n${CLUB_HUB}\n${bookingFor(k) ? `Please register with this email address: ${bookingFor(k).email} (the one you used to reserve your places).\n` : ""}Use your British Gymnastics club number ${D.clubs[k].bg||""} when you register so your gymnasts appear.\n\n`) +
     (miss.length ? `Still needed:\n${miss.map(g=>`- ${g.name} (Level ${g.level})`).join("\n")}\n\n` : `All your music is in, thank you.\n\n`) +
     `MP3 files only, up to 15MB each.\n\nThanks,\nNational Gymnastics League`;
   if(e.target.dataset.how==="send"){
-    const to = (m.a && m.a.email) || "";
+    const to = (m.a && m.a.email) || (bookingFor(k) || {}).email || "";
     location.href = `mailto:${encodeURIComponent(to).replace(/%40/g,"@")}?subject=${encodeURIComponent("NGL Music Upload")}&body=${encodeURIComponent(text)}`;
-    if(!to) toast("This club has no NGL Club Hub account yet, so add their email address yourself.");
+    if(!to) toast("No email address on file for this club, so add it yourself.");
     return;
   }
   try{ await navigator.clipboard.writeText(text); toast("Email copied. Paste it into a new message."); }
