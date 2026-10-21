@@ -135,7 +135,7 @@ body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.p
   <button class="btn small" id="updBtn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.6)">Update from Elevien</button></div></header>
 <main>
   <section class="panel hidden" id="clubSignin" style="max-width:420px">
-    <h3>Connect to the Club Hub</h3>
+    <h3>Connect to the NGL Club Hub</h3>
     <p>Music is stored with club accounts, so sign in once with your NGL Club Hub admin login. This device remembers it.</p>
     <form id="csForm"><input id="csEmail" type="email" placeholder="Admin email" required style="width:100%;padding:9px;border:1px solid var(--line);border-radius:4px;margin-bottom:8px">
       <input id="csPass" type="password" placeholder="Password" required style="width:100%;padding:9px;border:1px solid var(--line);border-radius:4px;margin-bottom:8px">
@@ -153,14 +153,14 @@ body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.p
   <section id="tab-order"><div id="levels"></div></section>
   <section id="tab-clubs" class="hidden">
     <div class="panel">
-      <h3>Club Hub</h3>
-      <p id="pubState">Clubs upload in the Club Hub's Floor music tab. Publish the entries to switch it on (and again after any entry changes).</p>
+      <h3>NGL Club Hub</h3>
+      <p id="pubState">Clubs upload in the NGL Club Hub's Floor music tab. Publish the entries to switch it on (and again after any entry changes).</p>
       <label style="display:block;font-size:14px;font-weight:600;margin:0 0 10px">Upload deadline shown to clubs
         <input id="dlInput" style="display:block;width:min(320px,100%);padding:7px 9px;border:1px solid var(--line);border-radius:4px;margin-top:4px;font-weight:400"></label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="publish">Publish entries to Club Hub</button><button class="btn ghost" id="closeBtn">Close uploads</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="publish">Publish entries to NGL Club Hub</button><button class="btn ghost" id="closeBtn">Close uploads</button></div>
       <div id="diffNote" style="margin-top:10px"></div>
     </div>
-    <div class="panel"><h3>Clubs</h3><p>A club sees its gymnasts automatically when its Club Hub BG number matches Elevien's. Link any that don't.</p><div id="clubList"></div></div>
+    <div class="panel"><h3>Clubs</h3><p>A club sees its gymnasts automatically when its NGL Club Hub BG number matches Elevien's. Link any that don't.</p><div id="clubList"></div></div>
   </section>
   <section id="tab-play" class="hidden">
     <div class="split">
@@ -246,7 +246,7 @@ const deadline = () => ($("#dlInput") && $("#dlInput").value.trim()) || (EV && E
     const at = window.NGL_MUSIC_COMPS && window.NGL_MUSIC_COMPS.updatedAt;
     openDlg("Update from Elevien", `<p style="margin:0 0 10px">Competitions and entries were last pulled from Elevien <b>${at?esc(new Date(at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})):"not yet"}</b>.</p>
       <p style="margin:0 0 10px">To pull the latest, ask Claude: <b>"Update the NGL competitions from Elevien."</b> New competitions are added, and new or withdrawn gymnasts are updated. Rotations, absences and uploaded music are kept.</p>
-      <p style="margin:0;color:var(--muted);font-size:14px">Then click <b>Load latest</b> here. Anything that has changed since you last published is listed at the top of the page, ready to publish to the Club Hub.</p>`,
+      <p style="margin:0;color:var(--muted);font-size:14px">Then click <b>Load latest</b> here. Anything that has changed since you last published is listed at the top of the page, ready to publish to the NGL Club Hub.</p>`,
       [{l:"Close"},{l:"Load latest", cls:"primary", fn:()=>{ location.reload(); }}]);
   };
   if(!D.levels.some(L=>L.gymnasts.length)){
@@ -259,7 +259,7 @@ function renderDiff(){
   const pubNames = {}; (EV.levels||[]).forEach(L=>(L.gymnasts||[]).forEach(g=>pubNames[g.id]=g.name));
   const added = Object.keys(G).filter(id=>!(id in EV.gymClub)), gone = Object.keys(EV.gymClub).filter(id=>!G[id]);
   const moved = Object.keys(G).filter(id=>(id in EV.gymClub) && EV.gymClub[id]!==G[id].club);
-  if(!added.length && !gone.length && !moved.length){ $("#diffTop").innerHTML = ""; $("#diffNote").innerHTML = `<span class="st saved">Club Hub is up to date with Elevien</span>`; return; }
+  if(!added.length && !gone.length && !moved.length){ $("#diffTop").innerHTML = ""; $("#diffNote").innerHTML = `<span class="st saved">NGL Club Hub is up to date with Elevien</span>`; return; }
   const list = (ids, f) => ids.slice(0,6).map(f).join(", ") + (ids.length>6?` and ${ids.length-6} more`:"");
   const html = `<div class="note" style="border-radius:6px;margin-bottom:12px"><b>Changed in Elevien since you last published:</b>
     ${added.length?` ${added.length} new (${esc(list(added,id=>G[id].name))}).`:""}
@@ -336,7 +336,7 @@ function rotOf(s){
 }
 const rotName = r => r==="u" ? "Not in a rotation yet" : "Rotation "+r;
 async function saveRot(s, o){
-  if(!EV){ toast("Publish the entries to the Club Hub first (Clubs tab)."); return; }
+  if(!EV){ toast("Publish the entries to the NGL Club Hub first (Clubs tab)."); return; }
   const clean = {}; for(let r=1;r<=NROT;r++) clean[r] = o[r];
   ROT[s.key] = clean; render(); renderPlayer(); $("#saveState").textContent = "Saving…";
   try{ await cdb.collection("musicEvents").doc(D.compKey).set({rot:{[s.key]:clean}}, {merge:true}); $("#saveState").textContent = "Saved"; }
@@ -349,7 +349,7 @@ function moveTo(id, r, beforeId, after){
   saveRot(s, o);
 }
 async function setAbsent(id, on){
-  if(!EV){ toast("Publish the entries to the Club Hub first (Clubs tab)."); return; }
+  if(!EV){ toast("Publish the entries to the NGL Club Hub first (Clubs tab)."); return; }
   ABS[id] = on; render(); renderPlayer();
   try{ await cdb.collection("musicEvents").doc(D.compKey).set({absent:{[id]:on}}, {merge:true}); }catch(e){ err(e,"the absence"); }
 }
@@ -363,7 +363,7 @@ function render(){
   const all = Object.keys(G).length, have = Object.keys(UP).filter(id=>G[id]).length;
   $("#tally").innerHTML = `<div><b>${have}/${all}</b><span>Music uploaded</span></div>` +
     D.levels.map(L=>{ const n=L.gymnasts.filter(g=>UP[g[0]]).length; return `<div style="border-left-color:${n===L.gymnasts.length?"var(--ok)":"var(--red)"}"><b>${n}/${L.gymnasts.length}</b><span>${esc(L.name)}</span></div>`; }).join("") +
-    `<div style="border-left-color:${EV&&EV.status==="open"?"var(--ok)":"var(--red)"}"><b>${EV ? (EV.status==="open"?"Open":"Closed") : "Not published"}</b><span>Club Hub uploads</span></div>`;
+    `<div style="border-left-color:${EV&&EV.status==="open"?"var(--ok)":"var(--red)"}"><b>${EV ? (EV.status==="open"?"Open":"Closed") : "Not published"}</b><span>NGL Club Hub uploads</span></div>`;
   $("#levels").innerHTML = SESS.map(s=>{
     const o = rotOf(s), ids = sessIds(s), n = ids.filter(id=>UP[id]).length;
     const blocks = (o.u.length ? [["u",o.u]] : []).concat(Array.from({length:NROT},(_,i)=>[i+1,o[i+1]]));
@@ -435,7 +435,7 @@ function pasteDlg(s, r){
 }
 
 /* ---------- NGL admin uploads a track for a gymnast (e.g. a club emailed it) ----------
-   Same Storage path and musicUploads record the Club Hub uses, so the club sees it as done. */
+   Same Storage path and musicUploads record the NGL Club Hub uses, so the club sees it as done. */
 const ADMIN_MAX_MB = 15;
 document.addEventListener("change", async e=>{
   const inp = e.target; if(!inp.dataset || !inp.dataset.aup) return;
@@ -443,7 +443,7 @@ document.addEventListener("change", async e=>{
   const g = G[id];
   if(!/\.mp3$/i.test(f.name) && f.type!=="audio/mpeg"){ toast("Please choose an MP3 file."); return; }
   if(f.size > ADMIN_MAX_MB*1048576){ toast(`That file is over ${ADMIN_MAX_MB}MB. Please export a smaller MP3.`); return; }
-  if(!EV){ toast("Publish the entries to the Club Hub first (Clubs tab)."); return; }
+  if(!EV){ toast("Publish the entries to the NGL Club Hub first (Clubs tab)."); return; }
   if(UP[id] && !confirm(`Replace the music for ${g.name}? The current file will be overwritten.`)) return;
   if(PL.playing && PL.playing.id===id){ toast("That music is playing. Fade it out first."); return; }
   const m = accountFor(g.club), owner = m.a ? m.a.uid : "admin";
@@ -492,7 +492,7 @@ $("#publish").addEventListener("click", async ()=>{
     levels:D.levels.map(L=>({id:L.id, name:L.name, session:L.session||"", gymnasts:L.gymnasts.map(([id,name,club])=>({id,name,club}))})),
     gymClub:Object.fromEntries(Object.values(G).map(g=>[g.id, g.club])),   // lets the database rules check each upload
     publishedAt:new Date().toISOString() };
-  try{ await cdb.collection("musicEvents").doc(D.compKey).set(doc, {merge:true}); toast("Published. Clubs will see a Floor music tab in the Club Hub."); }
+  try{ await cdb.collection("musicEvents").doc(D.compKey).set(doc, {merge:true}); toast("Published. Clubs will see a Floor music tab in the NGL Club Hub."); }
   catch(e){ err(e,"publishing"); }
 });
 $("#closeBtn").addEventListener("click", async ()=>{
@@ -510,13 +510,13 @@ function accountFor(k){
 }
 function renderClubs(){
   $("#closeBtn").textContent = EV && EV.status!=="open" ? "Reopen uploads" : "Close uploads";
-  $("#pubState").textContent = EV ? `Published${EV.publishedAt?" "+new Date(EV.publishedAt).toLocaleString("en-GB"):""}. Uploads are ${EV.status==="open"?"open":"closed"}. Publish again after any entry changes.` : "Not published yet. Clubs upload in the Club Hub's Floor music tab once you publish.";
+  $("#pubState").textContent = EV ? `Published${EV.publishedAt?" "+new Date(EV.publishedAt).toLocaleString("en-GB"):""}. Uploads are ${EV.status==="open"?"open":"closed"}. Publish again after any entry changes.` : "Not published yet. Clubs upload in the NGL Club Hub's Floor music tab once you publish.";
   $("#clubList").innerHTML = Object.entries(D.clubs).sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([k,c])=>{
     const mine = Object.values(G).filter(g=>g.club===k), done = mine.filter(g=>UP[g.id]).length, m = accountFor(k);
     return `<div class="crow"><div><span class="c">${esc(c.name)}</span> <span class="m">BG ${esc(c.bg||"?")}</span><br>
         <span class="m ${done<mine.length?"gap":""}">${done}/${mine.length} uploaded</span> ·
-        ${m.a ? `<span class="m" style="color:var(--ok)">Club Hub: ${esc(m.a.name)}${m.how==="linked"?" (linked by hand)":""}</span>` : `<span class="m gap">No matching Club Hub account</span>`}</div>
-      <div><select data-link="${k}" aria-label="Link ${esc(c.name)} to a Club Hub account" style="max-width:220px;padding:5px;border:1px solid var(--line);border-radius:4px">
+        ${m.a ? `<span class="m" style="color:var(--ok)">NGL Club Hub: ${esc(m.a.name)}${m.how==="linked"?" (linked by hand)":""}</span>` : `<span class="m gap">No matching NGL Club Hub account</span>`}</div>
+      <div><select data-link="${k}" aria-label="Link ${esc(c.name)} to an NGL Club Hub account" style="max-width:220px;padding:5px;border:1px solid var(--line);border-radius:4px">
         <option value="">${m.a?"Change link…":"Link to account…"}</option>${ACCOUNTS.map(a=>`<option value="${a.uid}">${esc(a.name)}${a.bg?" ("+esc(a.bg)+")":""}</option>`).join("")}</select></div>
       <div><button class="btn small ${done<mine.length?"primary":"ghost"}" data-email="${k}">Copy email</button></div></div>`;
   }).join("");

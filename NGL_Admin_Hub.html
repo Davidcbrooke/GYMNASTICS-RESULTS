@@ -247,7 +247,7 @@ const CONFIG = {
   // Fill in each url with the existing admin page (same GitHub Pages site).
   // Blank url = shown as "Not linked yet".
   sections: [
-    {id:"clubs",        name:"Club registrations", desc:"Every club registered on the Club Hub: newest first, contact details, where they came from and licences", colour:"#3BAA4A", url:"https://club.nationalgymnasticsleague.co.uk/#admin"},
+    {id:"clubs",        name:"Club registrations", desc:"Every club registered on the NGL Club Hub: newest first, contact details, where they came from and licences", colour:"#3BAA4A", url:"https://club.nationalgymnasticsleague.co.uk/#admin"},
     {id:"competitions", name:"Competitions",   desc:"Competition dates, club bookings and the season calendar", colour:"#14254a", url:"ngl-booking-system.html?admin=1"},
     {id:"staffing",     name:"Staffing",       desc:"Who's working each competition, judge requests and staffing sheets", colour:"#c8202f", url:"NGL_Staffing_Admin.html"},
     {id:"judging",      name:"Judging",        desc:"Judging Pathway registrations, tiers and approvals", colour:"#2c6e9b", url:"ngl-judging-pathway.html?admin=1"},
@@ -328,7 +328,7 @@ function chInit(){
   try{ CH.app = firebase.apps.find(a => a.name === "ngl-schools") || firebase.initializeApp(SCHOOLS_FIREBASE, "ngl-schools"); }catch(e){ console.error(e); return; }
   CH.app.auth().onAuthStateChanged(u => { const first = !CH.ready; CH.user = u; CH.ready = true; CH.state = u ? "live" : "signin"; if(u && ME && ME.owner) TEAM.forEach(syncMusicStaff); if(!first || u) refreshNotifications(); else renderNotifications(); });
 }
-const SRC_LABEL = {"email-campaign":"from an NGL email", clubhub:"on the Club Hub", recreational:"on the Recreational Hub", schools:"on the Schools Hub"};
+const SRC_LABEL = {"email-campaign":"from an NGL email", clubhub:"on the NGL Club Hub", recreational:"on the Recreational Hub", schools:"on the Schools Hub"};
 async function scanClubHub(add){
   if(!CH.user) return;
   try{
@@ -472,10 +472,10 @@ function renderNotifications(){
 
   const list = $("#notifList");
   const chBox = !LIVE || !can("clubs") ? "" :
-    CH.state === "signin" ? `<form id="chLogin" class="ch-login"><p><b>See club registrations here too.</b> Club Hub accounts are kept in a separate database, so sign in once with your NGL admin login for the Club Hub. It’s remembered after that.</p>
-      <input type="email" id="chEmail" placeholder="Club Hub admin email" autocomplete="username" required><input type="password" id="chPass" placeholder="Password" autocomplete="current-password" required>
+    CH.state === "signin" ? `<form id="chLogin" class="ch-login"><p><b>See club registrations here too.</b> NGL Club Hub accounts are kept in a separate database, so sign in once with your NGL admin login for the NGL Club Hub. It’s remembered after that.</p>
+      <input type="email" id="chEmail" placeholder="NGL Club Hub admin email" autocomplete="username" required><input type="password" id="chPass" placeholder="Password" autocomplete="current-password" required>
       <button class="btn small" type="submit">Connect</button><span id="chErr" class="n-err"></span></form>`
-    : CH.state === "denied" ? `<p class="n-empty n-err">This login can’t read Club Hub registrations. Sign in with an account that’s an NGL admin on the Club Hub. <button type="button" class="link" id="chOut">Use a different login</button></p>` : "";
+    : CH.state === "denied" ? `<p class="n-empty n-err">This login can’t read NGL Club Hub registrations. Sign in with an account that’s an NGL admin on the NGL Club Hub. <button type="button" class="link" id="chOut">Use a different login</button></p>` : "";
   const setList = h => { list.innerHTML = chBox + h; };
   if(N.err){ setList(`<p class="n-empty n-err">${esc(N.err)}</p>`); return; }
   if(!N.loaded){ setList(`<p class="n-empty">Checking for new sign-ups…</p>`); return; }
