@@ -1089,7 +1089,7 @@
           actions: [
             { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve your club's place for the 2027 Performance League season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
             { icon:"🏆", title:"League Table & Qualification", sub:"Performance results and rankings." },
-            { icon:"📖", title:"Rules", sub:"Girls: Classic Challenge Preparation (Levels 1–6) and Grades Preparation. Boys: Level 1. Opens here.", inline:"performance-2027" }
+            { icon:"📖", title:"Rules", sub:"Girls: the British Gymnastics Classic Challenge and Grades documents. Boys: Level 1. Opens here.", inline:"performance-2027" }
           ]
         }
       ]
@@ -1102,6 +1102,16 @@
   // ---- Rules documents shown inline. Everything lives in the ngl-rules-2027
   // folder next to this page on GitHub Pages (PDFs + one JPG per page). ----
   var RULES_DOCS = {
+    'performance-wag-bg-2027': {
+      title: 'Girls Performance League Rules 2027',
+      intro: 'NGL Performance League competitions for girls run to the British Gymnastics rules, unchanged. Open the document for the competition you are entering.',
+      links: [
+        { title:'BG Classic Championships Rules 2026', url:'https://www.british-gymnastics.org/intergrationservices/website/resource/137111853709546', sub:'Classic Challenge levels: rules, requirements and values.' },
+        { title:'BG NDP Grades 2024–2027', url:'https://www.southwag.com/_files/ugd/05ec96_496ece86b1144e68bd9cc89df5be72bd.pdf', sub:'Preparation, Development and Performance grades: routines and requirements.' },
+        { title:'BG Excel Grades 2026', url:'https://www.southwag.com/_files/ugd/05ec96_2f43ebedbb0248a9b6139c1b253e6555.pdf', sub:'Pre-Excel and Excel 1–3: routines and requirements.' }
+      ],
+      note: 'These are the British Gymnastics documents, opened from their published copies. NGL does not alter them.'
+    },
     'performance-wag-2027': {
       title: 'Girls Performance League Rules 2027',
       intro: 'Competition rules and common deductions for NGL Performance League Levels 1 to 6 — Women\'s Artistic.',
@@ -1190,7 +1200,7 @@
   };
 
   var RULES_GROUPS = {
-    'performance-2027':  { heading: 'Performance League Rules 2027', variants: [ { label:'Girls · Classic Challenge Preparation', doc:'performance-wag-2027' }, { label:'Girls · Grades Preparation', doc:'grades-prep-2027' }, { label:'Boys', doc:'performance-mag-2027' } ] },
+    'performance-2027':  { heading: 'Performance League Rules 2027', variants: [ { label:'Girls', doc:'performance-wag-bg-2027' }, { label:'Boys', doc:'performance-mag-2027' } ] },
     'general-2027':      { heading: 'General League Rules 2027',     variants: [ { label:'Girls', doc:'general-wag-2027' }, { label:'Boys', doc:'general-mag-2027' } ] },
     'recreational-2027': { heading: 'Recreational Club Competition Rules 2027', variants: [ { label:'Rules', doc:'recreational-2027' } ] }
   };
