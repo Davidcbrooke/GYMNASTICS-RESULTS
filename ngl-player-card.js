@@ -222,7 +222,7 @@
 
     // Footer
     ctx.textAlign = "center"; ctx.font = "700 24px 'Barlow Condensed'"; ctx.globalAlpha = .75;
-    ctx.fillText("NGL PLAYER · " + new Date().getFullYear(), W/2, 790);
+    ctx.fillText("NGL PLAYER · " + (card.season || new Date().getFullYear()), W/2, 790);
     ctx.globalAlpha = 1;
     ctx.restore();
   }
@@ -319,5 +319,5 @@
 
   injectAssets();
   if(!hook()) document.addEventListener("DOMContentLoaded", hook);
-  window.NGLPlayerCard = {open:openCard, build:buildCard};
+  window.NGLPlayerCard = {open:openCard, build:buildCard, draw:draw, ready:function(){ return Promise.all([fontsReady(), loadLogo()]); }, attrs:ATTRS};
 })();
