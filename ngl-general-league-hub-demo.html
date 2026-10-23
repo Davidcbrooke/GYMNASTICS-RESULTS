@@ -109,7 +109,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="demo-bar">DEMO · made-up gymnasts and results · nothing is saved</div>
+  <div class="demo-bar" id="demoBar">Loading…</div>
   <header class="topbar">
     <div class="badge">GL</div>
     <div class="brand">
@@ -139,117 +139,207 @@
   </nav>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-/* ───────────────── Demo data (all made up) ───────────────── */
+/* ═════════════════ Modes ═════════════════
+   Demo (default): made-up gymnasts, demo sign-in.
+   Admin (?admin=1, opened from the NGL Admin Hub): search real gymnasts from the
+   league results and view their hub read-only, exactly as their family would. */
+var ADMIN = /[?&]admin=1/.test(location.search);
 var MAG = ["Floor","Pommel","Rings","Vault","Parallel Bars","High Bar"];
 var WAG = ["Vault","Uneven Bars","Balance Beam","Floor"];
-var COMPS = [
-  {id:"r1", name:"General League · Round 1", date:"2027-02-07", venue:"Hertfordshire"},
-  {id:"r2", name:"General League · Round 2", date:"2027-03-21", venue:"East Midlands"},
-  {id:"r3", name:"General League · Round 3", date:"2027-05-09", venue:"Hertfordshire"}
-];
-var UPCOMING = {name:"General League · Round 4", date:"2027-06-13", venue:"Hertfordshire", arrival:"08:15", warmup:"08:45", squad:"Squad 3", start:"Floor"};
-var DEMO = {
-  "1000001": {name:"Oliver Hart", gender:"Boys", discipline:"MAG", level:"2", club:"Demo Gymnastics Club", linked:true,
-    results:{r1:[12.1,9.8,9.4,11.6,10.2,9.9], r2:[12.4,10.3,9.7,11.9,10.6,10.1], r3:[12.8,10.1,10.2,12.2,10.9,10.6]}, videos:{r3:true}},
-  "1000002": {name:"Maisie Hart", gender:"Girls", discipline:"WAG", level:"1", club:"Demo Gymnastics Club", linked:false,
-    results:{r1:[11.2,10.1,10.4,11.8], r2:[11.5,10.4,10.9,12.1], r3:[11.4,10.9,11.3,12.4]}, videos:{}}
-};
-var NEWS = [
-  {id:"n1", date:"2027-06-02", title:"Round 4 running order is out", body:"Squads, start apparatus and arrival times for Round 4 are now on the Comps tab. Warm-up starts at 08:45 and parking is on site."},
-  {id:"n2", date:"2027-05-10", title:"Round 3 results are in", body:"Scores from Round 3 are now on the Stats and Comps tabs, and the Player Card has been updated."},
-  {id:"n3", date:"2027-01-12", title:"Welcome to the General League Hub", body:"This is your gymnast's own page for the 2027 season: results, progress, competitions and their NGL Player Card."}
-];
 
-// Peers so league position and player card ratings have something to compare against
-function seeded(n){ var x = Math.sin(n) * 10000; return x - Math.floor(x); }
-function buildPeers(prefix, apps, level, gender, base, count){
-  var out = [];
-  for(var i = 0; i < count; i++){
-    var r = {};
-    COMPS.forEach(function(c, ci){
-      r[c.id] = apps.map(function(a, ai){ return Math.round((base + seeded(i*31 + ai*7 + ci*3 + level*11) * 3.2 - 0.6 + ci*0.15) * 10) / 10; });
-    });
-    out.push({id:prefix + i, gender:gender, level:level, club:"Club " + (i % 6 + 1), results:r});
-  }
-  return out;
-}
-var PEERS = buildPeers("pb", MAG, "2", "Boys", 9.2, 15).concat(buildPeers("pg", WAG, "1", "Girls", 9.6, 22));
+/* ═════════════════ Data model ═════════════════
+   GYM[id] = {name, gender, discipline, level, club, results:{compId:{apparatus:score}}, videos:{compId:true}}
+   COMPS   = [{id, name, date, venue}] oldest first */
+var GYM = {}, COMPS = [], UPCOMING = null, NEWS = [], competitions = [];
+var DATA_LABEL = "";
 
-// Shape the data like the league pages so ngl-player-card.js can use it unchanged
-var competitions = COMPS.map(function(c){
-  var apps = MAG.concat(WAG.filter(function(a){ return MAG.indexOf(a) < 0; }));
-  return {name:c.name, date:c.date, displayDate:c.date, sheets: apps.map(function(app){
-    var entries = [];
-    function add(id, g){
-      var list = g.gender === "Boys" ? MAG : WAG, i = list.indexOf(app);
-      if(i < 0 || !g.results[c.id]) return;
-      entries.push({memberId:id, gender:g.gender, level:g.level, club:g.club, score:g.results[c.id][i]});
+/* ── Demo data (all made up) ── */
+function loadDemo(){
+  DATA_LABEL = "DEMO · made-up gymnasts and results · nothing is saved";
+  COMPS = [
+    {id:"r1", name:"General League · Round 1", date:"2027-02-07", venue:"Hertfordshire"},
+    {id:"r2", name:"General League · Round 2", date:"2027-03-21", venue:"East Midlands"},
+    {id:"r3", name:"General League · Round 3", date:"2027-05-09", venue:"Hertfordshire"}
+  ];
+  UPCOMING = {name:"General League · Round 4", date:"2027-06-13", venue:"Hertfordshire", arrival:"08:15", warmup:"08:45", squad:"Squad 3", start:"Floor"};
+  function res(list, rows){ var out = {}; COMPS.forEach(function(c, ci){ var m = {}; list.forEach(function(a, ai){ m[a] = rows[ci][ai]; }); out[c.id] = m; }); return out; }
+  GYM["1000001"] = {name:"Oliver Hart", gender:"Boys", discipline:"MAG", level:"2", club:"Demo Gymnastics Club", linked:true,
+    results:res(MAG, [[12.1,9.8,9.4,11.6,10.2,9.9],[12.4,10.3,9.7,11.9,10.6,10.1],[12.8,10.1,10.2,12.2,10.9,10.6]]), videos:{r3:true}};
+  GYM["1000002"] = {name:"Maisie Hart", gender:"Girls", discipline:"WAG", level:"1", club:"Demo Gymnastics Club", linked:false,
+    results:res(WAG, [[11.2,10.1,10.4,11.8],[11.5,10.4,10.9,12.1],[11.4,10.9,11.3,12.4]]), videos:{}};
+  function seeded(n){ var x = Math.sin(n) * 10000; return x - Math.floor(x); }
+  function peers(prefix, list, level, gender, base, count){
+    for(var i = 0; i < count; i++){
+      var rows = COMPS.map(function(c, ci){ return list.map(function(a, ai){ return Math.round((base + seeded(i*31 + ai*7 + ci*3 + Number(level)*11) * 3.2 - 0.6 + ci*0.15) * 10) / 10; }); });
+      GYM[prefix + i] = {name:"", gender:gender, discipline:gender === "Boys" ? "MAG" : "WAG", level:level, club:"Club " + (i % 6 + 1), peer:true, results:res(list, rows), videos:{}};
     }
-    Object.keys(DEMO).forEach(function(id){ add(id, DEMO[id]); });
-    PEERS.forEach(function(p){ add(p.id, p); });
-    return {apparatus:app, entries:entries};
-  })};
-});
-function getName(id){ return DEMO[id] ? DEMO[id].name : ""; }
+  }
+  peers("pb", MAG, "2", "Boys", 9.2, 15); peers("pg", WAG, "1", "Girls", 9.6, 22);
+  NEWS = [
+    {id:"n1", date:"2027-06-02", title:"Round 4 running order is out", body:"Squads, start apparatus and arrival times for Round 4 are now on the Comps tab. Warm-up starts at 08:45 and parking is on site."},
+    {id:"n2", date:"2027-05-10", title:"Round 3 results are in", body:"Scores from Round 3 are now on the Stats and Comps tabs, and the Player Card has been updated."},
+    {id:"n3", date:"2027-01-12", title:"Welcome to the General League Hub", body:"This is your gymnast's own page for the 2027 season: results, progress, competitions and their NGL Player Card."}
+  ];
+  buildCompetitions();
+  return Promise.resolve();
+}
 
-/* ───────────────── State ───────────────── */
-var S = {email:"", bg:"", signedIn:false, gymnasts:[], current:null, readNews:{}, emails:true, photo:{}};
+/* ── Real league data (admin preview) ── same sources the league table uses */
+var GH = {user:"Davidcbrooke", repo:"GYMNASTICS-RESULTS", branch:"main"};
+var ADMIN_DIRS = ["elevien-data-2027", "elevien-data"];   // 2027 season first; falls back to 2026 until 2027 results exist
+var API = "https://api.github.com/repos/" + GH.user + "/" + GH.repo + "/contents/";
+var RAW = "https://raw.githubusercontent.com/" + GH.user + "/" + GH.repo + "/" + GH.branch + "/";
+function cleanClub(c){ return String(c || "").split(",")[0].replace(/\s*\(\d+\)\s*$/, "").trim(); }
+function loadAdmin(){
+  var names = {}, corrections = {}, reassign = {};
+  function json(path){ return fetch(RAW + path).then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }); }
+  var side = Promise.all([
+    fetch(API + "gymnast-names.xlsx?ref=" + GH.branch).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){
+      var buf = Uint8Array.from(atob(d.content.replace(/\n/g, "")), function(c){ return c.charCodeAt(0); });
+      var wb = XLSX.read(buf, {type:"array"});
+      XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""}).forEach(function(r){
+        var id = String(r["Mid"] || r["BG Number"] || r["Member ID"] || "").trim();
+        var nm = (String(r["FirstName"] || r["First Name"] || "").trim() + " " + String(r["LastName"] || r["Last Name"] || "").trim()).trim();
+        if(id && nm) names[id] = nm;
+      });
+    }).catch(function(){}),
+    json("corrections.json").then(function(d){ corrections = d || {}; }),
+    json("reassignments.json").then(function(d){ reassign = d || {}; })
+  ]);
+  function tryDir(i){
+    if(i >= ADMIN_DIRS.length) return Promise.reject(new Error("No league results found yet"));
+    var dir = ADMIN_DIRS[i];
+    return fetch(API + dir + "?ref=" + GH.branch).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(files){
+      var jf = files.filter(function(f){ return f.type === "file" && /\.json$/i.test(f.name) && !/unavailable/i.test(f.name); });
+      if(!jf.length) throw 0;
+      return Promise.all(jf.map(function(f){ return fetch(RAW + dir + "/" + f.name).then(function(r){ return r.json(); }).catch(function(){ return null; }); }))
+        .then(function(list){ return {dir:dir, comps:list.filter(Boolean)}; });
+    }).catch(function(){ return tryDir(i + 1); });
+  }
+  return Promise.all([tryDir(0), side]).then(function(out){
+    var data = out[0];
+    DATA_LABEL = "ADMIN PREVIEW · real results from " + (data.dir === "elevien-data" ? "the 2026 season" : "the 2027 season") + " · read-only";
+    data.comps.sort(function(a, b){ return String(a.date).localeCompare(String(b.date)); });
+    data.comps.forEach(function(raw, ci){
+      var cid = "c" + ci;
+      COMPS.push({id:cid, name:raw.name || ("Competition " + (ci + 1)), date:raw.date || "", venue:raw.region || ""});
+      (raw.sheets || []).forEach(function(sh){
+        (sh.entries || []).forEach(function(e){
+          var id = String(e.memberId || "").trim(); if(!id) return;
+          if(reassign[id]) id = reassign[id];
+          var s = parseFloat(e.score); if(isNaN(s)) return;
+          var c = corrections[id] || {};
+          var gender = c.gender || e.gender || "", level = String(c.level || e.level || "").toUpperCase();
+          var g = GYM[id] || (GYM[id] = {name:names[id] || e.name || "", gender:gender, discipline:/boy/i.test(gender) ? "MAG" : "WAG", level:level, club:cleanClub(e.club), results:{}, videos:{}});
+          if(!g.name && names[id]) g.name = names[id];
+          (g.results[cid] || (g.results[cid] = {}))[sh.apparatus] = s;
+        });
+      });
+    });
+    NEWS = [];
+    buildCompetitions();
+  });
+}
 
-/* ───────────────── Helpers ───────────────── */
+// Shape GYM like the league pages so ngl-player-card.js works unchanged
+function buildCompetitions(){
+  competitions = COMPS.map(function(c){
+    var byApp = {};
+    Object.keys(GYM).forEach(function(id){
+      var g = GYM[id], r = g.results[c.id]; if(!r) return;
+      Object.keys(r).forEach(function(app){ (byApp[app] || (byApp[app] = [])).push({memberId:id, gender:g.gender, level:g.level, club:g.club, score:r[app]}); });
+    });
+    return {name:c.name, date:c.date, displayDate:c.date, sheets:Object.keys(byApp).map(function(a){ return {apparatus:a, entries:byApp[a]}; })};
+  });
+}
+function getName(id){ return GYM[id] && !GYM[id].peer ? displayName(id) : ""; }
+
+/* ═════════════════ State ═════════════════ */
+function freshState(){ return {email:"", bg:"", signedIn:false, gymnasts:[], current:null, readNews:{}, emails:true, photo:{}, query:""}; }
+var S = freshState();
+
+/* ═════════════════ Helpers ═════════════════ */
 function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-function apps(g){ return g.gender === "Boys" ? MAG : WAG; }
 var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-function dateBits(d){ return {d:Number(d.slice(8)), m:MONTHS[Number(d.slice(5,7)) - 1]}; }
-function longDate(d){ var b = dateBits(d); return b.d + " " + b.m + " " + d.slice(0,4); }
-function best(g){ var a = apps(g), out = {}; a.forEach(function(app, i){ out[app] = Math.max.apply(null, COMPS.filter(function(c){ return g.results[c.id]; }).map(function(c){ return g.results[c.id][i]; })); }); return out; }
-function total(b){ return Object.keys(b).reduce(function(t,k){ return t + b[k]; }, 0); }
-function compTotal(g, cid){ return g.results[cid].reduce(function(t,v){ return t + v; }, 0); }
-function leaguePos(id){
-  var me = DEMO[id], field = PEERS.filter(function(p){ return p.gender === me.gender && p.level === me.level; }).concat([me]);
-  var mine = total(best(me));
-  var ahead = field.filter(function(p){ return total(best(p)) > mine; }).length;
-  return {pos:ahead + 1, of:field.length};
+function dateBits(d){ return {d:Number(String(d).slice(8, 10)) || "", m:MONTHS[Number(String(d).slice(5, 7)) - 1] || ""}; }
+function longDate(d){ var b = dateBits(d); return b.d + " " + b.m + " " + String(d).slice(0, 4); }
+function compsOf(g){ return COMPS.filter(function(c){ return g.results[c.id]; }); }
+function apps(g){
+  var seen = {}; compsOf(g).forEach(function(c){ Object.keys(g.results[c.id]).forEach(function(a){ seen[a] = 1; }); });
+  var order = g.discipline === "MAG" ? MAG : WAG;
+  return order.filter(function(a){ return seen[a]; }).concat(Object.keys(seen).filter(function(a){ return order.indexOf(a) < 0; }));
 }
-function compPlace(id, cid){
-  var me = DEMO[id], field = PEERS.filter(function(p){ return p.gender === me.gender && p.level === me.level; }).concat([me]);
-  var mine = compTotal(me, cid);
-  return field.filter(function(p){ return compTotal(p, cid) > mine; }).length + 1;
-}
+function best(g){ var out = {}; apps(g).forEach(function(a){ compsOf(g).forEach(function(c){ var v = g.results[c.id][a]; if(v != null && (out[a] == null || v > out[a])) out[a] = v; }); }); return out; }
+function total(b){ return Object.keys(b).reduce(function(t, k){ return t + b[k]; }, 0); }
+function compTotal(g, cid){ var r = g.results[cid] || {}; return Object.keys(r).reduce(function(t, k){ return t + r[k]; }, 0); }
+function field(g){ return Object.keys(GYM).map(function(k){ return GYM[k]; }).filter(function(p){ return p.gender === g.gender && p.level === g.level; }); }
+function leaguePos(id){ var me = GYM[id], f = field(me), mine = total(best(me)); return {pos:f.filter(function(p){ return total(best(p)) > mine; }).length + 1, of:f.length}; }
+function compPlace(id, cid){ var me = GYM[id], f = field(me).filter(function(p){ return p.results[cid]; }), mine = compTotal(me, cid); return {pos:f.filter(function(p){ return compTotal(p, cid) > mine; }).length + 1, of:f.length}; }
 function ord(n){ var s = ["th","st","nd","rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
-function firstName(g){ return g.name.split(" ")[0]; }
+function displayName(id){ return GYM[id].name || (/^\d+$/.test(id) ? "BG " + id : id); }
+function firstName(id){ return GYM[id].name ? GYM[id].name.split(" ")[0] : displayName(id); }
+function levelLabel(g){ return g.discipline + " Level " + g.level; }
 
-/* ───────────────── Router ───────────────── */
+/* ═════════════════ Router ═════════════════ */
 var view = document.getElementById("view");
 function go(h){ if(location.hash === h) render(); else location.hash = h; }
 window.addEventListener("hashchange", render);
-document.addEventListener("click", function(e){
-  var t = e.target.closest("[data-go]"); if(t){ e.preventDefault(); go(t.getAttribute("data-go")); }
-});
+document.addEventListener("click", function(e){ var t = e.target.closest("[data-go]"); if(t){ e.preventDefault(); go(t.getAttribute("data-go")); } });
+var OPEN = ["signin","waiting","check","admin","loading","error"];
 
 function chrome(signed){
+  document.getElementById("demoBar").innerHTML = esc(DATA_LABEL) + (ADMIN && S.signedIn ? ' · <a href="#/admin" id="backSearch" style="color:inherit">Back to search</a>' : "");
   document.getElementById("tabbar").hidden = !signed;
-  document.getElementById("topActions").hidden = !signed;
+  document.getElementById("topActions").hidden = !signed || ADMIN;
   document.getElementById("newsDot").style.display = NEWS.some(function(n){ return !S.readNews[n.id]; }) ? "" : "none";
-  var route = location.hash.replace("#/","") || "home";
+  var route = location.hash.replace("#/", "") || "home";
   document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-go") === "#/" + route); });
 }
-
 function render(){
-  var route = (location.hash.replace("#/","") || "").split("?")[0];
-  if(!S.signedIn && ["signin","waiting","check",""].indexOf(route) < 0) route = "signin";
-  if(S.signedIn && ["signin","waiting","check",""].indexOf(route) >= 0) route = "home";
-  if(!SCREENS[route]) route = S.signedIn ? "home" : "signin";
-  var fn = SCREENS[route];
+  var route = (location.hash.replace("#/", "") || "").split("?")[0];
+  if(READY !== true) route = READY === "error" ? "error" : "loading";
+  else if(ADMIN && route === "admin"){ S.signedIn = false; }
+  else if(!S.signedIn && OPEN.indexOf(route) < 0) route = ADMIN ? "admin" : "signin";
+  else if(S.signedIn && OPEN.indexOf(route) >= 0) route = "home";
+  if(!SCREENS[route]) route = S.signedIn ? "home" : (ADMIN ? "admin" : "signin");
   chrome(S.signedIn);
-  view.innerHTML = '<div class="screen">' + fn() + '</div>';
+  view.innerHTML = '<div class="screen">' + SCREENS[route]() + '</div>';
   if(AFTER[route]) AFTER[route]();
   window.scrollTo(0, 0);
 }
 
-/* ───────────────── Screens ───────────────── */
+/* ═════════════════ Screens ═════════════════ */
 var SCREENS = {}, AFTER = {};
+var READY = false, LOAD_ERROR = "";
 
+SCREENS.loading = function(){ return '<div class="center" style="padding:60px 0"><div class="hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-dasharray="40 20"/></svg></div><p class="muted">Loading league results…</p></div>'; };
+SCREENS.error = function(){ return '<div class="card"><h2>Couldn\'t load results</h2><p class="muted">' + esc(LOAD_ERROR) + '</p><button class="btn" onclick="location.reload()">Try again</button></div>'; };
+
+/* ── Admin: search any gymnast, then view their hub ── */
+SCREENS.admin = function(){
+  return '<div class="eyebrow">NGL Admin</div><h1>View as gymnast</h1>'
+  + '<p class="muted">Search by name, BG number or club, then open their hub exactly as their family will see it. Read-only: no emails are sent and nothing is changed.</p>'
+  + '<div class="card"><label for="q" style="margin-top:0">Search gymnasts</label><input id="q" type="text" autocomplete="off" placeholder="Name, BG number or club" value="' + esc(S.query) + '"></div>'
+  + '<div id="results"></div>';
+};
+AFTER.admin = function(){
+  var q = document.getElementById("q"), box = document.getElementById("results");
+  function run(){
+    S.query = q.value;
+    var t = q.value.trim().toLowerCase();
+    var ids = Object.keys(GYM).filter(function(id){ var g = GYM[id]; return !t || id.indexOf(t) >= 0 || (g.name || "").toLowerCase().indexOf(t) >= 0 || (g.club || "").toLowerCase().indexOf(t) >= 0; });
+    ids.sort(function(a, b){ return displayName(a).localeCompare(displayName(b)); });
+    var shown = ids.slice(0, 60);
+    box.innerHTML = '<div class="section-title" style="margin-top:4px"><h2>' + ids.length + ' gymnast' + (ids.length === 1 ? "" : "s") + '</h2>' + (ids.length > 60 ? '<span class="muted" style="font-size:13px">showing 60, refine the search</span>' : "") + '</div>'
+      + shown.map(function(id){ var g = GYM[id]; return '<button class="card pick" data-view="' + esc(id) + '" style="display:block;width:100%;text-align:left;cursor:pointer;padding:14px 16px"><h3 style="margin:0">' + esc(displayName(id)) + '</h3><div class="muted" style="font-size:13px">' + esc(g.club) + ' · ' + esc(levelLabel(g)) + ' · BG ' + esc(id) + '</div></button>'; }).join("");
+    box.querySelectorAll("[data-view]").forEach(function(b){ b.onclick = function(){ var id = b.getAttribute("data-view"); S.signedIn = true; S.gymnasts = [id]; S.current = id; S.email = "Admin preview"; go("#/home"); }; });
+  }
+  q.oninput = run; run(); q.focus();
+};
+
+/* ── Demo sign-in flow ── */
 SCREENS.signin = function(){
   return '<div class="hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v12c0 3-3 5-6 6-3-1-6-3-6-6z"/></svg></div>'
   + '<h1 class="center">Your gymnast\'s hub</h1>'
@@ -274,21 +364,19 @@ AFTER.signin = function(){
     S.bg = bg; S.email = em;
     if(!/^\d{6,8}$/.test(bg)){ err.innerHTML = '<div class="error">Enter the gymnast\'s BG number (numbers only).</div>'; return; }
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ err.innerHTML = '<div class="error">Enter a valid email address.</div>'; return; }
-    if(!DEMO[bg]){ err.innerHTML = '<div class="error">We can\'t find that BG number in the 2027 General League. Check it with your club.</div>'; return; }
-    go(DEMO[bg].linked ? "#/check" : "#/waiting");
+    if(!GYM[bg] || GYM[bg].peer){ err.innerHTML = '<div class="error">We can\'t find that BG number in the 2027 General League. Check it with your club.</div>'; return; }
+    go(GYM[bg].linked ? "#/check" : "#/waiting");
   };
 };
-
 SCREENS.waiting = function(){
-  var g = DEMO[S.bg];
+  var g = GYM[S.bg];
   return '<div class="hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>'
   + '<h1 class="center">Nearly there</h1>'
   + '<p class="center muted">This is the first time <b>' + esc(S.email) + '</b> has asked for a hub, so we\'ve asked <b>' + esc(g.club) + '</b> to confirm it\'s you. Clubs usually do this the same day.</p>'
   + '<div class="card"><h3>What happens next</h3><p class="muted" style="margin:0">When your club confirms, we\'ll email you a sign-in link. You only do this once.</p></div>'
   + '<div class="demo-box"><b>Demo:</b> pretend you\'re the club. <button id="approve">Approve this parent in the NGL Club Hub</button></div>';
 };
-AFTER.waiting = function(){ document.getElementById("approve").onclick = function(){ DEMO[S.bg].linked = true; go("#/check"); }; };
-
+AFTER.waiting = function(){ document.getElementById("approve").onclick = function(){ GYM[S.bg].linked = true; go("#/check"); }; };
 SCREENS.check = function(){
   return '<div class="hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div>'
   + '<h1 class="center">Check your email</h1>'
@@ -299,9 +387,8 @@ SCREENS.check = function(){
 AFTER.check = function(){
   document.getElementById("open").onclick = function(){
     S.signedIn = true;
-    S.gymnasts = Object.keys(DEMO).filter(function(id){ return DEMO[id].linked; });
+    S.gymnasts = Object.keys(GYM).filter(function(id){ return GYM[id].linked; });
     if(S.gymnasts.indexOf(S.bg) < 0) S.gymnasts.push(S.bg);
-    // siblings: in the demo, linking Maisie also shows Oliver (same family email)
     if(S.bg === "1000002" && S.gymnasts.indexOf("1000001") < 0) S.gymnasts.unshift("1000001");
     S.current = S.bg;
     go("#/home");
@@ -310,55 +397,55 @@ AFTER.check = function(){
 
 function switcher(){
   if(S.gymnasts.length < 2) return "";
-  return '<div class="switcher">' + S.gymnasts.map(function(id){ return '<button data-pick="' + id + '" class="' + (id === S.current ? "on" : "") + '">' + esc(firstName(DEMO[id])) + '</button>'; }).join("") + '</div>';
+  return '<div class="switcher">' + S.gymnasts.map(function(id){ return '<button data-pick="' + id + '" class="' + (id === S.current ? "on" : "") + '">' + esc(firstName(id)) + '</button>'; }).join("") + '</div>';
 }
 function wireSwitcher(){ document.querySelectorAll("[data-pick]").forEach(function(b){ b.onclick = function(){ S.current = b.getAttribute("data-pick"); render(); }; }); }
 
-SCREENS.home = function(){
-  var g = DEMO[S.current], b = best(g), lp = leaguePos(S.current), a = apps(g);
-  var top = a.slice().sort(function(x, y){ return b[y] - b[x]; }).slice(0, 4);
+function upcomingCard(compact){
+  if(!UPCOMING) return '<div class="card"><p class="muted" style="margin:0">No upcoming competition yet. It will appear here as soon as their club enters them.</p></div>';
   var bd = dateBits(UPCOMING.date);
+  if(compact) return '<div class="card"><div class="comp"><div class="date"><div class="d">' + bd.d + '</div><div class="m">' + bd.m + '</div></div><div>'
+    + '<h3>' + esc(UPCOMING.name) + '</h3><div class="muted" style="font-size:14px">' + esc(UPCOMING.venue) + ' · arrive ' + UPCOMING.arrival + '</div>'
+    + '<div style="margin-top:8px"><span class="pill gl">' + UPCOMING.squad + '</span><span class="pill">Starts on ' + UPCOMING.start + '</span></div></div></div></div>';
+  return '<div class="card accent"><div class="comp"><div class="date" style="background:rgba(255,255,255,.15);border-color:transparent"><div class="d">' + bd.d + '</div><div class="m" style="color:#fff">' + bd.m + '</div></div><div>'
+    + '<h3>' + esc(UPCOMING.name) + '</h3><p style="margin:0;opacity:.9;font-size:14px">' + esc(UPCOMING.venue) + '<br>Arrive ' + UPCOMING.arrival + ' · warm-up ' + UPCOMING.warmup + '<br>' + UPCOMING.squad + ', starts on ' + UPCOMING.start + '</p></div></div></div>';
+}
+
+SCREENS.home = function(){
+  var id = S.current, g = GYM[id], b = best(g), lp = leaguePos(id);
+  var top = Object.keys(b).sort(function(x, y){ return b[y] - b[x]; }).slice(0, 4);
   return switcher()
-  + '<div class="card">'
-  +   '<div class="eyebrow">2027 General League</div>'
-  +   '<h1>' + esc(g.name) + '</h1>'
-  +   '<div><span class="pill gl">' + g.discipline + ' Level ' + g.level + '</span><span class="pill">' + esc(g.club) + '</span></div>'
-  + '</div>'
-  + '<div class="card accent">'
-  +   '<div class="eyebrow">League position · ' + g.discipline + ' Level ' + g.level + '</div>'
+  + '<div class="card"><div class="eyebrow">' + (ADMIN ? "General League" : "2027 General League") + '</div><h1>' + esc(displayName(id)) + '</h1>'
+  +   '<div><span class="pill gl">' + esc(levelLabel(g)) + '</span><span class="pill">' + esc(g.club) + '</span></div></div>'
+  + '<div class="card accent"><div class="eyebrow">League position · ' + esc(levelLabel(g)) + '</div>'
   +   '<div class="big-pos"><span class="n">' + ord(lp.pos) + '</span><span>of ' + lp.of + ' gymnasts</span></div>'
-  +   '<p style="margin:8px 0 0;opacity:.9">All-around total ' + total(b).toFixed(3) + ' from best scores on each apparatus.</p>'
-  + '</div>'
+  +   '<p style="margin:8px 0 0;opacity:.9">All-around total ' + total(b).toFixed(3) + ' from best scores on each apparatus.</p></div>'
   + '<div class="section-title"><h2>Best scores</h2><a href="#/stats">See progress</a></div>'
   + '<div class="stat-grid">' + top.map(function(app){ return '<div class="stat"><div class="k">' + esc(app) + '</div><div class="v">' + b[app].toFixed(3) + '</div></div>'; }).join("") + '</div>'
-  + '<div class="section-title"><h2>Next competition</h2></div>'
-  + '<div class="card"><div class="comp"><div class="date"><div class="d">' + bd.d + '</div><div class="m">' + bd.m + '</div></div><div>'
-  +   '<h3>' + esc(UPCOMING.name) + '</h3><div class="muted" style="font-size:14px">' + esc(UPCOMING.venue) + ' · arrive ' + UPCOMING.arrival + '</div>'
-  +   '<div style="margin-top:8px"><span class="pill gl">' + UPCOMING.squad + '</span><span class="pill">Starts on ' + UPCOMING.start + '</span></div>'
-  + '</div></div></div>';
+  + '<div class="section-title"><h2>Next competition</h2></div>' + upcomingCard(true);
 };
 AFTER.home = wireSwitcher;
 
 var COLOURS = ["#3aa0e6","#f2a900","#2ec4b6","#ff6b8b","#a78bfa","#9be564"];
 function graph(g){
-  var a = apps(g), W = 520, H = 240, L = 44, R = 44, T = 14, B = 40;
-  var all = []; COMPS.forEach(function(c){ g.results[c.id].forEach(function(v){ all.push(v); }); });
+  var a = apps(g), cs = compsOf(g), W = 520, H = 240, L = 44, R = 44, T = 14, B = 40;
+  var all = []; cs.forEach(function(c){ a.forEach(function(app){ var v = g.results[c.id][app]; if(v != null) all.push(v); }); });
+  if(!all.length) return '<p class="muted">No scores yet.</p>';
   var lo = Math.floor(Math.min.apply(null, all) - 0.5), hi = Math.ceil(Math.max.apply(null, all) + 0.5);
-  var X = function(i){ return L + i * (W - L - R) / (COMPS.length - 1); }, Y = function(v){ return T + (hi - v) / (hi - lo) * (H - T - B); };
+  var X = function(i){ return cs.length === 1 ? (L + W - R) / 2 : L + i * (W - L - R) / (cs.length - 1); }, Y = function(v){ return T + (hi - v) / (hi - lo) * (H - T - B); };
   var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Scores across the season">';
-  for(var v = lo; v <= hi; v++){ s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="rgba(255,255,255,.1)"/><text x="' + (L - 8) + '" y="' + (Y(v) + 4) + '" fill="#b7c1e6" font-size="15" text-anchor="end">' + v + '</text>'; }
-  COMPS.forEach(function(c, i){ s += '<text x="' + X(i) + '" y="' + (H - 10) + '" fill="#b7c1e6" font-size="15" text-anchor="middle">Round ' + (i + 1) + '</text>'; });
+  for(var v = lo; v <= hi; v++){ s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="rgba(255,255,255,.1)"/><text x="' + (L - 8) + '" y="' + (Y(v) + 5) + '" fill="#b7c1e6" font-size="15" text-anchor="end">' + v + '</text>'; }
+  cs.forEach(function(c, i){ var d = dateBits(c.date); s += '<text x="' + X(i) + '" y="' + (H - 10) + '" fill="#b7c1e6" font-size="15" text-anchor="middle">' + (ADMIN ? (d.d + " " + d.m) : ("Round " + (i + 1))) + '</text>'; });
   a.forEach(function(app, ai){
-    var pts = COMPS.map(function(c, i){ return X(i) + "," + Y(g.results[c.id][ai]); });
-    s += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="' + COLOURS[ai] + '" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>';
-    COMPS.forEach(function(c, i){ s += '<circle cx="' + X(i) + '" cy="' + Y(g.results[c.id][ai]) + '" r="4" fill="' + COLOURS[ai] + '"/>'; });
+    var pts = []; cs.forEach(function(c, i){ var v = g.results[c.id][app]; if(v != null) pts.push([X(i), Y(v)]); });
+    if(pts.length > 1) s += '<polyline points="' + pts.map(function(p){ return p.join(","); }).join(" ") + '" fill="none" stroke="' + COLOURS[ai % 6] + '" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>';
+    pts.forEach(function(p){ s += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="4" fill="' + COLOURS[ai % 6] + '"/>'; });
   });
-  return s + '</svg><div class="legend">' + a.map(function(app, ai){ return '<span><i style="background:' + COLOURS[ai] + '"></i>' + esc(app) + '</span>'; }).join("") + '</div>';
+  return s + '</svg><div class="legend">' + a.map(function(app, ai){ return '<span><i style="background:' + COLOURS[ai % 6] + '"></i>' + esc(app) + '</span>'; }).join("") + '</div>';
 }
 
 SCREENS.stats = function(){
-  var g = DEMO[S.current], b = best(g), a = apps(g), lp = leaguePos(S.current);
-  var latest = COMPS[COMPS.length - 1].id;
+  var id = S.current, g = GYM[id], b = best(g), lp = leaguePos(id), cs = compsOf(g), latest = cs.length ? g.results[cs[cs.length - 1].id] : {};
   return switcher()
   + '<div class="card"><div class="eyebrow">Progress this season</div>' + graph(g) + '</div>'
   + '<div class="stat-grid" style="margin-bottom:14px">'
@@ -366,62 +453,53 @@ SCREENS.stats = function(){
   +   '<div class="stat"><div class="k">League position</div><div class="v">' + ord(lp.pos) + ' <span class="muted" style="font-size:14px">of ' + lp.of + '</span></div></div>'
   + '</div>'
   + '<div class="card"><div class="eyebrow">Best per apparatus</div><table class="best">'
-  + a.map(function(app, i){ var pb = g.results[latest][i] === b[app]; return '<tr><td>' + esc(app) + (pb ? ' <span class="pill" style="background:var(--gold);color:#1b1300;margin:0 0 0 6px">PB last comp</span>' : '') + '</td><td>' + b[app].toFixed(3) + '</td></tr>'; }).join("")
+  + Object.keys(b).map(function(app){ var pb = cs.length > 1 && latest[app] === b[app]; return '<tr><td>' + esc(app) + (pb ? ' <span class="pill" style="background:var(--gold);color:#1b1300;margin:0 0 0 6px">PB last comp</span>' : '') + '</td><td>' + b[app].toFixed(3) + '</td></tr>'; }).join("")
   + '</table></div>';
 };
 AFTER.stats = wireSwitcher;
 
 SCREENS.comps = function(){
-  var g = DEMO[S.current], a = apps(g), bd = dateBits(UPCOMING.date);
-  var done = COMPS.slice().reverse().map(function(c){
-    var d = dateBits(c.date), place = compPlace(S.current, c.id);
+  var id = S.current, g = GYM[id], cs = compsOf(g);
+  var done = cs.slice().reverse().map(function(c){
+    var d = dateBits(c.date), place = compPlace(id, c.id), r = g.results[c.id];
     return '<div class="card"><div class="comp"><div class="date"><div class="d">' + d.d + '</div><div class="m">' + d.m + '</div></div><div style="flex:1;min-width:0">'
-      + '<h3>' + esc(c.name) + '</h3><div class="muted" style="font-size:14px">' + esc(c.venue) + ' · ' + g.discipline + ' Level ' + g.level + '</div>'
-      + '<div style="margin-top:8px"><span class="pill gl">' + ord(place) + ' all-around</span><span class="pill">' + compTotal(g, c.id).toFixed(3) + '</span>' + (g.videos[c.id] ? '<span class="pill" style="cursor:pointer" data-video>▶ Videos</span>' : '') + '</div>'
-      + '<div class="scores">' + a.map(function(app, i){ return '<div>' + esc(app) + '<b>' + g.results[c.id][i].toFixed(3) + '</b></div>'; }).join("") + '</div>'
+      + '<h3>' + esc(c.name) + '</h3><div class="muted" style="font-size:14px">' + (c.venue ? esc(c.venue) + ' · ' : '') + esc(levelLabel(g)) + '</div>'
+      + '<div style="margin-top:8px"><span class="pill gl">' + ord(place.pos) + ' of ' + place.of + '</span><span class="pill">' + compTotal(g, c.id).toFixed(3) + '</span>' + (g.videos[c.id] ? '<span class="pill" style="cursor:pointer" data-video>▶ Videos</span>' : '') + '</div>'
+      + '<div class="scores">' + apps(g).filter(function(a){ return r[a] != null; }).map(function(app){ return '<div>' + esc(app) + '<b>' + r[app].toFixed(3) + '</b></div>'; }).join("") + '</div>'
       + '</div></div></div>';
   }).join("");
   return switcher()
-  + '<div class="section-title" style="margin-top:0"><h2>Coming up</h2></div>'
-  + '<div class="card accent"><div class="comp"><div class="date" style="background:rgba(255,255,255,.15);border-color:transparent"><div class="d">' + bd.d + '</div><div class="m" style="color:#fff">' + bd.m + '</div></div><div>'
-  +   '<h3>' + esc(UPCOMING.name) + '</h3><p style="margin:0;opacity:.9;font-size:14px">' + esc(UPCOMING.venue) + '<br>Arrive ' + UPCOMING.arrival + ' · warm-up ' + UPCOMING.warmup + '<br>' + UPCOMING.squad + ', starts on ' + UPCOMING.start + '</p>'
-  + '</div></div></div>'
-  + '<div class="section-title"><h2>Entered in 2027</h2><span class="muted" style="font-size:13px">' + COMPS.length + ' competitions</span></div>'
-  + done;
+  + '<div class="section-title" style="margin-top:0"><h2>Coming up</h2></div>' + upcomingCard(false)
+  + '<div class="section-title"><h2>Competitions entered</h2><span class="muted" style="font-size:13px">' + cs.length + '</span></div>' + done;
 };
 AFTER.comps = function(){ wireSwitcher(); document.querySelectorAll("[data-video]").forEach(function(v){ v.onclick = function(){ alert("Demo: this would open the routine videos for this competition."); }; }); };
 
 SCREENS.card = function(){
-  var c = NGLPlayerCard.build(S.current);
+  var id = S.current, c = NGLPlayerCard.build(id);
   return switcher()
   + '<canvas class="card-canvas" id="pc" width="1200" height="1720"></canvas>'
   + '<div class="row" style="justify-content:center;gap:10px;margin-bottom:14px"><button class="btn ghost small" id="addPhoto">Add photo</button><button class="btn small" id="saveCard">Save card</button></div>'
   + '<input type="file" accept="image/*" id="photoIn" hidden>'
   + '<div class="card"><div class="eyebrow">How the ratings work</div>'
-  +   '<p class="muted" style="font-size:14px">Each apparatus gets a rating from where ' + esc(firstName(DEMO[S.current])) + '\'s best score sits among ' + (c ? c.discipline : "") + ' Level ' + DEMO[S.current].level + ' gymnasts this season. Those feed the six skills below. The card updates after every competition.</p>'
+  +   '<p class="muted" style="font-size:14px">Each apparatus gets a rating from where ' + esc(firstName(id)) + '\'s best score sits among ' + esc(levelLabel(GYM[id])) + ' gymnasts this season. Those feed the six skills below. The card updates after every competition.</p>'
   +   '<div class="stat-grid">' + NGLPlayerCard.attrs.map(function(at){ return '<div class="stat"><div class="k">' + at.key + ' · ' + at.label + '</div><div class="v">' + (c && c.attrs[at.key] != null ? c.attrs[at.key] : "–") + '</div></div>'; }).join("") + '</div>'
   + '</div>'
-  + '<div class="foot">Photos stay on this phone. They are never uploaded or saved by NGL.</div>';
+  + '<div class="foot">Photos stay on this device. They are never uploaded or saved by NGL.</div>';
 };
 AFTER.card = function(){
   wireSwitcher();
-  var id = S.current, card = NGLPlayerCard.build(id); card.season = 2027; var cv = document.getElementById("pc");
+  var id = S.current, card = NGLPlayerCard.build(id); if(!card) return; card.season = ADMIN ? "" : 2027; var cv = document.getElementById("pc");
   function draw(){ NGLPlayerCard.draw(cv, card, S.photo[id] || null); }
   draw(); NGLPlayerCard.ready().then(draw);
   document.getElementById("addPhoto").onclick = function(){ document.getElementById("photoIn").click(); };
-  document.getElementById("photoIn").onchange = function(e){
-    var f = e.target.files && e.target.files[0]; if(!f) return;
-    var img = new Image(); img.onload = function(){ S.photo[id] = img; draw(); }; img.src = URL.createObjectURL(f);
-  };
-  document.getElementById("saveCard").onclick = function(){
-    try{ var a = document.createElement("a"); a.download = "NGL_Player_" + card.name.replace(/\s+/g, "_") + ".png"; a.href = cv.toDataURL("image/png"); a.click(); }
-    catch(err){ alert("Couldn't save here. Try a screenshot instead."); }
-  };
+  document.getElementById("photoIn").onchange = function(e){ var f = e.target.files && e.target.files[0]; if(!f) return; var img = new Image(); img.onload = function(){ S.photo[id] = img; draw(); }; img.src = URL.createObjectURL(f); };
+  document.getElementById("saveCard").onclick = function(){ try{ var a = document.createElement("a"); a.download = "NGL_Player_" + displayName(id).replace(/\s+/g, "_") + ".png"; a.href = cv.toDataURL("image/png"); a.click(); }catch(err){ alert("Couldn't save here. Try a screenshot instead."); } };
 };
 
 SCREENS.news = function(){
-  var out = '<h1>News</h1><p class="muted">Messages from NGL about ' + esc(firstName(DEMO[S.current])) + '\'s competitions and the General League.</p>'
-  + NEWS.map(function(n){ return '<div class="card msg ' + (S.readNews[n.id] ? "read" : "") + '"><div class="eyebrow">' + longDate(n.date) + '</div><h3>' + esc(n.title) + '</h3><p class="muted" style="margin:0">' + esc(n.body) + '</p></div>'; }).join("");
+  var out = '<h1>News</h1><p class="muted">Messages from NGL about ' + esc(firstName(S.current)) + '\'s competitions and the General League.</p>';
+  if(!NEWS.length) out += '<div class="card"><p class="muted" style="margin:0">No messages yet.</p></div>';
+  out += NEWS.map(function(n){ return '<div class="card msg ' + (S.readNews[n.id] ? "read" : "") + '"><div class="eyebrow">' + longDate(n.date) + '</div><h3>' + esc(n.title) + '</h3><p class="muted" style="margin:0">' + esc(n.body) + '</p></div>'; }).join("");
   NEWS.forEach(function(n){ S.readNews[n.id] = true; });
   return out;
 };
@@ -429,22 +507,28 @@ AFTER.news = function(){ chrome(true); };
 
 SCREENS.settings = function(){
   return '<h1>Account</h1>'
-  + '<div class="card"><div class="eyebrow">Signed in as</div><h3>' + esc(S.email) + '</h3><p class="muted" style="margin:0">Linked gymnasts: ' + S.gymnasts.map(function(id){ return esc(DEMO[id].name); }).join(", ") + '</p></div>'
-  + '<div class="card"><div class="toggle"><div><h3>Competition emails</h3><p class="muted" style="margin:0;font-size:14px">Running orders, arrival times and results.</p></div><button class="switch ' + (S.emails ? "on" : "") + '" id="em" aria-label="Competition emails"></button></div></div>'
-  + '<div class="card"><h3>Add another gymnast</h3><p class="muted" style="font-size:14px">A brother or sister in the General League? Add them with their BG number.</p><button class="btn ghost small" data-go="#/signin" id="addG">Add a gymnast</button></div>'
+  + '<div class="card"><div class="eyebrow">Signed in as</div><h3>' + esc(S.email) + '</h3><p class="muted" style="margin:0">Linked gymnasts: ' + S.gymnasts.map(function(id){ return esc(displayName(id)); }).join(", ") + '</p></div>'
+  + '<div class="card"><div class="toggle"><div><h3>Competition emails</h3><p class="muted" style="margin:0;font-size:14px">Running orders, arrival times and results.</p></div><button class="switch ' + (S.emails ? "on" : "") + '" id="emt" aria-label="Competition emails"></button></div></div>'
+  + '<div class="card"><h3>Add another gymnast</h3><p class="muted" style="font-size:14px">A brother or sister in the General League? Add them with their BG number.</p><button class="btn ghost small" id="addG">Add a gymnast</button></div>'
   + '<div class="card"><h3>Your data</h3><p class="muted" style="font-size:14px">We hold your email and which gymnasts it\'s linked to. Results come from NGL competitions. NGL is part of SAADI Gymnastics, the data controller.</p><button class="btn ghost small" id="del">Delete my account</button></div>'
   + '<button class="btn ghost" id="out">Sign out</button>';
 };
 AFTER.settings = function(){
-  document.getElementById("em").onclick = function(){ S.emails = !S.emails; this.classList.toggle("on", S.emails); };
-  document.getElementById("addG").onclick = function(e){ e.preventDefault(); e.stopPropagation(); S.signedIn = false; S.bg = ""; go("#/signin"); };
-  document.getElementById("del").onclick = function(){ if(confirm("Demo: delete this account? (Nothing is really stored.)")){ S = {email:"", bg:"", signedIn:false, gymnasts:[], current:null, readNews:{}, emails:true, photo:{}}; go("#/signin"); } };
+  document.getElementById("emt").onclick = function(){ S.emails = !S.emails; this.classList.toggle("on", S.emails); };
+  document.getElementById("addG").onclick = function(){ S.signedIn = false; S.bg = ""; go("#/signin"); };
+  document.getElementById("del").onclick = function(){ if(confirm("Demo: delete this account? (Nothing is really stored.)")){ S = freshState(); go("#/signin"); } };
   document.getElementById("out").onclick = function(){ S.signedIn = false; go("#/signin"); };
 };
 
-render();
+/* ═════════════════ Start ═════════════════ */
+function start(){
+  render();
+  (ADMIN ? loadAdmin() : loadDemo()).then(function(){ READY = true; if(ADMIN && !location.hash) location.hash = "#/admin"; render(); })
+    .catch(function(e){ READY = "error"; LOAD_ERROR = (e && e.message) || "Please try again."; render(); });
+}
 </script>
 <script src="ngl-player-card.js"></script>
-<script>render();</script>
+<script>start();</script>
+
 </body>
 </html>
