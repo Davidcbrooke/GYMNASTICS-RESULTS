@@ -1927,12 +1927,14 @@ window.mailCopy = async function(what){
   catch (_) { prompt('Copy this:', text); }
   if (what === 'body') mailSaveLink();
 };
+// Address lists for mailto: keep @ and the commas readable, as some mail apps don't decode %40 / %2C
+const mailtoList = list => list.map(e => encodeURIComponent(String(e).trim()).replace(/%40/g, '@')).join(',');
 window.mailOpen = async function(){
   if (!MAIL || !MAIL.list.length) { alert('No clubs to email for this competition.'); return; }
   const link = document.getElementById('mm-link').value.trim();
   if (!link && !confirm('There is no JustGo link yet, so the email will say [JustGo link]. Continue anyway?')) return;
   await mailSaveLink();
-  const url = 'mailto:?bcc=' + encodeURIComponent(MAIL.list.map(x => x.email).join(',')) +
+  const url = 'mailto:?bcc=' + mailtoList(MAIL.list.map(x => x.email)) +
     '&subject=' + encodeURIComponent(document.getElementById('mm-subj').value) +
     '&body=' + encodeURIComponent(document.getElementById('mm-body').value);
   if (url.length > 1900) {
@@ -1951,7 +1953,7 @@ window.emailAllClubs = function() {
     if (!confirm(emails.length + ' clubs found. Some email clients silently drop addresses from very long BCC lists (Outlook can struggle past ~50). Continue anyway, or click Cancel to copy the list instead and paste it manually.')) return;
   }
   const subject = encodeURIComponent('NGL 2027 Season Update');
-  const bcc = encodeURIComponent(emails.join(';'));
+  const bcc = mailtoList(emails);
   window.location.href = 'mailto:?bcc=' + bcc + '&subject=' + subject;
 };
 
