@@ -802,5 +802,6 @@ function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").
 loadNames();
 Promise.all([loadCorrections(),loadReassignments()]).catch(function(){}).then(function(){loadCompetitions();});
 </script>
+<script src="ngl-player-card.js"></script>
 </body>
 </html>
