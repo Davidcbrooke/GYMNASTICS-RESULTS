@@ -686,6 +686,26 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="mail-modal">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-head">&#x2709;&#xFE0F; Email clubs to book on JustGo
+      <button class="modal-close" onclick="window.closeMailModal()">&#x2715;</button></div>
+    <div class="modal-body">
+      <p id="mm-who" style="font-size:0.82rem;margin:0 0 10px"></p>
+      <label style="display:flex;gap:8px;align-items:center;font-size:0.78rem;margin:0 0 12px"><input type="checkbox" id="mm-wait" onchange="window.mailRefresh()"> Include clubs on the waiting list</label>
+      <div class="fg"><label>JustGo booking link for this competition</label><input type="url" id="mm-link" placeholder="https://..." oninput="window.mailRefresh()"></div>
+      <div class="fg"><label>Subject</label><input type="text" id="mm-subj"></div>
+      <div class="fg"><label>Message</label><textarea id="mm-body" rows="12" style="width:100%;font-family:var(--font);font-size:0.8rem;padding:8px;border:1px solid var(--border)"></textarea></div>
+      <p style="font-size:0.72rem;color:var(--grey-mid);margin:6px 0 0">Clubs go in BCC, so no club sees another’s address. The link is saved on the competition for next time.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="window.mailCopy('emails')">Copy addresses</button>
+      <button class="btn-cancel" onclick="window.mailCopy('body')">Copy message</button>
+      <button class="btn-save" onclick="window.mailOpen()">Open email</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
     <div class="modal-head">
@@ -1638,6 +1658,7 @@ function renderAdminComps() {
       '<span class="acl-spots">' + booked + '/' + compMax(c) + (hasMax(c) ? '' : ' <span style="color:var(--red);font-weight:700" title="No Max Club Places set, so 20 is assumed. Click Edit to set it.">&#x26A0; no max</span>') + ' ' + TIER_EMOJI[tierFor(compMax(c) ? Math.round(Math.min(booked, compMax(c)) / compMax(c) * 100) : 100)] + '</span>' +
       '<button class="btn-edit" onclick="window.openEditModal(\'' + c.id + '\')">&#x270F; Edit</button>' +
       '<button class="btn-edit" style="color:var(--navy)" onclick="window.duplicateComp(\'' + c.id + '\')">&#x2398; Copy</button>' +
+      '<button class="btn-edit" style="color:var(--navy)" title="Email the clubs with reservations" onclick="window.openMailModal(\'' + c.id + '\')">&#x2709; Email clubs</button>' +
       '<button class="btn-del" onclick="window.deleteComp(\'' + c.id + '\')">&#x2715;</button>' +
       '</div>';
   }).join('');
@@ -1849,6 +1870,79 @@ function getUniqueClubEmails() {
   });
   return emails;
 }
+
+/* ── Email the clubs that reserved places at one competition ── */
+let MAIL = null;
+function mailRecipients(compId, withWait){
+  const seen = new Set(), out = [];
+  allBookings.filter(b => b.compId === compId && (withWait || !b.waitlist)).forEach(b => {
+    const e = (b.email || '').trim(), k = e.toLowerCase();
+    if (e && !seen.has(k)) { seen.add(k); out.push({email:e, club:b.club}); }
+  });
+  return out;
+}
+function mailText(c, link){
+  const d = new Date(c.date + 'T00:00:00');
+  const nice = d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const due = new Date(d.getFullYear(), d.getMonth() - 3, d.getDate()).toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  return 'Hello,\n\n' +
+    'Thank you for reserving places at ' + c.name + ' on ' + nice + (c.venue ? ' at ' + c.venue : '') + '.\n\n' +
+    'This NGL competition is now available to book, exclusively for your club, on the British Gymnastics JustGo website. Follow this link to book:\n' +
+    (link || '[JustGo link]') + '\n\n' +
+    'Please complete your booking by ' + due + ', 3 months before the competition date.\n\n' +
+    'If you have any questions, just reply to this email.\n\n' +
+    'Kind regards,\nNational Gymnastics League';
+}
+window.openMailModal = function(compId){
+  const c = allCompetitions.find(x => x.id === compId); if (!c) return;
+  MAIL = {c};
+  document.getElementById('mm-wait').checked = false;
+  document.getElementById('mm-link').value = c.justgoUrl || '';
+  const d = new Date(c.date + 'T00:00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+  document.getElementById('mm-subj').value = 'Now open on JustGo: ' + c.name + ', ' + d;
+  window.mailRefresh();
+  document.getElementById('mail-modal').classList.add('open');
+};
+window.mailRefresh = function(){
+  if (!MAIL) return;
+  const withWait = document.getElementById('mm-wait').checked, link = document.getElementById('mm-link').value.trim();
+  MAIL.list = mailRecipients(MAIL.c.id, withWait);
+  const clubs = [...new Set(MAIL.list.map(x => x.club))];
+  document.getElementById('mm-who').innerHTML = MAIL.list.length
+    ? '<b>' + MAIL.list.length + ' email address' + (MAIL.list.length === 1 ? '' : 'es') + '</b> from ' + clubs.length + ' club' + (clubs.length === 1 ? '' : 's') + ': ' + clubs.map(x => String(x).replace(/</g, '&lt;')).join(', ')
+    : '<b style="color:var(--red)">No clubs with reservations for this competition yet.</b>';
+  document.getElementById('mm-body').value = mailText(MAIL.c, link);
+};
+window.closeMailModal = function(){ document.getElementById('mail-modal').classList.remove('open'); };
+async function mailSaveLink(){
+  const link = document.getElementById('mm-link').value.trim();
+  if (MAIL && link && link !== (MAIL.c.justgoUrl || '')) {
+    try { await updateDoc(doc(db, 'ngl_competitions', MAIL.c.id), {justgoUrl: link}); MAIL.c.justgoUrl = link; } catch (e) { console.warn('JustGo link not saved', e); }
+  }
+}
+window.mailCopy = async function(what){
+  if (!MAIL) return;
+  const text = what === 'emails' ? MAIL.list.map(x => x.email).join('; ') : document.getElementById('mm-body').value;
+  try { await navigator.clipboard.writeText(text); alert(what === 'emails' ? MAIL.list.length + ' addresses copied. Paste them into BCC.' : 'Message copied.'); }
+  catch (_) { prompt('Copy this:', text); }
+  if (what === 'body') mailSaveLink();
+};
+window.mailOpen = async function(){
+  if (!MAIL || !MAIL.list.length) { alert('No clubs to email for this competition.'); return; }
+  const link = document.getElementById('mm-link').value.trim();
+  if (!link && !confirm('There is no JustGo link yet, so the email will say [JustGo link]. Continue anyway?')) return;
+  await mailSaveLink();
+  const url = 'mailto:?bcc=' + encodeURIComponent(MAIL.list.map(x => x.email).join(',')) +
+    '&subject=' + encodeURIComponent(document.getElementById('mm-subj').value) +
+    '&body=' + encodeURIComponent(document.getElementById('mm-body').value);
+  if (url.length > 1900) {
+    try { await navigator.clipboard.writeText(MAIL.list.map(x => x.email).join('; ')); } catch (_) {}
+    alert('This list is too long for one email link, so the addresses are copied. Paste them into BCC once the email opens.');
+    location.href = 'mailto:?subject=' + encodeURIComponent(document.getElementById('mm-subj').value) + '&body=' + encodeURIComponent(document.getElementById('mm-body').value);
+    return;
+  }
+  location.href = url;
+};
 
 window.emailAllClubs = function() {
   const emails = getUniqueClubEmails();
