@@ -145,11 +145,12 @@
     <div id="adminDash" class="hide">
       <div class="card">
         <h2>Add a gymnast</h2>
-        <p class="note">We only keep the first name and surname initial, so nothing more than that ever appears in the public table.</p>
+        <p class="note">The public table only shows the first name and surname initial. The BG number is private: only NGL admins can see it, and it links his Power League card to his General League Hub.</p>
         <form class="form" id="addForm">
           <label>First name<input type="text" id="aFirst" required maxlength="30"></label>
           <label>Surname initial<input type="text" id="aInit" required maxlength="1" style="min-width:0"></label>
           <label>Club<input type="text" id="aClub" required maxlength="80" list="clubList"></label>
+          <label>BG number (private)<input type="text" id="aBg" inputmode="numeric" maxlength="12" placeholder="e.g. 1234567"></label>
           <label>Level<select id="aLevel"></select></label>
           <label>Age group<select id="aAge"></select></label>
           <label>Training hours<select id="aHrs"></select></label>
@@ -162,7 +163,7 @@
         <div class="filters">
           <label>Find gymnast<input type="text" id="aFind" placeholder="Name or club"></label>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>Gymnast</th><th>Club</th><th>Level</th><th>Age</th><th>Hours</th><th class="num">Challenges</th><th class="num">OVR</th><th></th></tr></thead><tbody id="aList"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Gymnast</th><th>Club</th><th>Level</th><th>Age</th><th>Hours</th><th class="num">BG no.</th><th class="num">Challenges</th><th class="num">OVR</th><th></th></tr></thead><tbody id="aList"></tbody></table></div>
       </div>
     </div>
   </section>
@@ -188,9 +189,10 @@
 
 <div class="modal" id="modal"><div class="card" id="modalBody"></div></div>
 
+<script src="ngl-power-league-core.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const app = initializeApp({
@@ -200,77 +202,18 @@ const app = initializeApp({
 });
 const db = getFirestore(app), auth = getAuth(app);
 const COL = collection(db, 'ngl_power_league');
+/* BG numbers are kept apart from the public table, in a collection only NGL admins can read. */
+const PRIV = 'ngl_power_league_private';
+let BG = {};
 const ADMIN = /[?&]admin=1/.test(location.search);
 
-const LEVELS = ['1','2','3','4'], AGES = ['6-8','9-11','12-14','15+'], HRS = ['2-5','6-10'];
-/* Challenges. dir: 1 = higher is better, -1 = lower is better. off: added before rating (pike reach can be below the toes). */
-const CH = [
-  {k:'sprint', n:'10m Sprint', stat:'SPD', unit:'s', dir:-1, step:0.01,
-   ok:['Standing start behind the line, no rocking start','Time from first movement to chest crossing the 10m line'],
-   no:['False or flying start','Start or finish line out of shot']},
-  {k:'jump', n:'Standing Long Jump', stat:'POW', unit:'cm', dir:1, step:1,
-   ok:['Both feet behind the line, two-foot take-off, no step','Must stick the landing and hold for 2 seconds','Measured from the line to the back of the nearest heel'],
-   no:['Step, hop, fall or hand down on landing','Any run-up']},
-  {k:'tuck', n:'Tuck Jumps in 30s', stat:'POW', unit:'reps', dir:1, step:1,
-   ok:['Knees come up to at least hip height','Two-foot take-off and landing'],
-   no:['Knees below hip height: that jump doesn’t count, but the count carries on']},
-  {k:'push', n:'Push-ups in 30s', stat:'STR', unit:'reps', dir:1, step:1,
-   ok:['Straight body from head to heels','Chest down to a fist height off the floor, arms fully straight at the top'],
-   no:['Hips sagging or piking','Half reps or knees on the floor']},
-  {k:'pull', n:'Pull-ups', nLow:'Chin-up Hold', stat:'STR', unit:'reps', unitLow:'s', dir:1, step:1,
-   ok:['Levels 3–4: from a straight-arm hang, chin over the bar, back to straight arms','Levels 1–2 (chin-up hold): chin held above the bar, time stops when it drops'],
-   no:['Kipping or swinging','Chin not clearing the bar, or not returning to straight arms']},
-  {k:'dips', n:'Max Dips', stat:'STR', unit:'reps', dir:1, step:1,
-   ok:['From straight-arm support, lower until the upper arms are parallel to the floor','Push back to straight arms'],
-   no:['Not low enough or not locking out at the top','Feet touching the floor']},
-  {k:'balance', n:'Single-Leg Balance (eyes closed)', stat:'BAL', unit:'s', dir:1, step:1,
-   ok:['Stand on one leg (either leg), hands on hips, eyes closed','Free foot lifted and resting against the standing knee','Time runs from eyes closing until the shape breaks'],
-   no:['Hands leaving the hips, the standing foot moving or hopping','The free foot touching down, or eyes opening']},
-  {k:'pike', n:'Pike Fold Reach', stat:'FLX', unit:'cm', dir:1, step:1, off:20,
-   ok:['Legs straight and together, toes pointing up','Both hands level, held for 2 seconds','Measured in cm past the toes (minus if short of them)'],
-   no:['Bent knees or bouncing','One hand ahead of the other']},
-  {k:'hand', n:'Handstand Hold', stat:'CTL', unit:'s', dir:1, step:1,
-   ok:['Arms straight, legs together, straight body','Time starts when the feet come together at the top','Wall allowed at Levels 1–2, freestanding at Levels 3–4'],
-   no:['Walking on the hands, legs apart or bent arms','Time stops when he moves or comes down']}
-];
-const STATS = ['SPD','POW','STR','FLX','BAL','CTL'];
-const chName = (c, lvl) => (c.nLow && +lvl <= 2) ? c.nLow : c.n;
-const chUnit = (c, lvl) => (c.unitLow && +lvl <= 2) ? c.unitLow : c.unit;
+const {LEVELS, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf} = window.NGLPowerLeague;
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const toast = m => { const t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); };
-const fmt = (v, c) => v == null ? '—' : (c.k === 'sprint' ? (+v).toFixed(2) : String(+v));
-const group = g => `${g.level}|${g.age}|${g.hrs}`;
 
-let G = [], ADMIN_OK = false;
-
-/* ---------- Ratings ----------
-   Per challenge, the best valid result in the gymnast's group (same level, age group, hours) rates 99;
-   everyone else is rated in proportion to it. A missing challenge rates 0. A stat is the average of its
-   challenges; OVR is the average of the six stats. */
-function rate(list){
-  const best = {};
-  list.forEach(g => CH.forEach(c => {
-    const r = g.results && g.results[c.k]; if(!r || r.best == null) return;
-    const key = group(g) + '|' + c.k, v = +r.best + (c.off || 0);
-    if(c.dir < 0 ? v <= 0 : v < 0) return;
-    if(best[key] == null || (c.dir > 0 ? v > best[key] : v < best[key])) best[key] = v;
-  }));
-  list.forEach(g => {
-    g.ch = {}; g.stats = {};
-    CH.forEach(c => {
-      const r = g.results && g.results[c.k], b = best[group(g) + '|' + c.k];
-      if(!r || r.best == null || !b){ g.ch[c.k] = 0; return; }
-      const v = +r.best + (c.off || 0);
-      g.ch[c.k] = Math.max(1, Math.min(99, Math.round(c.dir > 0 ? 99 * v / b : 99 * b / v)));
-    });
-    STATS.forEach(s => { const cs = CH.filter(c => c.stat === s); g.stats[s] = Math.round(cs.reduce((a, c) => a + g.ch[c.k], 0) / cs.length); });
-    g.ovr = Math.round(STATS.reduce((a, s) => a + g.stats[s], 0) / STATS.length);
-    g.done = CH.filter(c => g.results && g.results[c.k] && g.results[c.k].best != null).length;
-  });
-}
-const nameOf = g => `${g.first} ${g.init}.`;
+let G = [], ADMIN_OK = false, BG_SUB = null;
 
 /* ---------- Public ---------- */
 let VIEW = 'overall';
@@ -327,8 +270,10 @@ function setupAdmin(){
     const first = $('aFirst').value.trim(), init = $('aInit').value.trim().toUpperCase().slice(0, 1), club = $('aClub').value.trim();
     if(!first || !init || !club) return;
     try{
-      await addDoc(COL, {first, init, club, level: $('aLevel').value, age: $('aAge').value, hrs: $('aHrs').value, results: {}, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
-      $('aFirst').value = ''; $('aInit').value = ''; $('aFirst').focus(); toast(`${first} ${init}. added`);
+      const bg = $('aBg').value.replace(/\D/g, '');
+      const ref = await addDoc(COL, {first, init, club, level: $('aLevel').value, age: $('aAge').value, hrs: $('aHrs').value, results: {}, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+      if(bg) await setDoc(doc(db, PRIV, ref.id), {bg, updatedAt: serverTimestamp()});
+      $('aFirst').value = ''; $('aInit').value = ''; $('aBg').value = ''; $('aFirst').focus(); toast(`${first} ${init}. added`);
     }catch(err){ console.error(err); toast(err.code === 'permission-denied' ? 'The database blocked this. The Power League rules need adding.' : 'Couldn’t add the gymnast.'); }
   };
 }
@@ -337,8 +282,8 @@ function renderAdmin(){
   $('clubList').innerHTML = [...new Set(G.map(g => g.club))].sort().map(c => `<option value="${esc(c)}">`).join('');
   const q = $('aFind').value.trim().toLowerCase();
   const list = G.filter(g => !q || nameOf(g).toLowerCase().includes(q) || (g.club || '').toLowerCase().includes(q)).sort((a, b) => (a.club || '').localeCompare(b.club || '') || nameOf(a).localeCompare(nameOf(b)));
-  $('aList').innerHTML = list.length ? list.map(g => `<tr><td><b>${esc(nameOf(g))}</b></td><td>${esc(g.club)}</td><td>${esc(g.level)}</td><td>${esc(g.age)}</td><td>${esc(g.hrs)}</td><td class="num">${g.done} / ${CH.length}</td><td class="num ovr">${g.done ? g.ovr : '—'}</td><td><button class="btn small" data-edit="${g.id}">Results</button></td></tr>`).join('')
-    : `<tr><td colspan="8" class="empty">No gymnasts yet. Add the first one above.</td></tr>`;
+  $('aList').innerHTML = list.length ? list.map(g => `<tr><td><b>${esc(nameOf(g))}</b></td><td>${esc(g.club)}</td><td>${esc(g.level)}</td><td>${esc(g.age)}</td><td>${esc(g.hrs)}</td><td class="num">${BG[g.id] ? '✓' : '<span class="muted">—</span>'}</td><td class="num">${g.done} / ${CH.length}</td><td class="num ovr">${g.done ? g.ovr : '—'}</td><td><button class="btn small" data-edit="${g.id}">Results</button></td></tr>`).join('')
+    : `<tr><td colspan="9" class="empty">No gymnasts yet. Add the first one above.</td></tr>`;
   $('aList').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEditor(b.dataset.edit));
 }
 function openEditor(id){
@@ -349,6 +294,7 @@ function openEditor(id){
       <label>Level<select id="eLevel">${LEVELS.map(v => `<option ${v === g.level ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <label>Age group<select id="eAge">${AGES.map(v => `<option ${v === g.age ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <label>Training hours<select id="eHrs">${HRS.map(v => `<option ${v === g.hrs ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label>BG number (private)<input type="text" id="eBg" inputmode="numeric" maxlength="12" value="${esc(BG[g.id] || '')}"></label>
     </div>
     <p class="note">Enter a result only once you've checked the video meets every "Counts" rule. The best result each gymnast has ever posted counts, so a lower score never replaces a better one.</p>
     <div>${CH.map(c => { const r = (g.results || {})[c.k]; return `<div class="entry"><div><b>${esc(chName(c, g.level))}</b><div class="hist">Best: ${r && r.best != null ? fmt(r.best, c) + ' ' + chUnit(c, g.level) + (r.date ? ' · ' + esc(r.date) : '') : 'none yet'}</div></div>
@@ -367,7 +313,7 @@ function openEditor(id){
   });
   $('eDel').onclick = async () => {
     const b = $('eDel'); if(!b.dataset.armed){ b.dataset.armed = 1; b.textContent = 'Tap again to remove'; return; }
-    try{ await deleteDoc(doc(db, 'ngl_power_league', id)); $('modal').classList.remove('open'); toast('Gymnast removed'); }catch(err){ console.error(err); toast('Couldn’t remove the gymnast.'); }
+    try{ await deleteDoc(doc(db, 'ngl_power_league', id)); if(BG[id]) await deleteDoc(doc(db, PRIV, id)); $('modal').classList.remove('open'); toast('Gymnast removed'); }catch(err){ console.error(err); toast('Couldn’t remove the gymnast.'); }
   };
   $('eSave').onclick = async () => {
     const res = JSON.parse(JSON.stringify(g.results || {})); let n = 0, kept = 0;
@@ -381,7 +327,10 @@ function openEditor(id){
       res[c.k] = r; n++;
     });
     const upd = {results: res, level: $('eLevel').value, age: $('eAge').value, hrs: $('eHrs').value, updatedAt: serverTimestamp()};
-    try{ await updateDoc(doc(db, 'ngl_power_league', id), upd); $('modal').classList.remove('open');
+    const bg = $('eBg').value.replace(/\D/g, '');
+    try{ await updateDoc(doc(db, 'ngl_power_league', id), upd);
+      if(bg !== (BG[id] || '')){ if(bg) await setDoc(doc(db, PRIV, id), {bg, updatedAt: serverTimestamp()}); else await deleteDoc(doc(db, PRIV, id)); }
+      $('modal').classList.remove('open');
       toast(n ? `${n} result${n > 1 ? 's' : ''} saved${kept ? ` (${kept} didn’t beat the best, so the best stays)` : ''}` : 'Saved'); }
     catch(err){ console.error(err); toast(err.code === 'permission-denied' ? 'The database blocked this. The Power League rules need adding.' : 'Couldn’t save.'); }
   };
@@ -403,6 +352,7 @@ if(ADMIN) onAuthStateChanged(auth, async u => {
       else $('gateMsg').textContent = `Signed in as ${u.email}, but this account doesn’t include the Power League. Ask Dave to add it in NGL Admin.`;
     }catch(e){ console.warn(e); $('gateMsg').textContent = 'Couldn’t check your access. Refresh to try again.'; }
   }
+  if(ADMIN_OK && !BG_SUB) BG_SUB = onSnapshot(collection(db, PRIV), snap => { BG = {}; snap.docs.forEach(d => { BG[d.id] = d.data().bg || ''; }); renderAdmin(); }, err => console.warn('BG numbers not readable', err));
   $('adminGate').classList.toggle('hide', ADMIN_OK); $('adminDash').classList.toggle('hide', !ADMIN_OK);
   $('who').innerHTML = ADMIN_OK ? `${esc(u.email)} · <a href="ngl-power-league.html" target="_blank">View public table</a>` : '';
   renderAdmin();

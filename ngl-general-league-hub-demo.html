@@ -114,6 +114,7 @@
   .hero-icon svg{width:32px;height:32px;}
   .foot{text-align:center;font-size:12px;color:var(--muted);margin-top:26px;}
 </style>
+<script src="ngl-power-league-core.js"></script>
 </head>
 <body>
 <div class="app">
@@ -459,6 +460,7 @@ SCREENS.stats = function(){
   +   '<div class="stat"><div class="k">All-around</div><div class="v">' + total(b).toFixed(3) + '</div></div>'
   +   '<div class="stat"><div class="k">League position</div><div class="v">' + ord(lp.pos) + ' <span class="muted" style="font-size:14px">of ' + lp.of + '</span></div></div>'
   + '</div>'
+  + (isBoy(id) ? plStats(id) : '')
   + '<div class="card"><div class="eyebrow">Best per apparatus</div><table class="best">'
   + Object.keys(b).map(function(app){ var pb = cs.length > 1 && latest[app] === b[app]; return '<tr><td>' + esc(app) + (pb ? ' <span class="pill" style="background:var(--gold);color:#1b1300;margin:0 0 0 6px">PB last comp</span>' : '') + '</td><td>' + b[app].toFixed(3) + '</td></tr>'; }).join("")
   + '</table></div>';
@@ -482,7 +484,9 @@ SCREENS.comps = function(){
 AFTER.comps = function(){ wireSwitcher(); document.querySelectorAll("[data-video]").forEach(function(v){ v.onclick = function(){ alert("Demo: this would open the routine videos for this competition."); }; }); };
 
 SCREENS.card = function(){
-  var id = S.current, c = NGLPlayerCard.build(id);
+  var id = S.current;
+  if(isBoy(id)) return cardBoy(id);
+  var c = NGLPlayerCard.build(id);
   return switcher()
   + '<canvas class="card-canvas" id="pc" width="1200" height="1720"></canvas>'
   + '<div class="row" style="justify-content:center;gap:10px;margin-bottom:14px"><button class="btn ghost small" id="addPhoto">Add photo</button><button class="btn small" id="saveCard">Save card</button></div>'
@@ -493,9 +497,22 @@ SCREENS.card = function(){
   + '</div>'
   + '<div class="foot">Photos stay on this device. They are never uploaded or saved by NGL.</div>';
 };
+function cardBoy(id){
+  var e = plFor(id);
+  return switcher()
+  + '<canvas class="card-canvas" id="pc" width="1200" height="1720"></canvas>'
+  + '<div class="row" style="justify-content:center;gap:10px;margin-bottom:14px"><button class="btn ghost small" id="addPhoto">Add photo</button><button class="btn small" id="saveCard">Save card</button></div>'
+  + '<input type="file" accept="image/*" id="photoIn" hidden>'
+  + '<div class="card"><div class="eyebrow">Power League</div>'
+  + (e ? '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s card is built from the Power League: nine strength, speed and power challenges filmed in training. Each stat is rated out of 99 against boys at the same level, age group and training hours.</p>'
+       + '<p style="font-weight:800;margin-bottom:10px">' + plPosLine(e) + '</p>' + plTable(e, id)
+       : '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s NGL Player Card is built from the Power League: nine strength, speed and power challenges his coach films in training. It fills in as soon as his first results are checked.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
+  + '<a class="btn ghost small" href="' + PL_URL + '" target="_blank" rel="noopener" style="margin-top:12px">See the Power League table</a></div>'
+  + '<div class="foot">Photos stay on this device. They are never uploaded or saved by NGL.</div>';
+}
 AFTER.card = function(){
   wireSwitcher();
-  var id = S.current, card = NGLPlayerCard.build(id); if(!card) return; card.season = ADMIN ? "" : 2027; var cv = document.getElementById("pc");
+  var id = S.current, card = isBoy(id) ? plCard(id) : NGLPlayerCard.build(id); if(!card) return; if(!isBoy(id)) card.season = ADMIN ? "" : 2027; var cv = document.getElementById("pc");
   function draw(){ NGLPlayerCard.draw(cv, card, S.photo[id] || null); }
   draw(); NGLPlayerCard.ready().then(draw);
   document.getElementById("addPhoto").onclick = function(){ document.getElementById("photoIn").click(); };
@@ -527,10 +544,71 @@ AFTER.settings = function(){
   document.getElementById("out").onclick = function(){ S.signedIn = false; go("#/signin"); };
 };
 
+/* ── Power League (boys) ──
+   For boys the NGL Player Card comes from the Power League challenges, not from competition scores.
+   Demo: made-up results. Admin preview: real Power League results, matched by the private BG number
+   (only readable when signed in to NGL Admin with Power League or Results access). */
+var PL = {ready:false, byGym:{}, list:[], note:""};
+var PLK = window.NGLPowerLeague;
+function isBoy(id){ return GYM[id] && GYM[id].discipline === "MAG"; }
+function plFor(id){ return PL.byGym[id] || null; }
+function demoPL(){
+  function seeded(n){ var x = Math.sin(n * 9.17) * 10000; return x - Math.floor(x); }
+  var base = {sprint:2.3, jump:175, tuck:22, push:20, pull:10, dips:9, balance:30, pike:4, hand:9};
+  var list = [];
+  for(var i = 0; i < 12; i++){
+    var r = {};
+    Object.keys(base).forEach(function(k, j){
+      var f = i ? 0.7 + seeded(i * 13 + j) * 0.6 : 1.12 + seeded(j) * 0.12, v = k === "sprint" ? base[k] / f : k === "pike" ? Math.round(base[k] * f * 2 - 4) : Math.round(base[k] * f);
+      r[k] = {best: k === "sprint" ? Math.round(v * 100) / 100 : v, date: "2027-0" + (2 + i % 4) + "-1" + (i % 9)};
+    });
+    list.push({id:"d" + i, first: i ? "Boy" : "Oliver", init: i ? String.fromCharCode(65 + i) : "H", club: i ? "Club " + (i % 6 + 1) : "Demo Gymnastics Club", level:"2", age:"9-11", hrs:"2-5", results:r});
+  }
+  PLK.rate(list); PL.list = list; PL.byGym["1000001"] = list[0];
+}
+function loadPLAdmin(){
+  var V = "https://www.gstatic.com/firebasejs/10.12.0/";
+  return Promise.all([import(V + "firebase-app.js"), import(V + "firebase-firestore.js"), import(V + "firebase-auth.js")]).then(function(m){
+    var appM = m[0], fs = m[1], au = m[2];
+    var app = appM.initializeApp({apiKey:"AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4", authDomain:"saadi-rotation.firebaseapp.com", projectId:"saadi-rotation",
+      storageBucket:"saadi-rotation.firebasestorage.app", messagingSenderId:"1066734803675", appId:"1:1066734803675:web:0188fd601adea7db08cafe"}, "power-league");
+    var db = fs.getFirestore(app), auth = au.getAuth(app);
+    return new Promise(function(res){ var off = au.onAuthStateChanged(auth, function(u){ off(); res(u); }); }).then(function(u){
+      if(!u){ PL.note = "Sign in to NGL Admin to see Power League cards here."; return; }
+      return Promise.all([fs.getDocs(fs.collection(db, "ngl_power_league")), fs.getDocs(fs.collection(db, "ngl_power_league_private"))]).then(function(snaps){
+        PL.list = snaps[0].docs.map(function(d){ var o = d.data(); o.id = d.id; return o; }); PLK.rate(PL.list);
+        var byId = {}; PL.list.forEach(function(e){ byId[e.id] = e; });
+        snaps[1].docs.forEach(function(d){ var bg = String(d.data().bg || ""); if(bg && byId[d.id]) PL.byGym[bg] = byId[d.id]; });
+      });
+    });
+  }).catch(function(e){ console.warn("Power League not loaded", e); PL.note = "Power League results couldn't be loaded here."; });
+}
+function plTable(e, id){
+  return '<table class="best">' + PLK.CH.map(function(c){ var r = e.results && e.results[c.k];
+    return '<tr><td>' + esc(PLK.chName(c, e.level)) + '</td><td>' + (r && r.best != null ? PLK.fmt(r.best, c) + ' <span class="muted" style="font-size:13px">' + PLK.chUnit(c, e.level) + '</span>' : '<span class="muted">–</span>') + '</td><td style="width:56px;text-align:right">' + (e.ch[c.k] || '<span class="muted">–</span>') + '</td></tr>'; }).join("") + '</table>';
+}
+function plStats(id){
+  var e = plFor(id);
+  return '<div class="card"><div class="eyebrow">Power League</div>'
+    + (e ? '<div class="stat-grid" style="margin-bottom:12px"><div class="stat"><div class="k">OVR</div><div class="v">' + e.ovr + '</div></div><div class="stat"><div class="k">League position</div><div class="v" style="font-size:16px">' + plPosLine(e) + '</div></div></div>'
+         + '<div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">' + PLK.STATS.map(function(k){ return '<div class="stat"><div class="k">' + k + '</div><div class="v">' + e.stats[k] + '</div></div>'; }).join("") + '</div>' + plTable(e, id)
+         : '<p class="muted" style="font-size:14px;margin:0">No Power League results yet.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
+    + '</div>';
+}
+function plPosLine(e){ var lp = PLK.leaguePos(PL.list, e); return lp.pos ? ord(lp.pos) + ' of ' + lp.of + ' · Level ' + esc(e.level) + ' · ' + esc(e.age) + ' · ' + esc(e.hrs) + ' hrs' : 'Not ranked yet'; }
+var PL_URL = "ngl-power-league.html";
+function plCard(id){
+  var e = plFor(id), g = GYM[id];
+  if(e){ var c = PLK.cardFor(e); c.name = displayName(id); c.club = g.club || c.club; c.season = "POWER LEAGUE"; return c; }
+  var blank = {}; PLK.STATS.forEach(function(k){ blank[k] = null; });
+  return {name:displayName(id), club:g.club, level:g.level, discipline:"MAG", overall:"–", attrs:blank, tier:"bronze", season:"POWER LEAGUE"};
+}
+
 /* ═════════════════ Start ═════════════════ */
 function start(){
   render();
-  (ADMIN ? loadAdmin() : loadDemo()).then(function(){ READY = true; if(ADMIN && !location.hash) location.hash = "#/admin"; render(); })
+  (ADMIN ? loadAdmin() : loadDemo()).then(function(){ READY = true; if(ADMIN && !location.hash) location.hash = "#/admin"; render();
+      (ADMIN ? loadPLAdmin() : Promise.resolve(demoPL())).then(function(){ PL.ready = true; if(/^#\/(card|stats|home)/.test(location.hash)) render(); }); })
     .catch(function(e){ READY = "error"; LOAD_ERROR = (e && e.message) || "Please try again."; render(); });
 }
 </script>
