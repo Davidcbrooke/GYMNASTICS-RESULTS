@@ -104,14 +104,14 @@
     <div>
       <div class="eyebrow">NGL General League · Boys</div>
       <h1>The <span>Power League</span></h1>
-      <p class="muted">Nine strength, speed, power, flexibility and control challenges. Coaches film them in training and send them to NGL, and every valid result goes straight into the league table and onto the gymnast's player card.</p>
+      <p class="muted">Nine strength, speed, power, flexibility, balance and control challenges. Coaches film them in training and send them to NGL, and every valid result goes straight into the league table and onto the gymnast's player card.</p>
       <div class="pills"><span class="pill gl">Levels 1–4</span><span class="pill">Ages 6–8 · 9–11 · 12–14 · 15+</span><span class="pill">2–5 hrs · 6–10 hrs</span><span class="pill">Open all season</span></div>
     </div>
     <div class="card accent">
       <div class="eyebrow" style="color:rgba(255,255,255,.85)">Player card stats</div>
       <div class="stats6">
-        <div><b>SPD</b><span>Speed</span></div><div><b>PWR</b><span>Power</span></div><div><b>STR</b><span>Strength</span></div>
-        <div><b>CORE</b><span>Core</span></div><div><b>FLX</b><span>Flexibility</span></div><div><b>CTRL</b><span>Control</span></div>
+        <div><b>SPD</b><span>Speed</span></div><div><b>POW</b><span>Power</span></div><div><b>STR</b><span>Strength</span></div>
+        <div><b>FLX</b><span>Flexibility</span></div><div><b>BAL</b><span>Balance</span></div><div><b>CTL</b><span>Control</span></div>
       </div>
       <p style="margin:12px 0 0;font-size:13px">Each stat is rated out of 99 against boys at the same level, age group and training hours. OVR is the average of all six.</p>
     </div>
@@ -190,10 +190,10 @@ const CH = [
   {k:'sprint', n:'10m Sprint', stat:'SPD', unit:'s', dir:-1, step:0.01,
    ok:['Standing start behind the line, no rocking start','Time from first movement to chest crossing the 10m line'],
    no:['False or flying start','Start or finish line out of shot']},
-  {k:'jump', n:'Standing Long Jump', stat:'PWR', unit:'cm', dir:1, step:1,
+  {k:'jump', n:'Standing Long Jump', stat:'POW', unit:'cm', dir:1, step:1,
    ok:['Both feet behind the line, two-foot take-off, no step','Must stick the landing and hold for 2 seconds','Measured from the line to the back of the nearest heel'],
    no:['Step, hop, fall or hand down on landing','Any run-up']},
-  {k:'tuck', n:'Tuck Jumps in 30s', stat:'PWR', unit:'reps', dir:1, step:1,
+  {k:'tuck', n:'Tuck Jumps in 30s', stat:'POW', unit:'reps', dir:1, step:1,
    ok:['Knees come up to at least hip height','Two-foot take-off and landing'],
    no:['Knees below hip height: that jump doesn’t count, but the count carries on']},
   {k:'push', n:'Push-ups in 30s', stat:'STR', unit:'reps', dir:1, step:1,
@@ -205,17 +205,17 @@ const CH = [
   {k:'dips', n:'Max Dips', stat:'STR', unit:'reps', dir:1, step:1,
    ok:['From straight-arm support, lower until the upper arms are parallel to the floor','Push back to straight arms'],
    no:['Not low enough or not locking out at the top','Feet touching the floor']},
-  {k:'hollow', n:'Hollow Hold', stat:'CORE', unit:'s', dir:1, step:1,
-   ok:['Lower back pressed to the floor','Arms by the ears, legs straight and together, shoulders and feet off the floor'],
-   no:['Time after the back lifts, the knees bend or the feet touch down']},
+  {k:'balance', n:'Single-Leg Balance (eyes closed)', stat:'BAL', unit:'s', dir:1, step:1,
+   ok:['Stand on one leg (either leg), hands on hips, eyes closed','Free foot lifted and resting against the standing knee','Time runs from eyes closing until the shape breaks'],
+   no:['Hands leaving the hips, the standing foot moving or hopping','The free foot touching down, or eyes opening']},
   {k:'pike', n:'Pike Fold Reach', stat:'FLX', unit:'cm', dir:1, step:1, off:20,
    ok:['Legs straight and together, toes pointing up','Both hands level, held for 2 seconds','Measured in cm past the toes (minus if short of them)'],
    no:['Bent knees or bouncing','One hand ahead of the other']},
-  {k:'hand', n:'Handstand Hold', stat:'CTRL', unit:'s', dir:1, step:1,
+  {k:'hand', n:'Handstand Hold', stat:'CTL', unit:'s', dir:1, step:1,
    ok:['Arms straight, legs together, straight body','Time starts when the feet come together at the top','Wall allowed at Levels 1–2, freestanding at Levels 3–4'],
    no:['Walking on the hands, legs apart or bent arms','Time stops when he moves or comes down']}
 ];
-const STATS = ['SPD','PWR','STR','CORE','FLX','CTRL'];
+const STATS = ['SPD','POW','STR','FLX','BAL','CTL'];
 const chName = (c, lvl) => (c.nLow && +lvl <= 2) ? c.nLow : c.n;
 const chUnit = (c, lvl) => (c.unitLow && +lvl <= 2) ? c.unitLow : c.unit;
 

@@ -257,6 +257,12 @@
   .pw-content .lede:last-child{margin-bottom:0;}
   .pw-content .ov-p{font-size:15px; line-height:1.6; color:var(--muted); margin:0 0 14px;}
   .pw-content .ov-p strong{color:var(--white); font-weight:700;}
+  .pw-content .ov-kicker{font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--pathway-color, var(--gold)); margin:0 0 6px;}
+  .pw-content .ov-h{font-size:22px; line-height:1.2; color:var(--white); margin:0 0 12px; font-weight:800;}
+  .pw-content .ov-list{margin:0 0 14px; padding-left:20px; color:var(--muted); font-size:15px; line-height:1.6;}
+  .pw-content .ov-list li{margin-bottom:6px;}
+  .pw-content .ov-list strong{color:var(--white);}
+  .pw-content .gender-tabs .stab{flex:1; text-align:center;}
   .pw-content .ov-formats{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:4px;}
   @media (max-width:640px){ .pw-content .ov-formats{grid-template-columns:1fr;} }
   .pw-content .ov-format{background:var(--navy); border:1px solid var(--line-soft); border-radius:12px; padding:14px 16px;}
@@ -1068,8 +1074,40 @@
             { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve your club's place now, pay later.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
             { icon:"🏆", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
             { icon:"📖", title:"Rules", sub:"Girls (Levels 1–4) and Boys (Levels 1–4) General League Rules 2027. Opens here.", inline:"general-2027" }
-          ],
-          extra: { title:"⚡ Power League · Boys", sub:"Nine strength, speed and fitness challenges, filmed in training. Live league table and player-card ratings all season.", url:"https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-power-league.html" }
+          ]
+        }
+      ]
+    },
+    general_boys: {
+      introHTML:
+        '<p class="ov-kicker">It\'s time to change the narrative</p>' +
+        '<h3 class="ov-h">It\'s not the boys. It\'s the offer.</h3>' +
+        '<p class="ov-p">Boys don\'t walk away from gymnastics because they don\'t enjoy it. They walk away because of what the sport offers them: training hours that clash with Saturday football and Sunday rugby, an image that tells them it isn\'t for them, and competitions with unfamiliar scoring and no season, no table and no team.</p>' +
+        '<p class="ov-p">At the NGL we\'re changing that. <strong>Gymnastics is the sport that powers all sports</strong>, and we\'ve built an experience that speaks to boys:</p>' +
+        '<ul class="ov-list">' +
+          '<li><strong>Lower training hours.</strong> Train with us and keep your football and rugby.</li>' +
+          '<li><strong>A real season.</strong> League tables, regional qualification and National Finals, just like the sports they already follow.</li>' +
+          '<li><strong>Kit that looks like sport.</strong> A fitted sports t-shirt with shorts or longs. No leotards.</li>' +
+          '<li><strong>The Power League.</strong> Nine strength, speed and power challenges, filmed in training, that build every boy\'s own <strong>NGL Player Card</strong>. Climb the table all season.</li>' +
+        '</ul>' +
+        '<p class="ov-p"><strong>Gymnastics doesn\'t replace their other sports. It makes them better at all of them.</strong></p>',
+      seasons: [
+        {
+          label: "This Season (2026)",
+          actions: [
+            { icon:"📅", title:"Season Schedule & Booking", sub:"Find and book your club's place via JustGo.", url:"https://www.nationalgymnasticsleague.co.uk/league-schedule-4" },
+            { icon:"🏆", title:"League Table & Qualification", sub:"Live results, league table and National Qualifiers.", url:"https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" },
+            { icon:"📖", title:"Rules", sub:"Boys Rules for the 2026 season.", url:"https://www.nationalgymnasticsleague.co.uk/handbook" }
+          ]
+        },
+        {
+          label: "Next Season (2027)",
+          actions: [
+            { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve your club's place now, pay later.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
+            { icon:"🏆", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
+            { icon:"📖", title:"Boys Rules", sub:"Boys General League Rules 2027, Levels 1–4. Opens here.", inline:"general-boys-2027" },
+            { icon:"⚡", title:"Power League", sub:"Nine strength, speed and power challenges, filmed in training. Live league table and NGL Player Card ratings all season.", url:"https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-power-league.html" }
+          ]
         }
       ]
     },
@@ -1204,6 +1242,7 @@
   var RULES_GROUPS = {
     'performance-2027':  { heading: 'Performance League Rules 2027', variants: [ { label:'Girls', doc:'performance-wag-bg-2027' }, { label:'Boys', doc:'performance-mag-2027' } ] },
     'general-2027':      { heading: 'General League Rules 2027',     variants: [ { label:'Girls', doc:'general-wag-2027' }, { label:'Boys', doc:'general-mag-2027' } ] },
+    'general-boys-2027': { heading: 'Boys General League Rules 2027', variants: [ { label:'Boys', doc:'general-mag-2027' } ] },
     'recreational-2027': { heading: 'Recreational Club Competition Rules 2027', variants: [ { label:'Rules', doc:'recreational-2027' } ] }
   };
 
@@ -1369,8 +1408,19 @@
         '<div class="section-panel active" data-sec="s0"><div class="action-grid">' + actionsHTML + '</div></div>' +
         '<div class="section-panel" data-sec="s1"><div class="action-grid">' + actionsHTML + '</div></div>';
     }
-    var tabs = data.seasons.map(function (s, i) { return '<div class="stab' + (i === 0 ? ' active' : '') + '" data-sec="s' + i + '">' + s.label + '</div>'; }).join('');
-    var panels = data.seasons.map(function (s, i) {
+    var boys = id === 'general' ? SEASON_DATA.general_boys : null;
+    if (boys) {
+      return '<div class="card">' + (data.overviewHTML || '<p class="lede">' + data.overview + '</p>') + '</div>' +
+        '<div class="section-tabs gender-tabs"><div class="stab active" data-sec="g-girls">Girls</div><div class="stab" data-sec="g-boys">Boys</div></div>' +
+        '<div class="section-panel active" data-sec="g-girls">' + seasonsHTML(data.seasons) + '</div>' +
+        '<div class="section-panel" data-sec="g-boys"><div class="card boys-intro">' + boys.introHTML + '</div>' + seasonsHTML(boys.seasons) + '</div>';
+    }
+    return '<div class="card">' + (data.overviewHTML || '<p class="lede">' + data.overview + '</p>') + '</div>' + seasonsHTML(data.seasons);
+  }
+
+  function seasonsHTML(seasons){
+    var tabs = seasons.map(function (s, i) { return '<div class="stab' + (i === 0 ? ' active' : '') + '" data-sec="s' + i + '">' + s.label + '</div>'; }).join('');
+    var panels = seasons.map(function (s, i) {
       var extraHTML = s.extra
         ? '<div class="action-grid" style="margin-top:12px;"><a class="action-card secondary" href="' + s.extra.url + '" target="_top">' +
           '<span class="action-title">' + s.extra.title + '</span><span class="action-sub">' + (s.extra.sub || '') + '</span></a></div>'
@@ -1378,7 +1428,7 @@
       return '<div class="section-panel' + (i === 0 ? ' active' : '') + '" data-sec="s' + i + '"><div class="action-grid">' +
         s.actions.map(actionCardHTML).join('') + '</div>' + extraHTML + '</div>';
     }).join('');
-    return '<div class="card">' + (data.overviewHTML || '<p class="lede">' + data.overview + '</p>') + '</div><div class="section-tabs">' + tabs + '</div>' + panels;
+    return '<div class="section-tabs">' + tabs + '</div>' + panels;
   }
 
   // ============================================================
