@@ -28,6 +28,13 @@ h1{font:700 44px/1.05 var(--cond);color:#fff;margin:8px 0 8px}
 .seasons button{font:700 17px var(--body);color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:10px 22px;cursor:pointer}
 .seasons button[aria-pressed="true"]{background:#fff;color:var(--navy);border-color:#fff}
 .tiles[hidden]{display:none}
+.dates{margin-top:28px}
+.dh{font:700 28px/1.1 var(--cond);color:#fff;margin:0 0 12px}
+.dmuted{color:#c9cde6;margin:0}
+.dcomp{display:grid;grid-template-columns:62px 1fr;gap:14px;align-items:center;background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:10px;border-left:6px solid var(--c,var(--gl))}
+.dcomp .d{background:var(--navy);color:#fff;border-radius:10px;text-align:center;padding:6px 0;line-height:1.1}.dcomp .d b{display:block;font:700 26px var(--cond)}.dcomp .d span{font-size:12px;text-transform:uppercase;letter-spacing:.06em;opacity:.85}
+.dcomp h3{margin:0;color:var(--navy);font-size:17px}.dcomp .m{font-size:14px;color:var(--muted)}
+.dcomp .tag{display:inline-block;font-size:12px;font-weight:800;padding:2px 9px;border-radius:10px;margin-right:6px;color:#fff;background:var(--c,var(--gl))}
 .tiles{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 .tile{background:#fff;border-radius:16px;padding:22px 22px 20px;text-decoration:none;color:inherit;display:flex;flex-direction:column;border-top:6px solid var(--c,var(--gl));transition:transform .15s,box-shadow .15s}
 a.tile:hover{transform:translateY(-3px);box-shadow:0 14px 30px -14px rgba(0,0,0,.6)}
@@ -86,18 +93,51 @@ footer{text-align:center;color:#b9bbdc;font-size:14px;padding:10px 16px 30px}foo
       <span class="soon">Coming soon</span><h2>Your gymnast’s hub</h2>
       <p>Your gymnast’s own General League Hub: their NGL Player Card, scores, stats and upcoming competitions. Your club will send you the details.</p></div>
   </div>
+  <section class="dates">
+    <h2 class="dh">Competition dates <span id="dSeason">2026</span></h2>
+    <div id="dList"><p class="dmuted">Loading the competition dates…</p></div>
+  </section>
   <div class="club">
     <div><h3>Is your gymnast’s club in the NGL?</h3><p>The NGL is exclusively for British Gymnastics clubs. Tell your club about it: registering is free and takes 30 seconds.</p></div>
     <a class="btn" href="https://club.nationalgymnasticsleague.co.uk/#register" target="_top">Clubs: register here</a>
   </div>
-  <p class="small">Only first names and surname initials are ever shown publicly.</p>
 </main>
 <footer>National Gymnastics League · Exclusively for British Gymnastics Clubs · <a href="mailto:admin@nationalgymnasticsleague.co.uk">admin@nationalgymnasticsleague.co.uk</a></footer>
 </div>
 <script>
+/* Competition dates: read straight from the NGL booking system (public list of competitions) */
+var COMPS = null, SEASON = '2026';
+var PW = {general:{n:'General League', c:'#0071B3'}, recreational:{n:'Recreational', c:'#E88230'}, performance:{n:'Performance League', c:'#01AFB8'}};
+function esc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function val(f){ if(!f) return ''; return f.stringValue != null ? f.stringValue : f.integerValue != null ? f.integerValue : f.booleanValue != null ? f.booleanValue : ''; }
+function drawDates(){
+  var el = document.getElementById('dList'); document.getElementById('dSeason').textContent = SEASON;
+  if(COMPS === null) return;
+  var today = new Date(new Date().toDateString());
+  var list = COMPS.filter(function(c){ return c.date.slice(0, 4) === SEASON && c.d >= today && c.pw !== 'schools' && c.pw !== 'preschool'; });
+  if(!list.length){ el.innerHTML = '<p class="dmuted">' + (SEASON === '2026' ? 'No more competitions this season.' : 'The 2027 dates will appear here.') + '</p>'; return; }
+  el.innerHTML = list.map(function(c){ var p = PW[c.pw] || PW.general, g = c.gender === 'girls' ? 'Girls' : c.gender === 'boys' ? 'Boys' : '';
+    return '<div class="dcomp" style="--c:' + p.c + '"><div class="d"><span>' + c.d.toLocaleDateString('en-GB', {month:'short'}) + '</span><b>' + c.d.getDate() + '</b><span>' + c.d.toLocaleDateString('en-GB', {weekday:'short'}) + '</span></div>' +
+      '<div><h3>' + esc(c.name) + '</h3><div class="m"><span class="tag">' + p.n + '</span>' + (g ? esc(g) + ' · ' : '') + esc(c.venue || 'Venue to be confirmed') + '</div></div></div>'; }).join('');
+}
+fetch('https://firestore.googleapis.com/v1/projects/saadi-rotation/databases/(default)/documents/ngl_competitions?pageSize=300&key=AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4')
+  .then(function(r){ return r.json(); })
+  .then(function(j){
+    COMPS = (j.documents || []).map(function(d){ var f = d.fields || {}, date = String(val(f.date)).slice(0, 10), name = val(f.name);
+      var pw = val(f.pathway) || (/rec/i.test(name + ' ' + val(f.level)) ? 'recreational' : 'general');
+      var y = +date.slice(0, 4), m = +date.slice(5, 7), dd = +date.slice(8, 10);
+      return {name:name, date:date, d:new Date(y, m - 1, dd), venue:val(f.venue), gender:val(f.gender), pw:pw, hidden:val(f.hidden) === true || val(f.status) === 'hidden'}; })
+      .filter(function(c){ return c.date.length === 10 && !c.hidden; })
+      .sort(function(a, b){ return a.d - b.d; });
+    drawDates();
+  })
+  .catch(function(){ document.getElementById('dList').innerHTML = '<p class="dmuted">We couldn’t load the dates just now. Please try again later.</p>'; });
+</script>
+<script>
 document.querySelectorAll('[data-season]').forEach(function(b){ b.onclick = function(){
   document.querySelectorAll('[data-season]').forEach(function(x){ x.setAttribute('aria-pressed', x === b); });
   document.querySelectorAll('.tiles[data-for]').forEach(function(t){ t.hidden = t.dataset.for !== b.dataset.season; });
+  SEASON = b.dataset.season; drawDates();
 }; });
 </script>
 <script>/* On the NGL website this page sits in a Squarespace code block; tell it our height */

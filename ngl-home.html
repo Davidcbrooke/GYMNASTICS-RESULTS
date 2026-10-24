@@ -56,6 +56,10 @@
     background:var(--red);
     border-radius:0 0 16px 16px;
   }
+  .what-ngl{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 22px;max-width:860px;margin:16px 0 0}
+  .what-ngl div{border-left:4px solid var(--gold);padding:2px 0 2px 12px;color:var(--white);font-size:clamp(14px,1.4vw,16px);line-height:1.45}
+  .what-ngl b{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+  .what-ngl span{color:var(--muted)}
   .hero p{
     max-width:720px;
     color:var(--muted);
@@ -89,6 +93,7 @@
     font-weight:700;
     flex:0 0 auto;
   }
+  .step-note a.parent-jump{display:inline-block;margin:4px 0 8px;background:var(--gold);color:var(--navy);font-weight:800;text-decoration:none;padding:9px 16px;border-radius:999px}
   .step-note{
     min-height:1.4em;
     color:var(--muted);
@@ -720,6 +725,10 @@
   <div class="hero">
     <h1>The National Gymnastics League</h1>
     <p>One connected framework for British Gymnastics clubs — training, awards, competitions and club support, across seven pathways spanning every age and ability.</p>
+    <div class="what-ngl">
+      <div><b>For clubs</b><span>Awards schemes, competitions and club support in one connected system, run from your free NGL Club Hub.</span></div>
+      <div><b>For families</b><span>Where your gymnast earns their awards, competes all season and follows their scores in the National League Table.</span></div>
+    </div>
     <!-- Club and gymnast figures load live from the booking system (same totals as the Admin booking dashboard). The numbers below are only a fallback. -->
     <div class="proof" aria-label="NGL in numbers">
       <div><b id="liveClubs">27</b><span>clubs already booked for the 2027 season</span></div>
@@ -760,7 +769,7 @@
     <div class="step-label"><span class="num">2</span> <span id="step2-title">Which pathway is your gymnast on?</span></div>
     <div class="pathway-block" id="pathway-block">
       <div class="system">
-        <div class="title-banner">Supporting British Gymnastics Clubs to Be Better Across All Areas of Their Business</div>
+        <div class="title-banner" id="pathway-banner">Supporting British Gymnastics Clubs to Be Better Across All Areas of Their Business</div>
         <div class="pathway-row" id="pathway-row">
           <button class="stage" style="--stage-color:#ef2891;" data-id="preschool" data-name="Pre-School" aria-pressed="false">
             <div class="stage-name">Pre-School</div>
@@ -918,7 +927,7 @@
   // ============================================================
   var audienceNotes = {
     club: "Everything to run your pathway — awards scheme, competitions, judging and club support, in one place.",
-    parent: "Follow your gymnast's pathway — their awards progress and upcoming competitions, at a glance."
+    parent: "Looking for results? <a class=\"parent-jump\" href=\"https://www.nationalgymnasticsleague.co.uk/parents\" target=\"_top\">Results, league tables &amp; the Power League &rarr;</a><br>Or pick your gymnast's pathway below to see their awards and competitions."
   };
   var audienceButtons = document.querySelectorAll('.audience-btn');
   var audienceNote = document.getElementById('audience-note');
@@ -930,7 +939,8 @@
     btn.addEventListener('click', function () {
       audienceButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
       selectedAudience = btn.dataset.audience;
-      audienceNote.textContent = audienceNotes[btn.dataset.audience] || '';
+      audienceNote.innerHTML = audienceNotes[btn.dataset.audience] || '';
+      document.getElementById('pathway-banner').textContent = selectedAudience === 'club' ? 'Supporting British Gymnastics Clubs to Be Better Across All Areas of Their Business' : 'Every pathway, from first steps to the NGL National Finals';
       document.getElementById('step2-title').textContent = selectedAudience === 'club' ? 'Which pathway would you like to look at?' : 'Which pathway is your gymnast on?';
       pathwayBlock.classList.add('open');
       // Switching Club <-> Parent after a pathway is picked changes what
@@ -983,7 +993,7 @@
   var SCHOOLS_PARENT_HUB_URL = 'https://nglschools.co.uk/';
 
   // ---- Recreational levels / skills / videos (shared by Awards + Competitions) ----
-  var REC_BOOK_URL = 'https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration';
+  var REC_BOOK_URL = 'https://club.nationalgymnasticsleague.co.uk/#book-recreational';   // reserving goes through the NGL Club Hub, so places show in the club's account
   var REC_LEVELS = [
     {id:'ruby', name:'Ruby', tag:'Beginner', color:'#c90511'},
     {id:'pink', name:'Pink', tag:'Beginner +', color:'#f65eb7'},
@@ -1075,7 +1085,7 @@
         {
           label: "Next Season (2027)",
           actions: [
-            { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve your club's place now, pay later.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
+            { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve places in your NGL Club Hub: no payment and no commitment to buy.", url:"https://club.nationalgymnasticsleague.co.uk/#book-general" },
             { icon:"🏆", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
             { icon:"📖", title:"Rules", sub:"Girls (Levels 1–4) and Boys (Levels 1–4) General League Rules 2027. Opens here.", inline:"general-2027" }
           ]
@@ -1107,7 +1117,7 @@
         {
           label: "Next Season (2027)",
           actions: [
-            { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve your club's place now, pay later.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
+            { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve places in your NGL Club Hub: no payment and no commitment to buy.", url:"https://club.nationalgymnasticsleague.co.uk/#book-general" },
             { icon:"🏆", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
             { icon:"📖", title:"Boys Rules", sub:"Boys General League Rules 2027, Levels 1–4. Opens here.", inline:"general-boys-2027" },
             { icon:"⚡", title:"Power League", sub:"Nine strength, speed and power challenges, filmed in training. Live league table and NGL Player Card ratings all season.", url:"https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-power-league.html" }
@@ -1378,7 +1388,7 @@
 
   function recreationalCompetitionPanelHTML(){
     return hostTeaserHTML() + '<div class="card"><p class="lede">A simple, positive-scoring club competition, exclusively for British Gymnastics clubs &mdash; every gymnast leaves with a medal.</p>' +
-      '<a class="buy-btn" href="' + REC_BOOK_URL + '" target="_top">Book Now</a></div>' +
+      (selectedAudience === 'parent' ? '' : '<a class="buy-btn" href="' + REC_BOOK_URL + '" target="_top">Reserve places</a>') + '</div>' +
       '<div class="section-tabs"><div class="stab active" data-sec="rec-comp">Competition</div><div class="stab" data-sec="rec-videos">Routine Videos</div></div>' +
       '<div class="section-panel active" data-sec="rec-comp">' +
       '<div class="action-grid" style="margin-bottom:16px;">' + actionCardHTML({ icon:"📖", title:"Club Competition Rules 2027", sub:"The one-page rules sheet — options, scoring, medals and routines. Opens here.", inline:"recreational-2027" }) + '</div>' +
@@ -1390,7 +1400,7 @@
       '<div class="gallery-label">Scoring &mdash; positive 10.0</div><ul><li>Skill completion &mdash; 4.0</li><li>Shapes and technique &mdash; 4.0</li><li>Confidence and effort &mdash; 2.0</li></ul>' +
       '<p class="lede">Gymnasts build their score &mdash; points are awarded, not taken away. Gymnasts training over 1 hour a week may only enter Teal and Indigo.</p>' +
       '<p class="lede">2 Piece (Floor &amp; Vault) or 4 Piece (Floor, Vault, Beam &amp; Bars) competitions for gymnasts training less than 2 hours a week, with routines that are simple, age-appropriate and confidence-building.</p>' +
-      '<a class="buy-btn" href="' + REC_BOOK_URL + '" target="_top">Book Now</a></div></div>' +
+      (selectedAudience === 'parent' ? '' : '<a class="buy-btn" href="' + REC_BOOK_URL + '" target="_top">Reserve places</a>') + '</div></div>' +
       '<div class="section-panel" data-sec="rec-videos"><div class="card"><p class="lede">Every competition routine, organised by Level &mdash; tap a Level to reveal its Floor, Vault, Beam and Bars videos.</p>' +
       recVideoLevelsHTML() + '</div></div>';
   }
@@ -1430,7 +1440,7 @@
           '<span class="action-title">' + s.extra.title + '</span><span class="action-sub">' + (s.extra.sub || '') + '</span></a></div>'
         : '';
       return '<div class="section-panel' + (i === 0 ? ' active' : '') + '" data-sec="s' + i + '"><div class="action-grid">' +
-        s.actions.map(actionCardHTML).join('') + '</div>' + extraHTML + '</div>';
+        s.actions.filter(function (a) { return selectedAudience !== 'parent' || !/^(Season Schedule|Register interest)/.test(a.title); }).map(actionCardHTML).join('') + '</div>' + extraHTML + '</div>';
     }).join('');
     return '<div class="section-tabs">' + tabs + '</div>' + panels;
   }
@@ -1608,7 +1618,7 @@
         '<div class="event-row"><span class="event-icon">📍</span><span><strong>' + g.venue + '</strong></span></div>' +
       '</div>' +
       '<p class="lede" style="margin-top:16px;">The Graduation Performance brings every school on the programme together to show what they\'ve learned across the year, with Bronze, Silver and Gold certificates presented on the day.</p>' +
-      '<a class="buy-btn" href="' + BOOKING_URL + '?pathway=schools" target="_top">Book Now</a>' +
+      (selectedAudience === 'parent' ? '' : '<a class="buy-btn" href="https://club.nationalgymnasticsleague.co.uk/#book-schools" target="_top">Reserve places</a>') +
       '</div>';
   }
 
@@ -1873,7 +1883,7 @@
     }
     if (keep) {
       choiceRow.querySelectorAll('.choice-card').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.type === keep)); });
-      if ((keep === 'competitions' && selectedPathwayId === 'recreational') || keep === 'awards') showStep4(selectedPathwayId, keep); // re-render club/parent content
+      if (keep === 'competitions' || keep === 'awards') showStep4(selectedPathwayId, keep); // re-render club/parent content
     }
   }
 
