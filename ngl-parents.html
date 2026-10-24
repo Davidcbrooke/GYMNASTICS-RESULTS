@@ -24,6 +24,10 @@ body{margin:0;font:16px/1.55 var(--body);color:var(--ink);background:linear-grad
 main{padding:18px 0 40px}
 h1{font:700 44px/1.05 var(--cond);color:#fff;margin:8px 0 8px}
 .lead{color:#d9daf2;max-width:720px;margin:0 0 22px;font-size:18px}
+.seasons{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.seasons button{font:700 17px var(--body);color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:10px 22px;cursor:pointer}
+.seasons button[aria-pressed="true"]{background:#fff;color:var(--navy);border-color:#fff}
+.tiles[hidden]{display:none}
 .tiles{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 .tile{background:#fff;border-radius:16px;padding:22px 22px 20px;text-decoration:none;color:inherit;display:flex;flex-direction:column;border-top:6px solid var(--c,var(--gl));transition:transform .15s,box-shadow .15s}
 a.tile:hover{transform:translateY(-3px);box-shadow:0 14px 30px -14px rgba(0,0,0,.6)}
@@ -52,9 +56,26 @@ footer{text-align:center;color:#b9bbdc;font-size:14px;padding:10px 16px 30px}foo
 <main class="wrap">
   <h1>Follow your gymnast’s season</h1>
   <p class="lead">Live results from every NGL competition, the National League Table and the boys’ Power League, all in one place.</p>
-  <div class="tiles">
+  <div class="seasons" role="tablist" aria-label="Season">
+    <button type="button" data-season="2026" aria-pressed="true">2026 season</button>
+    <button type="button" data-season="2027" aria-pressed="false">2027 season</button>
+  </div>
+  <div class="tiles" data-for="2026">
+    <a class="tile" style="--c:var(--gl)" href="https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" target="_top">
+      <span class="ic" aria-hidden="true">🏆</span><h2>Results &amp; league table</h2>
+      <p>Every result from this season’s competitions and the 2026 National League Table.</p>
+      <span class="go">See the 2026 results →</span></a>
+    <a class="tile" style="--c:#0f6bac" href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/national-qualifier.html" target="_blank" rel="noopener">
+      <span class="ic" aria-hidden="true">🎟️</span><h2>National Qualifiers</h2>
+      <p>Who has qualified to represent their region at the NGL National Finals 2026.</p>
+      <span class="go">See the qualifiers →</span></a>
+    <div class="tile" style="--c:var(--red)">
+      <span class="soon">Coming soon</span><h2>Your gymnast’s hub</h2>
+      <p>Your gymnast’s own General League Hub: their NGL Player Card, scores, stats and upcoming competitions. Your club will send you the details.</p></div>
+  </div>
+  <div class="tiles" data-for="2027" hidden>
     <a class="tile" style="--c:var(--gl)" href="https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" target="_top">
-      <span class="ic" aria-hidden="true">🏆</span><h2>Results &amp; league tables</h2>
+      <span class="ic" aria-hidden="true">🏆</span><h2>Results &amp; league table</h2>
       <p>Live results on competition day, the 2027 National League Table and regional qualification for the NGL National Finals.</p>
       <span class="go">See the 2027 league table →</span></a>
     <a class="tile" style="--c:#0f6bac" href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-power-league.html" target="_blank" rel="noopener">
@@ -63,8 +84,7 @@ footer{text-align:center;color:#b9bbdc;font-size:14px;padding:10px 16px 30px}foo
       <span class="go">See the Power League →</span></a>
     <div class="tile" style="--c:var(--red)">
       <span class="soon">Coming soon</span><h2>Your gymnast’s hub</h2>
-      <p>Your gymnast’s own General League Hub: their NGL Player Card, scores, stats and upcoming competitions. Your club will send you the details.</p>
-      <div class="more"><a href="https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" target="_top">2026 results</a><a href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/national-qualifier.html" target="_blank" rel="noopener">2026 National Qualifiers</a></div></div>
+      <p>Your gymnast’s own General League Hub: their NGL Player Card, scores, stats and upcoming competitions. Your club will send you the details.</p></div>
   </div>
   <div class="club">
     <div><h3>Is your gymnast’s club in the NGL?</h3><p>The NGL is exclusively for British Gymnastics clubs. Tell your club about it: registering is free and takes 30 seconds.</p></div>
@@ -74,6 +94,12 @@ footer{text-align:center;color:#b9bbdc;font-size:14px;padding:10px 16px 30px}foo
 </main>
 <footer>National Gymnastics League · Exclusively for British Gymnastics Clubs · <a href="mailto:admin@nationalgymnasticsleague.co.uk">admin@nationalgymnasticsleague.co.uk</a></footer>
 </div>
+<script>
+document.querySelectorAll('[data-season]').forEach(function(b){ b.onclick = function(){
+  document.querySelectorAll('[data-season]').forEach(function(x){ x.setAttribute('aria-pressed', x === b); });
+  document.querySelectorAll('.tiles[data-for]').forEach(function(t){ t.hidden = t.dataset.for !== b.dataset.season; });
+}; });
+</script>
 <script>/* On the NGL website this page sits in a Squarespace code block; tell it our height */
 (function(){ if(parent === window) return; document.body.style.minHeight = '0'; document.documentElement.classList.add('embed');
   var el = document.querySelector('.ngl-page'), last = 0;
