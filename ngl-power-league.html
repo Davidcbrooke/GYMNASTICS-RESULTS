@@ -107,7 +107,10 @@
     .note{font-size:14px}
     
   }
+html.embed .topbar,html.embed .hero,html.embed footer,html.embed #admin{display:none!important}
+html.embed body{min-height:0}html.embed main{padding-top:14px}
 </style>
+<script>if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed');</script>
 </head>
 <body>
 <header class="topbar"><div class="topbar-strap">NGL General League · Power League · Boys</div><div class="topbar-in">
@@ -222,7 +225,7 @@ function setupPublic(){
   $('viewTabs').innerHTML = `<button class="tab on" data-v="overall">Overall</button>` + CH.map(c => `<button class="tab" data-v="${c.k}">${esc(c.n)}</button>`).join('');
   $('viewTabs').onclick = e => { const b = e.target.closest('[data-v]'); if(!b) return; VIEW = b.dataset.v; [...$('viewTabs').children].forEach(x => x.classList.toggle('on', x === b)); renderTable(); };
   opts($('fLevel'), LEVELS, 'All levels', v => 'Level ' + v); opts($('fAge'), AGES, 'All ages'); opts($('fHrs'), HRS, 'All hours', v => v + ' hrs');
-  ['fLevel','fAge','fHrs'].forEach(id => $(id).onchange = renderTable); $('fFind').oninput = renderTable;
+  ['fLevel','fAge','fHrs'].forEach(id => $(id).onchange = renderTable); $('fFind').oninput = renderTable; try{ const qc = new URLSearchParams(location.search).get('club'); if(qc) $('fFind').value = qc; }catch(_){}
   $('chList').innerHTML = CH.map(c => `<div class="card ch"><h3>${esc(c.n)}${c.nLow ? ` <span class="muted" style="font-weight:600;font-size:13px">(${esc(c.nLow)} at Levels 1–2)</span>` : ''}<small>${c.stat}</small></h3>
     <div class="ok">Counts</div><ul>${c.ok.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
     <div class="no">Doesn’t count</div><ul>${c.no.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('');
@@ -358,5 +361,11 @@ if(ADMIN) onAuthStateChanged(auth, async u => {
   renderAdmin();
 });
 </script>
+<script>/* Inside the General League Club Hub: report this page's height so the hub can size the frame */
+(function(){ if(!document.documentElement.classList.contains('embed') || parent === window) return;
+  var last = 0; function send(){ var h = Math.ceil(document.body.getBoundingClientRect().height) + 24; if(Math.abs(h - last) > 2){ last = h; try{ parent.postMessage({nglPowerHeight:h}, '*'); }catch(e){} } }
+  try{ new ResizeObserver(send).observe(document.body); }catch(e){ setInterval(send, 800); }
+  window.addEventListener('load', send);
+})();</script>
 </body>
 </html>

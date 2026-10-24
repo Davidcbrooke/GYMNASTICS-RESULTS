@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14254a">
+<title>NGL Parents &amp; Gymnasts</title>
+<meta name="description" content="Live results, league tables and the Power League for NGL gymnasts and their families.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14254a;--ink:#16213a;--muted:#5d6782;--red:#C9142E;--gl:#0071B3;--cond:'Barlow Condensed','Arial Narrow',sans-serif;--body:'Barlow',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.55 var(--body);color:var(--ink);background:linear-gradient(180deg,#14254a 0,#1e1a4c 900px,#1e1a4c 100%) #1e1a4c;min-height:100vh}
+.wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+.top{background:var(--red)}
+.strap{text-align:center;color:#fff;font-weight:800;font-size:13px;letter-spacing:.04em;padding:7px 16px}
+.band{background:linear-gradient(180deg,#29235c 0%,#29235c 40%,#14254a 100%);border-top-right-radius:120px 38px;padding-bottom:4px}
+@media(min-width:700px){.band{border-top-right-radius:220px 46px}}
+.row{display:flex;align-items:center;gap:10px;min-height:76px;padding:10px 16px;flex-wrap:wrap}
+.logo{margin-right:auto;display:block}.logo img{height:50px;display:block}
+@media(min-width:700px){.logo img{height:60px}}
+.tbtn{display:inline-block;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.35)}
+main{padding:18px 0 40px}
+h1{font:700 44px/1.05 var(--cond);color:#fff;margin:8px 0 8px}
+.lead{color:#d9daf2;max-width:720px;margin:0 0 22px;font-size:18px}
+.tiles{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.tile{background:#fff;border-radius:16px;padding:22px 22px 20px;text-decoration:none;color:inherit;display:flex;flex-direction:column;border-top:6px solid var(--c,var(--gl));transition:transform .15s,box-shadow .15s}
+a.tile:hover{transform:translateY(-3px);box-shadow:0 14px 30px -14px rgba(0,0,0,.6)}
+.tile .ic{font-size:34px;line-height:1;margin-bottom:10px}
+.tile h2{font:700 26px/1.1 var(--cond);color:var(--navy);margin:0 0 6px}
+.tile p{margin:0 0 14px;color:var(--muted)}
+.tile .go{margin-top:auto;font-weight:800;color:var(--c,var(--gl))}
+.tile .more{display:flex;gap:14px;flex-wrap:wrap;margin-top:auto}
+.tile .more a{font-weight:700;color:var(--c,var(--gl))}
+.soon{display:inline-block;background:#e8f1f8;color:var(--gl);font-weight:800;font-size:13px;padding:3px 10px;border-radius:12px;margin-bottom:8px;align-self:flex-start}
+.club{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:16px;padding:20px 22px;margin-top:26px;color:#fff;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}
+.club h3{margin:0;font:700 24px/1.1 var(--cond)}
+.club p{margin:4px 0 0;color:#d9daf2}
+.club a.btn{margin-left:auto;background:var(--red);color:#fff;text-decoration:none;font-weight:700;padding:10px 18px;border-radius:999px}
+.small{font-size:14px;color:#b9bbdc;margin-top:18px}
+footer{text-align:center;color:#b9bbdc;font-size:14px;padding:10px 16px 30px}footer a{color:#fff}
+</style>
+</head>
+<body>
+<div class="top"><div class="strap">National Gymnastics League · Parents &amp; Gymnasts</div><div class="band"><div class="wrap row">
+  <a class="logo" href="https://www.nationalgymnasticsleague.co.uk/" aria-label="National Gymnastics League"><img src="brand/ngl-logo-full.png" alt="NGL"></a>
+  <a class="tbtn" href="https://www.nationalgymnasticsleague.co.uk/">NGL website</a>
+</div></div></div>
+<main class="wrap">
+  <h1>Follow your gymnast’s season</h1>
+  <p class="lead">Live results from every NGL competition, the National League Table and the boys’ Power League, all in one place.</p>
+  <div class="tiles">
+    <a class="tile" style="--c:var(--gl)" href="https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" target="_top">
+      <span class="ic" aria-hidden="true">🏆</span><h2>Results &amp; league tables</h2>
+      <p>Live results on competition day, the 2027 National League Table and regional qualification for the NGL National Finals.</p>
+      <span class="go">See the 2027 league table →</span></a>
+    <a class="tile" style="--c:#0f6bac" href="ngl-power-league.html" target="_top">
+      <span class="ic" aria-hidden="true">⚡</span><h2>Power League</h2>
+      <p>Nine strength, speed and power challenges for boys, filmed in training. See the table and every boy’s NGL Player Card ratings.</p>
+      <span class="go">See the Power League →</span></a>
+    <div class="tile" style="--c:var(--red)">
+      <span class="soon">Coming soon</span><h2>Your gymnast’s hub</h2>
+      <p>Your gymnast’s own General League Hub: their NGL Player Card, scores, stats and upcoming competitions. Your club will send you the details.</p>
+      <div class="more"><a href="https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" target="_top">2026 results</a><a href="national-qualifier.html" target="_top">2026 National Qualifiers</a></div></div>
+  </div>
+  <div class="club">
+    <div><h3>Is your gymnast’s club in the NGL?</h3><p>The NGL is exclusively for British Gymnastics clubs. Tell your club about it: registering is free and takes 30 seconds.</p></div>
+    <a class="btn" href="https://club.nationalgymnasticsleague.co.uk/#register" target="_top">Clubs: register here</a>
+  </div>
+  <p class="small">Only first names and surname initials are ever shown publicly.</p>
+</main>
+<footer>National Gymnastics League · Exclusively for British Gymnastics Clubs · <a href="mailto:admin@nationalgymnasticsleague.co.uk">admin@nationalgymnasticsleague.co.uk</a></footer>
+</body>
+</html>

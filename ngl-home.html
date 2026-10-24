@@ -623,6 +623,8 @@
     margin:0 0 10px 2px;
   }
   .quick-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .quick-groups{display:flex; flex-wrap:wrap; gap:18px 34px;}
+  @media (max-width:480px){ .quick-groups > div{flex:1 1 100%;} .quick-groups .quick-pill{flex:1 1 100%;} }
   .quick-pill{
     display:inline-block;
     padding:10px 16px;
@@ -728,9 +730,19 @@
   </div>
 
   <div class="quick">
-    <div class="quick-label">British Gymnastics clubs</div>
-    <div class="quick-row">
-      <a class="quick-pill start" href="https://club.nationalgymnasticsleague.co.uk/#register" target="_top">Clubs: Register Here</a>
+    <div class="quick-groups">
+      <div>
+        <div class="quick-label">British Gymnastics clubs</div>
+        <div class="quick-row">
+          <a class="quick-pill start" href="https://club.nationalgymnasticsleague.co.uk/#register" target="_top">Clubs: Register Here</a>
+        </div>
+      </div>
+      <div>
+        <div class="quick-label">Parents and gymnasts</div>
+        <div class="quick-row">
+          <a class="quick-pill" href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/ngl-parents.html" target="_top">Parents &amp; Gymnasts: Results &amp; League Tables</a>
+        </div>
+      </div>
     </div>
     <p class="quick-help">Need some help to get to the right place?</p>
   </div>
