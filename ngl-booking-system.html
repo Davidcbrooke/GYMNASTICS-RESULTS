@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NGL Competition Booking 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script>/* ?embed=1: shown inside the NGL Club Hub, so the page's own header is hidden */
+if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed');
+if(/[?&]admin/.test(location.search)) document.documentElement.classList.add('adminmode');</script>
 <style>
   :root {
     --navy:       #0d1b3e;
@@ -368,17 +373,62 @@
   .btn-edit { background: none; border: 1px solid var(--border); color: var(--navy); padding: 3px 7px; font-size: 0.68rem; font-family: var(--font); cursor: pointer; border-radius: 2px; transition: all 0.1s; }
   .btn-edit:hover { background: var(--navy); color: var(--white); border-color: var(--navy); }
 </style>
+<style>
+/* ===== NGL hub look: same header band, fonts, colours and pill buttons as the Club Hub ===== */
+:root{--navy:#14254a;--navy-light:#223a70;--red:#C9142E;--red-hover:#a8102a;--font:'Barlow',-apple-system,'Segoe UI',Arial,sans-serif;--cond:'Barlow Condensed','Barlow',Arial,sans-serif;--off-white:#f4f5f8;--border:#d6dbe6;--grey-mid:#5d6782;--text:#16213a}
+body{font-size:15px}
+.hub-top{position:relative;z-index:30;background:#C9142E}
+.hub-top .strap{text-align:center;color:#fff;font-weight:800;font-size:13px;letter-spacing:.04em;padding:7px 16px}
+.hub-top .band{background:linear-gradient(180deg,#29235c 0%,#29235c 40%,#14254a 100%);border-top-right-radius:120px 38px;padding-bottom:4px}
+@media(min-width:700px){.hub-top .band{border-top-right-radius:220px 46px}}
+.hub-top .hub-row{display:flex;align-items:center;gap:10px;min-height:76px;padding:10px 16px;flex-wrap:wrap;max-width:1120px;margin:0 auto}
+.hub-top .hub-logo{margin-right:auto;display:block}.hub-top .hub-logo img{height:50px;display:block}
+@media(min-width:700px){.hub-top .hub-logo img{height:60px}}
+.hub-top .top-nav{background:none;border:0;height:auto;padding:0;display:flex}
+.hub-top .nav-tabs{gap:8px;flex-wrap:wrap;overflow:visible}
+.hub-top .nav-tab,.hub-top .tbtn{height:auto;margin:0;display:inline-block;color:#fff;text-decoration:none;font:700 14px var(--font);letter-spacing:0;text-transform:none;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:transparent}
+.hub-top .nav-tab:hover,.hub-top .tbtn:hover{background:rgba(255,255,255,.1);color:#fff}
+.hub-top .nav-tab.active{background:#fff;color:#14254a;border-color:#fff}
+.hub-top .tbtn.red{background:#C9142E;border-color:#C9142E}
+.nav-tab.admin-tab{display:none!important}html.adminmode .nav-tab.admin-tab{display:inline-block!important}
+.hero{background:linear-gradient(180deg,#14254a 0,#1e1a4c 100%)}
+.hero h1,.sec-title,.ci-name,.success-ref,.date-badge .dbday{font-family:var(--cond);letter-spacing:.01em}
+.hero h1{font-weight:700;font-size:clamp(2rem,5.4vw,3.2rem);line-height:1.05}
+.hero p{color:#c9cde6;font-size:1rem}
+.hero-kicker{border-radius:999px;color:#d9daf2;border-color:rgba(255,255,255,.3)}
+.hero-badge{border-radius:999px;color:#e6e7f6}
+.sec-title{font-size:1.6rem;font-weight:700}
+.path-card,.comp-card,.no-comps,.loading-bar,.load-error{border-radius:14px;overflow:hidden}
+.path-card-head{background:linear-gradient(180deg,#29235c,#14254a)}
+.date-badge{border-radius:10px}
+.form-card{border-radius:14px;overflow:hidden}.fc-head{background:linear-gradient(180deg,#29235c,#14254a)!important}.fc-head h2{font-family:var(--cond);font-size:1.5rem}
+.btn-book,.path-card-cta,.back-to-paths,.fc-chip,.fc-book,.btn-again,.btn-signin,.btn-logout,.btn-add,.btn-export,.btn-save,.btn-cancel,.pill,.hero-badge,.comp-icon{border-radius:999px!important;text-transform:none!important;letter-spacing:0!important;font-family:var(--font)!important}
+.btn-book,.path-card-cta,.back-to-paths,.btn-again,.btn-signin,.btn-add,.btn-save,.fc-book{font-size:.95rem!important;font-weight:700}
+.fg input,.fg select,.spaces-input,.table-toolbar input,.table-toolbar select{border-radius:8px}
+
+/* Inside the Club Hub: no page header, no pathway hero, straight to the dates */
+html.embed body{background:transparent;min-height:0!important}
+html.embed .hub-top,html.embed #panel-home .hero,html.embed .back-to-paths,html.embed .hero-badges,html.embed .ngl-foot,html.embed .footer{display:none!important}
+html.embed #path-hero{background:none;padding:6px 16px 0}
+html.embed #path-hero h1,html.embed #path-hero p,html.embed #path-kicker{display:none}
+html.embed .booking-section{padding-top:16px}
+html.embed .path-grid{margin-top:8px}
+html.embed #panel-home > div[style*="text-align:center"]{display:none}
+</style>
 </head>
 <body>
 
-<nav class="top-nav">
-  <div class="brand">NGL <span>Competition Booking System</span></div>
+<div class="hub-top"><div class="strap">NGL Club Hub · Competition Booking 2027</div><div class="band"><div class="hub-row">
+  <a class="hub-logo" href="https://club.nationalgymnasticsleague.co.uk/" aria-label="NGL Club Hub"><img src="brand/ngl-logo-full.png" alt="NGL"></a>
+  <nav class="top-nav">
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="window.showPanel('home',this)">Pathways</button>
     <button class="nav-tab" onclick="window.showPanel('mybookings',this)">My Bookings</button>
-    <button class="nav-tab" onclick="window.showPanel('admin',this)">Admin &#x1F512;</button>
+    <button class="nav-tab admin-tab" onclick="window.showPanel('admin',this)">Admin &#x1F512;</button>
+    <a class="tbtn red" href="https://club.nationalgymnasticsleague.co.uk/#competitions">Back to NGL Club Hub</a>
   </div>
-</nav>
+  </nav>
+</div></div></div>
 
 <div id="panel-home" class="panel active">
   <div class="hero">
@@ -2164,7 +2214,13 @@ function buildMiniCalendar(monthKey, byDateKey) {
 </script>
 <script>
 // Prefill the club email when opened from the NGL Club Hub (?email=)
-(function(){ try{ var pre = new URLSearchParams(location.search).get('email'); var el = document.getElementById('f-email'); if(pre && el && !el.value) el.value = pre; }catch(e){} })();
+(function(){ try{ var qp = new URLSearchParams(location.search), cl = qp.get('club'), ce = document.getElementById('f-club'); if(cl && ce && !ce.value) ce.value = cl; var pre = qp.get('email'); var el = document.getElementById('f-email'); if(pre && el && !el.value) el.value = pre; }catch(e){} })();
 </script>
+<script>/* Inside the Club Hub: tell the hub how tall this page is so it never needs its own scrollbar */
+(function(){ if(!document.documentElement.classList.contains('embed') || parent === window) return;
+  var last = 0; function send(){ var h = Math.ceil(document.body.getBoundingClientRect().height) + 24; if(Math.abs(h - last) > 2){ last = h; try{ parent.postMessage({nglBookingHeight:h}, '*'); }catch(e){} } }
+  try{ new ResizeObserver(send).observe(document.body); }catch(e){ setInterval(send, 800); }
+  window.addEventListener('load', send); document.addEventListener('click', function(){ setTimeout(send, 60); });
+})();</script>
 </body>
 </html>
