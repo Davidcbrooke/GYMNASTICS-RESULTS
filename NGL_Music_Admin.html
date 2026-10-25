@@ -96,6 +96,8 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
 .ctl .btn{padding:12px 18px;font-size:16px}
 .ctl .go{background:var(--ok);border-color:var(--ok);color:#fff;font-size:18px;padding:12px 28px}
 .ctl .fade{background:var(--red);border-color:var(--red);color:#fff}
+.ctl .pause{background:#e0a800;border-color:#e0a800;color:#1b1300;min-width:130px}
+.ctl .pause.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .ctl .btn:disabled{opacity:.4;cursor:not-allowed}
 .ctl kbd{font-family:var(--body);font-size:11px;opacity:.8;margin-left:6px;border:1px solid currentColor;border-radius:3px;padding:0 4px}
 .nextup{background:#fff;border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:6px;padding:10px 14px;margin-bottom:12px}
@@ -191,6 +193,7 @@ body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.p
       <div class="now" id="nowCard"></div>
       <div class="ctl">
         <button class="btn go" id="goBtn">&#9654; Play<kbd>Space</kbd></button>
+        <button class="btn pause" id="pauseBtn" disabled>&#10073;&#10073; Pause<kbd>K</kbd></button>
         <button class="btn fade" id="fadeBtn">Fade out<kbd>F</kbd></button>
         <button class="btn" id="restartBtn">Restart<kbd>R</kbd></button>
         <button class="btn ghost" id="prevBtn">&larr; Previous</button>
@@ -198,7 +201,7 @@ body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.p
       </div>
       <div class="nextup" id="nextUp"></div>
       <div class="q" id="queue"></div>
-      <p style="font-size:13px;color:var(--muted);margin-top:10px">Space plays the selected gymnast. Absent gymnasts are skipped. Drag rows to change the order, or use the rotation box to move someone. While music is playing, Space does nothing, so a stray press can't stop a routine: use F to fade out. When a track finishes, the next gymnast is selected but doesn't start until you press Space.</p>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px">Space plays the selected gymnast. Absent gymnasts are skipped. Drag rows to change the order, or use the rotation box to move someone. While music is playing, Space does nothing, so a stray press can't stop a routine: use F to fade out, or K to pause and resume. When a track finishes, the next gymnast is selected but doesn't start until you press Space.</p>
     </div>
   </section>
   </div>
@@ -627,7 +630,7 @@ function renderPlayer(){
       <span class="qc"><button class="btn small ghost" data-qabs="${id}">${ABS[id]?"Present":"Absent"}</button>${rotSelect(id, PL.rot)}${upLabel(id)}</span></div>`; }).join("")
     : `<div class="qr empty" style="display:block">No gymnasts in this rotation yet. Drag them here from another rotation's list, or set the floor order on the Running order tab.</div>`;
   $("#goBtn").disabled = !!PL.playing;
-  prepState(); tick();
+  prepState(); tick(); updPause();
 }
 function prepState(){
   const ids = Object.keys(G).filter(id=>UP[id]), saved = ids.filter(id=>status(id)==="saved").length, bad = ids.filter(id=>status(id)==="bad").length;
@@ -676,7 +679,7 @@ function srcFor(id){
   return u ? {src:u.url, gain:1, local:false} : null;
 }
 function startAudio(src, gain){
-  audio.pause(); PL.fading=false; audio.src = src; audio.currentTime = 0; PL.gain = gain;
+  audio.pause(); PL.fading=false; PL.paused=false; audio.src = src; audio.currentTime = 0; PL.gain = gain;
   audio.volume = Math.min(1, PL.vol*gain);
   return audio.play();
 }
@@ -700,19 +703,37 @@ async function playAnn(k){
   renderPlayer();
 }
 function finish(advance){
-  const p = PL.playing; PL.playing = null; PL.fading = false; audio.pause();
+  const p = PL.playing; PL.playing = null; PL.fading = false; PL.paused = false; audio.pause();
   if(p && p.kind==="gym"){ PL.played[p.id] = true; if(advance){ const nx = nextAfter(p.id); PL.cur = nx || p.id; } }
   plSave(); renderPlayer();
 }
+/* Pause / resume: holds the music (gymnast or announcement) exactly where it is */
+function togglePause(){
+  if(!PL.playing || PL.fading) return;
+  if(PL.paused){ PL.paused = false; audio.play().catch(()=>toast("Couldn't resume. Press Restart (R) instead.")); }
+  else { PL.paused = true; audio.pause(); }
+  updPause();
+}
+function updPause(){
+  const b = $("#pauseBtn"); if(!b) return;
+  b.disabled = !PL.playing || PL.fading;
+  b.classList.toggle("on", !!PL.paused);
+  b.innerHTML = PL.paused ? '&#9654; Resume<kbd>K</kbd>' : '&#10073;&#10073; Pause<kbd>K</kbd>';
+  const lbl = document.querySelector("#nowCard .lbl");
+  if(lbl && PL.playing){ lbl.textContent = lbl.textContent.replace(/^(Now playing|Paused)/, PL.paused ? "Paused" : "Now playing"); }
+}
 function fadeOut(){
-  if(!PL.playing || PL.fading) return; PL.fading = true;
+  if(!PL.playing || PL.fading) return;
+  if(PL.paused){ finish(true); return; }   // already silent: just stop
+  PL.fading = true; updPause();
   const v0 = audio.volume, t0 = performance.now(), dur = 2500;
   const step = now=>{ if(!PL.fading) return; const f = Math.min(1,(now-t0)/dur); audio.volume = v0*(1-f); if(f<1) requestAnimationFrame(step); else finish(true); };
   requestAnimationFrame(step);
 }
 function restart(){
   if(!PL.playing){ play(); return; }
-  PL.fading = false; audio.currentTime = 0; audio.volume = Math.min(1, PL.vol*(PL.gain||1)); audio.play().catch(()=>{});
+  PL.fading = false; PL.paused = false; audio.currentTime = 0; audio.volume = Math.min(1, PL.vol*(PL.gain||1)); audio.play().catch(()=>{});
+  updPause();
 }
 function move(d){
   if(PL.playing){ toast("Fade out the music before moving on."); return; }
@@ -743,13 +764,14 @@ document.addEventListener("keydown", e=>{
   const k = e.key;
   if(k===" "||k==="Spacebar"){ e.preventDefault(); e.stopPropagation(); play(); }
   else if(k==="f"||k==="F"){ e.preventDefault(); fadeOut(); }
+  else if(k==="k"||k==="K"){ e.preventDefault(); togglePause(); }
   else if(k==="r"||k==="R"){ e.preventDefault(); restart(); }
   else if(k==="ArrowRight"||k==="ArrowDown"||k==="n"||k==="N"){ e.preventDefault(); move(1); }
   else if(k==="ArrowLeft"||k==="ArrowUp"||k==="p"||k==="P"){ e.preventDefault(); move(-1); }
 }, true);
 // buttons must not keep focus, or Space would also "click" the focused button
 $("#tab-play").addEventListener("mouseup", e=>{ const b=e.target.closest("button"); if(b) setTimeout(()=>b.blur(),0); });
-$("#goBtn").onclick = play; $("#fadeBtn").onclick = fadeOut; $("#restartBtn").onclick = restart;
+$("#goBtn").onclick = play; $("#pauseBtn").onclick = togglePause; $("#fadeBtn").onclick = fadeOut; $("#restartBtn").onclick = restart;
 $("#prevBtn").onclick = ()=>move(-1); $("#nextBtn").onclick = ()=>move(1);
 $("#prepBtn").onclick = prepareAll;
 $("#vol").oninput = e=>{ PL.vol = e.target.value/100; if(PL.playing && !PL.fading) audio.volume = Math.min(1, PL.vol*(PL.gain||1)); plSave(); };
