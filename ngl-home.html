@@ -400,6 +400,42 @@
   .pw-content .video-panel{display:none;}
   .pw-content .video-panel.active{display:block;}
 
+  /* Recreational: "Look inside" book slider + connected-pathway pitch */
+  .pw-content .rb-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .pw-content .rb-head h3{margin:0;font-size:clamp(19px,2.4vw,24px);font-weight:900}
+  .pw-content .rb-head p{margin:2px 0 0;color:var(--muted);font-size:14px}
+  .pw-content .rb-stage{position:relative;background:#e9eef9;border-radius:12px;aspect-ratio:1600/1135;overflow:hidden;touch-action:pan-y}
+  .pw-content .rb-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .25s ease}
+  .pw-content .rb-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:var(--navy);color:#fff;font-size:26px;line-height:1;cursor:pointer;box-shadow:0 6px 16px -6px rgba(0,0,0,.6);z-index:2}
+  .pw-content .rb-prev{left:10px}.pw-content .rb-next{right:10px}
+  .pw-content .rb-cap{display:flex;justify-content:space-between;gap:10px;margin:10px 2px 12px;font-size:14px}
+  @media (max-width:520px){.pw-content .rb-cap{flex-direction:column;gap:2px}.pw-content .rb-nav{width:36px;height:36px;font-size:22px}}
+  .pw-content .rb-cap b{color:var(--white)}.pw-content .rb-cap span{color:var(--muted)}
+  .pw-content .rb-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  .pw-content .rb-strip button{flex:0 0 auto;scroll-snap-align:start;border:2px solid transparent;border-radius:8px;padding:0;background:none;cursor:pointer;opacity:.6;transition:opacity .15s ease,border-color .15s ease}
+  .pw-content .rb-strip button.on{border-color:var(--gold);opacity:1}
+  .pw-content .rb-strip img{display:block;height:84px;width:auto;border-radius:6px}
+  .pw-content .rb-note{font-size:12.5px;color:var(--muted);margin:2px 0 0}
+  .pw-content .rc-h{font-size:clamp(20px,2.6vw,26px);font-weight:900;line-height:1.15;margin:0 0 6px}
+  .pw-content .rc-lead{color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 18px}
+  .pw-content .rc-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 6px;position:relative}
+  @media (max-width:680px){.pw-content .rc-flow{grid-template-columns:minmax(0,1fr)}}
+  .pw-content .rc-flow > div{background:var(--navy);border:1px solid var(--line-soft);border-top:4px solid var(--c);border-radius:12px;padding:16px 16px 14px}
+  .pw-content .rc-flow .k{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
+  .pw-content .rc-flow b{display:block;font-size:17px;margin:3px 0 5px}
+  .pw-content .rc-flow span{display:block;color:var(--muted);font-size:14px;line-height:1.55}
+  .pw-content .rc-tag{margin:12px 0 0;font-weight:700;font-size:15px}
+  .pw-content .rc-tag em{font-style:normal;color:var(--gold)}
+  .pw-content .rc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  @media (max-width:680px){.pw-content .rc-grid{grid-template-columns:minmax(0,1fr)}}
+  .pw-content .rc-grid > div{display:flex;gap:12px;align-items:flex-start;background:var(--navy);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+  .pw-content .rc-grid i{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:#ea732c;color:#0a1440;font-style:normal;font-weight:900;display:grid;place-items:center;font-size:17px}
+  .pw-content .rc-grid b{display:block;font-size:15.5px;margin-bottom:3px}
+  .pw-content .rc-grid span{color:var(--muted);font-size:14px;line-height:1.5}
+  .pw-content .rc-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 4px}
+  .pw-content .rc-stats div{border-left:3px solid #ea732c;padding:2px 0 2px 12px}
+  .pw-content .rc-stats b{display:block;font-size:clamp(24px,3vw,30px);font-weight:900;line-height:1}
+  .pw-content .rc-stats span{color:var(--muted);font-size:13px;line-height:1.35}
   .pw-content .book-layout{display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap;}
   .pw-content .book-layout img{width:180px; max-width:40%; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.35); flex:0 0 auto;}
   .pw-content .book-copy{flex:1 1 260px; min-width:240px;}
@@ -1642,14 +1678,80 @@
     return '<p class="coming-soon">Routine videos coming soon.</p>';
   }
 
+  // "Look inside" Book 1 — images copied from nglrecreational.co.uk (Levels 2–4 and the routines QR are blurred in the images).
+  var REC_BOOK_PAGES = [
+    ['Cover','Book 1 · Ruby competition level'],
+    ['Welcome','How the book works, and meet Somi and Flic'],
+    ['Attendance and medals','Tick off every session and collect a medal for each level'],
+    ['Levels 1 and 2','Six pieces, four skills each, one level a term'],
+    ['Levels 3 and 4','The rest of the Ruby book'],
+    ['Ruby competition','The routines, built from the same skills'],
+    ['Back cover','Every NGL pathway']
+  ];
+  function recBookSliderHTML(){
+    return '<div class="card rb" data-rb="0">' +
+      '<div class="rb-head"><div><h3>Look inside Book 1</h3><p>The Ruby award book every gymnast gets. Swipe or tap through the pages.</p></div></div>' +
+      '<div class="rb-stage"><img src="brand/recbook/page1.jpg" alt="Book 1: Cover">' +
+        '<button type="button" class="rb-nav rb-prev" data-rb-go="-1" aria-label="Previous page">‹</button>' +
+        '<button type="button" class="rb-nav rb-next" data-rb-go="1" aria-label="Next page">›</button></div>' +
+      '<div class="rb-cap"><b>' + REC_BOOK_PAGES[0][0] + '</b><span>' + REC_BOOK_PAGES[0][1] + ' · 1 of ' + REC_BOOK_PAGES.length + '</span></div>' +
+      '<div class="rb-strip">' + REC_BOOK_PAGES.map(function (pg, i) {
+        return '<button type="button" data-rb-to="' + i + '"' + (i === 0 ? ' class="on"' : '') + ' aria-label="' + pg[0] + '"><img loading="lazy" src="brand/recbook/thumb' + (i + 1) + '.jpg" alt=""></button>'; }).join('') + '</div>' +
+      '<p class="rb-note">Levels 2 to 4 are blurred in this preview. Licensed clubs get the full books: four books, Ruby, Pink, Teal and Indigo.</p></div>';
+  }
+  function recBookShow(card, i){
+    var n = REC_BOOK_PAGES.length; i = (i + n) % n; card.setAttribute('data-rb', i);
+    var img = card.querySelector('.rb-stage img'); img.src = 'brand/recbook/page' + (i + 1) + '.jpg'; img.alt = 'Book 1: ' + REC_BOOK_PAGES[i][0];
+    card.querySelector('.rb-cap').innerHTML = '<b>' + REC_BOOK_PAGES[i][0] + '</b><span>' + REC_BOOK_PAGES[i][1] + ' · ' + (i + 1) + ' of ' + n + '</span>';
+    card.querySelectorAll('.rb-strip button').forEach(function (b, j) { b.classList.toggle('on', j === i); if (j === i && b.scrollIntoView) { var s = b.parentNode; s.scrollTo({ left: b.offsetLeft - s.clientWidth / 2 + b.clientWidth / 2, behavior: 'smooth' }); } });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-rb-go],[data-rb-to]'); if (!b) return;
+    var card = b.closest('.rb'); if (!card) return;
+    var cur = +card.getAttribute('data-rb');
+    recBookShow(card, b.hasAttribute('data-rb-to') ? +b.getAttribute('data-rb-to') : cur + (+b.getAttribute('data-rb-go')));
+  });
+  (function () { var x0 = null, card = null;
+    document.addEventListener('touchstart', function (e) { var st = e.target.closest && e.target.closest('.rb-stage'); card = st ? st.closest('.rb') : null; x0 = card ? e.touches[0].clientX : null; }, { passive: true });
+    document.addEventListener('touchend', function (e) { if (x0 == null || !card) return; var dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) recBookShow(card, +card.getAttribute('data-rb') + (dx < 0 ? 1 : -1)); x0 = null; }, { passive: true });
+  })();
+
   function recreationalAwardsHTML(p){
-    return '<div class="card"><p class="lede">' + p.desc + '</p></div>' +
-      '<div class="card"><div class="book-layout"><img src="' + COVER_IMAGE.recreational + '" alt="NGL Recreational Awards Book cover">' +
-      '<div class="book-copy"><p>The Recreational Awards Programme is made up of <strong>4 books, each with 4 levels</strong>, covering every stage of development in Recreational Gymnastics.</p>' +
-      '<div class="coming-tag">' + COMING_TEXT.recreational + '</div></div></div></div>' +
-      '<div class="card"><p class="lede">' + (selectedAudience === 'club' ? 'Run NGL Recreational at your club: the licence includes a term of lesson plans fitted to your club, warm-ups, videos and the four award books to order at club prices.' : 'Ask your club if they run NGL Recreational, or tell them about it.') + '</p>' +
-      (selectedAudience === 'club' ? '<a class="buy-btn" href="' + REC_HUB_URL + '" target="_blank" rel="noopener">Explore NGL Recreational</a> ' +
+    var isClub = selectedAudience === 'club';
+    var flow = '<div class="card">' +
+      '<h3 class="rc-h">' + (isClub ? 'Training, assessment and competition — all connected' : 'How your gymnast progresses') + '</h3>' +
+      '<p class="rc-lead">' + (isClub
+        ? 'Most recreational programmes leave coaches guessing what to teach, and competitions testing skills nobody practised. NGL Recreational lines everything up, so every skill is taught before it is assessed, and every routine is built from skills the gymnast has already passed.'
+        : 'What your gymnast learns in class, what they are tested on and what they compete are all the same skills, so they always know what comes next.') + '</p>' +
+      '<div class="rc-flow">' +
+        '<div style="--c:#f2a900"><div class="k">1 · Train</div><b>Customised lesson plans</b><span>Built around ' + (isClub ? 'your' : 'the club’s') + ' gym, equipment, class length and term dates. Stations at four levels, so mixed-ability groups train together.</span></div>' +
+        '<div style="--c:#ea732c"><div class="k">2 · Assess</div><b>Termly assessment</b><span>The last two weeks of every term. Gymnasts pass the level in their award book and earn a medal and certificate.</span></div>' +
+        '<div style="--c:#C6152E"><div class="k">3 · Compete</div><b>NGL Recreational competitions</b><span>Ruby, Pink, Teal and Indigo routines use the same skills, so gymnasts compete what they have been taught.</span></div>' +
+      '</div>' +
+      '<p class="rc-tag">One book. One plan. One competition level. <em>It’s all connected.</em></p></div>';
+    var stats = '<div class="card"><div class="rc-stats">' +
+      '<div><b>4</b><span>award books, Ruby to Indigo</span></div>' +
+      '<div><b>16</b><span>levels, one passed each term</span></div>' +
+      '<div><b>6</b><span>pieces of apparatus, stations at 4 levels</span></div></div></div>';
+    var benefits = isClub ? '<div class="card"><h3 class="rc-h">What your club gets</h3><p class="rc-lead">Everything your recreational classes need, ready for January 2027.</p><div class="rc-grid">' +
+        '<div><i>✎</i><div><b>Customised lesson plans</b><span>Tell the Recreational Club Hub what apparatus you have, how long your classes are and your term dates, and it builds your term plan, with alternatives for missing kit.</span></div></div>' +
+        '<div><i>▶</i><div><b>Live lesson plans</b><span>Coaches pick the week and apparatus on a phone or tablet and follow it, or print every plan clearly for the wall.</span></div></div>' +
+        '<div><i>↻</i><div><b>Live rotation plans</b><span>Run your classes from the NGL Rotation Planner, so every group and coach knows where to go and when to move.</span></div></div>' +
+        '<div><i>♥</i><div><b>Warm-ups built in</b><span>A 10-minute warm-up for every two-week block, taken from the physical preparation in the books.</span></div></div>' +
+        '<div><i>✓</i><div><b>Consistent coaching</b><span>New and experienced coaches teach the same skills in the same order, with assessment sheets for every level.</span></div></div>' +
+        '<div><i>£</i><div><b>Built to pay for itself</b><span>Order books, medals and certificates at club prices and resell them to families, so the programme covers its cost.</span></div></div>' +
+        '<div><i>☺</i><div><b>Parents can see the progress</b><span>The NGL Recreational family app shows parents what their child is learning and how it links to assessment and competition.</span></div></div>' +
+        '<div><i>★</i><div><b>A route into competition</b><span>Optional, fun first competitions at the right level, then on into the NGL General and Performance Leagues.</span></div></div>' +
+      '</div></div>' : '<div class="card"><h3 class="rc-h">What every gymnast gets</h3><div class="rc-grid">' +
+        '<div><i>📘</i><div><b>Their own award book</b><span>Every skill for their level, with a page to tick off each session.</span></div></div>' +
+        '<div><i>🏅</i><div><b>A medal every term</b><span>Plus attendance certificates as they go.</span></div></div>' +
+        '<div><i>☺</i><div><b>The family app</b><span>See what they are learning each week and how it links to their assessment.</span></div></div>' +
+        '<div><i>★</i><div><b>A first competition</b><span>Optional and fun, at exactly the level they train.</span></div></div>' +
+      '</div></div>';
+    var cta = '<div class="card"><p class="lede">' + (isClub ? 'Run NGL Recreational at your club from January 2027. ' + COMING_TEXT.recreational + '.' : 'Ask your club if they run NGL Recreational, or tell them about it.') + '</p>' +
+      (isClub ? '<a class="buy-btn" href="' + REC_HUB_URL + '" target="_blank" rel="noopener">Explore NGL Recreational</a> ' +
         '<a class="buy-btn" href="' + LICENCES_URL + '" target="_blank" rel="noopener">Licence fees</a>' : '') + '</div>';
+    return '<div class="card"><p class="lede">' + p.desc + '</p></div>' + recBookSliderHTML() + flow + stats + benefits + cta;
   }
 
   // Recreational's Awards→Competitions tab: same in-place switch, since the
@@ -1735,7 +1837,7 @@
       eventHTML = simpleEventHTML(p.eventLabel);
       routinesHTML = simpleRoutinesHTML();
     }
-    return pathwaySectionsHTML({ awardsHTML: awardsHTML, eventLabel: p.eventLabel, eventHTML: eventHTML, routinesHTML: routinesHTML, noVideos: id === 'preschool' });
+    return pathwaySectionsHTML({ awardsHTML: awardsHTML, eventLabel: p.eventLabel, eventHTML: eventHTML, routinesHTML: routinesHTML, noVideos: id === 'preschool' || id === 'recreational' });
   }
 
 
