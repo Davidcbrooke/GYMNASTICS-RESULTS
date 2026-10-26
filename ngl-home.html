@@ -60,6 +60,14 @@
   .what-ngl div{border-left:4px solid var(--gold);padding:2px 0 2px 12px;color:var(--white);font-size:clamp(14px,1.4vw,16px);line-height:1.45}
   .what-ngl b{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
   .what-ngl span{color:var(--muted)}
+  .hero-text{min-width:0}.hero h1{max-width:100%}
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:clamp(20px,4vw,40px);align-items:start}
+  @media (max-width:760px){.hero-grid{grid-template-columns:minmax(0,1fr)}.hero-video{max-width:340px;margin:4px auto 0}}
+  .hero .mission{font-size:clamp(22px,2.8vw,30px);line-height:1.2;font-weight:700;color:var(--white);margin:0 0 14px;max-width:640px}
+  .hero .mission em{font-style:normal;color:var(--gold)}
+  .hero-video{margin:0;position:relative;border-radius:16px;overflow:hidden;box-shadow:0 18px 40px -16px rgba(0,0,0,.7);aspect-ratio:4/5;background:#0a1440}
+  .hero-video video{width:100%;height:100%;display:block;object-fit:cover}
+  .vid-sound{position:absolute;right:10px;bottom:10px;border:0;border-radius:999px;padding:8px 13px;font:700 13px/1 inherit;background:rgba(255,255,255,.92);color:var(--navy);cursor:pointer}
   .hero p{
     max-width:720px;
     color:var(--muted);
@@ -723,12 +731,21 @@
 <div class="wrap">
 
   <div class="hero">
+   <div class="hero-grid">
+    <div class="hero-text">
     <h1>The National Gymnastics League</h1>
-    <p>One connected framework for British Gymnastics clubs — training, awards, competitions and club support, across seven pathways spanning every age and ability.</p>
+    <p class="mission">Helping Britain’s gymnastics clubs become the <em>first choice</em> for every parent.</p>
+    <p>One connected framework for British Gymnastics clubs — training, awards, competitions and club support, across seven pathways spanning every age and ability. Powered by technology that lifts the experience: remote judging, live competition scoring, dynamic lesson plans, live rotation plans and pathway apps.</p>
     <div class="what-ngl">
       <div><b>For clubs</b><span>Awards schemes, competitions and club support in one connected system, run from your free NGL Club Hub.</span></div>
       <div><b>For families</b><span>Where your gymnast earns their awards, competes all season and follows their scores in the National League Table.</span></div>
     </div>
+    </div>
+    <figure class="hero-video">
+      <video id="heroVid" src="brand/ngl-what-is-the-ngl.mp4" poster="brand/ngl-what-is-the-ngl-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="What is the NGL? A 17-second introduction"></video>
+      <button type="button" class="vid-sound" id="vidSound" aria-pressed="false">&#128264; Sound on</button>
+    </figure>
+   </div>
     <!-- Club and gymnast figures load live from the booking system (same totals as the Admin booking dashboard). The numbers below are only a fallback. -->
     <div class="proof" aria-label="NGL in numbers">
       <div><b id="liveClubs">27</b><span>clubs already booked for the 2027 season</span></div>
@@ -923,6 +940,12 @@
   });
 
   // ============================================================
+  // Hero video: plays muted; one tap turns the sound on (and restarts it so the music lines up)
+  (function(){ var v=document.getElementById('heroVid'), b=document.getElementById('vidSound'); if(!v||!b) return;
+    b.addEventListener('click', function(){ var on=v.muted; v.muted=!on; if(on){ try{ v.currentTime=0; }catch(e){} v.play(); }
+      b.setAttribute('aria-pressed', String(on)); b.innerHTML = on ? '&#128266; Sound off' : '&#128264; Sound on'; });
+  })();
+
   // Step 1: audience
   // ============================================================
   var audienceNotes = {
