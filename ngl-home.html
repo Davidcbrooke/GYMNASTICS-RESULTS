@@ -67,7 +67,7 @@
   .hero .mission em{font-style:normal;color:var(--gold)}
   .hero-video{margin:0;position:relative;border-radius:16px;overflow:hidden;box-shadow:0 18px 40px -16px rgba(0,0,0,.7);aspect-ratio:4/5;background:#0a1440}
   .hero-video video{width:100%;height:100%;display:block;object-fit:cover}
-  .vid-sound{position:absolute;right:10px;bottom:10px;border:0;border-radius:999px;padding:8px 13px;font:700 13px/1 inherit;background:rgba(255,255,255,.92);color:var(--navy);cursor:pointer}
+  .vid-sound{position:absolute;right:10px;top:10px;border:0;border-radius:999px;padding:8px 13px;font:700 13px/1 inherit;background:rgba(255,255,255,.92);color:var(--navy);cursor:pointer}
   .hero p{
     max-width:720px;
     color:var(--muted);
@@ -725,6 +725,45 @@
   .why-cta a{display:inline-block;text-decoration:none;font-weight:700;font-size:15px;border-radius:999px;padding:11px 20px}
   .why-cta .primary{background:var(--gold);color:var(--navy)}
   .why-cta .secondary{border:1px solid var(--line);color:var(--white)}
+
+  /* ---------- Coloured bands (full-bleed backgrounds, content stays in .wrap) ---------- */
+  html,body{overflow-x:clip}
+  .band{position:relative;isolation:isolate;padding:clamp(30px,5vw,52px) 0;margin:0 0 clamp(30px,5vw,48px)}
+  .band::before{content:"";position:absolute;inset:0 -100vmax;background:var(--band-bg);z-index:-1}
+  .band-eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin:0 0 6px}
+  .band h2{font-size:clamp(24px,3.4vw,34px);font-weight:900;line-height:1.1;letter-spacing:-0.01em;margin:0 0 6px}
+  .band-lead{font-size:15px;line-height:1.55;margin:0 0 22px;max-width:640px}
+
+  /* 2027 Season — soft ice blue, so the numbers stand out without a stark white block */
+  .band-season{--band-bg:#e9eef9;color:var(--navy);margin-bottom:0}
+  .band-season .band-eyebrow{color:var(--red)}
+  .band-season .band-lead{color:#4a557a}
+  .band-season .proof{margin:0 0 24px;max-width:none;gap:14px}
+  .band-season .proof div{background:#fff;border-left:0;border-top:4px solid var(--c,var(--gold));border-radius:12px;padding:16px 16px 14px;box-shadow:0 8px 22px -16px rgba(10,20,64,.45)}
+  .band-season .proof b{color:var(--navy);font-size:clamp(28px,4vw,40px)}
+  .band-season .proof span{color:#4a557a}
+  .season-cta{display:flex;flex-wrap:wrap;gap:10px}
+  .season-cta a{display:inline-block;text-decoration:none;font-weight:800;font-size:15px;border-radius:999px;padding:12px 20px}
+  .season-cta .primary{background:var(--navy);color:#fff}
+  .season-cta .secondary{border:2px solid var(--navy);color:var(--navy);padding:10px 18px}
+
+  /* Get started — NGL red, the main call to action */
+  .band-start{--band-bg:var(--red);color:#fff}
+  .band-start .band-eyebrow{color:rgba(255,255,255,.8)}
+  .start-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  @media (max-width:640px){.start-cards{grid-template-columns:minmax(0,1fr)}}
+  .start-card{display:flex;flex-direction:column;align-items:flex-start;background:#fff;color:var(--navy);border-radius:16px;padding:22px 22px 20px;text-decoration:none;box-shadow:0 16px 30px -18px rgba(0,0,0,.55);transition:transform .15s ease}
+  .start-card:hover{transform:translateY(-2px)}
+  .start-card .who{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px}
+  .start-card b{font-size:clamp(20px,2.4vw,24px);font-weight:900;line-height:1.15;margin-bottom:6px}
+  .start-card span{font-size:14.5px;line-height:1.5;color:#4a557a;margin-bottom:16px;flex:1}
+  .start-card .go{display:inline-block;font-weight:800;font-size:14.5px;border-radius:999px;padding:11px 18px;background:var(--navy);color:#fff}
+  .start-card.club .go{background:var(--gold);color:var(--navy)}
+
+  /* Not sure where to go? — its own lighter navy panel */
+  .helper{background:#0f1b52;border:1px solid var(--line-soft);border-radius:20px;padding:clamp(22px,4vw,36px) clamp(16px,3.5vw,32px) 4px;margin:0 0 clamp(30px,5vw,48px)}
+  .helper > h2{font-size:clamp(22px,3vw,30px);font-weight:900;margin:0 0 4px;letter-spacing:-0.01em}
+  .helper > .band-lead{color:var(--muted);margin-bottom:24px}
 </style>
 </head>
 <body>
@@ -746,32 +785,48 @@
       <button type="button" class="vid-sound" id="vidSound" aria-pressed="false">&#128264; Sound on</button>
     </figure>
    </div>
-    <!-- Club and gymnast figures load live from the booking system (same totals as the Admin booking dashboard). The numbers below are only a fallback. -->
-    <div class="proof" aria-label="NGL in numbers">
-      <div><b id="liveClubs">27</b><span>clubs already booked for the 2027 season</span></div>
-      <div><b id="liveGyms">1,359</b><span>gymnast places reserved for 2027</span></div>
-      <div><b>4</b><span>regional General League venues</span></div>
-      <div><b>7</b><span>pathways, from Pre-School to Masters</span></div>
-    </div>
   </div>
 
-  <div class="quick">
-    <div class="quick-groups">
-      <div>
-        <div class="quick-label">British Gymnastics clubs</div>
-        <div class="quick-row">
-          <a class="quick-pill start" href="https://club.nationalgymnasticsleague.co.uk/#register" target="_top">Clubs: Register Here</a>
-        </div>
-      </div>
-      <div>
-        <div class="quick-label">Parents and gymnasts</div>
-        <div class="quick-row">
-          <a class="quick-pill" href="https://www.nationalgymnasticsleague.co.uk/parents" target="_top">Parents &amp; Gymnasts: Results &amp; League Tables</a>
-        </div>
-      </div>
+  <section class="band band-season" aria-labelledby="season-title">
+    <p class="band-eyebrow">Live from the booking system</p>
+    <h2 id="season-title">2027 Season Stats</h2>
+    <p class="band-lead">Clubs across the country are already reserving their places for next season.</p>
+    <!-- Club and gymnast figures load live from the booking system (same totals as the Admin booking dashboard). The numbers below are only a fallback. -->
+    <div class="proof" aria-label="2027 season in numbers">
+      <div style="--c:#C6152E"><b id="liveClubs">27</b><span>clubs already booked for the 2027 season</span></div>
+      <div style="--c:#0f6bac"><b id="liveGyms">1,359</b><span>gymnast places reserved for 2027</span></div>
+      <div style="--c:#f2a900"><b>4</b><span>regional General League venues</span></div>
+      <div style="--c:#38bcb9"><b>7</b><span>pathways, from Pre-School to Masters</span></div>
     </div>
-    <p class="quick-help">Need some help to get to the right place?</p>
-  </div>
+    <div class="season-cta">
+      <a class="primary" href="https://club.nationalgymnasticsleague.co.uk/#book-general" target="_top">Find out more &amp; reserve places</a>
+      <a class="secondary" href="https://www.nationalgymnasticsleague.co.uk/parents" target="_top">2027 results &amp; league tables</a>
+    </div>
+  </section>
+
+  <section class="band band-start" aria-labelledby="start-title">
+    <p class="band-eyebrow">Get started</p>
+    <h2 id="start-title">Who are you?</h2>
+    <p class="band-lead">Jump straight to the right place.</p>
+    <div class="start-cards">
+      <a class="start-card club" href="https://club.nationalgymnasticsleague.co.uk/#register" target="_top">
+        <div class="who">British Gymnastics clubs</div>
+        <b>Register your club</b>
+        <span>Free, and takes about a minute. Get your NGL Club Hub, awards schemes and 2027 competition places.</span>
+        <em class="go" style="font-style:normal">Clubs: Register here →</em>
+      </a>
+      <a class="start-card" href="https://www.nationalgymnasticsleague.co.uk/parents" target="_top">
+        <div class="who">Parents and gymnasts</div>
+        <b>Results &amp; league tables</b>
+        <span>Follow your gymnast's scores, league positions and the Power League, for this season and next.</span>
+        <em class="go" style="font-style:normal">Parents &amp; gymnasts →</em>
+      </a>
+    </div>
+  </section>
+
+  <section class="helper" aria-labelledby="helper-title">
+  <h2 id="helper-title">Not sure where to go?</h2>
+  <p class="band-lead">Answer a few quick questions and we'll take you to the right place.</p>
 
   <div class="step">
     <div class="step-label"><span class="num">1</span> Are you a club or a parent?</div>
@@ -843,6 +898,7 @@
     <div class="step-label"><span class="num">4</span> <span id="step4-title"></span></div>
     <div class="pw-content" id="pw-content"></div>
   </div>
+  </section>
 
   <section class="why" aria-labelledby="why-title">
     <h2 id="why-title">Why clubs choose the NGL</h2>
