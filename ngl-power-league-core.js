@@ -39,10 +39,10 @@ const CH = [
    ok:['Hands on the mushroom, legs straight and together','Every full circle counts'],
    no:['Feet or legs touching the mushroom or floor: that circle doesn’t count']},
   {k:'vsit', n:'V-Sit Hold on Beam', stat:'BAL', unit:'s', dir:1, step:1,
-   ok:['Sitting on the beam, legs straight and together, lifted into a V','Hands off the beam','Time runs until the shape breaks'],
-   no:['Bent knees or legs dropping','A hand or foot touching the beam, or coming off']},
+   ok:['On a low beam for safety','Legs straight and together, lifted into a V with the chest towards the knees','No hands: hands off the beam','Time runs until the shape breaks'],
+   no:['Bent knees, legs dropping or chest moving away from the knees','A hand or foot touching the beam, or coming off']},
   {k:'hand', n:'Handstand Hold', stat:'CTL', unit:'s', dir:1, step:1,
-   ok:['Arms straight, legs together, straight body','Time starts when the feet come together at the top','Wall allowed for ages 6–11, freestanding for 12 and over'],
+   ok:['Arms straight, legs together, straight body','Freestanding: no wall','Time starts when the feet come together at the top'],
    no:['Walking on the hands, legs apart or bent arms','Time stops when he moves or comes down']}
 ];
 const STATS = ['SPD','POW','STR','FLX','BAL','CTL'];
@@ -66,7 +66,7 @@ const ICON = {
   hand: P('<path d="M24 5v24"/><circle cx="24" cy="32" r="3.5"/><path d="M24 26l-6 14M24 26l6 14"/><path d="M8 42h32"/>')
 };
 
-/* Younger boys (6–11) may do an easier version of a challenge (nLow/unitLow); none currently */
+/* One set of rules for every age. nLow/unitLow (an easier version for ages 6–11) are not used at present. */
 const young = age => age === '6-8' || age === '9-11';
 const chName = (c, age) => (c.nLow && young(age)) ? c.nLow : c.n;
 const chUnit = (c, age) => (c.unitLow && young(age)) ? c.unitLow : c.unit;
