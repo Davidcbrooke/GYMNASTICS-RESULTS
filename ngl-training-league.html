@@ -97,6 +97,53 @@
   .hist{font-size:12px;color:var(--muted)}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#fff;color:#0a1440;font-weight:800;padding:10px 16px;border-radius:12px;z-index:60}
   .hide{display:none!important}
+  /* ---------- Clearer layout: challenge strip, compact filters, leaderboard panel, challenge cards ---------- */
+  .panel{background:var(--navy-2);border:1px solid var(--line);border-radius:22px;padding:18px 18px 14px;margin:0 0 26px}
+  .panel-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+  .panel-h h2{margin:0;font-size:clamp(22px,3vw,28px)}
+  .panel-h .sel{color:var(--muted);font-size:14px;font-weight:700}
+  .chs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 -4px 6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .chs::-webkit-scrollbar{display:none}
+  .chs button{flex:0 0 auto;width:80px;scroll-snap-align:start;border:0;background:none;color:var(--muted);cursor:pointer;padding:0;font:700 12px/1.2 inherit;text-align:center}
+  .chs .ic{display:flex;align-items:center;justify-content:center;width:60px;height:60px;margin:0 auto 6px;border-radius:18px;background:var(--navy-3);border:1px solid var(--line);color:#cfd8ff;transition:background .15s ease,transform .15s ease}
+  .chs .ic svg{width:34px;height:34px}
+  .chs button:hover .ic{transform:translateY(-2px)}
+  .chs button.on{color:#fff}
+  .chs button.on .ic{background:var(--gl);border-color:var(--gl);color:#fff;box-shadow:0 8px 18px -8px rgba(0,113,179,.9)}
+  @media(min-width:900px){.chs{overflow:visible;justify-content:space-between}.chs button{width:auto;flex:1 1 0}}
+  .fbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.4fr);gap:8px;margin:0 0 14px}
+  @media(max-width:700px){.fbar{grid-template-columns:repeat(3,minmax(0,1fr))}.fbar .find{grid-column:1/-1}}
+  .fbar select,.fbar input{width:100%;min-width:0!important;border-radius:999px!important;padding:10px 14px!important;font-weight:700;font-size:14px!important}
+  .fbar .find{position:relative}.fbar .find input{padding-left:38px!important}
+  .fbar .find svg{position:absolute;left:13px;top:50%;width:17px;height:17px;transform:translateY(-50%);color:var(--muted)}
+  .lb{display:none;list-style:none;margin:0;padding:0}
+  .lb li{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;background:var(--navy-3);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+  .lb .pos{font-weight:900;color:var(--muted);text-align:center;font-size:16px}
+  .lb li:nth-child(1) .pos{color:#f2c94c}.lb li:nth-child(2) .pos{color:#d6dbe6}.lb li:nth-child(3) .pos{color:#e0a36b}
+  .lb .nm b{display:block;font-size:15px}.lb .nm small{display:block;color:var(--muted);font-size:12.5px;line-height:1.35}
+  .lb .sc{text-align:right;font-weight:900;font-size:22px;color:var(--gold);line-height:1}.lb .sc small{display:block;font-size:10.5px;letter-spacing:.08em;color:var(--muted);font-weight:800;margin-top:3px}
+  .lb li.empty{display:block;text-align:center;color:var(--muted);padding:22px;cursor:default}
+  @media(max-width:700px){.table-wrap{display:none}.lb{display:block}}
+  .band-ch{margin:0 0 26px}
+  .band-ch h2{font-size:clamp(22px,3vw,28px);margin:0 0 4px}
+  .film{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 18px}
+  @media(max-width:700px){.film{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .film div{background:var(--navy-3);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:13.5px;color:var(--muted);line-height:1.4}
+  .film b{display:block;color:#fff;font-size:15px;margin:4px 0 2px}.film i{font-style:normal;font-size:22px}
+  .chc{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+  @media(min-width:900px){.chc{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  .chc .c{background:var(--navy-3);border:1px solid var(--line);border-radius:16px;padding:14px}
+  .chc .hd{display:flex;align-items:center;gap:12px}
+  .chc .hd .ic{flex:none;width:52px;height:52px;border-radius:14px;background:var(--gl);color:#fff;display:flex;align-items:center;justify-content:center}
+  .chc .hd .ic svg{width:32px;height:32px}
+  .chc .hd b{display:block;font-size:16px}.chc .hd small{color:var(--muted);font-size:12.5px}
+  .chc .st{margin-left:auto;font-size:11px;font-weight:900;letter-spacing:.08em;background:rgba(58,160,230,.16);color:var(--gl-bright);padding:4px 8px;border-radius:999px}
+  .chc details{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+  .chc summary{cursor:pointer;font-weight:800;font-size:13.5px;color:var(--gl-bright);list-style:none}
+  .chc summary::-webkit-details-marker{display:none}
+  .chc summary::after{content:" ▾"}.chc details[open] summary::after{content:" ▴"}
+  .chc ul{padding-left:18px;margin:4px 0 8px;line-height:1.45;font-size:14px}
+  .chc .ok{color:var(--ok);font-weight:800;font-size:13px;margin-top:6px}.chc .no{color:var(--bad);font-weight:800;font-size:13px}
   footer{color:var(--muted);font-size:12px;text-align:center;padding:24px 16px}
   /* Larger layout on desktop screens */
   @media(min-width:1100px){
@@ -196,19 +243,31 @@ html.embed body{min-height:0}html.embed main{padding-top:14px}
 
   <!-- PUBLIC -->
   <section id="public">
-    <div class="tabs" id="viewTabs"></div>
-    <div class="filters">
-      <label>Level<select id="fLevel"></select></label>
-      <label>Age group<select id="fAge"></select></label>
-      <label>Training hours<select id="fHrs"></select></label>
-      <label>Search<input type="text" id="fFind" placeholder="Name or club"></label>
+    <div class="panel">
+      <div class="panel-h"><h2>Leaderboard</h2><span class="sel" id="selNote"></span></div>
+      <div class="chs" id="viewTabs" role="tablist" aria-label="Choose a challenge"></div>
+      <div class="fbar">
+        <select id="fLevel" aria-label="Level"></select>
+        <select id="fAge" aria-label="Age group"></select>
+        <select id="fHrs" aria-label="Training hours"></select>
+        <div class="find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="text" id="fFind" placeholder="Search name or club" aria-label="Search name or club"></div>
+      </div>
+      <div class="table-wrap"><table id="tbl"></table></div>
+      <ol class="lb" id="lb"></ol>
+      <p class="note" style="margin-top:8px" id="tblNote"></p>
     </div>
-    <div class="table-wrap"><table id="tbl"></table></div>
-    <p class="note" style="margin-top:8px" id="tblNote"></p>
 
-    <h2 style="margin-top:30px">The challenges</h2>
-    <p class="muted">Filmed in training: fixed camera side-on, whole body in shot, one continuous take, a tape measure or line in shot for distances, and the coach says the gymnast's name and the challenge at the start. Up to 2 attempts per challenge each time it's filmed; the best valid attempt counts towards the season.</p>
-    <div class="grid-ch" id="chList"></div>
+    <div class="band-ch">
+      <h2>The nine challenges</h2>
+      <p class="muted" style="margin:0">Filmed in training. Up to 2 attempts per challenge each time it's filmed; the best valid attempt counts towards the season.</p>
+      <div class="film">
+        <div><i>📱</i><b>Fixed camera</b>Side-on, whole body in shot</div>
+        <div><i>🎬</i><b>One take</b>One continuous video, no edits</div>
+        <div><i>📏</i><b>Show the distance</b>Tape measure or line in shot</div>
+        <div><i>🗣️</i><b>Say who it is</b>Name and challenge at the start</div>
+      </div>
+      <div class="chc" id="chList"></div>
+    </div>
   </section>
 </main>
 <footer>National Gymnastics League · Exclusively for British Gymnastics clubs · Only first names and surname initials are shown.</footer>
@@ -233,7 +292,7 @@ const PRIV = 'ngl_power_league_private';
 let BG = {};
 const ADMIN = /[?&]admin=1/.test(location.search);
 
-const {LEVELS, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf} = window.NGLPowerLeague;
+const {ICON, SHORT, LEVELS, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf} = window.NGLPowerLeague;
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -245,13 +304,13 @@ let G = [], ADMIN_OK = false, BG_SUB = null;
 let VIEW = 'overall';
 function opts(sel, list, all, lbl){ sel.innerHTML = (all ? `<option value="">${all}</option>` : '') + list.map(v => `<option value="${v}">${lbl ? lbl(v) : v}</option>`).join(''); }
 function setupPublic(){
-  $('viewTabs').innerHTML = `<button class="tab on" data-v="overall">Overall</button>` + CH.map(c => `<button class="tab" data-v="${c.k}">${esc(c.n)}</button>`).join('');
+  $('viewTabs').innerHTML = ['overall', ...CH.map(c => c.k)].map(k => `<button type="button" role="tab" class="${k === 'overall' ? 'on' : ''}" data-v="${k}" aria-label="${esc(k === 'overall' ? 'Overall' : CH.find(c => c.k === k).n)}"><span class="ic">${ICON[k]}</span>${SHORT[k]}</button>`).join('');
   $('viewTabs').onclick = e => { const b = e.target.closest('[data-v]'); if(!b) return; VIEW = b.dataset.v; [...$('viewTabs').children].forEach(x => x.classList.toggle('on', x === b)); renderTable(); };
-  opts($('fLevel'), LEVELS, 'All levels', v => 'Level ' + v); opts($('fAge'), AGES, 'All ages'); opts($('fHrs'), HRS, 'All hours', v => v + ' hrs');
+  const narrow = matchMedia('(max-width:700px)').matches; opts($('fLevel'), LEVELS, narrow ? 'Level' : 'All levels', v => 'Level ' + v); opts($('fAge'), AGES, narrow ? 'Age' : 'All ages'); opts($('fHrs'), HRS, narrow ? 'Hours' : 'All hours', v => v + ' hrs');
   ['fLevel','fAge','fHrs'].forEach(id => $(id).onchange = renderTable); $('fFind').oninput = renderTable; try{ const qc = new URLSearchParams(location.search).get('club'); if(qc) $('fFind').value = qc; }catch(_){}
-  $('chList').innerHTML = CH.map(c => `<div class="card ch"><h3>${esc(c.n)}${c.nLow ? ` <span class="muted" style="font-weight:600;font-size:13px">(${esc(c.nLow)} at Levels 1–2)</span>` : ''}<small>${c.stat}</small></h3>
-    <div class="ok">Counts</div><ul>${c.ok.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-    <div class="no">Doesn’t count</div><ul>${c.no.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('');
+  $('chList').innerHTML = CH.map(c => `<div class="c"><div class="hd"><span class="ic">${ICON[c.k]}</span><div><b>${esc(c.n)}</b><small>${c.nLow ? esc(c.nLow) + ' at Levels 1–2 · ' : ''}Scored in ${esc(c.unit === 's' ? 'seconds' : c.unit)}</small></div><span class="st">${c.stat}</span></div>
+    <details><summary>How it's judged</summary><div class="ok">Counts</div><ul>${c.ok.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="no">Doesn’t count</div><ul>${c.no.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details></div>`).join('');
 }
 function filtered(){
   const L = $('fLevel').value, A = $('fAge').value, H = $('fHrs').value, q = $('fFind').value.trim().toLowerCase();
@@ -275,6 +334,15 @@ function renderTable(){
       : `<tr><td colspan="6" class="empty">No ${esc(c.n)} results yet.</td></tr>`) + '</tbody>';
   }
   t.querySelectorAll('tr.row').forEach(r => r.onclick = () => openCard(r.dataset.id));
+  // Mobile: the same ranking as a simple list
+  const L = $('fLevel').value, A = $('fAge').value, H = $('fHrs').value;
+  $('selNote').textContent = [VIEW === 'overall' ? 'Overall' : CH.find(x => x.k === VIEW).n, L ? 'Level ' + L : 'All levels', A || 'All ages', H ? H + ' hrs' : 'All hours'].join(' · ');
+  const c = VIEW === 'overall' ? null : CH.find(x => x.k === VIEW);
+  const items = c ? list.filter(g => g.results && g.results[c.k] && g.results[c.k].best != null).sort((a, b) => c.dir > 0 ? b.results[c.k].best - a.results[c.k].best : a.results[c.k].best - b.results[c.k].best)
+                  : list.filter(g => g.done).sort((a, b) => b.ovr - a.ovr || b.done - a.done || nameOf(a).localeCompare(nameOf(b)));
+  $('lb').innerHTML = items.length ? items.map((g, i) => `<li data-id="${g.id}"><span class="pos">${i + 1}</span><span class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small><small>Level ${esc(g.level)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</small></span><span class="sc">${c ? fmt(g.results[c.k].best, c) : g.ovr}<small>${c ? esc(chUnit(c, g.level)).toUpperCase() : 'OVR'}</small></span></li>`).join('')
+    : `<li class="empty">${c ? 'No ' + esc(c.n) + ' results yet.' : 'No results yet. Results appear here as soon as NGL checks the videos.'}</li>`;
+  $('lb').querySelectorAll('li[data-id]').forEach(r => r.onclick = () => openCard(r.dataset.id));
 }
 function openCard(id){
   const g = G.find(x => x.id === id); if(!g) return;

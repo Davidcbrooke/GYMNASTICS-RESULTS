@@ -34,6 +34,22 @@ const CH = [
    no:['Walking on the hands, legs apart or bent arms','Time stops when he moves or comes down']}
 ];
 const STATS = ['SPD','POW','STR','FLX','BAL','CTL'];
+/* Line icons (48x48, stroke = currentColor) and short labels for each challenge. */
+const SHORT = {overall:'Overall', sprint:'Sprint', jump:'Long Jump', tuck:'Tuck Jumps', push:'Push-ups', pull:'Pull-ups', dips:'Dips', balance:'Balance', pike:'Pike Fold', hand:'Handstand'};
+const P = d => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICON = {
+  overall: P('<path d="M16 8h16v9a8 8 0 0 1-16 0z"/><path d="M16 11h-5a5 5 0 0 0 6 8M32 11h5a5 5 0 0 1-6 8"/><path d="M24 25v7M18 40h12M20 40l1-8h6l1 8"/>'),
+  sprint: P('<circle cx="31" cy="8" r="3.5"/><path d="M29 14l-6 11 8 5-2 11"/><path d="M27 17l7 5M25 18l-7 3"/><path d="M23 25l-8 5"/><path d="M4 22h8M6 29h6"/>'),
+  jump: P('<path d="M7 38c4-18 12-26 17-26s13 8 17 26" stroke-dasharray="3 5"/><circle cx="24" cy="18" r="3.5"/><path d="M24 22v8M24 25l-6-4M24 25l6-4M24 30l-5 5M24 30l5 5"/><path d="M4 43h40"/>'),
+  tuck: P('<circle cx="26" cy="7" r="3.5"/><path d="M26 11v11M26 15l-7 3M26 15l7 3M26 22l-6 2 4 6M26 22l6 2-4 6"/><path d="M9 32V20M6 23l3-3 3 3"/><path d="M8 42h32"/>'),
+  push: P('<circle cx="9" cy="23" r="3.5"/><path d="M13 25l28 6"/><path d="M17 26v9"/><path d="M41 31l1 5"/><path d="M4 38h42"/>'),
+  pull: P('<path d="M6 7h36"/><path d="M17 7l4 11M31 7l-4 11"/><circle cx="24" cy="18" r="3.5"/><path d="M24 22v12M24 34l-3 9M24 34l3 9"/>'),
+  dips: P('<path d="M6 24h12M30 24h12M10 24v18M38 24v18"/><path d="M16 24l5-8M32 24l-5-8"/><circle cx="24" cy="9" r="3.5"/><path d="M24 13v14M24 27l-4 8 3 5"/>'),
+  balance: P('<circle cx="24" cy="7" r="3.5"/><path d="M24 11v16M24 16l-6 4 4 3M24 16l6 4-4 3"/><path d="M24 27v16M24 27l8 5-6 4"/><path d="M14 44h20"/>'),
+  pike: P('<path d="M4 40h40"/><path d="M10 37h28"/><path d="M11 37c1-9 6-13 15-10"/><circle cx="29" cy="27" r="3.5"/><path d="M22 28l14 4"/>'),
+  hand: P('<path d="M24 5v24"/><circle cx="24" cy="32" r="3.5"/><path d="M24 26l-6 14M24 26l6 14"/><path d="M8 42h32"/>')
+};
+
 const chName = (c, lvl) => (c.nLow && +lvl <= 2) ? c.nLow : c.n;
 const chUnit = (c, lvl) => (c.unitLow && +lvl <= 2) ? c.unitLow : c.unit;
 
@@ -80,5 +96,5 @@ function leaguePos(list, g){
   const peers = list.filter(x => x.done && group(x) === group(g)).sort((a, b) => b.ovr - a.ovr);
   return {pos: peers.indexOf(g) + 1, of: peers.length};
 }
-window.NGLPowerLeague = {LEVELS, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf, tierOf, cardFor, leaguePos};
+window.NGLPowerLeague = {ICON, SHORT, LEVELS, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf, tierOf, cardFor, leaguePos};
 })();
