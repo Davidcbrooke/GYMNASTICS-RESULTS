@@ -12,7 +12,7 @@
   --white:#ffffff; --paper:#f9f7f3;
 }
 *{ box-sizing:border-box; margin:0; padding:0; }
-body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--navy); color:var(--ink); min-height:100vh; }
+body{ font-family:Roboto,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--navy); color:var(--ink); min-height:100vh; }
 
 /* ---- AUTH SCREENS ---- */
 .auth-screen{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; background:var(--navy); }
@@ -476,7 +476,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 </style>
 </head>
 <body>
-<div id="nglSplash" role="status" aria-label="Loading NGL Rotation Planner"><img class="nsl" alt="NGL Rotation Planner"><div class="nsm"></div><div class="nsh">One connected framework for British Gymnastics clubs: training, awards, competitions and club support, across seven pathways spanning every age and ability.</div><div class="nsg"></div><div class="nsb"><b></b></div><div class="nsx">Exclusively for British Gymnastics clubs</div></div><style>#nglSplash{position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 50% 35%,#26375e 0%,#1a2a4a 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .45s ease,transform .45s ease;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+<div id="nglSplash" role="status" aria-label="Loading NGL Rotation Planner"><img class="nsl" alt="NGL Rotation Planner"><div class="nsm"></div><div class="nsh">One connected framework for British Gymnastics clubs: training, awards, competitions and club support, across seven pathways spanning every age and ability.</div><div class="nsg"></div><div class="nsb"><b></b></div><div class="nsx">Exclusively for British Gymnastics clubs</div></div><style>#nglSplash{position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 50% 35%,#26375e 0%,#1a2a4a 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .45s ease,transform .45s ease;font-family:Roboto,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
 #nglSplash.out{opacity:0;transform:scale(1.04);pointer-events:none}
 #nglSplash .nsl{width:min(240px,62vw);height:auto;min-height:40px;opacity:0;transform:scale(.7);animation:nslPop .6s cubic-bezier(.2,1.4,.4,1) .15s forwards}
 #nglSplash .nsl-t{color:#fff;font-weight:900;font-size:34px;letter-spacing:.02em}
@@ -1323,23 +1323,23 @@ function recPrintSheet(){
   const w = window.open('', '_blank');
   if(!w){ showToast('Allow pop-ups to print the term sheet'); return; }
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${club} · Recreational term sheet</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>@page{size:A4 landscape;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Roboto,Arial,sans-serif;color:#1e1a4c;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pg{width:297mm;height:210mm;padding:8mm 9mm 7mm;display:flex;flex-direction:column;gap:3mm;overflow:hidden}
 .top{display:flex;align-items:center;gap:5mm;border-bottom:1.2mm solid #E88230;padding-bottom:2.5mm}.top img{height:14mm}
-h1{font-family:'Barlow Condensed',Arial,sans-serif;font-weight:700;font-size:22pt;margin:0;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.top>div:nth-child(2){min-width:0}.top p{margin:1mm 0 0;font-size:9.5pt;color:#555}.top .r{margin-left:auto;text-align:right;font-size:8.5pt;color:#555}
+h1{font-family:'Roboto Condensed',Arial,sans-serif;font-weight:700;font-size:22pt;margin:0;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.top>div:nth-child(2){min-width:0}.top p{margin:1mm 0 0;font-size:9.5pt;color:#555}.top .r{margin-left:auto;text-align:right;font-size:8.5pt;color:#555}
 .main{display:grid;grid-template-columns:1fr 64mm;gap:5mm;flex:1;min-height:0}.wk{margin-bottom:2mm}.wkh{margin-bottom:1mm}
-.badge{font-family:'Barlow Condensed',Arial,sans-serif;font-weight:700;color:#fff;border-radius:2mm;padding:.5mm 3mm;font-size:12pt}.badge.A{background:#1e1a4c}.badge.B{background:#E88230}
+.badge{font-family:'Roboto Condensed',Arial,sans-serif;font-weight:700;color:#fff;border-radius:2mm;padding:.5mm 3mm;font-size:12pt}.badge.A{background:#1e1a4c}.badge.B{background:#E88230}
 table{border-collapse:separate;border-spacing:.8mm;width:100%}.rot{table-layout:fixed}.rot thead th:first-child{width:23mm}.rot thead th:nth-child(2),.rot thead th:last-child{width:22mm}.rot th,.rot td{font-size:8.6pt;padding:1.05mm 2mm;border-radius:1.2mm;text-align:left}
-.rot thead th{background:#ece9f5;font-family:'Barlow Condensed',Arial,sans-serif;font-size:10pt}.rot thead small{display:block;font-family:Roboto,Arial,sans-serif;font-weight:400;font-size:7.4pt;color:#666}
-.rot tbody th{width:23mm;font-family:'Barlow Condensed',Arial,sans-serif;font-size:10.5pt;background:#f6f5fa;white-space:nowrap}.rot tbody th i{display:inline-block;width:3.2mm;height:3.2mm;border-radius:50%;margin-right:1.6mm;vertical-align:-.5mm}
+.rot thead th{background:#ece9f5;font-family:'Roboto Condensed',Arial,sans-serif;font-size:10pt}.rot thead small{display:block;font-family:Roboto,Arial,sans-serif;font-weight:400;font-size:7.4pt;color:#666}
+.rot tbody th{width:23mm;font-family:'Roboto Condensed',Arial,sans-serif;font-size:10.5pt;background:#f6f5fa;white-space:nowrap}.rot tbody th i{display:inline-block;width:3.2mm;height:3.2mm;border-radius:50%;margin-right:1.6mm;vertical-align:-.5mm}
 .wm{background:#f6f5fa;color:#555;width:22mm}.pc{color:#fff;font-weight:500;font-size:9pt!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-h2{font-family:'Barlow Condensed',Arial,sans-serif;font-size:12pt;margin:0 0 1mm}.box{background:#f6f5fa;border-radius:2mm;padding:2.5mm 3mm;margin-bottom:3mm;font-size:8.4pt;line-height:1.4}
+h2{font-family:'Roboto Condensed',Arial,sans-serif;font-size:12pt;margin:0 0 1mm}.box{background:#f6f5fa;border-radius:2mm;padding:2.5mm 3mm;margin-bottom:3mm;font-size:8.4pt;line-height:1.4}
 .times th,.times td{font-size:8.6pt;padding:.8mm 1mm;text-align:left;vertical-align:top}.times td{font-weight:500;white-space:nowrap}
 .key div{display:flex;align-items:center;gap:1.5mm;margin:.6mm 0}.key i{width:3.4mm;height:3.4mm;border-radius:.8mm;display:inline-block}
-.calh{font-family:'Barlow Condensed',Arial,sans-serif;font-weight:600;font-size:12pt;margin-bottom:1mm}.calh small{font-family:Roboto,Arial,sans-serif;font-weight:400;font-size:8pt;color:#666}
+.calh{font-family:'Roboto Condensed',Arial,sans-serif;font-weight:600;font-size:12pt;margin-bottom:1mm}.calh small{font-family:Roboto,Arial,sans-serif;font-weight:400;font-size:8pt;color:#666}
 .cal{display:grid;gap:.8mm}.cw{border-radius:1.4mm;padding:1.2mm 1mm;text-align:center;font-size:7pt;line-height:1.25;background:#f6f5fa}
-.cw b{display:block;font-family:'Barlow Condensed',Arial,sans-serif;font-size:9.5pt}.cw span{display:block;color:#555}.cw em{display:block;font-style:normal;font-weight:500;margin-top:.4mm}
+.cw b{display:block;font-family:'Roboto Condensed',Arial,sans-serif;font-size:9.5pt}.cw span{display:block;color:#555}.cw em{display:block;font-style:normal;font-weight:500;margin-top:.4mm}
 .cw.A{border-top:1.2mm solid #1e1a4c}.cw.B{border-top:1.2mm solid #E88230}.cw.as{background:#fff4d6;border-top:1.2mm solid #d9a521}.cw.ht{background:#e9e9e9;color:#777;border-top:1.2mm solid #aaa}
 .foot{font-size:7.4pt;color:#777;display:flex;justify-content:space-between}
 @media screen{body{background:#666}.pg{background:#fff;margin:10px auto;box-shadow:0 4px 20px rgba(0,0,0,.4)}}</style></head><body><div class="pg">

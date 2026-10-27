@@ -10,7 +10,7 @@
   var COLS = ['#E8559A','#F8D438','#E88230','#0071B3','#01AFB8','#3BAA4A','#7A4C9E'];
 
   var f = document.createElement('link'); f.rel = 'stylesheet';
-  f.href = 'https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@700&display=swap';
+  f.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Condensed:wght@500;600;700;800&display=swap';
   document.head.appendChild(f);
 
   var css = ''
@@ -21,9 +21,9 @@
   + '.nglc-d:before{content:"";position:absolute;left:8px;right:8px;top:50%;height:3px;margin-top:-1.5px;border-radius:2px;background:linear-gradient(90deg,' + COLS.join(',') + ')}'
   + '.nglc-d i{position:relative;width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 3px #221e52;animation:nglc-p 3.2s ease-in-out infinite}'
   + '@keyframes nglc-p{0%,70%,100%{transform:scale(1)}78%{transform:scale(1.35)}}'
-  + '.nglc-t{font-family:Anton,Impact,sans-serif;font-size:24px;line-height:1;letter-spacing:.5px;color:#fff;white-space:nowrap}'
+  + '.nglc-t{font-family:'Roboto Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1;letter-spacing:.5px;color:#fff;white-space:nowrap}'
   + '.nglc-t span{color:#01AFB8}'
-  + '.nglc-s{font-family:"Barlow Condensed",Arial Narrow,sans-serif;font-weight:700;font-size:12px;letter-spacing:3px;color:#c9cbee;text-transform:uppercase}'
+  + '.nglc-s{font-family:"Roboto Condensed",Arial Narrow,sans-serif;font-weight:700;font-size:12px;letter-spacing:3px;color:#c9cbee;text-transform:uppercase}'
   + '.nglc-wrap{text-align:center;padding:8px 0}'
   + '.nglc-float{position:fixed;left:18px;bottom:18px;z-index:9998;transform-origin:left bottom;scale:.82}'
   + '@media(max-width:600px){.nglc-float{scale:.68;left:10px;bottom:10px}}'

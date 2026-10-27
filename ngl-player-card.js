@@ -124,7 +124,8 @@
   function fontsReady(){
     if(!document.fonts || !document.fonts.load) return Promise.resolve();
     return Promise.all([
-      document.fonts.load("900 40px Roboto"),
+      document.fonts.load("800 40px 'Roboto Condensed'"),
+      document.fonts.load("700 30px 'Roboto Condensed'"),
       document.fonts.load("700 30px Roboto"),
       document.fonts.load("500 30px Roboto")
     ]).catch(function(){});
@@ -195,16 +196,16 @@
 
     // Overall + discipline + level
     ctx.fillStyle = t.ink; ctx.textAlign = "center";
-    ctx.font = "900 112px Roboto"; ctx.fillText(String(card.overall), 120, 175);
-    ctx.font = "700 38px Roboto"; ctx.fillText(card.discipline || "NGL", 120, 230);
+    ctx.font = "800 128px 'Roboto Condensed'"; ctx.fillText(String(card.overall), 120, 175);
+    ctx.font = "700 44px 'Roboto Condensed'"; ctx.fillText(card.discipline || "NGL", 120, 230);
     ctx.fillRect(80, 248, 80, 4);
-    if(card.level){ ctx.font = "700 26px Roboto"; ctx.fillText("LEVEL", 120, 290); ctx.font = "900 46px Roboto"; ctx.fillText(card.level, 120, 340); }
+    if(card.level){ ctx.font = "700 30px 'Roboto Condensed'"; ctx.fillText("LEVEL", 120, 290); ctx.font = "800 46px 'Roboto Condensed'"; ctx.fillText(card.level, 120, 340); }
     if(logoImg){ var lw = 150, lh = lw*logoImg.height/logoImg.width; ctx.drawImage(logoImg, 120-lw/2, 365, lw, lh); }
 
     // Name
     var name = (card.name || "Gymnast").toUpperCase();
     ctx.fillStyle = t.ink;
-    fitText(ctx, name, W-110, 62, "900 {s}px Roboto");
+    fitText(ctx, name, W-110, 62, "800 {s}px 'Roboto Condensed'");
     ctx.fillText(name, W/2, 480);
     ctx.font = "500 26px Roboto"; ctx.globalAlpha = .8;
     fitText(ctx, card.club, W-140, 28, "500 {s}px Roboto");
@@ -215,13 +216,13 @@
     var colX = [120, 345], rowY = [600, 660, 720];
     ATTRS.forEach(function(a, i){
       var x = colX[i < 3 ? 0 : 1], y = rowY[i % 3], v = card.attrs[a.key];
-      ctx.textAlign = "right"; ctx.font = "900 44px Roboto"; ctx.fillText(v == null ? "–" : String(v), x + 60, y);
-      ctx.textAlign = "left"; ctx.font = "700 32px Roboto"; ctx.fillText(a.key, x + 78, y - 2);
+      ctx.textAlign = "right"; ctx.font = "800 50px 'Roboto Condensed'"; ctx.fillText(v == null ? "–" : String(v), x + 60, y);
+      ctx.textAlign = "left"; ctx.font = "700 40px 'Roboto Condensed'"; ctx.fillText(a.key, x + 78, y - 2);
     });
     ctx.globalAlpha = .35; ctx.fillRect(W/2 - 1, 560, 2, 180); ctx.globalAlpha = 1;
 
     // Footer
-    ctx.textAlign = "center"; ctx.font = "700 20px Roboto"; ctx.globalAlpha = .75;
+    ctx.textAlign = "center"; ctx.font = "700 24px 'Roboto Condensed'"; ctx.globalAlpha = .75;
     var season = String(card.season || new Date().getFullYear());
     ctx.fillText(/^\d+$/.test(season) ? "NGL PROFILE CARD · " + season : "NGL · " + season, W/2, 790);
     ctx.globalAlpha = 1;
@@ -247,7 +248,7 @@
     if(document.getElementById("npc-style")) return;
     var st = document.createElement("style"); st.id = "npc-style"; st.textContent = css; document.head.appendChild(st);
     var lk = document.createElement("link"); lk.rel = "stylesheet";
-    lk.href = "https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap";
+    lk.href = "https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Condensed:wght@500;600;700;800&display=swap";
     document.head.appendChild(lk);
   }
 
