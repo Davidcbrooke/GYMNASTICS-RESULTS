@@ -189,7 +189,7 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
     <div>
       <div class="eyebrow">NGL General League · Boys</div>
       <h1>The <span>Training League</span></h1>
-      <p class="muted"><b style="color:#fff">Boost training. Focus, results and fun, every session.</b> Nine conditioning challenges for strength, speed, power, flexibility, balance and control. Coaches film them in training and send them to NGL, and every valid result goes straight into the live league table and onto the gymnast's NGL Profile Card.</p>
+      <p class="muted"><b style="color:#fff">Boost training. Focus, results and fun, every session.</b> 13 conditioning challenges for strength, speed, power, flexibility, balance and control. Coaches film them in training and send them to NGL, and every valid result goes straight into the live league table and onto the gymnast's NGL Profile Card.</p>
       <div class="pills"><span class="pill gl">Ages 6–8 · 9–11 · 12–14 · 15+</span><span class="pill">2–5 hrs · 6–10 hrs</span><span class="pill">Open all season</span></div>
     </div>
     <figure class="hero-card">
@@ -260,7 +260,7 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
     </div>
 
     <div class="band-ch">
-      <h2>The nine challenges</h2>
+      <h2>The 13 challenges</h2>
       <p class="muted" style="margin:0">Filmed in training. Up to 2 attempts per challenge each time it's filmed; the best valid attempt counts towards the season.</p>
       <div class="film">
         <div><i>📱</i><b>Fixed camera</b>Side-on, whole body in shot</div>
@@ -430,7 +430,7 @@ function openEditor(id){
     CH.forEach(c => {
       const raw = $('modalBody').querySelector(`[data-v="${c.k}"]`).value; if(raw === '') return;
       const v = +raw, date = $('modalBody').querySelector(`[data-d="${c.k}"]`).value || today;
-      if(!isFinite(v) || (c.k !== 'pike' && v <= 0)) return;
+      if(!isFinite(v) || (v <= 0)) return;
       const r = res[c.k] || {history: []}; r.history = (r.history || []).concat([{v, date}]).slice(-20);
       const better = r.best == null || (c.dir > 0 ? v > r.best : v < r.best);
       if(better){ r.best = v; r.date = date; } else kept++;

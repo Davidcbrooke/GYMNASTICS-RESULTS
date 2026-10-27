@@ -17,25 +17,37 @@ const CH = [
   {k:'push', n:'Push-ups in 30s', stat:'STR', unit:'reps', dir:1, step:1,
    ok:['Straight body from head to heels','Chest down to a fist height off the floor, arms fully straight at the top'],
    no:['Hips sagging or piking','Half reps or knees on the floor']},
-  {k:'pull', n:'Pull-ups', nLow:'Chin-up Hold', stat:'STR', unit:'reps', unitLow:'s', dir:1, step:1,
-   ok:['Ages 12 and over: from a straight-arm hang, chin over the bar, back to straight arms','Ages 6–11 (chin-up hold): chin held above the bar, time stops when it drops'],
+  {k:'pull', n:'Pull-ups', stat:'STR', unit:'reps', dir:1, step:1,
+   ok:['Overhand grip (palms facing away)','From a straight-arm hang, chin over the bar, back to straight arms'],
+   no:['Kipping or swinging','Chin not clearing the bar, or not returning to straight arms']},
+  {k:'chin', n:'Chin-ups', stat:'STR', unit:'reps', dir:1, step:1,
+   ok:['Underhand grip (palms facing you)','From a straight-arm hang, chin over the bar, back to straight arms'],
    no:['Kipping or swinging','Chin not clearing the bar, or not returning to straight arms']},
   {k:'dips', n:'Max Dips', stat:'STR', unit:'reps', dir:1, step:1,
    ok:['From straight-arm support, lower until the upper arms are parallel to the floor','Push back to straight arms'],
    no:['Not low enough or not locking out at the top','Feet touching the floor']},
-  {k:'balance', n:'Single-Leg Balance (eyes closed)', stat:'BAL', unit:'s', dir:1, step:1,
-   ok:['Stand on one leg (either leg), hands on hips, eyes closed','Free foot lifted and resting against the standing knee','Time runs from eyes closing until the shape breaks'],
-   no:['Hands leaving the hips, the standing foot moving or hopping','The free foot touching down, or eyes opening']},
-  {k:'pike', n:'Pike Fold Reach', stat:'FLX', unit:'cm', dir:1, step:1, off:20,
-   ok:['Legs straight and together, toes pointing up','Both hands level, held for 2 seconds','Measured in cm past the toes (minus if short of them)'],
-   no:['Bent knees or bouncing','One hand ahead of the other']},
+  {k:'muscle', n:'Muscle-ups on Rings in 1 min', stat:'STR', unit:'reps', dir:1, step:1,
+   ok:['From a straight-arm hang below the rings, pull through to straight-arm support above them','Return to a straight-arm hang between reps'],
+   no:['Big kip or swing to get through','Not reaching straight-arm support, or feet touching the floor']},
+  {k:'rope', n:'5m Straddle Rope Climb', stat:'STR', unit:'s', dir:-1, step:0.01,
+   ok:['Feet off the floor, legs held in straddle the whole climb','Arms only','Time from leaving the floor to a hand touching the 5m mark'],
+   no:['Legs touching or wrapping the rope','Legs dropping out of straddle']},
+  {k:'splits', n:'Oversplit Blocks', stat:'FLX', unit:'cm', dir:1, step:1,
+   ok:['Front heel on a stack of blocks, back leg straight behind','Hips square and down on the floor, held for 2 seconds','Left or right leg, whichever is better: measure the total height of the blocks in cm'],
+   no:['Bent front or back knee','Hips lifted off the floor or turned out']},
+  {k:'mush', n:'Mushroom Circles in 30s', stat:'CTL', unit:'reps', dir:1, step:1,
+   ok:['Hands on the mushroom, legs straight and together','Every full circle counts'],
+   no:['Feet or legs touching the mushroom or floor: that circle doesn’t count']},
+  {k:'vsit', n:'V-Sit Hold on Beam', stat:'BAL', unit:'s', dir:1, step:1,
+   ok:['Sitting on the beam, legs straight and together, lifted into a V','Hands off the beam','Time runs until the shape breaks'],
+   no:['Bent knees or legs dropping','A hand or foot touching the beam, or coming off']},
   {k:'hand', n:'Handstand Hold', stat:'CTL', unit:'s', dir:1, step:1,
    ok:['Arms straight, legs together, straight body','Time starts when the feet come together at the top','Wall allowed for ages 6–11, freestanding for 12 and over'],
    no:['Walking on the hands, legs apart or bent arms','Time stops when he moves or comes down']}
 ];
 const STATS = ['SPD','POW','STR','FLX','BAL','CTL'];
 /* Line icons (48x48, stroke = currentColor) and short labels for each challenge. */
-const SHORT = {overall:'Overall', sprint:'Sprint', jump:'Long Jump', tuck:'Tuck Jumps', push:'Push-ups', pull:'Pull-ups', dips:'Dips', balance:'Balance', pike:'Pike Fold', hand:'Handstand'};
+const SHORT = {overall:'Overall', sprint:'Sprint', jump:'Long Jump', tuck:'Tuck Jumps', push:'Push-ups', pull:'Pull-ups', chin:'Chin-ups', dips:'Dips', muscle:'Muscle-ups', rope:'Rope Climb', splits:'Splits', mush:'Mushroom', vsit:'V-Sit', hand:'Handstand'};
 const P = d => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const ICON = {
   overall: P('<path d="M16 8h16v9a8 8 0 0 1-16 0z"/><path d="M16 11h-5a5 5 0 0 0 6 8M32 11h5a5 5 0 0 1-6 8"/><path d="M24 25v7M18 40h12M20 40l1-8h6l1 8"/>'),
@@ -45,17 +57,21 @@ const ICON = {
   push: P('<circle cx="9" cy="23" r="3.5"/><path d="M13 25l28 6"/><path d="M17 26v9"/><path d="M41 31l1 5"/><path d="M4 38h42"/>'),
   pull: P('<path d="M6 7h36"/><path d="M17 7l4 11M31 7l-4 11"/><circle cx="24" cy="18" r="3.5"/><path d="M24 22v12M24 34l-3 9M24 34l3 9"/>'),
   dips: P('<path d="M6 24h12M30 24h12M10 24v18M38 24v18"/><path d="M16 24l5-8M32 24l-5-8"/><circle cx="24" cy="9" r="3.5"/><path d="M24 13v14M24 27l-4 8 3 5"/>'),
-  balance: P('<circle cx="24" cy="7" r="3.5"/><path d="M24 11v16M24 16l-6 4 4 3M24 16l6 4-4 3"/><path d="M24 27v16M24 27l8 5-6 4"/><path d="M14 44h20"/>'),
-  pike: P('<path d="M4 40h40"/><path d="M10 37h28"/><path d="M11 37c1-9 6-13 15-10"/><circle cx="29" cy="27" r="3.5"/><path d="M22 28l14 4"/>'),
+  chin: P('<path d="M6 7h36"/><path d="M19 7c-3 5-2 9 2 11M29 7c3 5 2 9-2 11"/><circle cx="24" cy="18" r="3.5"/><path d="M24 22v12M24 34l-3 9M24 34l3 9"/>'),
+  muscle: P('<path d="M16 3v10M32 3v10"/><circle cx="16" cy="16" r="3"/><circle cx="32" cy="16" r="3"/><circle cx="24" cy="9" r="3.5"/><path d="M16 19v6h16v-6"/><path d="M24 13v18M24 31l-4 11M24 31l4 11"/>'),
+  rope: P('<path d="M24 3v42" stroke-dasharray="2 3"/><circle cx="24" cy="11" r="3.5"/><path d="M24 15v12"/><path d="M24 17l-3-4M24 17l3-4"/><path d="M24 27l-14 4M24 27l14 4"/><path d="M38 6h6M38 6v6" stroke-width="2.5"/>'),
+  splits: P('<path d="M4 42h40"/><path d="M32 42v-8h12v8M32 38h12"/><circle cx="20" cy="22" r="3.5"/><path d="M20 26v10"/><path d="M20 36l18-2M20 36L5 41"/><path d="M20 29l-6-5M20 29l6-5"/>'),
+  mush: P('<path d="M12 36c0-6 5-9 12-9s12 3 12 9z"/><path d="M20 36v6h8v-6"/><path d="M14 42h20"/><circle cx="24" cy="16" r="3.5"/><path d="M24 20v7"/><path d="M27 22c8-2 14 0 16 2"/><path d="M8 16a17 9 0 0 1 32 0" stroke-dasharray="3 4"/><path d="M37 13l3 3-4 1"/>'),
+  vsit: P('<path d="M4 34h40"/><path d="M14 34v10M34 34v10"/><circle cx="16" cy="12" r="3.5"/><path d="M17 16l7 16"/><path d="M24 32l16-14"/><path d="M19 21l-7 4M20 22l7-1"/>'),
   hand: P('<path d="M24 5v24"/><circle cx="24" cy="32" r="3.5"/><path d="M24 26l-6 14M24 26l6 14"/><path d="M8 42h32"/>')
 };
 
-/* Younger boys (6–11) do the easier version of some challenges */
+/* Younger boys (6–11) may do an easier version of a challenge (nLow/unitLow); none currently */
 const young = age => age === '6-8' || age === '9-11';
 const chName = (c, age) => (c.nLow && young(age)) ? c.nLow : c.n;
 const chUnit = (c, age) => (c.unitLow && young(age)) ? c.unitLow : c.unit;
 
-const fmt = (v, c) => v == null ? '—' : (c.k === 'sprint' ? (+v).toFixed(2) : String(+v));
+const fmt = (v, c) => v == null ? '—' : (c.step < 1 ? (+v).toFixed(2) : String(+v));
 const group = g => `${g.age}|${g.hrs}`;
 
 /* ---------- Ratings ----------

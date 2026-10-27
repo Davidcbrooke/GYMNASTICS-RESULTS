@@ -504,9 +504,9 @@ function cardBoy(id){
   + '<div class="row" style="justify-content:center;gap:10px;margin-bottom:14px"><button class="btn ghost small" id="addPhoto">Add photo</button><button class="btn small" id="saveCard">Save card</button></div>'
   + '<input type="file" accept="image/*" id="photoIn" hidden>'
   + '<div class="card"><div class="eyebrow">Training League</div>'
-  + (e ? '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s card is built from the Training League: nine strength, speed and power challenges filmed in training. Each stat is rated out of 99 against boys of the same age group and training hours.</p>'
+  + (e ? '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s card is built from the Training League: 13 strength, speed and power challenges filmed in training. Each stat is rated out of 99 against boys of the same age group and training hours.</p>'
        + '<p style="font-weight:800;margin-bottom:10px">' + plPosLine(e) + '</p>' + plTable(e, id)
-       : '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s NGL Profile Card is built from the Training League: nine strength, speed and power challenges his coach films in training. It fills in as soon as his first results are checked.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
+       : '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s NGL Profile Card is built from the Training League: 13 strength, speed and power challenges his coach films in training. It fills in as soon as his first results are checked.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
   + '<a class="btn ghost small" href="' + PL_URL + '" target="_blank" rel="noopener" style="margin-top:12px">See the Training League table</a></div>'
   + '<div class="foot">Photos stay on this device. They are never uploaded or saved by NGL.</div>';
 }
@@ -554,13 +554,13 @@ function isBoy(id){ return GYM[id] && GYM[id].discipline === "MAG"; }
 function plFor(id){ return PL.byGym[id] || null; }
 function demoPL(){
   function seeded(n){ var x = Math.sin(n * 9.17) * 10000; return x - Math.floor(x); }
-  var base = {sprint:2.3, jump:175, tuck:22, push:20, pull:10, dips:9, balance:30, pike:4, hand:9};
+  var base = {sprint:2.3, jump:175, tuck:22, push:20, pull:8, chin:10, dips:9, muscle:4, rope:14, splits:20, mush:12, vsit:25, hand:9};
   var list = [];
   for(var i = 0; i < 12; i++){
     var r = {};
     Object.keys(base).forEach(function(k, j){
-      var f = i ? 0.7 + seeded(i * 13 + j) * 0.6 : 1.12 + seeded(j) * 0.12, v = k === "sprint" ? base[k] / f : k === "pike" ? Math.round(base[k] * f * 2 - 4) : Math.round(base[k] * f);
-      r[k] = {best: k === "sprint" ? Math.round(v * 100) / 100 : v, date: "2027-0" + (2 + i % 4) + "-1" + (i % 9)};
+      var f = i ? 0.7 + seeded(i * 13 + j) * 0.6 : 1.12 + seeded(j) * 0.12, v = (k === "sprint" || k === "rope") ? base[k] / f : Math.round(base[k] * f);
+      r[k] = {best: (k === "sprint" || k === "rope") ? Math.round(v * 100) / 100 : v, date: "2027-0" + (2 + i % 4) + "-1" + (i % 9)};
     });
     list.push({id:"d" + i, first: i ? "Boy" : "Oliver", init: i ? String.fromCharCode(65 + i) : "H", club: i ? "Club " + (i % 6 + 1) : "Demo Gymnastics Club", level:"2", age:"9-11", hrs:"2-5", results:r});
   }
