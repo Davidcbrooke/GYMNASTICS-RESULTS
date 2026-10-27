@@ -222,7 +222,8 @@
 
     // Footer
     ctx.textAlign = "center"; ctx.font = "700 24px 'Barlow Condensed'"; ctx.globalAlpha = .75;
-    ctx.fillText("NGL PLAYER · " + (card.season || new Date().getFullYear()), W/2, 790);
+    var season = String(card.season || new Date().getFullYear());
+    ctx.fillText(/^\d+$/.test(season) ? "NGL PROFILE CARD · " + season : "NGL · " + season, W/2, 790);
     ctx.globalAlpha = 1;
     ctx.restore();
   }
@@ -286,7 +287,7 @@
       if(act === "save"){
         try{
           var a = document.createElement("a");
-          a.download = "NGL_Player_" + (card.name || card.memberId).replace(/[^A-Za-z0-9]+/g, "_") + ".png";
+          a.download = "NGL_Profile_Card_" + (card.name || card.memberId).replace(/[^A-Za-z0-9]+/g, "_") + ".png";
           a.href = canvas.toDataURL("image/png"); document.body.appendChild(a); a.click(); a.remove();
         }catch(err){ alert("Couldn't save the card on this page. Try a screenshot instead."); }
       }
@@ -303,7 +304,7 @@
     var head = document.querySelector("#profile-modal .profile-header > div");
     if(!head || head.querySelector(".npc-open")) return;
     var b = document.createElement("button");
-    b.className = "npc-open"; b.type = "button"; b.textContent = "NGL Player Card";
+    b.className = "npc-open"; b.type = "button"; b.textContent = "NGL Profile Card";
     b.addEventListener("click", function(){ openCard(memberId); });
     head.appendChild(b);
   }

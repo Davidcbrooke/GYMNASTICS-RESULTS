@@ -98,6 +98,10 @@
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#fff;color:#0a1440;font-weight:800;padding:10px 16px;border-radius:12px;z-index:60}
   .hide{display:none!important}
   /* ---------- Clearer layout: challenge strip, compact filters, leaderboard panel, challenge cards ---------- */
+  .hero-card{margin:0;text-align:center}
+  .hero-card canvas{width:min(300px,72vw);height:auto;filter:drop-shadow(0 18px 34px rgba(0,0,0,.5));transform:rotate(2deg)}
+  .hero-card figcaption{color:var(--muted);font-size:13.5px;max-width:340px;margin:10px auto 0;line-height:1.45}
+  .mcard{display:block;width:min(300px,78vw);height:auto;margin:0 auto 14px;filter:drop-shadow(0 14px 28px rgba(0,0,0,.5))}
   .panel{background:var(--navy-2);border:1px solid var(--line);border-radius:22px;padding:18px 18px 14px;margin:0 0 26px}
   .panel-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px}
   .panel-h h2{margin:0;font-size:clamp(22px,3vw,28px)}
@@ -184,14 +188,10 @@ html.embed body{min-height:0}html.embed main{padding-top:14px}
       <p class="muted"><b style="color:#fff">Boost training. Focus, results and fun, every session.</b> Nine conditioning challenges for strength, speed, power, flexibility, balance and control. Coaches film them in training and send them to NGL, and every valid result goes straight into the live league table and onto the gymnast's NGL Profile Card.</p>
       <div class="pills"><span class="pill gl">Levels 1–4</span><span class="pill">Ages 6–8 · 9–11 · 12–14 · 15+</span><span class="pill">2–5 hrs · 6–10 hrs</span><span class="pill">Open all season</span></div>
     </div>
-    <div class="card accent">
-      <div class="eyebrow" style="color:rgba(255,255,255,.85)">Profile card stats</div>
-      <div class="stats6">
-        <div><b>SPD</b><span>Speed</span></div><div><b>POW</b><span>Power</span></div><div><b>STR</b><span>Strength</span></div>
-        <div><b>FLX</b><span>Flexibility</span></div><div><b>BAL</b><span>Balance</span></div><div><b>CTL</b><span>Control</span></div>
-      </div>
-      <p style="margin:12px 0 0;font-size:13px">Each stat is rated out of 99 against boys at the same level, age group and training hours. OVR is the average of all six.</p>
-    </div>
+    <figure class="hero-card">
+      <canvas id="heroCard" width="600" height="860" aria-label="An NGL Profile Card"></canvas>
+      <figcaption id="heroCap">Every boy gets his own NGL Profile Card, rated out of 99 for speed, power, strength, flexibility, balance and control. Tap any name in the table to see his.</figcaption>
+    </figure>
   </section>
 
 
@@ -275,6 +275,7 @@ html.embed body{min-height:0}html.embed main{padding-top:14px}
 <div class="modal" id="modal"><div class="card" id="modalBody"></div></div>
 
 <script src="ngl-power-league-core.js"></script>
+<script src="ngl-player-card.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -344,13 +345,22 @@ function renderTable(){
     : `<li class="empty">${c ? 'No ' + esc(c.n) + ' results yet.' : 'No results yet. Results appear here as soon as NGL checks the videos.'}</li>`;
   $('lb').querySelectorAll('li[data-id]').forEach(r => r.onclick = () => openCard(r.dataset.id));
 }
+
+/* NGL Profile Cards (drawn by ngl-player-card.js) */
+const SAMPLE = {name:'Your gymnast', club:'Your club', level:'2', discipline:'MAG', overall:84, attrs:{SPD:86, POW:82, STR:88, FLX:74, BAL:85, CTL:89}, tier:'gold', season:'TRAINING LEAGUE'};
+function drawCard(cv, g){ if(!cv || !window.NGLPlayerCard) return; const card = g ? NGLPowerLeague.cardFor(g) : SAMPLE; NGLPlayerCard.draw(cv, card, null); NGLPlayerCard.ready().then(() => NGLPlayerCard.draw(cv, card, null)); }
+function drawHero(){
+  const top = G.filter(g => g.done === CH.length).sort((a, b) => b.ovr - a.ovr)[0];
+  drawCard($('heroCard'), top || null);
+  $('heroCap').textContent = top ? `Top of the table: ${nameOf(top)}, ${top.club}. Every boy gets his own NGL Profile Card. Tap any name to see his.` : 'Every boy gets his own NGL Profile Card, rated out of 99 for speed, power, strength, flexibility, balance and control. Tap any name in the table to see his.';
+}
 function openCard(id){
   const g = G.find(x => x.id === id); if(!g) return;
-  $('modalBody').innerHTML = `<div class="pcard"><div class="top"><div class="big">${g.ovr}<small>OVR</small></div><div><h2 style="margin:0">${esc(nameOf(g))}</h2><div class="muted">${esc(g.club)}</div><div class="pills"><span class="pill gl">Level ${esc(g.level)}</span><span class="pill">${esc(g.age)}</span><span class="pill">${esc(g.hrs)} hrs</span></div></div></div>
-    <div class="stats6" style="margin-top:14px">${STATS.map(s => `<div><b>${g.stats[s]}</b><span>${s}</span></div>`).join('')}</div></div>
+  $('modalBody').innerHTML = `<canvas class="mcard" id="mCard" width="600" height="860" aria-label="${esc(nameOf(g))}'s NGL Profile Card"></canvas>
     <div class="res"><span class="h">Challenge</span><span class="h">Best</span><span class="h">Rating</span>${CH.map(c => { const r = g.results && g.results[c.k]; return `<span>${esc(chName(c, g.level))}</span><span>${r && r.best != null ? fmt(r.best, c) + ' ' + chUnit(c, g.level) : '—'}</span><span>${g.ch[c.k] || '—'}</span>`; }).join('')}</div>
     <div style="margin-top:16px;text-align:right"><button class="btn ghost small" id="mClose">Close</button></div>`;
   $('modal').classList.add('open'); $('mClose').onclick = () => $('modal').classList.remove('open');
+  drawCard($('mCard'), g);
 }
 $('modal').onclick = e => { if(e.target === $('modal')) $('modal').classList.remove('open'); };
 
@@ -435,7 +445,7 @@ setupPublic();
 if(ADMIN) setupAdmin();
 onSnapshot(COL, snap => {
   G = snap.docs.map(d => ({id: d.id, ...d.data()})); rate(G);
-  renderTable(); renderAdmin();
+  renderTable(); renderAdmin(); drawHero();
 }, err => { console.error(err); $('tbl').innerHTML = `<tbody><tr><td class="empty">${err.code === 'permission-denied' ? 'The Training League table isn’t switched on yet.' : 'Couldn’t load the table. Refresh to try again.'}</td></tr></tbody>`; });
 if(ADMIN) onAuthStateChanged(auth, async u => {
   ADMIN_OK = false;
