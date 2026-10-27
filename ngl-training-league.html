@@ -172,8 +172,9 @@
   }
 html.embed .topbar,html.embed .hero,html.embed .why,html.embed footer,html.embed #admin{display:none!important}
 html.embed body{min-height:0}html.embed main{padding-top:14px}
+html.site .topbar,html.site footer{display:none!important}html.site body{min-height:0}html.site main{padding-top:18px}
 </style>
-<script>if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed');</script>
+<script>if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed'); if(/[?&]site=1/.test(location.search)) document.documentElement.classList.add('site');</script>
 </head>
 <body>
 <header class="topbar"><div class="topbar-strap">NGL General League · Training League · Boys</div><div class="topbar-in">
@@ -466,7 +467,7 @@ if(ADMIN) onAuthStateChanged(auth, async u => {
 });
 </script>
 <script>/* Inside the General League Club Hub: report this page's height so the hub can size the frame */
-(function(){ if(!document.documentElement.classList.contains('embed') || parent === window) return;
+(function(){ var c = document.documentElement.classList; if(!(c.contains('embed') || c.contains('site')) || parent === window) return;
   var last = 0; function send(){ var h = Math.ceil(document.body.getBoundingClientRect().height) + 24; if(Math.abs(h - last) > 2){ last = h; try{ parent.postMessage({nglPowerHeight:h}, '*'); }catch(e){} } }
   try{ new ResizeObserver(send).observe(document.body); }catch(e){ setInterval(send, 800); }
   window.addEventListener('load', send);
