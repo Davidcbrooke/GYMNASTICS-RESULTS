@@ -188,7 +188,7 @@
           <div class="sidebar-title">Gymnastics</div>
           <div class="sidebar-subtitle">Competition Results</div>
         </div>
-        <a href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/admin-corrections.html" target="_blank" class="admin-link">ADMIN 🔒</a>
+        <a href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/admin-corrections.html" target="_blank" class="admin-link" id="adminLink" style="display:none">ADMIN 🔒</a><script>if(/[?&]admin\b/.test(location.search))document.getElementById("adminLink").style.display="";</script>
       </div>
     </div>
     <div class="tab-bar">
@@ -384,6 +384,9 @@ function loadCompetitions(){
       renderSidebar();
       if(competitions.length)selectComp(0);
       else showWelcome();
+      /* Open on the League table unless the link asks for a tab (?tab=competitions or ?tab=champs) */
+      var wantTab=(location.search.match(/[?&]tab=(competitions|league|champs)/)||[])[1]||"league";
+      if(competitions.length&&wantTab!=="competitions")switchTab(wantTab);
     })
     .catch(function(err){console.error(err);setStatus("error","Failed to load");showWelcome();});
 }
@@ -611,7 +614,7 @@ function activeTagsHtml(f,removeFn){
 
 function fSelect(key,label,options,currentVal,onchangeFn){
   if(!options||options.length<=1)return"";
-  var allLabel=label==="Apparatus"?"All Apparatus":label==="Training Hrs"?"All Training Hrs":"All "+label+"s";
+  var allLabel=label==="Apparatus"?"All Apparatus":label==="Training Hrs"?"All Training Hrs":label==="Age Category"?"All Age Categories":label==="Country"?"All Countries":"All "+label+"s";
   var s='<div class="filter-group"><label class="filter-label">'+label+'</label><select class="filter-select" onchange="'+onchangeFn+'(\''+key+'\',this.value)">';
   s+='<option value="ALL">'+allLabel+'</option>';
   options.forEach(function(o){if(o)s+='<option value="'+esc(o)+'"'+(currentVal===o?' selected':'')+'>'+esc(o)+'</option>';});
