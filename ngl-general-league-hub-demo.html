@@ -186,8 +186,8 @@ function loadDemo(){
   peers("pb", MAG, "2", "Boys", 9.2, 15); peers("pg", WAG, "1", "Girls", 9.6, 22);
   NEWS = [
     {id:"n1", date:"2027-06-02", title:"Round 4 running order is out", body:"Squads, start apparatus and arrival times for Round 4 are now on the Comps tab. Warm-up starts at 08:45 and parking is on site."},
-    {id:"n2", date:"2027-05-10", title:"Round 3 results are in", body:"Scores from Round 3 are now on the Stats and Comps tabs, and the Player Card has been updated."},
-    {id:"n3", date:"2027-01-12", title:"Welcome to the General League Hub", body:"This is your gymnast's own page for the 2027 season: results, progress, competitions and their NGL Player Card."}
+    {id:"n2", date:"2027-05-10", title:"Round 3 results are in", body:"Scores from Round 3 are now on the Stats and Comps tabs, and the Profile Card has been updated."},
+    {id:"n3", date:"2027-01-12", title:"Welcome to the General League Hub", body:"This is your gymnast's own page for the 2027 season: results, progress, competitions and their NGL Profile Card."}
   ];
   buildCompetitions();
   return Promise.resolve();
@@ -351,7 +351,7 @@ AFTER.admin = function(){
 SCREENS.signin = function(){
   return '<div class="hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v12c0 3-3 5-6 6-3-1-6-3-6-6z"/></svg></div>'
   + '<h1 class="center">Your gymnast\'s hub</h1>'
-  + '<p class="center muted">Results, progress, competitions and their NGL Player Card for the 2027 General League season.</p>'
+  + '<p class="center muted">Results, progress, competitions and their NGL Profile Card for the 2027 General League season.</p>'
   + '<div class="card">'
   +   '<label for="bg">Gymnast\'s British Gymnastics number</label>'
   +   '<input id="bg" type="text" inputmode="numeric" autocomplete="off" placeholder="e.g. 1234567" value="' + esc(S.bg) + '">'
@@ -363,7 +363,7 @@ SCREENS.signin = function(){
   +   '<div style="margin-top:16px"><button class="btn" id="go">Send my sign-in link</button></div>'
   + '</div>'
   + '<div class="demo-box"><b>Demo:</b> try <button data-fill="1000001">1000001</button> (Oliver, MAG, already linked) or <button data-fill="1000002">1000002</button> (Maisie, WAG, first time, so her club checks it first). Any email works.</div>'
-  + '<div class="foot">Only parents linked to a gymnast can see their hub.<br>Photos on the Player Card never leave your phone.</div>';
+  + '<div class="foot">Only parents linked to a gymnast can see their hub.<br>Photos on the Profile Card never leave your phone.</div>';
 };
 AFTER.signin = function(){
   document.querySelectorAll("[data-fill]").forEach(function(b){ b.onclick = function(){ document.getElementById("bg").value = b.getAttribute("data-fill"); if(!document.getElementById("em").value) document.getElementById("em").value = "parent@example.com"; }; });
@@ -506,7 +506,7 @@ function cardBoy(id){
   + '<div class="card"><div class="eyebrow">Training League</div>'
   + (e ? '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s card is built from the Training League: nine strength, speed and power challenges filmed in training. Each stat is rated out of 99 against boys at the same level, age group and training hours.</p>'
        + '<p style="font-weight:800;margin-bottom:10px">' + plPosLine(e) + '</p>' + plTable(e, id)
-       : '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s NGL Player Card is built from the Training League: nine strength, speed and power challenges his coach films in training. It fills in as soon as his first results are checked.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
+       : '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s NGL Profile Card is built from the Training League: nine strength, speed and power challenges his coach films in training. It fills in as soon as his first results are checked.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
   + '<a class="btn ghost small" href="' + PL_URL + '" target="_blank" rel="noopener" style="margin-top:12px">See the Training League table</a></div>'
   + '<div class="foot">Photos stay on this device. They are never uploaded or saved by NGL.</div>';
 }
@@ -545,7 +545,7 @@ AFTER.settings = function(){
 };
 
 /* ── Training League (boys) ──
-   For boys the NGL Player Card comes from the Training League challenges, not from competition scores.
+   For boys the NGL Profile Card comes from the Training League challenges, not from competition scores.
    Demo: made-up results. Admin preview: real Training League results, matched by the private BG number
    (only readable when signed in to NGL Admin with Training League or Results access). */
 var PL = {ready:false, byGym:{}, list:[], note:""};

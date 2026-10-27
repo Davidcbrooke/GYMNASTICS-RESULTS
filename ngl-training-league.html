@@ -37,6 +37,15 @@
   .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
   .pill{font-size:12px;font-weight:800;padding:5px 11px;border-radius:999px;background:var(--navy-4)}
   .pill.gl{background:var(--gl)}
+  .why{margin:0 0 22px}
+  .why h2{font-size:clamp(22px,3vw,28px);margin:0 0 4px}
+  .why .lead{color:var(--muted);margin:0 0 14px;max-width:760px}
+  .why-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+  @media(min-width:900px){.why-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  .why-grid div{background:var(--navy-3);border:1px solid var(--line);border-top:4px solid var(--gl-bright);border-radius:14px;padding:14px 16px}
+  .why-grid b{display:block;font-size:16px;margin-bottom:4px}
+  .why-grid span{color:var(--muted);font-size:14px;line-height:1.5}
+  .why-grid i{font-style:normal;font-size:22px;display:block;margin-bottom:6px}
   .card{background:var(--navy-3);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
   .card.accent{background:linear-gradient(135deg,var(--gl),#00548a);border-color:transparent}
   .stats6{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -107,7 +116,7 @@
     .note{font-size:14px}
     
   }
-html.embed .topbar,html.embed .hero,html.embed footer,html.embed #admin{display:none!important}
+html.embed .topbar,html.embed .hero,html.embed .why,html.embed footer,html.embed #admin{display:none!important}
 html.embed body{min-height:0}html.embed main{padding-top:14px}
 </style>
 <script>if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed');</script>
@@ -125,16 +134,30 @@ html.embed body{min-height:0}html.embed main{padding-top:14px}
     <div>
       <div class="eyebrow">NGL General League · Boys</div>
       <h1>The <span>Training League</span></h1>
-      <p class="muted">Nine strength, speed, power, flexibility, balance and control challenges. Coaches film them in training and send them to NGL, and every valid result goes straight into the league table and onto the gymnast's player card.</p>
+      <p class="muted"><b style="color:#fff">Boost training. Focus, results and fun, every session.</b> Nine conditioning challenges for strength, speed, power, flexibility, balance and control. Coaches film them in training and send them to NGL, and every valid result goes straight into the live league table and onto the gymnast's NGL Profile Card.</p>
       <div class="pills"><span class="pill gl">Levels 1–4</span><span class="pill">Ages 6–8 · 9–11 · 12–14 · 15+</span><span class="pill">2–5 hrs · 6–10 hrs</span><span class="pill">Open all season</span></div>
     </div>
     <div class="card accent">
-      <div class="eyebrow" style="color:rgba(255,255,255,.85)">Player card stats</div>
+      <div class="eyebrow" style="color:rgba(255,255,255,.85)">Profile card stats</div>
       <div class="stats6">
         <div><b>SPD</b><span>Speed</span></div><div><b>POW</b><span>Power</span></div><div><b>STR</b><span>Strength</span></div>
         <div><b>FLX</b><span>Flexibility</span></div><div><b>BAL</b><span>Balance</span></div><div><b>CTL</b><span>Control</span></div>
       </div>
       <p style="margin:12px 0 0;font-size:13px">Each stat is rated out of 99 against boys at the same level, age group and training hours. OVR is the average of all six.</p>
+    </div>
+  </section>
+
+
+  <section class="why" aria-labelledby="whyH">
+    <h2 id="whyH">Why clubs use the Training League</h2>
+    <p class="lead">Conditioning that boys actually want to do, with a reason to give their best every session.</p>
+    <div class="why-grid">
+      <div><i>🎯</i><b>Boost training productivity</b><span>Every challenge has a clear target, so sessions have focus and gymnasts can see their results improve.</span></div>
+      <div><i>🏁</i><b>Harness the power of competition</b><span>Gymnasts compete against boys at the same level, age and training hours across the country.</span></div>
+      <div><i>😄</i><b>Make training fun</b><span>Conditioning becomes a game: beat your best, climb the table, raise your rating.</span></div>
+      <div><i>⚽</i><b>A format boys recognise</b><span>League tables, ratings and profile cards, just like the sports games and cards they already love. Engagement every session.</span></div>
+      <div><i>📱</i><b>Easy to film and send</b><span>One phone, side-on, one continuous take. Email the videos and NGL does the rest.</span></div>
+      <div><i>📊</i><b>Live league table &amp; Profile Cards</b><span>Every result updates the table and the gymnast's NGL Profile Card, and you can compare two gymnasts side by side.</span></div>
     </div>
   </section>
 
