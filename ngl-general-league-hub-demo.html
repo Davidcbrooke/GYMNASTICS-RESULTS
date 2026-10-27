@@ -503,11 +503,11 @@ function cardBoy(id){
   + '<canvas class="card-canvas" id="pc" width="1200" height="1720"></canvas>'
   + '<div class="row" style="justify-content:center;gap:10px;margin-bottom:14px"><button class="btn ghost small" id="addPhoto">Add photo</button><button class="btn small" id="saveCard">Save card</button></div>'
   + '<input type="file" accept="image/*" id="photoIn" hidden>'
-  + '<div class="card"><div class="eyebrow">Power League</div>'
-  + (e ? '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s card is built from the Power League: nine strength, speed and power challenges filmed in training. Each stat is rated out of 99 against boys at the same level, age group and training hours.</p>'
+  + '<div class="card"><div class="eyebrow">Training League</div>'
+  + (e ? '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s card is built from the Training League: nine strength, speed and power challenges filmed in training. Each stat is rated out of 99 against boys at the same level, age group and training hours.</p>'
        + '<p style="font-weight:800;margin-bottom:10px">' + plPosLine(e) + '</p>' + plTable(e, id)
-       : '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s NGL Player Card is built from the Power League: nine strength, speed and power challenges his coach films in training. It fills in as soon as his first results are checked.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
-  + '<a class="btn ghost small" href="' + PL_URL + '" target="_blank" rel="noopener" style="margin-top:12px">See the Power League table</a></div>'
+       : '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s NGL Player Card is built from the Training League: nine strength, speed and power challenges his coach films in training. It fills in as soon as his first results are checked.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
+  + '<a class="btn ghost small" href="' + PL_URL + '" target="_blank" rel="noopener" style="margin-top:12px">See the Training League table</a></div>'
   + '<div class="foot">Photos stay on this device. They are never uploaded or saved by NGL.</div>';
 }
 AFTER.card = function(){
@@ -544,10 +544,10 @@ AFTER.settings = function(){
   document.getElementById("out").onclick = function(){ S.signedIn = false; go("#/signin"); };
 };
 
-/* ── Power League (boys) ──
-   For boys the NGL Player Card comes from the Power League challenges, not from competition scores.
-   Demo: made-up results. Admin preview: real Power League results, matched by the private BG number
-   (only readable when signed in to NGL Admin with Power League or Results access). */
+/* ── Training League (boys) ──
+   For boys the NGL Player Card comes from the Training League challenges, not from competition scores.
+   Demo: made-up results. Admin preview: real Training League results, matched by the private BG number
+   (only readable when signed in to NGL Admin with Training League or Results access). */
 var PL = {ready:false, byGym:{}, list:[], note:""};
 var PLK = window.NGLPowerLeague;
 function isBoy(id){ return GYM[id] && GYM[id].discipline === "MAG"; }
@@ -574,14 +574,14 @@ function loadPLAdmin(){
       storageBucket:"saadi-rotation.firebasestorage.app", messagingSenderId:"1066734803675", appId:"1:1066734803675:web:0188fd601adea7db08cafe"}, "power-league");
     var db = fs.getFirestore(app), auth = au.getAuth(app);
     return new Promise(function(res){ var off = au.onAuthStateChanged(auth, function(u){ off(); res(u); }); }).then(function(u){
-      if(!u){ PL.note = "Sign in to NGL Admin to see Power League cards here."; return; }
+      if(!u){ PL.note = "Sign in to NGL Admin to see Training League cards here."; return; }
       return Promise.all([fs.getDocs(fs.collection(db, "ngl_power_league")), fs.getDocs(fs.collection(db, "ngl_power_league_private"))]).then(function(snaps){
         PL.list = snaps[0].docs.map(function(d){ var o = d.data(); o.id = d.id; return o; }); PLK.rate(PL.list);
         var byId = {}; PL.list.forEach(function(e){ byId[e.id] = e; });
         snaps[1].docs.forEach(function(d){ var bg = String(d.data().bg || ""); if(bg && byId[d.id]) PL.byGym[bg] = byId[d.id]; });
       });
     });
-  }).catch(function(e){ console.warn("Power League not loaded", e); PL.note = "Power League results couldn't be loaded here."; });
+  }).catch(function(e){ console.warn("Training League not loaded", e); PL.note = "Training League results couldn't be loaded here."; });
 }
 function plTable(e, id){
   return '<table class="best">' + PLK.CH.map(function(c){ var r = e.results && e.results[c.k];
@@ -589,19 +589,19 @@ function plTable(e, id){
 }
 function plStats(id){
   var e = plFor(id);
-  return '<div class="card"><div class="eyebrow">Power League</div>'
+  return '<div class="card"><div class="eyebrow">Training League</div>'
     + (e ? '<div class="stat-grid" style="margin-bottom:12px"><div class="stat"><div class="k">OVR</div><div class="v">' + e.ovr + '</div></div><div class="stat"><div class="k">League position</div><div class="v" style="font-size:16px">' + plPosLine(e) + '</div></div></div>'
          + '<div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">' + PLK.STATS.map(function(k){ return '<div class="stat"><div class="k">' + k + '</div><div class="v">' + e.stats[k] + '</div></div>'; }).join("") + '</div>' + plTable(e, id)
-         : '<p class="muted" style="font-size:14px;margin:0">No Power League results yet.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
+         : '<p class="muted" style="font-size:14px;margin:0">No Training League results yet.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
     + '</div>';
 }
 function plPosLine(e){ var lp = PLK.leaguePos(PL.list, e); return lp.pos ? ord(lp.pos) + ' of ' + lp.of + ' · Level ' + esc(e.level) + ' · ' + esc(e.age) + ' · ' + esc(e.hrs) + ' hrs' : 'Not ranked yet'; }
-var PL_URL = "ngl-power-league.html";
+var PL_URL = "ngl-training-league.html";
 function plCard(id){
   var e = plFor(id), g = GYM[id];
-  if(e){ var c = PLK.cardFor(e); c.name = displayName(id); c.club = g.club || c.club; c.season = "POWER LEAGUE"; return c; }
+  if(e){ var c = PLK.cardFor(e); c.name = displayName(id); c.club = g.club || c.club; c.season = "TRAINING LEAGUE"; return c; }
   var blank = {}; PLK.STATS.forEach(function(k){ blank[k] = null; });
-  return {name:displayName(id), club:g.club, level:g.level, discipline:"MAG", overall:"–", attrs:blank, tier:"bronze", season:"POWER LEAGUE"};
+  return {name:displayName(id), club:g.club, level:g.level, discipline:"MAG", overall:"–", attrs:blank, tier:"bronze", season:"TRAINING LEAGUE"};
 }
 
 /* ═════════════════ Start ═════════════════ */

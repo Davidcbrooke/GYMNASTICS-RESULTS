@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a1440">
+<title>NGL Training League · Boys</title>
+<style>
+  :root{
+    --navy:#0a1440; --navy-2:#0d1a4f; --navy-3:#152463; --navy-4:#1d2f7a;
+    --line:rgba(255,255,255,0.14); --muted:#b7c1e6; --gl:#0071B3; --gl-bright:#3aa0e6;
+    --red:#D30E33; --gold:#f2a900; --ok:#5fd38d; --bad:#ff8a95;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--navy);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+  button,input,select{font:inherit;color:inherit}
+  a{color:var(--gl-bright)}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+  .topbar{background:var(--gl)}
+  .topbar-strap{text-align:center;color:#fff;font-weight:800;font-size:13px;letter-spacing:.02em;padding:7px 16px}
+  .topbar-in{background:linear-gradient(180deg,#2a245f 0%,#2a245f 40%,var(--navy) 100%);border-top-right-radius:120px 38px;padding-bottom:4px}
+  @media(min-width:700px){.topbar-in{border-top-right-radius:220px 46px}}
+  .topbar-row{display:flex;align-items:center;gap:12px;padding-top:10px;padding-bottom:10px;min-height:76px}
+  .logo img{height:50px;display:block}
+  @media(min-width:700px){.logo img{height:60px}}
+  .top-actions{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+  main{padding:10px 0 60px}
+  .hero{display:grid;gap:18px;grid-template-columns:1fr;align-items:center;margin:6px 0 20px}
+  @media(min-width:860px){.hero{grid-template-columns:1.3fr 1fr}}
+  .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:8px}
+  h1{font-size:40px;line-height:1.05;font-weight:900;letter-spacing:-.01em;margin-bottom:10px}
+  h1 span{color:var(--gl-bright)}
+  h2{font-size:20px;font-weight:800;margin-bottom:10px}
+  h3{font-size:16px;font-weight:800;margin-bottom:6px}
+  p{line-height:1.55;margin-bottom:10px}
+  .muted{color:var(--muted)}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .pill{font-size:12px;font-weight:800;padding:5px 11px;border-radius:999px;background:var(--navy-4)}
+  .pill.gl{background:var(--gl)}
+  .card{background:var(--navy-3);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
+  .card.accent{background:linear-gradient(135deg,var(--gl),#00548a);border-color:transparent}
+  .stats6{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .stats6 div{background:rgba(255,255,255,.1);border-radius:12px;padding:10px;text-align:center}
+  .stats6 b{display:block;font-size:20px;font-weight:900}
+  .stats6 span{font-size:11px;font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.8)}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 14px}
+  .tab{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 14px;font-weight:800;font-size:14px;cursor:pointer;color:var(--muted)}
+  .tab.on{background:var(--gl);border-color:var(--gl);color:#fff}
+  .filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+  .filters label{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  select,input[type=text],input[type=number],input[type=date]{background:var(--navy-2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:15px;min-width:140px;outline:none}
+  select:focus,input:focus{border-color:var(--gl-bright)}
+  .table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:14px;background:var(--navy-2)}
+  th,td{padding:10px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--navy-3);position:sticky;top:0}
+  td.num,th.num{text-align:center}
+  tr.row{cursor:pointer}
+  tr.row:hover td{background:rgba(255,255,255,.04)}
+  .pos{font-weight:900;width:44px}
+  .ovr{font-weight:900;font-size:18px;color:var(--gold)}
+  .nm b{display:block}.nm small{color:var(--muted);font-size:12px}
+  .empty{padding:26px;text-align:center;color:var(--muted)}
+  .grid-ch{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  .ch h3{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .ch h3 small{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--gl-bright)}
+  .ch ul{padding-left:18px;margin:4px 0 8px;line-height:1.45;font-size:14px}
+  .ch .ok{color:var(--ok);font-weight:800;font-size:13px}.ch .no{color:var(--bad);font-weight:800;font-size:13px}
+  .btn{display:inline-block;border:0;border-radius:12px;padding:10px 16px;font-weight:800;font-size:15px;background:var(--gl);color:#fff;cursor:pointer}
+  .btn.ghost{background:transparent;border:1px solid var(--line)}
+  .btn.small{padding:7px 12px;font-size:13px;border-radius:10px}
+  .btn.danger{background:transparent;border:1px solid var(--bad);color:var(--bad)}
+  .note{font-size:13px;color:var(--muted)}
+  .modal{position:fixed;inset:0;background:rgba(4,8,30,.75);display:none;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto;z-index:50}
+  .modal.open{display:flex}
+  .modal .card{max-width:560px;width:100%}
+  .pcard{background:linear-gradient(160deg,#1d2f7a,#0d1a4f 60%,#0071B3);border-radius:22px;padding:20px;border:2px solid var(--gold)}
+  .pcard .top{display:flex;align-items:center;gap:16px}
+  .pcard .big{font-size:54px;font-weight:900;color:var(--gold);line-height:1}
+  .pcard .big small{display:block;font-size:12px;letter-spacing:.12em;color:#fff;font-weight:800}
+  .res{display:grid;grid-template-columns:1fr auto auto;gap:6px 12px;font-size:14px;margin-top:14px}
+  .res .h{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:800}
+  .form{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));align-items:end}
+  .form label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;color:var(--muted)}
+  .entry{display:grid;grid-template-columns:1.5fr 1fr 1fr 44px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+  .entry:last-child{border:0}
+  .entry input{min-width:0;width:100%}
+  .hist{font-size:12px;color:var(--muted)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#fff;color:#0a1440;font-weight:800;padding:10px 16px;border-radius:12px;z-index:60}
+  .hide{display:none!important}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding:24px 16px}
+  /* Larger layout on desktop screens */
+  @media(min-width:1100px){
+    .wrap{max-width:1320px}
+    body{font-size:17px}
+    h1{font-size:54px} h2{font-size:24px} h3{font-size:18px}
+    p{font-size:17px}
+    .pill{font-size:14px;padding:6px 13px}
+    .stats6 b{font-size:24px} .stats6 span{font-size:12px}
+    .tab{font-size:15px;padding:10px 16px}
+    .filters label{font-size:12px}
+    select,input[type=text],input[type=number],input[type=date]{font-size:16px;padding:11px 13px;min-width:170px}
+    table{font-size:16px} th{font-size:12px} th,td{padding:13px 14px}
+    .ovr{font-size:20px}
+    .nm small{font-size:13px}
+    .ch ul{font-size:15px}
+    .note{font-size:14px}
+    
+  }
+html.embed .topbar,html.embed .hero,html.embed footer,html.embed #admin{display:none!important}
+html.embed body{min-height:0}html.embed main{padding-top:14px}
+</style>
+<script>if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed');</script>
+</head>
+<body>
+<header class="topbar"><div class="topbar-strap">NGL General League · Training League · Boys</div><div class="topbar-in">
+  <div class="wrap topbar-row">
+    <a class="logo" href="ngl-training-league.html" aria-label="NGL Training League"><img src="brand/ngl-logo-full.png" alt="National Gymnastics League"></a>
+    <div class="top-actions" id="who"></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">NGL General League · Boys</div>
+      <h1>The <span>Training League</span></h1>
+      <p class="muted">Nine strength, speed, power, flexibility, balance and control challenges. Coaches film them in training and send them to NGL, and every valid result goes straight into the league table and onto the gymnast's player card.</p>
+      <div class="pills"><span class="pill gl">Levels 1–4</span><span class="pill">Ages 6–8 · 9–11 · 12–14 · 15+</span><span class="pill">2–5 hrs · 6–10 hrs</span><span class="pill">Open all season</span></div>
+    </div>
+    <div class="card accent">
+      <div class="eyebrow" style="color:rgba(255,255,255,.85)">Player card stats</div>
+      <div class="stats6">
+        <div><b>SPD</b><span>Speed</span></div><div><b>POW</b><span>Power</span></div><div><b>STR</b><span>Strength</span></div>
+        <div><b>FLX</b><span>Flexibility</span></div><div><b>BAL</b><span>Balance</span></div><div><b>CTL</b><span>Control</span></div>
+      </div>
+      <p style="margin:12px 0 0;font-size:13px">Each stat is rated out of 99 against boys at the same level, age group and training hours. OVR is the average of all six.</p>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="admin" class="hide">
+    <div class="card" id="adminGate">
+      <h2>Training League admin</h2>
+      <p class="muted" id="gateMsg">Sign in through NGL Admin with your own account. Once you're signed in there, this page opens straight to the entry screen.</p>
+      <a class="btn" href="NGL_Admin_Hub.html?section=powerleague" target="_top">Open NGL Admin</a>
+    </div>
+    <div id="adminDash" class="hide">
+      <div class="card">
+        <h2>Add a gymnast</h2>
+        <p class="note">The public table only shows the first name and surname initial. The BG number is private: only NGL admins can see it, and it links his Training League card to his General League Hub.</p>
+        <form class="form" id="addForm">
+          <label>First name<input type="text" id="aFirst" required maxlength="30"></label>
+          <label>Surname initial<input type="text" id="aInit" required maxlength="1" style="min-width:0"></label>
+          <label>Club<input type="text" id="aClub" required maxlength="80" list="clubList"></label>
+          <label>BG number (private)<input type="text" id="aBg" inputmode="numeric" maxlength="12" placeholder="e.g. 1234567"></label>
+          <label>Level<select id="aLevel"></select></label>
+          <label>Age group<select id="aAge"></select></label>
+          <label>Training hours<select id="aHrs"></select></label>
+          <div><button class="btn" type="submit">Add gymnast</button></div>
+        </form>
+        <datalist id="clubList"></datalist>
+      </div>
+      <div class="card">
+        <h2>Enter results</h2>
+        <div class="filters">
+          <label>Find gymnast<input type="text" id="aFind" placeholder="Name or club"></label>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Gymnast</th><th>Club</th><th>Level</th><th>Age</th><th>Hours</th><th class="num">BG no.</th><th class="num">Challenges</th><th class="num">OVR</th><th></th></tr></thead><tbody id="aList"></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PUBLIC -->
+  <section id="public">
+    <div class="tabs" id="viewTabs"></div>
+    <div class="filters">
+      <label>Level<select id="fLevel"></select></label>
+      <label>Age group<select id="fAge"></select></label>
+      <label>Training hours<select id="fHrs"></select></label>
+      <label>Search<input type="text" id="fFind" placeholder="Name or club"></label>
+    </div>
+    <div class="table-wrap"><table id="tbl"></table></div>
+    <p class="note" style="margin-top:8px" id="tblNote"></p>
+
+    <h2 style="margin-top:30px">The challenges</h2>
+    <p class="muted">Filmed in training: fixed camera side-on, whole body in shot, one continuous take, a tape measure or line in shot for distances, and the coach says the gymnast's name and the challenge at the start. Up to 2 attempts per challenge each time it's filmed; the best valid attempt counts towards the season.</p>
+    <div class="grid-ch" id="chList"></div>
+  </section>
+</main>
+<footer>National Gymnastics League · Exclusively for British Gymnastics clubs · Only first names and surname initials are shown.</footer>
+
+<div class="modal" id="modal"><div class="card" id="modalBody"></div></div>
+
+<script src="ngl-power-league-core.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const app = initializeApp({
+  apiKey:"AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4", authDomain:"saadi-rotation.firebaseapp.com",
+  databaseURL:"https://saadi-rotation-default-rtdb.europe-west1.firebasedatabase.app", projectId:"saadi-rotation",
+  storageBucket:"saadi-rotation.firebasestorage.app", messagingSenderId:"1066734803675", appId:"1:1066734803675:web:0188fd601adea7db08cafe"
+});
+const db = getFirestore(app), auth = getAuth(app);
+const COL = collection(db, 'ngl_power_league');
+/* BG numbers are kept apart from the public table, in a collection only NGL admins can read. */
+const PRIV = 'ngl_power_league_private';
+let BG = {};
+const ADMIN = /[?&]admin=1/.test(location.search);
+
+const {LEVELS, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf} = window.NGLPowerLeague;
+
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toast = m => { const t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); };
+
+let G = [], ADMIN_OK = false, BG_SUB = null;
+
+/* ---------- Public ---------- */
+let VIEW = 'overall';
+function opts(sel, list, all, lbl){ sel.innerHTML = (all ? `<option value="">${all}</option>` : '') + list.map(v => `<option value="${v}">${lbl ? lbl(v) : v}</option>`).join(''); }
+function setupPublic(){
+  $('viewTabs').innerHTML = `<button class="tab on" data-v="overall">Overall</button>` + CH.map(c => `<button class="tab" data-v="${c.k}">${esc(c.n)}</button>`).join('');
+  $('viewTabs').onclick = e => { const b = e.target.closest('[data-v]'); if(!b) return; VIEW = b.dataset.v; [...$('viewTabs').children].forEach(x => x.classList.toggle('on', x === b)); renderTable(); };
+  opts($('fLevel'), LEVELS, 'All levels', v => 'Level ' + v); opts($('fAge'), AGES, 'All ages'); opts($('fHrs'), HRS, 'All hours', v => v + ' hrs');
+  ['fLevel','fAge','fHrs'].forEach(id => $(id).onchange = renderTable); $('fFind').oninput = renderTable; try{ const qc = new URLSearchParams(location.search).get('club'); if(qc) $('fFind').value = qc; }catch(_){}
+  $('chList').innerHTML = CH.map(c => `<div class="card ch"><h3>${esc(c.n)}${c.nLow ? ` <span class="muted" style="font-weight:600;font-size:13px">(${esc(c.nLow)} at Levels 1–2)</span>` : ''}<small>${c.stat}</small></h3>
+    <div class="ok">Counts</div><ul>${c.ok.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="no">Doesn’t count</div><ul>${c.no.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('');
+}
+function filtered(){
+  const L = $('fLevel').value, A = $('fAge').value, H = $('fHrs').value, q = $('fFind').value.trim().toLowerCase();
+  return G.filter(g => (!L || g.level === L) && (!A || g.age === A) && (!H || g.hrs === H) && (!q || nameOf(g).toLowerCase().includes(q) || (g.club || '').toLowerCase().includes(q)));
+}
+function renderTable(){
+  const list = filtered(), t = $('tbl');
+  const mixed = !$('fLevel').value || !$('fAge').value || !$('fHrs').value;
+  $('tblNote').textContent = mixed ? 'Ratings compare each gymnast with boys at the same level, age group and training hours. Pick all three filters to see one league.' : '';
+  if(VIEW === 'overall'){
+    const rows = list.filter(g => g.done).sort((a, b) => b.ovr - a.ovr || b.done - a.done || nameOf(a).localeCompare(nameOf(b)));
+    t.innerHTML = `<thead><tr><th class="num">#</th><th>Gymnast</th><th class="num">OVR</th>${STATS.map(s => `<th class="num">${s}</th>`).join('')}<th>Level · Age · Hours</th></tr></thead><tbody>` +
+      (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${g.ovr}</td>${STATS.map(s => `<td class="num">${g.stats[s]}</td>`).join('')}<td class="muted">L${esc(g.level)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</td></tr>`).join('')
+      : `<tr><td colspan="10" class="empty">No results yet. Results appear here as soon as NGL checks the videos.</td></tr>`) + '</tbody>';
+  } else {
+    const c = CH.find(x => x.k === VIEW);
+    const rows = list.filter(g => g.results && g.results[c.k] && g.results[c.k].best != null)
+      .sort((a, b) => c.dir > 0 ? b.results[c.k].best - a.results[c.k].best : a.results[c.k].best - b.results[c.k].best);
+    t.innerHTML = `<thead><tr><th class="num">#</th><th>Gymnast</th><th class="num">Best</th><th class="num">Rating</th><th>Level · Age · Hours</th><th>Date</th></tr></thead><tbody>` +
+      (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${fmt(g.results[c.k].best, c)} <small class="muted">${chUnit(c, g.level)}</small></td><td class="num">${g.ch[c.k]}</td><td class="muted">L${esc(g.level)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</td><td class="muted">${esc(g.results[c.k].date || '')}</td></tr>`).join('')
+      : `<tr><td colspan="6" class="empty">No ${esc(c.n)} results yet.</td></tr>`) + '</tbody>';
+  }
+  t.querySelectorAll('tr.row').forEach(r => r.onclick = () => openCard(r.dataset.id));
+}
+function openCard(id){
+  const g = G.find(x => x.id === id); if(!g) return;
+  $('modalBody').innerHTML = `<div class="pcard"><div class="top"><div class="big">${g.ovr}<small>OVR</small></div><div><h2 style="margin:0">${esc(nameOf(g))}</h2><div class="muted">${esc(g.club)}</div><div class="pills"><span class="pill gl">Level ${esc(g.level)}</span><span class="pill">${esc(g.age)}</span><span class="pill">${esc(g.hrs)} hrs</span></div></div></div>
+    <div class="stats6" style="margin-top:14px">${STATS.map(s => `<div><b>${g.stats[s]}</b><span>${s}</span></div>`).join('')}</div></div>
+    <div class="res"><span class="h">Challenge</span><span class="h">Best</span><span class="h">Rating</span>${CH.map(c => { const r = g.results && g.results[c.k]; return `<span>${esc(chName(c, g.level))}</span><span>${r && r.best != null ? fmt(r.best, c) + ' ' + chUnit(c, g.level) : '—'}</span><span>${g.ch[c.k] || '—'}</span>`; }).join('')}</div>
+    <div style="margin-top:16px;text-align:right"><button class="btn ghost small" id="mClose">Close</button></div>`;
+  $('modal').classList.add('open'); $('mClose').onclick = () => $('modal').classList.remove('open');
+}
+$('modal').onclick = e => { if(e.target === $('modal')) $('modal').classList.remove('open'); };
+
+/* ---------- Admin ---------- */
+function setupAdmin(){
+  $('admin').classList.remove('hide'); $('public').classList.add('hide');
+  opts($('aLevel'), LEVELS, '', v => 'Level ' + v); opts($('aAge'), AGES, ''); opts($('aHrs'), HRS, '', v => v + ' hrs');
+  $('aFind').oninput = renderAdmin;
+  $('addForm').onsubmit = async e => {
+    e.preventDefault(); if(!ADMIN_OK) return;
+    const first = $('aFirst').value.trim(), init = $('aInit').value.trim().toUpperCase().slice(0, 1), club = $('aClub').value.trim();
+    if(!first || !init || !club) return;
+    try{
+      const bg = $('aBg').value.replace(/\D/g, '');
+      const ref = await addDoc(COL, {first, init, club, level: $('aLevel').value, age: $('aAge').value, hrs: $('aHrs').value, results: {}, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+      if(bg) await setDoc(doc(db, PRIV, ref.id), {bg, updatedAt: serverTimestamp()});
+      $('aFirst').value = ''; $('aInit').value = ''; $('aBg').value = ''; $('aFirst').focus(); toast(`${first} ${init}. added`);
+    }catch(err){ console.error(err); toast(err.code === 'permission-denied' ? 'The database blocked this. The Training League rules need adding.' : 'Couldn’t add the gymnast.'); }
+  };
+}
+function renderAdmin(){
+  if(!ADMIN_OK) return;
+  $('clubList').innerHTML = [...new Set(G.map(g => g.club))].sort().map(c => `<option value="${esc(c)}">`).join('');
+  const q = $('aFind').value.trim().toLowerCase();
+  const list = G.filter(g => !q || nameOf(g).toLowerCase().includes(q) || (g.club || '').toLowerCase().includes(q)).sort((a, b) => (a.club || '').localeCompare(b.club || '') || nameOf(a).localeCompare(nameOf(b)));
+  $('aList').innerHTML = list.length ? list.map(g => `<tr><td><b>${esc(nameOf(g))}</b></td><td>${esc(g.club)}</td><td>${esc(g.level)}</td><td>${esc(g.age)}</td><td>${esc(g.hrs)}</td><td class="num">${BG[g.id] ? '✓' : '<span class="muted">—</span>'}</td><td class="num">${g.done} / ${CH.length}</td><td class="num ovr">${g.done ? g.ovr : '—'}</td><td><button class="btn small" data-edit="${g.id}">Results</button></td></tr>`).join('')
+    : `<tr><td colspan="9" class="empty">No gymnasts yet. Add the first one above.</td></tr>`;
+  $('aList').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEditor(b.dataset.edit));
+}
+function openEditor(id){
+  const g = G.find(x => x.id === id); if(!g) return;
+  const today = new Date().toISOString().slice(0, 10);
+  $('modalBody').innerHTML = `<h2>${esc(nameOf(g))} <span class="muted" style="font-size:15px">${esc(g.club)}</span></h2>
+    <div class="form" style="margin-bottom:12px">
+      <label>Level<select id="eLevel">${LEVELS.map(v => `<option ${v === g.level ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label>Age group<select id="eAge">${AGES.map(v => `<option ${v === g.age ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label>Training hours<select id="eHrs">${HRS.map(v => `<option ${v === g.hrs ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label>BG number (private)<input type="text" id="eBg" inputmode="numeric" maxlength="12" value="${esc(BG[g.id] || '')}"></label>
+    </div>
+    <p class="note">Enter a result only once you've checked the video meets every "Counts" rule. The best result each gymnast has ever posted counts, so a lower score never replaces a better one.</p>
+    <div>${CH.map(c => { const r = (g.results || {})[c.k]; return `<div class="entry"><div><b>${esc(chName(c, g.level))}</b><div class="hist">Best: ${r && r.best != null ? fmt(r.best, c) + ' ' + chUnit(c, g.level) + (r.date ? ' · ' + esc(r.date) : '') : 'none yet'}</div></div>
+      <input type="number" step="${c.step}" data-v="${c.k}" placeholder="${chUnit(c, g.level)}"><input type="date" data-d="${c.k}" value="${today}">
+      ${r && r.best != null ? `<button class="btn danger small" data-clear="${c.k}" title="Remove this result">✕</button>` : '<span></span>'}</div>`; }).join('')}</div>
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:16px;flex-wrap:wrap">
+      <button class="btn danger small" id="eDel">Remove gymnast</button>
+      <div style="display:flex;gap:8px"><button class="btn ghost" id="eCancel">Close</button><button class="btn" id="eSave">Save</button></div>
+    </div>`;
+  $('modal').classList.add('open');
+  $('eCancel').onclick = () => $('modal').classList.remove('open');
+  $('modalBody').querySelectorAll('[data-clear]').forEach(b => b.onclick = async () => {
+    if(!b.dataset.armed){ b.dataset.armed = 1; b.textContent = 'Sure?'; return; }
+    const res = {...(g.results || {})}; delete res[b.dataset.clear];
+    try{ await updateDoc(doc(db, 'ngl_power_league', id), {results: res, updatedAt: serverTimestamp()}); toast('Result removed'); openEditor(id); }catch(err){ console.error(err); toast('Couldn’t remove it.'); }
+  });
+  $('eDel').onclick = async () => {
+    const b = $('eDel'); if(!b.dataset.armed){ b.dataset.armed = 1; b.textContent = 'Tap again to remove'; return; }
+    try{ await deleteDoc(doc(db, 'ngl_power_league', id)); if(BG[id]) await deleteDoc(doc(db, PRIV, id)); $('modal').classList.remove('open'); toast('Gymnast removed'); }catch(err){ console.error(err); toast('Couldn’t remove the gymnast.'); }
+  };
+  $('eSave').onclick = async () => {
+    const res = JSON.parse(JSON.stringify(g.results || {})); let n = 0, kept = 0;
+    CH.forEach(c => {
+      const raw = $('modalBody').querySelector(`[data-v="${c.k}"]`).value; if(raw === '') return;
+      const v = +raw, date = $('modalBody').querySelector(`[data-d="${c.k}"]`).value || today;
+      if(!isFinite(v) || (c.k !== 'pike' && v <= 0)) return;
+      const r = res[c.k] || {history: []}; r.history = (r.history || []).concat([{v, date}]).slice(-20);
+      const better = r.best == null || (c.dir > 0 ? v > r.best : v < r.best);
+      if(better){ r.best = v; r.date = date; } else kept++;
+      res[c.k] = r; n++;
+    });
+    const upd = {results: res, level: $('eLevel').value, age: $('eAge').value, hrs: $('eHrs').value, updatedAt: serverTimestamp()};
+    const bg = $('eBg').value.replace(/\D/g, '');
+    try{ await updateDoc(doc(db, 'ngl_power_league', id), upd);
+      if(bg !== (BG[id] || '')){ if(bg) await setDoc(doc(db, PRIV, id), {bg, updatedAt: serverTimestamp()}); else await deleteDoc(doc(db, PRIV, id)); }
+      $('modal').classList.remove('open');
+      toast(n ? `${n} result${n > 1 ? 's' : ''} saved${kept ? ` (${kept} didn’t beat the best, so the best stays)` : ''}` : 'Saved'); }
+    catch(err){ console.error(err); toast(err.code === 'permission-denied' ? 'The database blocked this. The Training League rules need adding.' : 'Couldn’t save.'); }
+  };
+}
+
+/* ---------- Start ---------- */
+setupPublic();
+if(ADMIN) setupAdmin();
+onSnapshot(COL, snap => {
+  G = snap.docs.map(d => ({id: d.id, ...d.data()})); rate(G);
+  renderTable(); renderAdmin();
+}, err => { console.error(err); $('tbl').innerHTML = `<tbody><tr><td class="empty">${err.code === 'permission-denied' ? 'The Training League table isn’t switched on yet.' : 'Couldn’t load the table. Refresh to try again.'}</td></tr></tbody>`; });
+if(ADMIN) onAuthStateChanged(auth, async u => {
+  ADMIN_OK = false;
+  if(u && u.email){
+    try{
+      const d = await getDoc(doc(db, 'ngl_admin_users', u.email.toLowerCase())), r = d.exists() ? d.data() : null;
+      if(r && (r.owner || (r.sections || []).includes('powerleague'))) ADMIN_OK = true;
+      else $('gateMsg').textContent = `Signed in as ${u.email}, but this account doesn’t include the Training League. Ask Dave to add it in NGL Admin.`;
+    }catch(e){ console.warn(e); $('gateMsg').textContent = 'Couldn’t check your access. Refresh to try again.'; }
+  }
+  if(ADMIN_OK && !BG_SUB) BG_SUB = onSnapshot(collection(db, PRIV), snap => { BG = {}; snap.docs.forEach(d => { BG[d.id] = d.data().bg || ''; }); renderAdmin(); }, err => console.warn('BG numbers not readable', err));
+  $('adminGate').classList.toggle('hide', ADMIN_OK); $('adminDash').classList.toggle('hide', !ADMIN_OK);
+  $('who').innerHTML = ADMIN_OK ? `${esc(u.email)} · <a href="ngl-training-league.html" target="_blank">View public table</a>` : '';
+  renderAdmin();
+});
+</script>
+<script>/* Inside the General League Club Hub: report this page's height so the hub can size the frame */
+(function(){ if(!document.documentElement.classList.contains('embed') || parent === window) return;
+  var last = 0; function send(){ var h = Math.ceil(document.body.getBoundingClientRect().height) + 24; if(Math.abs(h - last) > 2){ last = h; try{ parent.postMessage({nglPowerHeight:h}, '*'); }catch(e){} } }
+  try{ new ResizeObserver(send).observe(document.body); }catch(e){ setInterval(send, 800); }
+  window.addEventListener('load', send);
+})();</script>
+</body>
+</html>

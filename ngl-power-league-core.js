@@ -1,5 +1,5 @@
-/* NGL Power League: challenges, stats and ratings, shared by the Power League page
-   (ngl-power-league.html) and the General League Hub (ngl-general-league-hub-demo.html). */
+/* NGL Training League: challenges, stats and ratings, shared by the Training League page
+   (ngl-training-league.html) and the General League Hub (ngl-general-league-hub-demo.html). */
 (function(){
 "use strict";
 const LEVELS = ['1','2','3','4'], AGES = ['6-8','9-11','12-14','15+'], HRS = ['2-5','6-10'];
@@ -73,7 +73,7 @@ const tierOf = ovr => ovr >= 80 ? 'gold' : ovr >= 65 ? 'silver' : 'bronze';
 /* A card object in the shape ngl-player-card.js draws */
 function cardFor(g){
   return {name: nameOf(g), club: g.club || '', level: g.level, discipline: 'MAG', overall: g.ovr || 0,
-    attrs: Object.assign({}, g.stats), tier: tierOf(g.ovr || 0), season: 'POWER LEAGUE'};
+    attrs: Object.assign({}, g.stats), tier: tierOf(g.ovr || 0), season: 'TRAINING LEAGUE'};
 }
 /* Position in his own league (same level, age group and hours) by OVR */
 function leaguePos(list, g){
