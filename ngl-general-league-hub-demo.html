@@ -504,9 +504,9 @@ function cardBoy(id){
   + '<div class="row" style="justify-content:center;gap:10px;margin-bottom:14px"><button class="btn ghost small" id="addPhoto">Add photo</button><button class="btn small" id="saveCard">Save card</button></div>'
   + '<input type="file" accept="image/*" id="photoIn" hidden>'
   + '<div class="card"><div class="eyebrow">Training League</div>'
-  + (e ? '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s card is built from the Training League: 13 strength, speed and power challenges filmed in training. Each stat is rated out of 99 against boys of the same age group and training hours.</p>'
+  + (e ? '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s card is built from the Training League: 13 strength, speed and power challenges filmed in training. Each stat is rated out of 99 against gymnasts of the same gender, age group and training hours.</p>'
        + '<p style="font-weight:800;margin-bottom:10px">' + plPosLine(e) + '</p>' + plTable(e, id)
-       : '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s NGL Profile Card is built from the Training League: 13 strength, speed and power challenges his coach films in training. It fills in as soon as his first results are checked.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
+       : '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s NGL Profile Card is built from the Training League: 13 strength, speed and power challenges their coach films in training. It fills in as soon as his first results are checked.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
   + '<a class="btn ghost small" href="' + PL_URL + '" target="_blank" rel="noopener" style="margin-top:12px">See the Training League table</a></div>'
   + '<div class="foot">Photos stay on this device. They are never uploaded or saved by NGL.</div>';
 }

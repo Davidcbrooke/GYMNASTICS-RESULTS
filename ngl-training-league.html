@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0a1440">
-<title>NGL Training League · Boys</title>
+<title>NGL Training League · Boys &amp; Girls</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -118,8 +118,8 @@
   .chs button.on{color:#fff}
   .chs button.on .ic{background:var(--gl);border-color:var(--gl);color:#fff;box-shadow:0 8px 18px -8px rgba(0,113,179,.9)}
   @media(min-width:900px){.chs{overflow:visible;justify-content:space-between}.chs button{width:auto;flex:1 1 0}}
-  .fbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,2fr);gap:8px;margin:0 0 14px}
-  @media(max-width:700px){.fbar{grid-template-columns:repeat(2,minmax(0,1fr))}.fbar .find{grid-column:1/-1}}
+  .fbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.5fr);gap:8px;margin:0 0 14px}
+  @media(max-width:700px){.fbar{grid-template-columns:repeat(3,minmax(0,1fr))}.fbar .find{grid-column:1/-1}}
   .fbar select,.fbar input{width:100%;min-width:0!important;border-radius:999px!important;padding:10px 14px!important;font-weight:700;font-size:14px!important}
   .fbar .find{position:relative}.fbar .find input{padding-left:38px!important}
   .fbar .find svg{position:absolute;left:13px;top:50%;width:17px;height:17px;transform:translateY(-50%);color:var(--muted)}
@@ -177,7 +177,7 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
 <script>if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed'); if(/[?&]site=1/.test(location.search)) document.documentElement.classList.add('site');</script>
 </head>
 <body>
-<header class="topbar"><div class="topbar-strap">NGL General League · Training League · Boys</div><div class="topbar-in">
+<header class="topbar"><div class="topbar-strap">NGL General League · Training League · Boys &amp; Girls</div><div class="topbar-in">
   <div class="wrap topbar-row">
     <a class="logo" href="ngl-training-league.html" aria-label="NGL Training League"><img src="brand/ngl-logo-full.png" alt="National Gymnastics League"></a>
     <div class="top-actions" id="who"></div>
@@ -187,26 +187,26 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
 <main class="wrap">
   <section class="hero">
     <div>
-      <div class="eyebrow">NGL General League · Boys</div>
+      <div class="eyebrow">NGL General League · Boys &amp; Girls</div>
       <h1>The <span>Training League</span></h1>
       <p class="muted"><b style="color:#fff">Boost training. Focus, results and fun, every session.</b> 13 conditioning challenges for strength, speed, power, flexibility, balance and control. Coaches film them in training and send them to NGL, and every valid result goes straight into the live league table and onto the gymnast's NGL Profile Card.</p>
-      <div class="pills"><span class="pill gl">Ages 6–8 · 9–11 · 12–14 · 15+</span><span class="pill">2–5 hrs · 6–10 hrs</span><span class="pill">Open all season</span></div>
+      <div class="pills"><span class="pill gl">Boys &amp; girls</span><span class="pill">Ages 6–8 · 9–11 · 12–14 · 15+</span><span class="pill">2–5 hrs · 6–10 hrs</span><span class="pill">Open all season</span></div>
     </div>
     <figure class="hero-card">
       <canvas id="heroCard" width="600" height="860" aria-label="An NGL Profile Card"></canvas>
-      <figcaption id="heroCap">Every boy gets his own NGL Profile Card, rated out of 99 for speed, power, strength, flexibility, balance and control. Tap any name in the table to see his.</figcaption>
+      <figcaption id="heroCap">Every gymnast gets their own NGL Profile Card, rated out of 99 for speed, power, strength, flexibility, balance and control. Tap any name in the table to see theirs.</figcaption>
     </figure>
   </section>
 
 
   <section class="why" aria-labelledby="whyH">
     <h2 id="whyH">Why clubs use the Training League</h2>
-    <p class="lead">Conditioning that boys actually want to do, with a reason to give their best every session.</p>
+    <p class="lead">Conditioning that gymnasts actually want to do, with a reason to give their best every session.</p>
     <div class="why-grid">
       <div><i>🎯</i><b>Boost training productivity</b><span>Every challenge has a clear target, so sessions have focus and gymnasts can see their results improve.</span></div>
-      <div><i>🏁</i><b>Harness the power of competition</b><span>Gymnasts compete against boys of the same age and training hours across the country.</span></div>
+      <div><i>🏁</i><b>Harness the power of competition</b><span>Boys and girls each have their own league, against gymnasts of the same age and training hours across the country. Anyone can try any challenge.</span></div>
       <div><i>😄</i><b>Make training fun</b><span>Conditioning becomes a game: beat your best, climb the table, raise your rating.</span></div>
-      <div><i>⚽</i><b>A format boys recognise</b><span>League tables, ratings and profile cards, just like the sports games and cards they already love. Engagement every session.</span></div>
+      <div><i>⚽</i><b>A format gymnasts recognise</b><span>League tables, ratings and profile cards, just like the sports games and cards they already love. Engagement every session.</span></div>
       <div><i>📱</i><b>Easy to film and send</b><span>One phone, side-on, one continuous take. Email the videos and NGL does the rest.</span></div>
       <div><i>📊</i><b>Live league table &amp; Profile Cards</b><span>Every result updates the table and the gymnast's NGL Profile Card, and you can compare two gymnasts side by side.</span></div>
     </div>
@@ -222,10 +222,11 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
     <div id="adminDash" class="hide">
       <div class="card">
         <h2>Add a gymnast</h2>
-        <p class="note">The public table only shows the first name and surname initial. The BG number is private: only NGL admins can see it, and it links his Training League card to his General League Hub.</p>
+        <p class="note">The public table only shows the first name and surname initial. The BG number is private: only NGL admins can see it, and it links their Training League card to their General League Hub.</p>
         <form class="form" id="addForm">
           <label>First name<input type="text" id="aFirst" required maxlength="30"></label>
           <label>Surname initial<input type="text" id="aInit" required maxlength="1" style="min-width:0"></label>
+          <label>Boy or girl<select id="aGen"></select></label>
           <label>Club<input type="text" id="aClub" required maxlength="80" list="clubList"></label>
           <label>BG number (private)<input type="text" id="aBg" inputmode="numeric" maxlength="12" placeholder="e.g. 1234567"></label>
           <label>Age group<select id="aAge"></select></label>
@@ -239,7 +240,7 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
         <div class="filters">
           <label>Find gymnast<input type="text" id="aFind" placeholder="Name or club"></label>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>Gymnast</th><th>Club</th><th>Age</th><th>Hours</th><th class="num">BG no.</th><th class="num">Challenges</th><th class="num">OVR</th><th></th></tr></thead><tbody id="aList"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Gymnast</th><th>Club</th><th>League</th><th>Age</th><th>Hours</th><th class="num">BG no.</th><th class="num">Challenges</th><th class="num">OVR</th><th></th></tr></thead><tbody id="aList"></tbody></table></div>
       </div>
     </div>
   </section>
@@ -250,6 +251,7 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
       <div class="panel-h"><h2>Leaderboard</h2><span class="sel" id="selNote"></span></div>
       <div class="chs" id="viewTabs" role="tablist" aria-label="Choose a challenge"></div>
       <div class="fbar">
+        <select id="fGen" aria-label="Boys or girls"></select>
         <select id="fAge" aria-label="Age group"></select>
         <select id="fHrs" aria-label="Training hours"></select>
         <div class="find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="text" id="fFind" placeholder="Search name or club" aria-label="Search name or club"></div>
@@ -261,7 +263,8 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
 
     <div class="band-ch">
       <h2>The 13 challenges</h2>
-      <p class="muted" style="margin:0">Filmed in training. Up to 2 attempts per challenge each time it's filmed; the best valid attempt counts towards the season.</p>
+      <p class="muted" style="margin:0">Filmed in training. Up to 2 attempts per challenge each time it's filmed; the best valid attempt counts towards the season. One set of rules for every age: anyone can try any challenge, and one they can't do yet is just left out.</p>
+      <p style="margin:10px 0 0"><a class="btn small" href="ngl-training-league-coach-guide.pdf" target="_blank" rel="noopener">Print the coach guide (1 page, PDF)</a></p>
       <div class="film">
         <div><i>📱</i><b>Fixed camera</b>Side-on, whole body in shot</div>
         <div><i>🎬</i><b>One take</b>One continuous video, no edits</div>
@@ -269,6 +272,17 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
         <div><i>🗣️</i><b>Say who it is</b>Name and challenge at the start</div>
       </div>
       <div class="chc" id="chList"></div>
+    </div>
+
+    <div class="band-ch privacy" id="privacy">
+      <h2>Filming and privacy</h2>
+      <div class="film">
+        <div><i>✅</i><b>Parent consent first</b>Clubs only film gymnasts whose parents have agreed, and confirm this when they send the videos</div>
+        <div><i>🛡️</i><b>Filmed safely</b>A club device where possible, club kit, no other children in shot, low beam for beam challenges</div>
+        <div><i>✉️</i><b>Sent only to NGL</b>Videos are emailed to NGL for grading and are never posted online</div>
+        <div><i>🗑️</i><b>Deleted after grading</b>The club deletes its copy once sent; NGL deletes the video within 14 days of the result going in</div>
+      </div>
+      <p class="muted" style="margin:0;font-size:14px">The table only shows a gymnast's first name, surname initial, club, league (boys or girls), age group and training hours. To have a gymnast's results removed, the club or a parent can email <a href="mailto:admin@nationalgymnasticsleague.co.uk" style="color:inherit">admin@nationalgymnasticsleague.co.uk</a>.</p>
     </div>
   </section>
 </main>
@@ -295,7 +309,7 @@ const PRIV = 'ngl_power_league_private';
 let BG = {};
 const ADMIN = /[?&]admin=1/.test(location.search);
 
-const {ICON, SHORT, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf} = window.NGLPowerLeague;
+const {ICON, SHORT, GENDERS, genOf, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf} = window.NGLPowerLeague;
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -309,41 +323,41 @@ function opts(sel, list, all, lbl){ sel.innerHTML = (all ? `<option value="">${a
 function setupPublic(){
   $('viewTabs').innerHTML = ['overall', ...CH.map(c => c.k)].map(k => `<button type="button" role="tab" class="${k === 'overall' ? 'on' : ''}" data-v="${k}" aria-label="${esc(k === 'overall' ? 'Overall' : CH.find(c => c.k === k).n)}"><span class="ic">${ICON[k]}</span>${SHORT[k]}</button>`).join('');
   $('viewTabs').onclick = e => { const b = e.target.closest('[data-v]'); if(!b) return; VIEW = b.dataset.v; [...$('viewTabs').children].forEach(x => x.classList.toggle('on', x === b)); renderTable(); };
-  const narrow = matchMedia('(max-width:700px)').matches; opts($('fAge'), AGES, narrow ? 'Age' : 'All ages'); opts($('fHrs'), HRS, narrow ? 'Hours' : 'All hours', v => v + ' hrs');
-  ['fAge','fHrs'].forEach(id => $(id).onchange = renderTable); $('fFind').oninput = renderTable; try{ const qc = new URLSearchParams(location.search).get('club'); if(qc) $('fFind').value = qc; }catch(_){}
+  const narrow = matchMedia('(max-width:700px)').matches; opts($('fGen'), GENDERS, narrow ? 'All' : 'Boys & girls'); opts($('fAge'), AGES, narrow ? 'Age' : 'All ages'); opts($('fHrs'), HRS, narrow ? 'Hours' : 'All hours', v => v + ' hrs');
+  ['fGen','fAge','fHrs'].forEach(id => $(id).onchange = renderTable); $('fFind').oninput = renderTable; try{ const qc = new URLSearchParams(location.search).get('club'); if(qc) $('fFind').value = qc; }catch(_){}
   $('chList').innerHTML = CH.map(c => `<div class="c"><div class="hd"><span class="ic">${ICON[c.k]}</span><div><b>${esc(c.n)}</b><small>${c.nLow ? esc(c.nLow) + ' for ages 6–11 · ' : ''}Scored in ${esc(c.unit === 's' ? 'seconds' : c.unit)}</small></div><span class="st">${c.stat}</span></div>
     <details><summary>How it's judged</summary><div class="ok">Counts</div><ul>${c.ok.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
     <div class="no">Doesn’t count</div><ul>${c.no.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details></div>`).join('');
 }
 function filtered(){
-  const A = $('fAge').value, H = $('fHrs').value, q = $('fFind').value.trim().toLowerCase();
-  return G.filter(g => (!A || g.age === A) && (!H || g.hrs === H) && (!q || nameOf(g).toLowerCase().includes(q) || (g.club || '').toLowerCase().includes(q)));
+  const X = $('fGen').value, A = $('fAge').value, H = $('fHrs').value, q = $('fFind').value.trim().toLowerCase();
+  return G.filter(g => (!X || genOf(g) === X) && (!A || g.age === A) && (!H || g.hrs === H) && (!q || nameOf(g).toLowerCase().includes(q) || (g.club || '').toLowerCase().includes(q)));
 }
 function renderTable(){
   const list = filtered(), t = $('tbl');
-  const mixed = !$('fAge').value || !$('fHrs').value;
-  $('tblNote').textContent = mixed ? 'Ratings compare each gymnast with boys of the same age group and training hours. Pick both filters to see one league.' : '';
+  const mixed = !$('fGen').value || !$('fAge').value || !$('fHrs').value;
+  $('tblNote').textContent = mixed ? 'Ratings compare each gymnast with others of the same gender, age group and training hours. Pick all three filters to see one league.' : '';
   if(VIEW === 'overall'){
     const rows = list.filter(g => g.done).sort((a, b) => b.ovr - a.ovr || b.done - a.done || nameOf(a).localeCompare(nameOf(b)));
-    t.innerHTML = `<thead><tr><th class="num">#</th><th>Gymnast</th><th class="num">OVR</th>${STATS.map(s => `<th class="num">${s}</th>`).join('')}<th>Age · Hours</th></tr></thead><tbody>` +
-      (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${g.ovr}</td>${STATS.map(s => `<td class="num">${g.stats[s]}</td>`).join('')}<td class="muted">${esc(g.age)} · ${esc(g.hrs)} hrs</td></tr>`).join('')
+    t.innerHTML = `<thead><tr><th class="num">#</th><th>Gymnast</th><th class="num">OVR</th>${STATS.map(s => `<th class="num">${s}</th>`).join('')}<th>League</th></tr></thead><tbody>` +
+      (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${g.ovr}</td>${STATS.map(s => `<td class="num">${g.stats[s]}</td>`).join('')}<td class="muted">${genOf(g)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</td></tr>`).join('')
       : `<tr><td colspan="10" class="empty">No results yet. Results appear here as soon as NGL checks the videos.</td></tr>`) + '</tbody>';
   } else {
     const c = CH.find(x => x.k === VIEW);
     const rows = list.filter(g => g.results && g.results[c.k] && g.results[c.k].best != null)
       .sort((a, b) => c.dir > 0 ? b.results[c.k].best - a.results[c.k].best : a.results[c.k].best - b.results[c.k].best);
-    t.innerHTML = `<thead><tr><th class="num">#</th><th>Gymnast</th><th class="num">Best</th><th class="num">Rating</th><th>Age · Hours</th><th>Date</th></tr></thead><tbody>` +
-      (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${fmt(g.results[c.k].best, c)} <small class="muted">${chUnit(c, g.age)}</small></td><td class="num">${g.ch[c.k]}</td><td class="muted">${esc(g.age)} · ${esc(g.hrs)} hrs</td><td class="muted">${esc(g.results[c.k].date || '')}</td></tr>`).join('')
+    t.innerHTML = `<thead><tr><th class="num">#</th><th>Gymnast</th><th class="num">Best</th><th class="num">Rating</th><th>League</th><th>Date</th></tr></thead><tbody>` +
+      (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${fmt(g.results[c.k].best, c)} <small class="muted">${chUnit(c, g.age)}</small></td><td class="num">${g.ch[c.k]}</td><td class="muted">${genOf(g)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</td><td class="muted">${esc(g.results[c.k].date || '')}</td></tr>`).join('')
       : `<tr><td colspan="6" class="empty">No ${esc(c.n)} results yet.</td></tr>`) + '</tbody>';
   }
   t.querySelectorAll('tr.row').forEach(r => r.onclick = () => openCard(r.dataset.id, r));
   // Mobile: the same ranking as a simple list
-  const A = $('fAge').value, H = $('fHrs').value;
-  $('selNote').textContent = [VIEW === 'overall' ? 'Overall' : CH.find(x => x.k === VIEW).n, A || 'All ages', H ? H + ' hrs' : 'All hours'].join(' · ');
+  const X = $('fGen').value, A = $('fAge').value, H = $('fHrs').value;
+  $('selNote').textContent = [VIEW === 'overall' ? 'Overall' : CH.find(x => x.k === VIEW).n, X || 'Boys & girls', A || 'All ages', H ? H + ' hrs' : 'All hours'].join(' · ');
   const c = VIEW === 'overall' ? null : CH.find(x => x.k === VIEW);
   const items = c ? list.filter(g => g.results && g.results[c.k] && g.results[c.k].best != null).sort((a, b) => c.dir > 0 ? b.results[c.k].best - a.results[c.k].best : a.results[c.k].best - b.results[c.k].best)
                   : list.filter(g => g.done).sort((a, b) => b.ovr - a.ovr || b.done - a.done || nameOf(a).localeCompare(nameOf(b)));
-  $('lb').innerHTML = items.length ? items.map((g, i) => `<li data-id="${g.id}"><span class="pos">${i + 1}</span><span class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small><small>${esc(g.age)} · ${esc(g.hrs)} hrs</small></span><span class="sc">${c ? fmt(g.results[c.k].best, c) : g.ovr}<small>${c ? esc(chUnit(c, g.age)).toUpperCase() : 'OVR'}</small></span></li>`).join('')
+  $('lb').innerHTML = items.length ? items.map((g, i) => `<li data-id="${g.id}"><span class="pos">${i + 1}</span><span class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small><small>${genOf(g)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</small></span><span class="sc">${c ? fmt(g.results[c.k].best, c) : g.ovr}<small>${c ? esc(chUnit(c, g.age)).toUpperCase() : 'OVR'}</small></span></li>`).join('')
     : `<li class="empty">${c ? 'No ' + esc(c.n) + ' results yet.' : 'No results yet. Results appear here as soon as NGL checks the videos.'}</li>`;
   $('lb').querySelectorAll('li[data-id]').forEach(r => r.onclick = () => openCard(r.dataset.id, r));
 }
@@ -354,7 +368,7 @@ function drawCard(cv, g){ if(!cv || !window.NGLPlayerCard) return; const card = 
 function drawHero(){
   const top = G.filter(g => g.done === CH.length).sort((a, b) => b.ovr - a.ovr)[0];
   drawCard($('heroCard'), top || null);
-  $('heroCap').textContent = top ? `Top of the table: ${nameOf(top)}, ${top.club}. Every boy gets his own NGL Profile Card. Tap any name to see his.` : 'Every boy gets his own NGL Profile Card, rated out of 99 for speed, power, strength, flexibility, balance and control. Tap any name in the table to see his.';
+  $('heroCap').textContent = top ? `Top of the table: ${nameOf(top)}, ${top.club}. Every gymnast gets their own NGL Profile Card. Tap any name to see theirs.` : 'Every gymnast gets their own NGL Profile Card, rated out of 99 for speed, power, strength, flexibility, balance and control. Tap any name in the table to see theirs.';
 }
 function openCard(id, from){
   const g = G.find(x => x.id === id); if(!g) return;
@@ -374,7 +388,7 @@ $('modal').onclick = e => { if(e.target === $('modal')) $('modal').classList.rem
 /* ---------- Admin ---------- */
 function setupAdmin(){
   $('admin').classList.remove('hide'); $('public').classList.add('hide');
-  opts($('aAge'), AGES, ''); opts($('aHrs'), HRS, '', v => v + ' hrs');
+  opts($('aGen'), GENDERS, ''); opts($('aAge'), AGES, ''); opts($('aHrs'), HRS, '', v => v + ' hrs');
   $('aFind').oninput = renderAdmin;
   $('addForm').onsubmit = async e => {
     e.preventDefault(); if(!ADMIN_OK) return;
@@ -382,7 +396,7 @@ function setupAdmin(){
     if(!first || !init || !club) return;
     try{
       const bg = $('aBg').value.replace(/\D/g, '');
-      const ref = await addDoc(COL, {first, init, club, age: $('aAge').value, hrs: $('aHrs').value, results: {}, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+      const ref = await addDoc(COL, {first, init, club, gender: $('aGen').value, age: $('aAge').value, hrs: $('aHrs').value, results: {}, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
       if(bg) await setDoc(doc(db, PRIV, ref.id), {bg, updatedAt: serverTimestamp()});
       $('aFirst').value = ''; $('aInit').value = ''; $('aBg').value = ''; $('aFirst').focus(); toast(`${first} ${init}. added`);
     }catch(err){ console.error(err); toast(err.code === 'permission-denied' ? 'The database blocked this. The Training League rules need adding.' : 'Couldn’t add the gymnast.'); }
@@ -393,8 +407,8 @@ function renderAdmin(){
   $('clubList').innerHTML = [...new Set(G.map(g => g.club))].sort().map(c => `<option value="${esc(c)}">`).join('');
   const q = $('aFind').value.trim().toLowerCase();
   const list = G.filter(g => !q || nameOf(g).toLowerCase().includes(q) || (g.club || '').toLowerCase().includes(q)).sort((a, b) => (a.club || '').localeCompare(b.club || '') || nameOf(a).localeCompare(nameOf(b)));
-  $('aList').innerHTML = list.length ? list.map(g => `<tr><td><b>${esc(nameOf(g))}</b></td><td>${esc(g.club)}</td><td>${esc(g.age)}</td><td>${esc(g.hrs)}</td><td class="num">${BG[g.id] ? '✓' : '<span class="muted">—</span>'}</td><td class="num">${g.done} / ${CH.length}</td><td class="num ovr">${g.done ? g.ovr : '—'}</td><td><button class="btn small" data-edit="${g.id}">Results</button></td></tr>`).join('')
-    : `<tr><td colspan="9" class="empty">No gymnasts yet. Add the first one above.</td></tr>`;
+  $('aList').innerHTML = list.length ? list.map(g => `<tr><td><b>${esc(nameOf(g))}</b></td><td>${esc(g.club)}</td><td>${genOf(g)}</td><td>${esc(g.age)}</td><td>${esc(g.hrs)}</td><td class="num">${BG[g.id] ? '✓' : '<span class="muted">—</span>'}</td><td class="num">${g.done} / ${CH.length}</td><td class="num ovr">${g.done ? g.ovr : '—'}</td><td><button class="btn small" data-edit="${g.id}">Results</button></td></tr>`).join('')
+    : `<tr><td colspan="10" class="empty">No gymnasts yet. Add the first one above.</td></tr>`;
   $('aList').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEditor(b.dataset.edit));
 }
 function openEditor(id){
@@ -402,6 +416,7 @@ function openEditor(id){
   const today = new Date().toISOString().slice(0, 10);
   $('modalBody').innerHTML = `<h2>${esc(nameOf(g))} <span class="muted" style="font-size:15px">${esc(g.club)}</span></h2>
     <div class="form" style="margin-bottom:12px">
+      <label>Boy or girl<select id="eGen">${GENDERS.map(v => `<option ${v === genOf(g) ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <label>Age group<select id="eAge">${AGES.map(v => `<option ${v === g.age ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <label>Training hours<select id="eHrs">${HRS.map(v => `<option ${v === g.hrs ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <label>BG number (private)<input type="text" id="eBg" inputmode="numeric" maxlength="12" value="${esc(BG[g.id] || '')}"></label>
@@ -436,7 +451,7 @@ function openEditor(id){
       if(better){ r.best = v; r.date = date; } else kept++;
       res[c.k] = r; n++;
     });
-    const upd = {results: res, age: $('eAge').value, hrs: $('eHrs').value, updatedAt: serverTimestamp()};
+    const upd = {results: res, gender: $('eGen').value, age: $('eAge').value, hrs: $('eHrs').value, updatedAt: serverTimestamp()};
     const bg = $('eBg').value.replace(/\D/g, '');
     try{ await updateDoc(doc(db, 'ngl_power_league', id), upd);
       if(bg !== (BG[id] || '')){ if(bg) await setDoc(doc(db, PRIV, id), {bg, updatedAt: serverTimestamp()}); else await deleteDoc(doc(db, PRIV, id)); }

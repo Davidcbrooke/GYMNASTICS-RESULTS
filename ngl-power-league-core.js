@@ -2,7 +2,7 @@
    (ngl-training-league.html) and the General League Hub (ngl-general-league-hub-demo.html). */
 (function(){
 "use strict";
-const AGES = ['6-8','9-11','12-14','15+'], HRS = ['2-5','6-10'];
+const GENDERS = ['Boys','Girls'], AGES = ['6-8','9-11','12-14','15+'], HRS = ['2-5','6-10'];
 /* Challenges. dir: 1 = higher is better, -1 = lower is better. off: added before rating (pike reach can be below the toes). */
 const CH = [
   {k:'sprint', n:'10m Sprint', stat:'SPD', unit:'s', dir:-1, step:0.01,
@@ -43,7 +43,7 @@ const CH = [
    no:['Bent knees, legs dropping or chest moving away from the knees','A hand or foot touching the beam, or coming off']},
   {k:'hand', n:'Handstand Hold', stat:'CTL', unit:'s', dir:1, step:1,
    ok:['Arms straight, legs together, straight body','Freestanding: no wall','Time starts when the feet come together at the top'],
-   no:['Walking on the hands, legs apart or bent arms','Time stops when he moves or comes down']}
+   no:['Walking on the hands, legs apart or bent arms','Time stops when the gymnast moves or comes down']}
 ];
 const STATS = ['SPD','POW','STR','FLX','BAL','CTL'];
 /* Line icons (48x48, stroke = currentColor) and short labels for each challenge. */
@@ -72,10 +72,12 @@ const chName = (c, age) => (c.nLow && young(age)) ? c.nLow : c.n;
 const chUnit = (c, age) => (c.unitLow && young(age)) ? c.unitLow : c.unit;
 
 const fmt = (v, c) => v == null ? '—' : (c.step < 1 ? (+v).toFixed(2) : String(+v));
-const group = g => `${g.age}|${g.hrs}`;
+/* Boys and girls have separate leagues. Older entries with no gender are boys. */
+const genOf = g => g.gender === 'Girls' ? 'Girls' : 'Boys';
+const group = g => `${genOf(g)}|${g.age}|${g.hrs}`;
 
 /* ---------- Ratings ----------
-   Per challenge, the best valid result in the gymnast's group (same age group and training hours) rates 99;
+   Per challenge, the best valid result in the gymnast's group (same gender, age group and training hours) rates 99;
    everyone else is rated in proportion to it. A missing challenge rates 0. A stat is the average of its
    challenges; OVR is the average of the six stats. */
 function rate(list){
@@ -106,13 +108,13 @@ const nameOf = g => `${g.first} ${g.init}.`;
 const tierOf = ovr => ovr >= 80 ? 'gold' : ovr >= 65 ? 'silver' : 'bronze';
 /* A card object in the shape ngl-player-card.js draws */
 function cardFor(g){
-  return {name: nameOf(g), club: g.club || '', level: '', discipline: 'MAG', overall: g.ovr || 0,
+  return {name: nameOf(g), club: g.club || '', level: '', discipline: genOf(g) === 'Girls' ? 'WAG' : 'MAG', overall: g.ovr || 0,
     attrs: Object.assign({}, g.stats), tier: tierOf(g.ovr || 0), season: 'TRAINING LEAGUE'};
 }
-/* Position in his own league (same age group and training hours) by OVR */
+/* Position in their own league (same gender, age group and training hours) by OVR */
 function leaguePos(list, g){
   const peers = list.filter(x => x.done && group(x) === group(g)).sort((a, b) => b.ovr - a.ovr);
   return {pos: peers.indexOf(g) + 1, of: peers.length};
 }
-window.NGLPowerLeague = {ICON, SHORT, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf, tierOf, cardFor, leaguePos};
+window.NGLPowerLeague = {ICON, SHORT, GENDERS, genOf, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf, tierOf, cardFor, leaguePos};
 })();
