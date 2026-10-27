@@ -338,7 +338,7 @@ function renderTable(){
       (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${fmt(g.results[c.k].best, c)} <small class="muted">${chUnit(c, g.level)}</small></td><td class="num">${g.ch[c.k]}</td><td class="muted">L${esc(g.level)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</td><td class="muted">${esc(g.results[c.k].date || '')}</td></tr>`).join('')
       : `<tr><td colspan="6" class="empty">No ${esc(c.n)} results yet.</td></tr>`) + '</tbody>';
   }
-  t.querySelectorAll('tr.row').forEach(r => r.onclick = () => openCard(r.dataset.id));
+  t.querySelectorAll('tr.row').forEach(r => r.onclick = () => openCard(r.dataset.id, r));
   // Mobile: the same ranking as a simple list
   const L = $('fLevel').value, A = $('fAge').value, H = $('fHrs').value;
   $('selNote').textContent = [VIEW === 'overall' ? 'Overall' : CH.find(x => x.k === VIEW).n, L ? 'Level ' + L : 'All levels', A || 'All ages', H ? H + ' hrs' : 'All hours'].join(' · ');
@@ -347,7 +347,7 @@ function renderTable(){
                   : list.filter(g => g.done).sort((a, b) => b.ovr - a.ovr || b.done - a.done || nameOf(a).localeCompare(nameOf(b)));
   $('lb').innerHTML = items.length ? items.map((g, i) => `<li data-id="${g.id}"><span class="pos">${i + 1}</span><span class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small><small>Level ${esc(g.level)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</small></span><span class="sc">${c ? fmt(g.results[c.k].best, c) : g.ovr}<small>${c ? esc(chUnit(c, g.level)).toUpperCase() : 'OVR'}</small></span></li>`).join('')
     : `<li class="empty">${c ? 'No ' + esc(c.n) + ' results yet.' : 'No results yet. Results appear here as soon as NGL checks the videos.'}</li>`;
-  $('lb').querySelectorAll('li[data-id]').forEach(r => r.onclick = () => openCard(r.dataset.id));
+  $('lb').querySelectorAll('li[data-id]').forEach(r => r.onclick = () => openCard(r.dataset.id, r));
 }
 
 /* NGL Profile Cards (drawn by ngl-player-card.js) */
@@ -358,13 +358,18 @@ function drawHero(){
   drawCard($('heroCard'), top || null);
   $('heroCap').textContent = top ? `Top of the table: ${nameOf(top)}, ${top.club}. Every boy gets his own NGL Profile Card. Tap any name to see his.` : 'Every boy gets his own NGL Profile Card, rated out of 99 for speed, power, strength, flexibility, balance and control. Tap any name in the table to see his.';
 }
-function openCard(id){
+function openCard(id, from){
   const g = G.find(x => x.id === id); if(!g) return;
   $('modalBody').innerHTML = `<canvas class="mcard" id="mCard" width="600" height="860" aria-label="${esc(nameOf(g))}'s NGL Profile Card"></canvas>
     <div class="res"><span class="h">Challenge</span><span class="h">Best</span><span class="h">Rating</span>${CH.map(c => { const r = g.results && g.results[c.k]; return `<span>${esc(chName(c, g.level))}</span><span>${r && r.best != null ? fmt(r.best, c) + ' ' + chUnit(c, g.level) : '—'}</span><span>${g.ch[c.k] || '—'}</span>`; }).join('')}</div>
     <div style="margin-top:16px;text-align:right"><button class="btn ghost small" id="mClose">Close</button></div>`;
   $('modal').classList.add('open'); $('mClose').onclick = () => $('modal').classList.remove('open');
   drawCard($('mCard'), g);
+  /* Inside the website or a hub the page is one tall frame, so put the card next to the row that was tapped */
+  const framed = document.documentElement.classList.contains('embed') || document.documentElement.classList.contains('site');
+  const body = $('modalBody');
+  if(framed && from){ $('modal').style.position = 'absolute'; $('modal').style.minHeight = document.body.scrollHeight + 'px'; body.style.marginTop = Math.max(0, from.getBoundingClientRect().top + window.scrollY - 160) + 'px'; try{ body.scrollIntoView({block:'nearest', behavior:'smooth'}); }catch(e){} }
+  else { $('modal').style.position = ''; body.style.marginTop = ''; }
 }
 $('modal').onclick = e => { if(e.target === $('modal')) $('modal').classList.remove('open'); };
 
