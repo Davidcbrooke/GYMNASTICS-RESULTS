@@ -496,7 +496,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 @media (prefers-reduced-motion:reduce){#nglSplash .nsh,#nglSplash .nsx{animation:none;opacity:1}#nglSplash .nsl,#nglSplash .nsm i{animation:none;opacity:1;transform:none}#nglSplash .nsb b{animation:none;width:100%}}</style><script>(function(){
   var C={"key": "rotation-planner", "title": "NGL Rotation Planner", "colours": ["#E84187", "#F8D438", "#E88230", "#0071B3", "#01AFB8", "#6AA525", "#90276A"], "lines": ["Setting up the hall\u2026", "Moving the mats\u2026", "Checking the rotations\u2026", "Starting the clock\u2026", "Rotate!"], "logo": false, "logoSel": ".auth-logo img"}, KEY='nglSplash-'+C.key, el=document.getElementById('nglSplash');
   // Full animation on the first open of each visit; later page loads skip it
-  if(window.self!==window.top){ el.remove(); return; }   // not inside the admin app's frames
+  if(window.self!==window.top && !/[?&]app=1\b/.test(location.search)){ el.remove(); return; }   // not inside the admin app's frames (app=1: the club.nationalgymnasticsleague.co.uk address)
   var seen=false; try{ seen=sessionStorage.getItem(KEY)==='1'; sessionStorage.setItem(KEY,'1'); }catch(e){}
   if(seen){ el.remove(); return; }
   var m=el.querySelector('.nsm'); C.colours.forEach(function(c,i){ var d=document.createElement('i'); d.style.background=c; d.style.animationDelay=(0.45+i*0.15)+'s,'+(1.1+i*0.15)+'s'; m.appendChild(d); });
