@@ -118,8 +118,8 @@
   .chs button.on{color:#fff}
   .chs button.on .ic{background:var(--gl);border-color:var(--gl);color:#fff;box-shadow:0 8px 18px -8px rgba(0,113,179,.9)}
   @media(min-width:900px){.chs{overflow:visible;justify-content:space-between}.chs button{width:auto;flex:1 1 0}}
-  .fbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.4fr);gap:8px;margin:0 0 14px}
-  @media(max-width:700px){.fbar{grid-template-columns:repeat(3,minmax(0,1fr))}.fbar .find{grid-column:1/-1}}
+  .fbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,2fr);gap:8px;margin:0 0 14px}
+  @media(max-width:700px){.fbar{grid-template-columns:repeat(2,minmax(0,1fr))}.fbar .find{grid-column:1/-1}}
   .fbar select,.fbar input{width:100%;min-width:0!important;border-radius:999px!important;padding:10px 14px!important;font-weight:700;font-size:14px!important}
   .fbar .find{position:relative}.fbar .find input{padding-left:38px!important}
   .fbar .find svg{position:absolute;left:13px;top:50%;width:17px;height:17px;transform:translateY(-50%);color:var(--muted)}
@@ -190,7 +190,7 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
       <div class="eyebrow">NGL General League · Boys</div>
       <h1>The <span>Training League</span></h1>
       <p class="muted"><b style="color:#fff">Boost training. Focus, results and fun, every session.</b> Nine conditioning challenges for strength, speed, power, flexibility, balance and control. Coaches film them in training and send them to NGL, and every valid result goes straight into the live league table and onto the gymnast's NGL Profile Card.</p>
-      <div class="pills"><span class="pill gl">Levels 1–4</span><span class="pill">Ages 6–8 · 9–11 · 12–14 · 15+</span><span class="pill">2–5 hrs · 6–10 hrs</span><span class="pill">Open all season</span></div>
+      <div class="pills"><span class="pill gl">Ages 6–8 · 9–11 · 12–14 · 15+</span><span class="pill">2–5 hrs · 6–10 hrs</span><span class="pill">Open all season</span></div>
     </div>
     <figure class="hero-card">
       <canvas id="heroCard" width="600" height="860" aria-label="An NGL Profile Card"></canvas>
@@ -204,7 +204,7 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
     <p class="lead">Conditioning that boys actually want to do, with a reason to give their best every session.</p>
     <div class="why-grid">
       <div><i>🎯</i><b>Boost training productivity</b><span>Every challenge has a clear target, so sessions have focus and gymnasts can see their results improve.</span></div>
-      <div><i>🏁</i><b>Harness the power of competition</b><span>Gymnasts compete against boys at the same level, age and training hours across the country.</span></div>
+      <div><i>🏁</i><b>Harness the power of competition</b><span>Gymnasts compete against boys of the same age and training hours across the country.</span></div>
       <div><i>😄</i><b>Make training fun</b><span>Conditioning becomes a game: beat your best, climb the table, raise your rating.</span></div>
       <div><i>⚽</i><b>A format boys recognise</b><span>League tables, ratings and profile cards, just like the sports games and cards they already love. Engagement every session.</span></div>
       <div><i>📱</i><b>Easy to film and send</b><span>One phone, side-on, one continuous take. Email the videos and NGL does the rest.</span></div>
@@ -228,7 +228,6 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
           <label>Surname initial<input type="text" id="aInit" required maxlength="1" style="min-width:0"></label>
           <label>Club<input type="text" id="aClub" required maxlength="80" list="clubList"></label>
           <label>BG number (private)<input type="text" id="aBg" inputmode="numeric" maxlength="12" placeholder="e.g. 1234567"></label>
-          <label>Level<select id="aLevel"></select></label>
           <label>Age group<select id="aAge"></select></label>
           <label>Training hours<select id="aHrs"></select></label>
           <div><button class="btn" type="submit">Add gymnast</button></div>
@@ -240,7 +239,7 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
         <div class="filters">
           <label>Find gymnast<input type="text" id="aFind" placeholder="Name or club"></label>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>Gymnast</th><th>Club</th><th>Level</th><th>Age</th><th>Hours</th><th class="num">BG no.</th><th class="num">Challenges</th><th class="num">OVR</th><th></th></tr></thead><tbody id="aList"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Gymnast</th><th>Club</th><th>Age</th><th>Hours</th><th class="num">BG no.</th><th class="num">Challenges</th><th class="num">OVR</th><th></th></tr></thead><tbody id="aList"></tbody></table></div>
       </div>
     </div>
   </section>
@@ -251,7 +250,6 @@ html.site .topbar,html.site footer{display:none!important}html.site body{min-hei
       <div class="panel-h"><h2>Leaderboard</h2><span class="sel" id="selNote"></span></div>
       <div class="chs" id="viewTabs" role="tablist" aria-label="Choose a challenge"></div>
       <div class="fbar">
-        <select id="fLevel" aria-label="Level"></select>
         <select id="fAge" aria-label="Age group"></select>
         <select id="fHrs" aria-label="Training hours"></select>
         <div class="find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="text" id="fFind" placeholder="Search name or club" aria-label="Search name or club"></div>
@@ -297,7 +295,7 @@ const PRIV = 'ngl_power_league_private';
 let BG = {};
 const ADMIN = /[?&]admin=1/.test(location.search);
 
-const {ICON, SHORT, LEVELS, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf} = window.NGLPowerLeague;
+const {ICON, SHORT, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf} = window.NGLPowerLeague;
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -311,47 +309,47 @@ function opts(sel, list, all, lbl){ sel.innerHTML = (all ? `<option value="">${a
 function setupPublic(){
   $('viewTabs').innerHTML = ['overall', ...CH.map(c => c.k)].map(k => `<button type="button" role="tab" class="${k === 'overall' ? 'on' : ''}" data-v="${k}" aria-label="${esc(k === 'overall' ? 'Overall' : CH.find(c => c.k === k).n)}"><span class="ic">${ICON[k]}</span>${SHORT[k]}</button>`).join('');
   $('viewTabs').onclick = e => { const b = e.target.closest('[data-v]'); if(!b) return; VIEW = b.dataset.v; [...$('viewTabs').children].forEach(x => x.classList.toggle('on', x === b)); renderTable(); };
-  const narrow = matchMedia('(max-width:700px)').matches; opts($('fLevel'), LEVELS, narrow ? 'Level' : 'All levels', v => 'Level ' + v); opts($('fAge'), AGES, narrow ? 'Age' : 'All ages'); opts($('fHrs'), HRS, narrow ? 'Hours' : 'All hours', v => v + ' hrs');
-  ['fLevel','fAge','fHrs'].forEach(id => $(id).onchange = renderTable); $('fFind').oninput = renderTable; try{ const qc = new URLSearchParams(location.search).get('club'); if(qc) $('fFind').value = qc; }catch(_){}
-  $('chList').innerHTML = CH.map(c => `<div class="c"><div class="hd"><span class="ic">${ICON[c.k]}</span><div><b>${esc(c.n)}</b><small>${c.nLow ? esc(c.nLow) + ' at Levels 1–2 · ' : ''}Scored in ${esc(c.unit === 's' ? 'seconds' : c.unit)}</small></div><span class="st">${c.stat}</span></div>
+  const narrow = matchMedia('(max-width:700px)').matches; opts($('fAge'), AGES, narrow ? 'Age' : 'All ages'); opts($('fHrs'), HRS, narrow ? 'Hours' : 'All hours', v => v + ' hrs');
+  ['fAge','fHrs'].forEach(id => $(id).onchange = renderTable); $('fFind').oninput = renderTable; try{ const qc = new URLSearchParams(location.search).get('club'); if(qc) $('fFind').value = qc; }catch(_){}
+  $('chList').innerHTML = CH.map(c => `<div class="c"><div class="hd"><span class="ic">${ICON[c.k]}</span><div><b>${esc(c.n)}</b><small>${c.nLow ? esc(c.nLow) + ' for ages 6–11 · ' : ''}Scored in ${esc(c.unit === 's' ? 'seconds' : c.unit)}</small></div><span class="st">${c.stat}</span></div>
     <details><summary>How it's judged</summary><div class="ok">Counts</div><ul>${c.ok.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
     <div class="no">Doesn’t count</div><ul>${c.no.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details></div>`).join('');
 }
 function filtered(){
-  const L = $('fLevel').value, A = $('fAge').value, H = $('fHrs').value, q = $('fFind').value.trim().toLowerCase();
-  return G.filter(g => (!L || g.level === L) && (!A || g.age === A) && (!H || g.hrs === H) && (!q || nameOf(g).toLowerCase().includes(q) || (g.club || '').toLowerCase().includes(q)));
+  const A = $('fAge').value, H = $('fHrs').value, q = $('fFind').value.trim().toLowerCase();
+  return G.filter(g => (!A || g.age === A) && (!H || g.hrs === H) && (!q || nameOf(g).toLowerCase().includes(q) || (g.club || '').toLowerCase().includes(q)));
 }
 function renderTable(){
   const list = filtered(), t = $('tbl');
-  const mixed = !$('fLevel').value || !$('fAge').value || !$('fHrs').value;
-  $('tblNote').textContent = mixed ? 'Ratings compare each gymnast with boys at the same level, age group and training hours. Pick all three filters to see one league.' : '';
+  const mixed = !$('fAge').value || !$('fHrs').value;
+  $('tblNote').textContent = mixed ? 'Ratings compare each gymnast with boys of the same age group and training hours. Pick both filters to see one league.' : '';
   if(VIEW === 'overall'){
     const rows = list.filter(g => g.done).sort((a, b) => b.ovr - a.ovr || b.done - a.done || nameOf(a).localeCompare(nameOf(b)));
-    t.innerHTML = `<thead><tr><th class="num">#</th><th>Gymnast</th><th class="num">OVR</th>${STATS.map(s => `<th class="num">${s}</th>`).join('')}<th>Level · Age · Hours</th></tr></thead><tbody>` +
-      (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${g.ovr}</td>${STATS.map(s => `<td class="num">${g.stats[s]}</td>`).join('')}<td class="muted">L${esc(g.level)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</td></tr>`).join('')
+    t.innerHTML = `<thead><tr><th class="num">#</th><th>Gymnast</th><th class="num">OVR</th>${STATS.map(s => `<th class="num">${s}</th>`).join('')}<th>Age · Hours</th></tr></thead><tbody>` +
+      (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${g.ovr}</td>${STATS.map(s => `<td class="num">${g.stats[s]}</td>`).join('')}<td class="muted">${esc(g.age)} · ${esc(g.hrs)} hrs</td></tr>`).join('')
       : `<tr><td colspan="10" class="empty">No results yet. Results appear here as soon as NGL checks the videos.</td></tr>`) + '</tbody>';
   } else {
     const c = CH.find(x => x.k === VIEW);
     const rows = list.filter(g => g.results && g.results[c.k] && g.results[c.k].best != null)
       .sort((a, b) => c.dir > 0 ? b.results[c.k].best - a.results[c.k].best : a.results[c.k].best - b.results[c.k].best);
-    t.innerHTML = `<thead><tr><th class="num">#</th><th>Gymnast</th><th class="num">Best</th><th class="num">Rating</th><th>Level · Age · Hours</th><th>Date</th></tr></thead><tbody>` +
-      (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${fmt(g.results[c.k].best, c)} <small class="muted">${chUnit(c, g.level)}</small></td><td class="num">${g.ch[c.k]}</td><td class="muted">L${esc(g.level)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</td><td class="muted">${esc(g.results[c.k].date || '')}</td></tr>`).join('')
+    t.innerHTML = `<thead><tr><th class="num">#</th><th>Gymnast</th><th class="num">Best</th><th class="num">Rating</th><th>Age · Hours</th><th>Date</th></tr></thead><tbody>` +
+      (rows.length ? rows.map((g, i) => `<tr class="row" data-id="${g.id}"><td class="num pos">${i + 1}</td><td class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small></td><td class="num ovr">${fmt(g.results[c.k].best, c)} <small class="muted">${chUnit(c, g.age)}</small></td><td class="num">${g.ch[c.k]}</td><td class="muted">${esc(g.age)} · ${esc(g.hrs)} hrs</td><td class="muted">${esc(g.results[c.k].date || '')}</td></tr>`).join('')
       : `<tr><td colspan="6" class="empty">No ${esc(c.n)} results yet.</td></tr>`) + '</tbody>';
   }
   t.querySelectorAll('tr.row').forEach(r => r.onclick = () => openCard(r.dataset.id, r));
   // Mobile: the same ranking as a simple list
-  const L = $('fLevel').value, A = $('fAge').value, H = $('fHrs').value;
-  $('selNote').textContent = [VIEW === 'overall' ? 'Overall' : CH.find(x => x.k === VIEW).n, L ? 'Level ' + L : 'All levels', A || 'All ages', H ? H + ' hrs' : 'All hours'].join(' · ');
+  const A = $('fAge').value, H = $('fHrs').value;
+  $('selNote').textContent = [VIEW === 'overall' ? 'Overall' : CH.find(x => x.k === VIEW).n, A || 'All ages', H ? H + ' hrs' : 'All hours'].join(' · ');
   const c = VIEW === 'overall' ? null : CH.find(x => x.k === VIEW);
   const items = c ? list.filter(g => g.results && g.results[c.k] && g.results[c.k].best != null).sort((a, b) => c.dir > 0 ? b.results[c.k].best - a.results[c.k].best : a.results[c.k].best - b.results[c.k].best)
                   : list.filter(g => g.done).sort((a, b) => b.ovr - a.ovr || b.done - a.done || nameOf(a).localeCompare(nameOf(b)));
-  $('lb').innerHTML = items.length ? items.map((g, i) => `<li data-id="${g.id}"><span class="pos">${i + 1}</span><span class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small><small>Level ${esc(g.level)} · ${esc(g.age)} · ${esc(g.hrs)} hrs</small></span><span class="sc">${c ? fmt(g.results[c.k].best, c) : g.ovr}<small>${c ? esc(chUnit(c, g.level)).toUpperCase() : 'OVR'}</small></span></li>`).join('')
+  $('lb').innerHTML = items.length ? items.map((g, i) => `<li data-id="${g.id}"><span class="pos">${i + 1}</span><span class="nm"><b>${esc(nameOf(g))}</b><small>${esc(g.club)}</small><small>${esc(g.age)} · ${esc(g.hrs)} hrs</small></span><span class="sc">${c ? fmt(g.results[c.k].best, c) : g.ovr}<small>${c ? esc(chUnit(c, g.age)).toUpperCase() : 'OVR'}</small></span></li>`).join('')
     : `<li class="empty">${c ? 'No ' + esc(c.n) + ' results yet.' : 'No results yet. Results appear here as soon as NGL checks the videos.'}</li>`;
   $('lb').querySelectorAll('li[data-id]').forEach(r => r.onclick = () => openCard(r.dataset.id, r));
 }
 
 /* NGL Profile Cards (drawn by ngl-player-card.js) */
-const SAMPLE = {name:'Your gymnast', club:'Your club', level:'2', discipline:'MAG', overall:84, attrs:{SPD:86, POW:82, STR:88, FLX:74, BAL:85, CTL:89}, tier:'gold', season:'TRAINING LEAGUE'};
+const SAMPLE = {name:'Your gymnast', club:'Your club', level:'', discipline:'MAG', overall:84, attrs:{SPD:86, POW:82, STR:88, FLX:74, BAL:85, CTL:89}, tier:'gold', season:'TRAINING LEAGUE'};
 function drawCard(cv, g){ if(!cv || !window.NGLPlayerCard) return; const card = g ? NGLPowerLeague.cardFor(g) : SAMPLE; NGLPlayerCard.draw(cv, card, null); NGLPlayerCard.ready().then(() => NGLPlayerCard.draw(cv, card, null)); }
 function drawHero(){
   const top = G.filter(g => g.done === CH.length).sort((a, b) => b.ovr - a.ovr)[0];
@@ -361,7 +359,7 @@ function drawHero(){
 function openCard(id, from){
   const g = G.find(x => x.id === id); if(!g) return;
   $('modalBody').innerHTML = `<canvas class="mcard" id="mCard" width="600" height="860" aria-label="${esc(nameOf(g))}'s NGL Profile Card"></canvas>
-    <div class="res"><span class="h">Challenge</span><span class="h">Best</span><span class="h">Rating</span>${CH.map(c => { const r = g.results && g.results[c.k]; return `<span>${esc(chName(c, g.level))}</span><span>${r && r.best != null ? fmt(r.best, c) + ' ' + chUnit(c, g.level) : '—'}</span><span>${g.ch[c.k] || '—'}</span>`; }).join('')}</div>
+    <div class="res"><span class="h">Challenge</span><span class="h">Best</span><span class="h">Rating</span>${CH.map(c => { const r = g.results && g.results[c.k]; return `<span>${esc(chName(c, g.age))}</span><span>${r && r.best != null ? fmt(r.best, c) + ' ' + chUnit(c, g.age) : '—'}</span><span>${g.ch[c.k] || '—'}</span>`; }).join('')}</div>
     <div style="margin-top:16px;text-align:right"><button class="btn ghost small" id="mClose">Close</button></div>`;
   $('modal').classList.add('open'); $('mClose').onclick = () => $('modal').classList.remove('open');
   drawCard($('mCard'), g);
@@ -376,7 +374,7 @@ $('modal').onclick = e => { if(e.target === $('modal')) $('modal').classList.rem
 /* ---------- Admin ---------- */
 function setupAdmin(){
   $('admin').classList.remove('hide'); $('public').classList.add('hide');
-  opts($('aLevel'), LEVELS, '', v => 'Level ' + v); opts($('aAge'), AGES, ''); opts($('aHrs'), HRS, '', v => v + ' hrs');
+  opts($('aAge'), AGES, ''); opts($('aHrs'), HRS, '', v => v + ' hrs');
   $('aFind').oninput = renderAdmin;
   $('addForm').onsubmit = async e => {
     e.preventDefault(); if(!ADMIN_OK) return;
@@ -384,7 +382,7 @@ function setupAdmin(){
     if(!first || !init || !club) return;
     try{
       const bg = $('aBg').value.replace(/\D/g, '');
-      const ref = await addDoc(COL, {first, init, club, level: $('aLevel').value, age: $('aAge').value, hrs: $('aHrs').value, results: {}, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+      const ref = await addDoc(COL, {first, init, club, age: $('aAge').value, hrs: $('aHrs').value, results: {}, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
       if(bg) await setDoc(doc(db, PRIV, ref.id), {bg, updatedAt: serverTimestamp()});
       $('aFirst').value = ''; $('aInit').value = ''; $('aBg').value = ''; $('aFirst').focus(); toast(`${first} ${init}. added`);
     }catch(err){ console.error(err); toast(err.code === 'permission-denied' ? 'The database blocked this. The Training League rules need adding.' : 'Couldn’t add the gymnast.'); }
@@ -395,7 +393,7 @@ function renderAdmin(){
   $('clubList').innerHTML = [...new Set(G.map(g => g.club))].sort().map(c => `<option value="${esc(c)}">`).join('');
   const q = $('aFind').value.trim().toLowerCase();
   const list = G.filter(g => !q || nameOf(g).toLowerCase().includes(q) || (g.club || '').toLowerCase().includes(q)).sort((a, b) => (a.club || '').localeCompare(b.club || '') || nameOf(a).localeCompare(nameOf(b)));
-  $('aList').innerHTML = list.length ? list.map(g => `<tr><td><b>${esc(nameOf(g))}</b></td><td>${esc(g.club)}</td><td>${esc(g.level)}</td><td>${esc(g.age)}</td><td>${esc(g.hrs)}</td><td class="num">${BG[g.id] ? '✓' : '<span class="muted">—</span>'}</td><td class="num">${g.done} / ${CH.length}</td><td class="num ovr">${g.done ? g.ovr : '—'}</td><td><button class="btn small" data-edit="${g.id}">Results</button></td></tr>`).join('')
+  $('aList').innerHTML = list.length ? list.map(g => `<tr><td><b>${esc(nameOf(g))}</b></td><td>${esc(g.club)}</td><td>${esc(g.age)}</td><td>${esc(g.hrs)}</td><td class="num">${BG[g.id] ? '✓' : '<span class="muted">—</span>'}</td><td class="num">${g.done} / ${CH.length}</td><td class="num ovr">${g.done ? g.ovr : '—'}</td><td><button class="btn small" data-edit="${g.id}">Results</button></td></tr>`).join('')
     : `<tr><td colspan="9" class="empty">No gymnasts yet. Add the first one above.</td></tr>`;
   $('aList').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEditor(b.dataset.edit));
 }
@@ -404,14 +402,13 @@ function openEditor(id){
   const today = new Date().toISOString().slice(0, 10);
   $('modalBody').innerHTML = `<h2>${esc(nameOf(g))} <span class="muted" style="font-size:15px">${esc(g.club)}</span></h2>
     <div class="form" style="margin-bottom:12px">
-      <label>Level<select id="eLevel">${LEVELS.map(v => `<option ${v === g.level ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <label>Age group<select id="eAge">${AGES.map(v => `<option ${v === g.age ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <label>Training hours<select id="eHrs">${HRS.map(v => `<option ${v === g.hrs ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <label>BG number (private)<input type="text" id="eBg" inputmode="numeric" maxlength="12" value="${esc(BG[g.id] || '')}"></label>
     </div>
     <p class="note">Enter a result only once you've checked the video meets every "Counts" rule. The best result each gymnast has ever posted counts, so a lower score never replaces a better one.</p>
-    <div>${CH.map(c => { const r = (g.results || {})[c.k]; return `<div class="entry"><div><b>${esc(chName(c, g.level))}</b><div class="hist">Best: ${r && r.best != null ? fmt(r.best, c) + ' ' + chUnit(c, g.level) + (r.date ? ' · ' + esc(r.date) : '') : 'none yet'}</div></div>
-      <input type="number" step="${c.step}" data-v="${c.k}" placeholder="${chUnit(c, g.level)}"><input type="date" data-d="${c.k}" value="${today}">
+    <div>${CH.map(c => { const r = (g.results || {})[c.k]; return `<div class="entry"><div><b>${esc(chName(c, g.age))}</b><div class="hist">Best: ${r && r.best != null ? fmt(r.best, c) + ' ' + chUnit(c, g.age) + (r.date ? ' · ' + esc(r.date) : '') : 'none yet'}</div></div>
+      <input type="number" step="${c.step}" data-v="${c.k}" placeholder="${chUnit(c, g.age)}"><input type="date" data-d="${c.k}" value="${today}">
       ${r && r.best != null ? `<button class="btn danger small" data-clear="${c.k}" title="Remove this result">✕</button>` : '<span></span>'}</div>`; }).join('')}</div>
     <div style="display:flex;gap:8px;justify-content:space-between;margin-top:16px;flex-wrap:wrap">
       <button class="btn danger small" id="eDel">Remove gymnast</button>
@@ -439,7 +436,7 @@ function openEditor(id){
       if(better){ r.best = v; r.date = date; } else kept++;
       res[c.k] = r; n++;
     });
-    const upd = {results: res, level: $('eLevel').value, age: $('eAge').value, hrs: $('eHrs').value, updatedAt: serverTimestamp()};
+    const upd = {results: res, age: $('eAge').value, hrs: $('eHrs').value, updatedAt: serverTimestamp()};
     const bg = $('eBg').value.replace(/\D/g, '');
     try{ await updateDoc(doc(db, 'ngl_power_league', id), upd);
       if(bg !== (BG[id] || '')){ if(bg) await setDoc(doc(db, PRIV, id), {bg, updatedAt: serverTimestamp()}); else await deleteDoc(doc(db, PRIV, id)); }

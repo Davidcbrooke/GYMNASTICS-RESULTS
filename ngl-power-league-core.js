@@ -2,7 +2,7 @@
    (ngl-training-league.html) and the General League Hub (ngl-general-league-hub-demo.html). */
 (function(){
 "use strict";
-const LEVELS = ['1','2','3','4'], AGES = ['6-8','9-11','12-14','15+'], HRS = ['2-5','6-10'];
+const AGES = ['6-8','9-11','12-14','15+'], HRS = ['2-5','6-10'];
 /* Challenges. dir: 1 = higher is better, -1 = lower is better. off: added before rating (pike reach can be below the toes). */
 const CH = [
   {k:'sprint', n:'10m Sprint', stat:'SPD', unit:'s', dir:-1, step:0.01,
@@ -18,7 +18,7 @@ const CH = [
    ok:['Straight body from head to heels','Chest down to a fist height off the floor, arms fully straight at the top'],
    no:['Hips sagging or piking','Half reps or knees on the floor']},
   {k:'pull', n:'Pull-ups', nLow:'Chin-up Hold', stat:'STR', unit:'reps', unitLow:'s', dir:1, step:1,
-   ok:['Levels 3–4: from a straight-arm hang, chin over the bar, back to straight arms','Levels 1–2 (chin-up hold): chin held above the bar, time stops when it drops'],
+   ok:['Ages 12 and over: from a straight-arm hang, chin over the bar, back to straight arms','Ages 6–11 (chin-up hold): chin held above the bar, time stops when it drops'],
    no:['Kipping or swinging','Chin not clearing the bar, or not returning to straight arms']},
   {k:'dips', n:'Max Dips', stat:'STR', unit:'reps', dir:1, step:1,
    ok:['From straight-arm support, lower until the upper arms are parallel to the floor','Push back to straight arms'],
@@ -30,7 +30,7 @@ const CH = [
    ok:['Legs straight and together, toes pointing up','Both hands level, held for 2 seconds','Measured in cm past the toes (minus if short of them)'],
    no:['Bent knees or bouncing','One hand ahead of the other']},
   {k:'hand', n:'Handstand Hold', stat:'CTL', unit:'s', dir:1, step:1,
-   ok:['Arms straight, legs together, straight body','Time starts when the feet come together at the top','Wall allowed at Levels 1–2, freestanding at Levels 3–4'],
+   ok:['Arms straight, legs together, straight body','Time starts when the feet come together at the top','Wall allowed for ages 6–11, freestanding for 12 and over'],
    no:['Walking on the hands, legs apart or bent arms','Time stops when he moves or comes down']}
 ];
 const STATS = ['SPD','POW','STR','FLX','BAL','CTL'];
@@ -50,14 +50,16 @@ const ICON = {
   hand: P('<path d="M24 5v24"/><circle cx="24" cy="32" r="3.5"/><path d="M24 26l-6 14M24 26l6 14"/><path d="M8 42h32"/>')
 };
 
-const chName = (c, lvl) => (c.nLow && +lvl <= 2) ? c.nLow : c.n;
-const chUnit = (c, lvl) => (c.unitLow && +lvl <= 2) ? c.unitLow : c.unit;
+/* Younger boys (6–11) do the easier version of some challenges */
+const young = age => age === '6-8' || age === '9-11';
+const chName = (c, age) => (c.nLow && young(age)) ? c.nLow : c.n;
+const chUnit = (c, age) => (c.unitLow && young(age)) ? c.unitLow : c.unit;
 
 const fmt = (v, c) => v == null ? '—' : (c.k === 'sprint' ? (+v).toFixed(2) : String(+v));
-const group = g => `${g.level}|${g.age}|${g.hrs}`;
+const group = g => `${g.age}|${g.hrs}`;
 
 /* ---------- Ratings ----------
-   Per challenge, the best valid result in the gymnast's group (same level, age group, hours) rates 99;
+   Per challenge, the best valid result in the gymnast's group (same age group and training hours) rates 99;
    everyone else is rated in proportion to it. A missing challenge rates 0. A stat is the average of its
    challenges; OVR is the average of the six stats. */
 function rate(list){
@@ -88,13 +90,13 @@ const nameOf = g => `${g.first} ${g.init}.`;
 const tierOf = ovr => ovr >= 80 ? 'gold' : ovr >= 65 ? 'silver' : 'bronze';
 /* A card object in the shape ngl-player-card.js draws */
 function cardFor(g){
-  return {name: nameOf(g), club: g.club || '', level: g.level, discipline: 'MAG', overall: g.ovr || 0,
+  return {name: nameOf(g), club: g.club || '', level: '', discipline: 'MAG', overall: g.ovr || 0,
     attrs: Object.assign({}, g.stats), tier: tierOf(g.ovr || 0), season: 'TRAINING LEAGUE'};
 }
-/* Position in his own league (same level, age group and hours) by OVR */
+/* Position in his own league (same age group and training hours) by OVR */
 function leaguePos(list, g){
   const peers = list.filter(x => x.done && group(x) === group(g)).sort((a, b) => b.ovr - a.ovr);
   return {pos: peers.indexOf(g) + 1, of: peers.length};
 }
-window.NGLPowerLeague = {ICON, SHORT, LEVELS, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf, tierOf, cardFor, leaguePos};
+window.NGLPowerLeague = {ICON, SHORT, AGES, HRS, CH, STATS, chName, chUnit, fmt, group, rate, nameOf, tierOf, cardFor, leaguePos};
 })();

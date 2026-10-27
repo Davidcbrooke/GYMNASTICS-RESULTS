@@ -504,7 +504,7 @@ function cardBoy(id){
   + '<div class="row" style="justify-content:center;gap:10px;margin-bottom:14px"><button class="btn ghost small" id="addPhoto">Add photo</button><button class="btn small" id="saveCard">Save card</button></div>'
   + '<input type="file" accept="image/*" id="photoIn" hidden>'
   + '<div class="card"><div class="eyebrow">Training League</div>'
-  + (e ? '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s card is built from the Training League: nine strength, speed and power challenges filmed in training. Each stat is rated out of 99 against boys at the same level, age group and training hours.</p>'
+  + (e ? '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s card is built from the Training League: nine strength, speed and power challenges filmed in training. Each stat is rated out of 99 against boys of the same age group and training hours.</p>'
        + '<p style="font-weight:800;margin-bottom:10px">' + plPosLine(e) + '</p>' + plTable(e, id)
        : '<p class="muted" style="font-size:14px">' + esc(firstName(id)) + '\'s NGL Profile Card is built from the Training League: nine strength, speed and power challenges his coach films in training. It fills in as soon as his first results are checked.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
   + '<a class="btn ghost small" href="' + PL_URL + '" target="_blank" rel="noopener" style="margin-top:12px">See the Training League table</a></div>'
@@ -585,7 +585,7 @@ function loadPLAdmin(){
 }
 function plTable(e, id){
   return '<table class="best">' + PLK.CH.map(function(c){ var r = e.results && e.results[c.k];
-    return '<tr><td>' + esc(PLK.chName(c, e.level)) + '</td><td>' + (r && r.best != null ? PLK.fmt(r.best, c) + ' <span class="muted" style="font-size:13px">' + PLK.chUnit(c, e.level) + '</span>' : '<span class="muted">–</span>') + '</td><td style="width:56px;text-align:right">' + (e.ch[c.k] || '<span class="muted">–</span>') + '</td></tr>'; }).join("") + '</table>';
+    return '<tr><td>' + esc(PLK.chName(c, e.age)) + '</td><td>' + (r && r.best != null ? PLK.fmt(r.best, c) + ' <span class="muted" style="font-size:13px">' + PLK.chUnit(c, e.age) + '</span>' : '<span class="muted">–</span>') + '</td><td style="width:56px;text-align:right">' + (e.ch[c.k] || '<span class="muted">–</span>') + '</td></tr>'; }).join("") + '</table>';
 }
 function plStats(id){
   var e = plFor(id);
@@ -595,7 +595,7 @@ function plStats(id){
          : '<p class="muted" style="font-size:14px;margin:0">No Training League results yet.' + (PL.note ? ' ' + esc(PL.note) : '') + '</p>')
     + '</div>';
 }
-function plPosLine(e){ var lp = PLK.leaguePos(PL.list, e); return lp.pos ? ord(lp.pos) + ' of ' + lp.of + ' · Level ' + esc(e.level) + ' · ' + esc(e.age) + ' · ' + esc(e.hrs) + ' hrs' : 'Not ranked yet'; }
+function plPosLine(e){ var lp = PLK.leaguePos(PL.list, e); return lp.pos ? ord(lp.pos) + ' of ' + lp.of + ' · ' + esc(e.age) + ' · ' + esc(e.hrs) + ' hrs' : 'Not ranked yet'; }
 var PL_URL = "ngl-training-league.html";
 function plCard(id){
   var e = plFor(id), g = GYM[id];
