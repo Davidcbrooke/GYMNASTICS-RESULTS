@@ -972,7 +972,7 @@ $("#queue").addEventListener("click", e=>{
   if(PL.playing){ toast("Fade out the music before choosing another gymnast."); return; }
   PL.cur = r.dataset.qid; plSave(); renderPlayer();
 });
-$("#resetSess").onclick = ()=>{ if(PL.playing) return; if(!confirm(`Clear the 'played' ticks for Rotation ${PL.rot} and go back to its first gymnast?`)) return; queue().forEach(id=>delete PL.played[id]); PL.cur = firstUp(queue()); plSave(); renderPlayer(); };
+$("#resetSess").onclick = ()=>{ if(PL.playing) return; if(!confirm(`Clear the 'played' ticks for Rotation ${PL.rot} and go back to its first gymnast?`)) return; queue().forEach(id=>{ delete PL.played[id]; delete PL.introed[id]; }); PL.cur = firstUp(queue()); plSave(); renderPlayer(); };
 $("#fsBtn").onclick = ()=>{ const st=$("#stage"); if(document.fullscreenElement) document.exitFullscreen(); else if(st.requestFullscreen) st.requestFullscreen().catch(()=>toast("Full screen isn't allowed here. Use 'Open in new tab' first.")); };
 document.addEventListener("fullscreenchange", ()=>{ $("#fsBtn").textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; });
 /* announcements */
