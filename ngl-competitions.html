@@ -153,7 +153,8 @@
   }
   .action-card:hover{background:#243a94; border-color:var(--pathway-color, var(--line));}
   .action-card:active{transform:scale(0.98);}
-  .action-icon{font-size:22px; display:block; margin-bottom:10px;}
+  .action-icon{display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; margin-bottom:12px; background:var(--pathway-color, #0f6bac); color:var(--pathway-text, #fff);}
+  .action-icon svg{width:24px; height:24px;}
   .action-title{display:block; font-weight:700; font-size:15px; margin-bottom:4px;}
   .action-sub{display:block; font-weight:400; font-size:12.5px; color:var(--muted); line-height:1.4;}
   .action-card.disabled{
@@ -212,6 +213,9 @@
 </div>
 
 <script>
+  var NGL_ICO = {"cal": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/>", "trophy": "<path d=\"M8 4h8v5a4 4 0 0 1-8 0z\"/><path d=\"M8 6H5a3 3 0 0 0 4 4M16 6h3a3 3 0 0 1-4 4\"/><path d=\"M12 13v4M8 21h8M9.5 21l.5-4h4l.5 4\"/>", "book": "<path d=\"M3 5.5C5.5 4 8.5 4 12 6c3.5-2 6.5-2 9-.5V19c-2.5-1.5-5.5-1.5-9 .5-3.5-2-6.5-2-9-.5z\"/><path d=\"M12 6v13.5\"/>", "arm": "<path d=\"M5 20c4 .8 9 .6 12-1.2 2.4-1.4 3-4 1.8-6-1.2-2-3.8-2.5-5.8-1.4-.8.4-1.4 1-1.9 1.7\"/><path d=\"M5 20c-.9-4-.4-8.4 1.6-12l1.7-3c.4-.7 1.2-1 2-.7l1.6.7c.9.4 1.2 1.4.7 2.2l-1.3 2.1-2.6.2\"/>", "doc": "<path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5M9 13h6M9 17h6\"/>", "download": "<path d=\"M12 4v11M7 10l5 5 5-5\"/><path d=\"M5 20h14\"/>", "pin": "<path d=\"M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z\"/><circle cx=\"12\" cy=\"9.5\" r=\"2.5\"/>", "pencil": "<path d=\"M4 20l4-1 11-11-3-3L5 16z\"/><path d=\"M14 6l3 3\"/>", "play": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M10 8.5v7l6-3.5z\"/>", "rotate": "<path d=\"M20 12a8 8 0 1 1-2.3-5.7\"/><path d=\"M20 4v5h-5\"/>", "heart": "<path d=\"M12 20s-7-4.4-9-9a4.8 4.8 0 0 1 9-3 4.8 4.8 0 0 1 9 3c-2 4.6-9 9-9 9z\"/>", "check": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 12.5l2.7 2.7L16 9.8\"/>", "pound": "<path d=\"M16 6.5A4.5 4.5 0 0 0 8 9.5V13H6M8 13v3c0 1.5-1 3-2.5 3H18M6 13h8\"/>", "family": "<circle cx=\"8\" cy=\"7\" r=\"3\"/><circle cx=\"17\" cy=\"9\" r=\"2.3\"/><path d=\"M2.5 20c0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6M14 20c0-2.6 1.3-4.6 3-4.6s3 2 3 4.6\"/>", "star": "<path d=\"M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z\"/>", "medal": "<circle cx=\"12\" cy=\"14\" r=\"6\"/><path d=\"M8.5 3h7l-2 5h-3zM12 11.5v5M10 13l2-1.5\"/>"};
+  function ico(k){ var d = NGL_ICO[k]; return d ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>' : (k || ''); }
+
 const DARK_TEXT = '#0a1440';
 const LIGHT_TEXT = '#ffffff';
 
@@ -233,18 +237,18 @@ const SEASON_DATA = {
       {
         label: "This Season (2026)",
         actions: [
-          { icon:"📅", title:"Season Schedule & Booking", sub:"Find and book your club's place via JustGo.", url:"https://www.nationalgymnasticsleague.co.uk/league-schedule-4" },
-          { icon:"🏆", title:"League Table & Qualification", sub:"Live results, league table and National Qualifiers.", url:"https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" },
-          { icon:"📖", title:"Rules", sub:"Girls Rules, Girls Element Book and Boys Rules.", url:"https://www.nationalgymnasticsleague.co.uk/handbook" }
+          { icon:"cal", title:"Season Schedule & Booking", sub:"Find and book your club's place via JustGo.", url:"https://www.nationalgymnasticsleague.co.uk/league-schedule-4" },
+          { icon:"trophy", title:"League Table & Qualification", sub:"Live results, league table and National Qualifiers.", url:"https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" },
+          { icon:"book", title:"Rules", sub:"Girls Rules, Girls Element Book and Boys Rules.", url:"https://www.nationalgymnasticsleague.co.uk/handbook" }
         ],
         extra: { title:"National Qualifiers", sub:"Regional qualification tracker for the 2026 season.", url:"https://davidcbrooke.github.io/GYMNASTICS-RESULTS/national-qualifier.html" }
       },
       {
         label: "Next Season (2027)",
         actions: [
-          { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve your club's place now, pay later.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
-          { icon:"🏆", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
-          { icon:"📖", title:"Rules", sub:"Girls Rules and Boys Rules for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/handbook-1" }
+          { icon:"cal", title:"Season Schedule & Booking", sub:"Reserve your club's place now, pay later.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-early-registration" },
+          { icon:"trophy", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
+          { icon:"book", title:"Rules", sub:"Girls Rules and Boys Rules for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/handbook-1" }
         ]
       }
     ]
@@ -256,7 +260,7 @@ function actionCardHTML(a){
     const sub = (a && a.subOverride) ? a.subOverride : 'Coming soon';
     return `
       <div class="action-card disabled">
-        <span class="action-icon">${a ? a.icon : ''}</span>
+        <span class="action-icon">${a ? ico(a.icon) : ''}</span>
         <span class="action-title">${a ? a.title : ''}</span>
         <span class="action-sub">${sub}</span>
       </div>
@@ -264,7 +268,7 @@ function actionCardHTML(a){
   }
   return `
     <a class="action-card" href="${a.url}" target="_top">
-      <span class="action-icon">${a.icon}</span>
+      <span class="action-icon">${ico(a.icon)}</span>
       <span class="action-title">${a.title}</span>
       <span class="action-sub">${a.sub || ''}</span>
     </a>
@@ -272,9 +276,9 @@ function actionCardHTML(a){
 }
 
 const PLACEHOLDER_ACTIONS = [
-  { icon:"📅", title:"Season Schedule & Booking" },
-  { icon:"🏆", title:"League Table & Qualification" },
-  { icon:"📖", title:"Rules" }
+  { icon:"cal", title:"Season Schedule & Booking" },
+  { icon:"trophy", title:"League Table & Qualification" },
+  { icon:"book", title:"Rules" }
 ];
 
 // Per-pathway overrides for the placeholder cards above — use this for cards that

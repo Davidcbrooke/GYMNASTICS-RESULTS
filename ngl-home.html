@@ -307,7 +307,8 @@
   }
   .pw-content .action-card:hover{background:#243a94; border-color:var(--pathway-color, var(--line-soft));}
   .pw-content .action-card:active{transform:scale(0.98);}
-  .pw-content .action-icon{font-size:22px; display:block; margin-bottom:10px;}
+  .pw-content .action-icon{display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; margin-bottom:12px; background:var(--pathway-color, #0f6bac); color:var(--pathway-text, #fff);}
+  .pw-content .action-icon svg{width:24px; height:24px;}
   .pw-content .action-title{display:block; font-weight:700; font-size:15px; margin-bottom:4px;}
   .pw-content .action-sub{display:block; font-weight:400; font-size:12.5px; color:var(--muted); line-height:1.4;}
   .pw-content .action-card.disabled{opacity:.55; cursor:default; pointer-events:none;}
@@ -430,6 +431,7 @@
   @media (max-width:680px){.pw-content .rc-grid{grid-template-columns:minmax(0,1fr)}}
   .pw-content .rc-grid > div{display:flex;gap:12px;align-items:flex-start;background:var(--navy);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
   .pw-content .rc-grid i{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:#ea732c;color:#0a1440;font-style:normal;font-weight:900;display:grid;place-items:center;font-size:17px}
+  .pw-content .rc-grid i svg{width:19px;height:19px}
   .pw-content .rc-grid b{display:block;font-size:15.5px;margin-bottom:3px}
   .pw-content .rc-grid span{color:var(--muted);font-size:14px;line-height:1.5}
   .pw-content .rc-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 4px}
@@ -644,7 +646,8 @@
 
   .pw-content .event-details{display:flex; flex-direction:column; gap:12px;}
   .pw-content .event-row{display:flex; align-items:flex-start; gap:12px; font-size:15px; line-height:1.4;}
-  .pw-content .event-icon{font-size:20px; line-height:1.2; flex:0 0 auto;}
+  .pw-content .event-icon{flex:0 0 auto; width:20px; height:20px; color:var(--pathway-color, #fff);}
+  .pw-content .event-icon svg{width:20px; height:20px; display:block;}
   .pw-content .event-sub{color:var(--muted); font-size:14px;}
 
   .pw-content .schools-cta{display:grid; grid-template-columns:1fr; gap:14px;}
@@ -1069,6 +1072,8 @@
   // across every NGL page)
   // ============================================================
   var DARK_TEXT = '#0a1440';
+  var NGL_ICO = {"cal": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/>", "trophy": "<path d=\"M8 4h8v5a4 4 0 0 1-8 0z\"/><path d=\"M8 6H5a3 3 0 0 0 4 4M16 6h3a3 3 0 0 1-4 4\"/><path d=\"M12 13v4M8 21h8M9.5 21l.5-4h4l.5 4\"/>", "book": "<path d=\"M3 5.5C5.5 4 8.5 4 12 6c3.5-2 6.5-2 9-.5V19c-2.5-1.5-5.5-1.5-9 .5-3.5-2-6.5-2-9-.5z\"/><path d=\"M12 6v13.5\"/>", "arm": "<path d=\"M5 20c4 .8 9 .6 12-1.2 2.4-1.4 3-4 1.8-6-1.2-2-3.8-2.5-5.8-1.4-.8.4-1.4 1-1.9 1.7\"/><path d=\"M5 20c-.9-4-.4-8.4 1.6-12l1.7-3c.4-.7 1.2-1 2-.7l1.6.7c.9.4 1.2 1.4.7 2.2l-1.3 2.1-2.6.2\"/>", "doc": "<path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5M9 13h6M9 17h6\"/>", "download": "<path d=\"M12 4v11M7 10l5 5 5-5\"/><path d=\"M5 20h14\"/>", "pin": "<path d=\"M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z\"/><circle cx=\"12\" cy=\"9.5\" r=\"2.5\"/>", "pencil": "<path d=\"M4 20l4-1 11-11-3-3L5 16z\"/><path d=\"M14 6l3 3\"/>", "play": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M10 8.5v7l6-3.5z\"/>", "rotate": "<path d=\"M20 12a8 8 0 1 1-2.3-5.7\"/><path d=\"M20 4v5h-5\"/>", "heart": "<path d=\"M12 20s-7-4.4-9-9a4.8 4.8 0 0 1 9-3 4.8 4.8 0 0 1 9 3c-2 4.6-9 9-9 9z\"/>", "check": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 12.5l2.7 2.7L16 9.8\"/>", "pound": "<path d=\"M16 6.5A4.5 4.5 0 0 0 8 9.5V13H6M8 13v3c0 1.5-1 3-2.5 3H18M6 13h8\"/>", "family": "<circle cx=\"8\" cy=\"7\" r=\"3\"/><circle cx=\"17\" cy=\"9\" r=\"2.3\"/><path d=\"M2.5 20c0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6M14 20c0-2.6 1.3-4.6 3-4.6s3 2 3 4.6\"/>", "star": "<path d=\"M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z\"/>", "medal": "<circle cx=\"12\" cy=\"14\" r=\"6\"/><path d=\"M8.5 3h7l-2 5h-3zM12 11.5v5M10 13l2-1.5\"/>"};
+  function ico(k){ var d = NGL_ICO[k]; return d ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>' : (k || ''); }
   var LIGHT_TEXT = '#ffffff';
 
   var PATHWAY_META = {
@@ -1191,19 +1196,19 @@
         {
           label: "This Season (2026)",
           actions: [
-            { icon:"📅", title:"Season Schedule & Booking", sub:"Find and book your club's place via JustGo.", url:"https://www.nationalgymnasticsleague.co.uk/league-schedule-4" },
-            { icon:"🏆", title:"League Table & Qualification", sub:"Live results, league table and National Qualifiers.", url:"https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" },
-            { icon:"📖", title:"Rules", sub:"Girls Rules, Girls Element Book and Boys Rules.", url:"https://www.nationalgymnasticsleague.co.uk/handbook" }
+            { icon:"cal", title:"Season Schedule & Booking", sub:"Find and book your club's place via JustGo.", url:"https://www.nationalgymnasticsleague.co.uk/league-schedule-4" },
+            { icon:"trophy", title:"League Table & Qualification", sub:"Live results, league table and National Qualifiers.", url:"https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" },
+            { icon:"book", title:"Rules", sub:"Girls Rules, Girls Element Book and Boys Rules.", url:"https://www.nationalgymnasticsleague.co.uk/handbook" }
           ],
           extra: { title:"National Qualifiers", sub:"Regional qualification tracker for the 2026 season.", url:"https://davidcbrooke.github.io/GYMNASTICS-RESULTS/national-qualifier.html" }
         },
         {
           label: "Next Season (2027)",
           actions: [
-            { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve places in your NGL Club Hub: no payment and no commitment to buy.", url:"https://club.nationalgymnasticsleague.co.uk/#book-general" },
-            { icon:"🏆", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
-            { icon:"📖", title:"Rules", sub:"Girls (Levels 1–4) and Boys (Levels 1–4) General League Rules 2027. Opens here.", inline:"general-2027" },
-            { icon:"⚡", title:"Training League", sub:"13 strength, speed and power challenges, filmed in training. Live league table and NGL Profile Card ratings all season.", url:"https://www.nationalgymnasticsleague.co.uk/training-league" }
+            { icon:"cal", title:"Season Schedule & Booking", sub:"Reserve places in your NGL Club Hub: no payment and no commitment to buy.", url:"https://club.nationalgymnasticsleague.co.uk/#book-general" },
+            { icon:"trophy", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
+            { icon:"book", title:"Rules", sub:"Girls (Levels 1–4) and Boys (Levels 1–4) General League Rules 2027. Opens here.", inline:"general-2027" },
+            { icon:"arm", title:"Training League", sub:"13 strength, speed and power challenges, filmed in training. Live league table and NGL Profile Card ratings all season.", url:"https://www.nationalgymnasticsleague.co.uk/training-league" }
           ]
         }
       ]
@@ -1225,18 +1230,18 @@
         {
           label: "This Season (2026)",
           actions: [
-            { icon:"📅", title:"Season Schedule & Booking", sub:"Find and book your club's place via JustGo.", url:"https://www.nationalgymnasticsleague.co.uk/league-schedule-4" },
-            { icon:"🏆", title:"League Table & Qualification", sub:"Live results, league table and National Qualifiers.", url:"https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" },
-            { icon:"📖", title:"Rules", sub:"Boys Rules for the 2026 season.", url:"https://www.nationalgymnasticsleague.co.uk/handbook" }
+            { icon:"cal", title:"Season Schedule & Booking", sub:"Find and book your club's place via JustGo.", url:"https://www.nationalgymnasticsleague.co.uk/league-schedule-4" },
+            { icon:"trophy", title:"League Table & Qualification", sub:"Live results, league table and National Qualifiers.", url:"https://www.nationalgymnasticsleague.co.uk/resultsandleaguetable" },
+            { icon:"book", title:"Rules", sub:"Boys Rules for the 2026 season.", url:"https://www.nationalgymnasticsleague.co.uk/handbook" }
           ]
         },
         {
           label: "Next Season (2027)",
           actions: [
-            { icon:"📅", title:"Season Schedule & Booking", sub:"Reserve places in your NGL Club Hub: no payment and no commitment to buy.", url:"https://club.nationalgymnasticsleague.co.uk/#book-general" },
-            { icon:"🏆", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
-            { icon:"📖", title:"Boys Rules", sub:"Boys General League Rules 2027, Levels 1–4. Opens here.", inline:"general-boys-2027" },
-            { icon:"⚡", title:"Training League", sub:"13 strength, speed and power challenges, filmed in training. Live league table and NGL Profile Card ratings all season.", url:"https://www.nationalgymnasticsleague.co.uk/training-league" }
+            { icon:"cal", title:"Season Schedule & Booking", sub:"Reserve places in your NGL Club Hub: no payment and no commitment to buy.", url:"https://club.nationalgymnasticsleague.co.uk/#book-general" },
+            { icon:"trophy", title:"League Table & Qualification", sub:"Live results and league table for the 2027 season.", url:"https://www.nationalgymnasticsleague.co.uk/2027-season-results-and-league-table" },
+            { icon:"book", title:"Boys Rules", sub:"Boys General League Rules 2027, Levels 1–4. Opens here.", inline:"general-boys-2027" },
+            { icon:"arm", title:"Training League", sub:"13 strength, speed and power challenges, filmed in training. Live league table and NGL Profile Card ratings all season.", url:"https://www.nationalgymnasticsleague.co.uk/training-league" }
           ]
         }
       ]
@@ -1256,9 +1261,9 @@
         {
           label: "2027 Season",
           actions: [
-            { icon:"📅", title:"Register interest", sub:"The Performance League is coming in 2027. Register interest in the NGL Club Hub and we'll tell you first.", url:"https://club.nationalgymnasticsleague.co.uk/#performance" },
-            { icon:"🏆", title:"League Table & Qualification", sub:"Performance results and rankings." },
-            { icon:"📖", title:"Rules", sub:"Girls: the British Gymnastics Classic Challenge and Grades documents. Boys: Level 1. Opens here.", inline:"performance-2027" }
+            { icon:"cal", title:"Register interest", sub:"The Performance League is coming in 2027. Register interest in the NGL Club Hub and we'll tell you first.", url:"https://club.nationalgymnasticsleague.co.uk/#performance" },
+            { icon:"trophy", title:"League Table & Qualification", sub:"Performance results and rankings." },
+            { icon:"book", title:"Rules", sub:"Girls: the British Gymnastics Classic Challenge and Grades documents. Boys: Level 1. Opens here.", inline:"performance-2027" }
           ]
         }
       ]
@@ -1404,7 +1409,7 @@
         '<div class="action-grid rules-links">' + d.links.map(function (l) {
           return '<a class="action-card" href="' + l.url + '"' + (l.download ? ' download' : ' target="_blank" rel="noopener"') +
             (l.also ? ' onclick="window.open(\'' + l.also + '\', \'_blank\', \'noopener\')"' : '') + '>' +
-            '<span class="action-icon">' + (l.download ? '⬇️' : '📄') + '</span><span class="action-title">' + l.title + ' ↗</span>' +
+            '<span class="action-icon">' + ico(l.download ? 'download' : 'doc') + '</span><span class="action-title">' + l.title + ' ↗</span>' +
             '<span class="action-sub">' + l.sub + '</span></a>';
         }).join('') + '</div>' +
         (d.note ? '<p class="rules-note">' + d.note + '</p>' : '');
@@ -1458,9 +1463,9 @@
   }
 
   var PLACEHOLDER_ACTIONS = [
-    { icon:"📅", title:"Season Schedule & Booking" },
-    { icon:"🏆", title:"League Table & Qualification" },
-    { icon:"📖", title:"Rules" }
+    { icon:"cal", title:"Season Schedule & Booking" },
+    { icon:"trophy", title:"League Table & Qualification" },
+    { icon:"book", title:"Rules" }
   ];
   var PLACEHOLDER_OVERRIDES = {
     preschool: { "League Table & Qualification": "Not applicable", "Rules": "Not applicable" },
@@ -1469,15 +1474,15 @@
 
   function actionCardHTML(a){
     if (a && a.inline) {
-      return '<button type="button" class="action-card" data-rules="' + a.inline + '" aria-expanded="false"><span class="action-icon">' + a.icon + '</span>' +
+      return '<button type="button" class="action-card" data-rules="' + a.inline + '" aria-expanded="false"><span class="action-icon">' + ico(a.icon) + '</span>' +
         '<span class="action-title">' + a.title + '</span><span class="action-sub">' + (a.sub || '') + '</span></button>';
     }
     if (!a || !a.url) {
       var sub = (a && a.subOverride) ? a.subOverride : 'Coming soon';
-      return '<div class="action-card disabled"><span class="action-icon">' + (a ? a.icon : '') + '</span>' +
+      return '<div class="action-card disabled"><span class="action-icon">' + (a ? ico(a.icon) : '') + '</span>' +
         '<span class="action-title">' + (a ? a.title : '') + '</span><span class="action-sub">' + sub + '</span></div>';
     }
-    return '<a class="action-card" href="' + a.url + '" target="_top"><span class="action-icon">' + a.icon + '</span>' +
+    return '<a class="action-card" href="' + a.url + '" target="_top"><span class="action-icon">' + ico(a.icon) + '</span>' +
       '<span class="action-title">' + a.title + '</span><span class="action-sub">' + (a.sub || '') + '</span></a>';
   }
 
@@ -1507,7 +1512,7 @@
       (selectedAudience === 'parent' ? '' : '<a class="buy-btn" href="' + REC_BOOK_URL + '" target="_top">Reserve places</a>') + '</div>' +
       '<div class="section-tabs"><div class="stab active" data-sec="rec-comp">Competition</div><div class="stab" data-sec="rec-videos">Routine Videos</div></div>' +
       '<div class="section-panel active" data-sec="rec-comp">' +
-      '<div class="action-grid" style="margin-bottom:16px;">' + actionCardHTML({ icon:"📖", title:"Club Competition Rules 2027", sub:"The one-page rules sheet — options, scoring, medals and routines. Opens here.", inline:"recreational-2027" }) + '</div>' +
+      '<div class="action-grid" style="margin-bottom:16px;">' + actionCardHTML({ icon:"book", title:"Club Competition Rules 2027", sub:"The one-page rules sheet — options, scoring, medals and routines. Opens here.", inline:"recreational-2027" }) + '</div>' +
       '<div class="card">' +
       '<div class="gallery-label">Levels</div><ul>' +
       REC_LEVELS.map(function (l) { return '<li><span class="lvl-dot" style="background:' + l.color + '"></span><strong>' + l.name + '</strong> &mdash; ' + l.tag + '</li>'; }).join('') +
@@ -1564,14 +1569,17 @@
   // ============================================================
   // AWARDS content (ported from ngl-award-programmes.html)
   // ============================================================
+  /* The Awards view is only about the awards scheme: competitions live under Competitions.
+     A pathway's own awards event (Pre-School Graduation Ceremony, Schools Graduation Performance) stays. */
   function pathwaySectionsHTML(opts){
-    return '<div class="section-tabs">' +
+    var ev = opts.eventLabel && opts.eventLabel !== 'Competitions', tabs = 1 + (ev ? 1 : 0) + (opts.noVideos ? 0 : 1);
+    return (tabs > 1 ? '<div class="section-tabs">' +
       '<div class="stab active" data-sec="awards">Awards Programme</div>' +
-      '<div class="stab" data-sec="event">' + opts.eventLabel + '</div>' +
+      (ev ? '<div class="stab" data-sec="event">' + opts.eventLabel + '</div>' : '') +
       (opts.noVideos ? '' : '<div class="stab" data-sec="videos">Videos</div>') +
-      '</div>' +
+      '</div>' : '') +
       '<div class="section-panel active" data-sec="awards">' + opts.awardsHTML + '</div>' +
-      '<div class="section-panel" data-sec="event">' + opts.eventHTML + '</div>' +
+      (ev ? '<div class="section-panel" data-sec="event">' + opts.eventHTML + '</div>' : '') +
       (opts.noVideos ? '' : '<div class="section-panel" data-sec="videos">' + (opts.videosHTML || videoTabsHTML(opts.routinesHTML)) + '</div>');
   }
 
@@ -1735,19 +1743,19 @@
       '<div><b>16</b><span>levels, one passed each term</span></div>' +
       '<div><b>6</b><span>pieces of apparatus, stations at 4 levels</span></div></div></div>';
     var benefits = isClub ? '<div class="card"><h3 class="rc-h">What your club gets</h3><p class="rc-lead">Everything your recreational classes need, ready for January 2027.</p><div class="rc-grid">' +
-        '<div><i>✎</i><div><b>Customised lesson plans</b><span>Tell the Recreational Club Hub what apparatus you have, how long your classes are and your term dates, and it builds your term plan, with alternatives for missing kit.</span></div></div>' +
-        '<div><i>▶</i><div><b>Live lesson plans</b><span>Coaches pick the week and apparatus on a phone or tablet and follow it, or print every plan clearly for the wall.</span></div></div>' +
-        '<div><i>↻</i><div><b>Live rotation plans</b><span>Run your classes from the NGL Rotation Planner, so every group and coach knows where to go and when to move.</span></div></div>' +
-        '<div><i>♥</i><div><b>Warm-ups built in</b><span>A 10-minute warm-up for every two-week block, taken from the physical preparation in the books.</span></div></div>' +
-        '<div><i>✓</i><div><b>Consistent coaching</b><span>New and experienced coaches teach the same skills in the same order, with assessment sheets for every level.</span></div></div>' +
-        '<div><i>£</i><div><b>Built to pay for itself</b><span>Order books, medals and certificates at club prices and resell them to families, so the programme covers its cost.</span></div></div>' +
-        '<div><i>☺</i><div><b>Parents can see the progress</b><span>The NGL Recreational family app shows parents what their child is learning and how it links to assessment and competition.</span></div></div>' +
-        '<div><i>★</i><div><b>A route into competition</b><span>Optional, fun first competitions at the right level, then on into the NGL General and Performance Leagues.</span></div></div>' +
+        '<div><i>' + ico('pencil') + '</i><div><b>Customised lesson plans</b><span>Tell the Recreational Club Hub what apparatus you have, how long your classes are and your term dates, and it builds your term plan, with alternatives for missing kit.</span></div></div>' +
+        '<div><i>' + ico('play') + '</i><div><b>Live lesson plans</b><span>Coaches pick the week and apparatus on a phone or tablet and follow it, or print every plan clearly for the wall.</span></div></div>' +
+        '<div><i>' + ico('rotate') + '</i><div><b>Live rotation plans</b><span>Run your classes from the NGL Rotation Planner, so every group and coach knows where to go and when to move.</span></div></div>' +
+        '<div><i>' + ico('heart') + '</i><div><b>Warm-ups built in</b><span>A 10-minute warm-up for every two-week block, taken from the physical preparation in the books.</span></div></div>' +
+        '<div><i>' + ico('check') + '</i><div><b>Consistent coaching</b><span>New and experienced coaches teach the same skills in the same order, with assessment sheets for every level.</span></div></div>' +
+        '<div><i>' + ico('pound') + '</i><div><b>Built to pay for itself</b><span>Order books, medals and certificates at club prices and resell them to families, so the programme covers its cost.</span></div></div>' +
+        '<div><i>' + ico('family') + '</i><div><b>Parents can see the progress</b><span>The NGL Recreational family app shows parents what their child is learning and how it links to assessment and competition.</span></div></div>' +
+        '<div><i>' + ico('star') + '</i><div><b>A route into competition</b><span>Optional, fun first competitions at the right level, then on into the NGL General and Performance Leagues.</span></div></div>' +
       '</div></div>' : '<div class="card"><h3 class="rc-h">What every gymnast gets</h3><div class="rc-grid">' +
-        '<div><i>📘</i><div><b>Their own award book</b><span>Every skill for their level, with a page to tick off each session.</span></div></div>' +
-        '<div><i>🏅</i><div><b>A medal every term</b><span>Plus attendance certificates as they go.</span></div></div>' +
-        '<div><i>☺</i><div><b>The family app</b><span>See what they are learning each week and how it links to their assessment.</span></div></div>' +
-        '<div><i>★</i><div><b>A first competition</b><span>Optional and fun, at exactly the level they train.</span></div></div>' +
+        '<div><i>' + ico('book') + '</i><div><b>Their own award book</b><span>Every skill for their level, with a page to tick off each session.</span></div></div>' +
+        '<div><i>' + ico('medal') + '</i><div><b>A medal every term</b><span>Plus attendance certificates as they go.</span></div></div>' +
+        '<div><i>' + ico('family') + '</i><div><b>The family app</b><span>See what they are learning each week and how it links to their assessment.</span></div></div>' +
+        '<div><i>' + ico('star') + '</i><div><b>A first competition</b><span>Optional and fun, at exactly the level they train.</span></div></div>' +
       '</div></div>';
     var cta = '<div class="card"><p class="lede">' + (isClub ? 'Run NGL Recreational at your club from January 2027. ' + COMING_TEXT.recreational + '.' : 'Ask your club if they run NGL Recreational, or tell them about it.') + '</p>' +
       (isClub ? '<a class="buy-btn" href="' + REC_HUB_URL + '" target="_blank" rel="noopener">Explore NGL Recreational</a> ' +
@@ -1796,8 +1804,8 @@
       '<div class="gallery-label">Graduation Performance</div>' +
       '<p class="lede" style="font-size:18px;font-weight:700;margin-bottom:14px;">' + g.title + '</p>' +
       '<div class="event-details">' +
-        '<div class="event-row"><span class="event-icon">📅</span><span><strong>' + g.date + '</strong><br><span class="event-sub">' + g.time + '</span></span></div>' +
-        '<div class="event-row"><span class="event-icon">📍</span><span><strong>' + g.venue + '</strong></span></div>' +
+        '<div class="event-row"><span class="event-icon">' + ico('cal') + '</span><span><strong>' + g.date + '</strong><br><span class="event-sub">' + g.time + '</span></span></div>' +
+        '<div class="event-row"><span class="event-icon">' + ico('pin') + '</span><span><strong>' + g.venue + '</strong></span></div>' +
       '</div>' +
       '<p class="lede" style="margin-top:16px;">The Graduation Performance brings every school on the programme together to show what they\'ve learned across the year, with Bronze, Silver and Gold certificates presented on the day.</p>' +
       (selectedAudience === 'parent' ? '' : '<a class="buy-btn" href="https://club.nationalgymnasticsleague.co.uk/#book-schools" target="_top">Reserve places</a>') +
