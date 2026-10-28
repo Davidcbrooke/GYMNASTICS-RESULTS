@@ -94,16 +94,24 @@ main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
 .todo-show{margin-left:auto;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;white-space:nowrap}
 .ti{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:start;padding:8px 0;border-top:1px solid #eef0f5}
 .ti:first-child{border-top:0}
-.ti input{width:19px;height:19px;margin:2px 0 0;accent-color:var(--ok)}
+.ti input[type=checkbox]{width:19px;height:19px;margin:2px 0 0;accent-color:var(--ok)}
 .ti .tx{min-width:0}.ti .tx b{font-weight:500}
 .ti .tx small{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
 .ti.done .tx b{text-decoration:line-through;color:var(--muted)}
 .who{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:1px;background:#eef0f5;color:var(--navy)}
 .who.Dave{background:#e4eefb;color:#0b4f86}.who.Christine{background:#fbe7f1;color:#9b1c5c}.who.Claude{background:#efe9fb;color:#5a3a9a}
 .ti .x{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;padding:0 4px}.ti .x:hover{color:var(--red)}
+.tact{display:flex;align-items:center;gap:4px}
+.ti .ed{background:none;border:0;color:var(--muted);padding:3px;border-radius:6px;display:flex}.ti .ed:hover{color:var(--navy);background:#eef0f5}
+.whosel{border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-size:12.5px;font-weight:700;background:#eef0f5;color:var(--navy);max-width:120px}
+.whosel.Dave{background:#e4eefb;color:#0b4f86;border-color:#c8dbf3}.whosel.Christine{background:#fbe7f1;color:#9b1c5c;border-color:#f2c6dc}.whosel.Claude{background:#efe9fb;color:#5a3a9a;border-color:#dccff5}
+.ti .tedit{display:block;height:auto;width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 9px;margin-bottom:6px}
+.tbtns{display:flex;gap:6px}
+@media(max-width:560px){.ti{grid-template-columns:24px 1fr}.tact{grid-column:2}}
 .todo-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
-.todo-add input{flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
-.todo-add select{border:1px solid var(--line);border-radius:8px;padding:8px}
+.todo-add input{flex:1;min-width:200px;width:auto;margin:0;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.todo-add select{border:1px solid var(--line);border-radius:8px;padding:8px;width:auto;margin:0}
+.todo-add .btn{width:auto;margin:0}
 .panel h3{font-family:var(--cond);font-size:22px;margin:0;color:var(--navy)}
 .panel > p{color:var(--muted);margin:2px 0 14px;font-size:14px}
 .tablewrap{overflow-x:auto}
@@ -737,7 +745,10 @@ const TODO_SEED = [
   {t:"Judging Pathway page: remove the 3-shadows rule and add \"we pay all our remote judges\"", n:"Dave to say go; Claude updates it.", who:"Claude"},
   {t:"Training League social post", n:"On hold until Dave is ready.", who:"Dave"}
 ];
-let TODO = [], todoUnsub = null;
+let TODO = [], todoUnsub = null, todoEditing = null;
+const WHO = () => [...new Set(["Dave","Christine","Claude", ...TODO.map(x=>x.who).filter(Boolean)])];
+const whoSelect = (id, cur) => `<select class="whosel ${esc(cur||"")}" data-todowho="${esc(id)}" aria-label="Who is responsible">` +
+  [["","Anyone"], ...WHO().map(w=>[w,w])].map(([v,l])=>`<option value="${esc(v)}"${(cur||"")===v?" selected":""}>${esc(l)}</option>`).join("") + `</select>`;
 const todoId = () => "t" + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
 function startTodo(){
   if(!(ME && (ME.owner || can("staffing")))) return;
@@ -746,7 +757,7 @@ function startTodo(){
   if(todoUnsub) todoUnsub();
   todoUnsub = TODO_REF().onSnapshot(d => {
     if(!d.exists){ TODO_REF().set({items:TODO_SEED.map((x,i)=>({id:"s"+i, ...x, addedBy:"Claude", addedAt:Date.now()}))}).catch(e=>console.error(e)); return; }
-    TODO = d.data().items || []; renderTodo();
+    TODO = d.data().items || []; if(!todoEditing) renderTodo();
   }, e => { console.error(e); $("#todoList").innerHTML = `<p style="color:var(--red);margin:6px 0">Couldn't load the to-do list (${esc(e.code||e.message)}).</p>`; });
 }
 async function todoChange(fn){
@@ -758,22 +769,36 @@ function renderTodo(){
   const show = $("#todoShowDone").checked, open = TODO.filter(x=>!x.done);
   $("#todoCount").textContent = open.length ? `${open.length} to do` : "All done";
   const list = TODO.filter(x => show || !x.done);
-  $("#todoList").innerHTML = list.length ? list.map(x => `<div class="ti ${x.done?"done":""}">
+  $("#todoList").innerHTML = list.length ? list.map(x => todoEditing===x.id ? `<div class="ti edit">
+      <span></span>
+      <div class="tx"><input class="tedit" id="teT" value="${esc(x.t)}" aria-label="To-do"><input class="tedit" id="teN" value="${esc(x.n||"")}" placeholder="Details (optional)" aria-label="Details">
+        <div class="tbtns"><button class="btn primary small" data-todosave="${esc(x.id)}">Save</button><button class="btn small" data-todocancel="1">Cancel</button></div></div>
+      <span></span></div>` : `<div class="ti ${x.done?"done":""}">
       <input type="checkbox" data-todo="${esc(x.id)}" ${x.done?"checked":""} aria-label="Done: ${esc(x.t)}">
-      <div class="tx"><b>${esc(x.t)}</b>${x.who?`<span class="who ${esc(x.who)}">${esc(x.who)}</span>`:""}${x.n?`<small>${esc(x.n)}</small>`:""}${x.done?`<small>Done by ${esc(x.doneBy||"")}${x.doneAt?` on ${new Date(x.doneAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}`:""}</small>`:""}</div>
-      <button class="x" data-todox="${esc(x.id)}" title="Remove" aria-label="Remove ${esc(x.t)}">&times;</button></div>`).join("")
+      <div class="tx"><b>${esc(x.t)}</b>${x.n?`<small>${esc(x.n)}</small>`:""}${x.done?`<small>Done by ${esc(x.doneBy||"")}${x.doneAt?` on ${new Date(x.doneAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}`:""}</small>`:""}</div>
+      <div class="tact">${whoSelect(x.id, x.who)}<button class="ed" data-todoedit="${esc(x.id)}" title="Edit" aria-label="Edit ${esc(x.t)}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></button><button class="x" data-todox="${esc(x.id)}" title="Remove" aria-label="Remove ${esc(x.t)}">&times;</button></div></div>`).join("")
     : `<p style="margin:6px 0;color:var(--muted)">Nothing to do. Add something below.</p>`;
 }
 document.addEventListener("change", e => {
   if(e.target.id==="todoShowDone"){ renderTodo(); return; }
+  const wid = e.target.dataset && e.target.dataset.todowho; if(wid){ const v = e.target.value; todoChange(items => { const x = items.find(i=>i.id===wid); if(x){ if(v) x.who = v; else delete x.who; } }); return; }
   const id = e.target.dataset && e.target.dataset.todo; if(!id) return;
   const on = e.target.checked, by = (ME && (ME.name||ME.email)) || "";
   todoChange(items => { const x = items.find(i=>i.id===id); if(!x) return; if(on){ x.done = true; x.doneBy = by; x.doneAt = Date.now(); } else { delete x.done; delete x.doneBy; delete x.doneAt; } });
 });
 document.addEventListener("click", e => {
+  const ed = e.target.closest("[data-todoedit]"); if(ed){ todoEditing = ed.dataset.todoedit; renderTodo(); const f = $("#teT"); if(f){ f.focus(); f.select(); } return; }
+  if(e.target.closest("[data-todocancel]")){ todoEditing = null; renderTodo(); return; }
+  const sv = e.target.closest("[data-todosave]"); if(sv){ const id = sv.dataset.todosave, t = $("#teT").value.trim(), n = $("#teN").value.trim(); if(!t) return;
+    todoEditing = null; todoChange(items => { const x = items.find(i=>i.id===id); if(x){ x.t = t; if(n) x.n = n; else delete x.n; } }); renderTodo(); return; }
   const b = e.target.closest("[data-todox]"); if(!b) return;
   if(b.dataset.sure!=="1"){ b.dataset.sure = "1"; b.textContent = "Remove?"; b.style.fontSize = "12px"; setTimeout(()=>{ if(b.isConnected){ b.dataset.sure=""; b.innerHTML="&times;"; b.style.fontSize=""; } }, 3000); return; }
   todoChange(items => { const i = items.findIndex(x=>x.id===b.dataset.todox); if(i>-1) items.splice(i,1); });
+});
+document.addEventListener("keydown", e => {
+  if(!todoEditing || !e.target.classList || !e.target.classList.contains("tedit")) return;
+  if(e.key==="Enter"){ e.preventDefault(); const b = document.querySelector("[data-todosave]"); if(b) b.click(); }
+  if(e.key==="Escape"){ todoEditing = null; renderTodo(); }
 });
 document.addEventListener("submit", e => {
   if(e.target.id!=="todoAdd") return; e.preventDefault();
