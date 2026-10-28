@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Competition Planning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{--navy:#14254a;--navy-2:#223a70;--red:#c6152e;--paper:#f4f5f8;--ink:#16213a;--muted:#5d6782;--line:#d6dbe6;
+  --ok:#1f7a4d;--ok-soft:#e3f3ea;--warn:#b7791f;--warn-soft:#fdf3dc;--late:#c6152e;--late-soft:#fdecee;
+  --body:'Roboto',system-ui,-apple-system,'Segoe UI',sans-serif;--cond:'Roboto Condensed','Arial Narrow',sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;font-family:var(--body);color:var(--ink);background:var(--paper);font-size:15px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}
+.hidden{display:none!important}
+header.top{background:var(--navy);color:#fff;border-bottom:4px solid var(--red)}
+header.top .in{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header.top h1{font-family:var(--cond);font-size:24px;margin:0;margin-right:auto;line-height:1.1}
+header.top h1 small{display:block;font-family:var(--body);font-size:12.5px;font-weight:400;opacity:.8}
+.mode{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:#3a4a78}.mode.live{background:var(--ok)}
+main{max-width:1180px;margin:0 auto;padding:16px 16px 48px;display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px}
+.side{padding:10px;position:sticky;top:10px}
+@media(max-width:860px){.side{position:static}}
+.side h2{font-family:var(--cond);font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 8px 8px}
+.cbtn{display:block;width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:10px;padding:9px 10px;margin-bottom:4px}
+.cbtn:hover{background:var(--paper)}
+.cbtn[aria-pressed="true"]{background:var(--navy);color:#fff}
+.cbtn b{display:block;font-size:14.5px;line-height:1.25}
+.cbtn span{display:block;font-size:12.5px;opacity:.8}
+.cbtn .bar{height:5px;border-radius:3px;background:#e7eaf1;margin-top:6px;overflow:hidden}.cbtn .bar i{display:block;height:100%;background:var(--ok)}
+.cbtn[aria-pressed="true"] .bar{background:rgba(255,255,255,.25)}
+.cbtn .flag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:0 7px;margin-left:4px;background:var(--late);color:#fff;vertical-align:1px}
+.past{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
+.past summary{cursor:pointer;font-size:13px;color:var(--muted);padding:4px 8px}
+.week{padding:14px 16px;margin-bottom:16px}
+.week h2{font-family:var(--cond);font-size:20px;margin:0 0 8px}
+.wrow{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid #eef0f5;font-size:14px}
+.wrow:first-of-type{border-top:0}
+.wrow .d{flex:none;width:88px;font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.wrow .c{color:var(--muted);font-size:13px}
+.wrow.late .d{color:var(--late);font-weight:700}
+.head{padding:16px 18px;margin-bottom:14px;border-left:6px solid var(--navy)}
+.head h2{font-family:var(--cond);font-size:28px;margin:0;line-height:1.1}
+.head p{margin:4px 0 0;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;background:var(--paper);border:1px solid var(--line)}
+.chip.late{background:var(--late-soft);border-color:#f3b8c1;color:var(--late)}
+.chip.soon{background:var(--warn-soft);border-color:#ecd39a;color:#8a5a00}
+.chip.ok{background:var(--ok-soft);border-color:#b7dfc8;color:var(--ok)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.tools label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.btn{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:7px 12px;font-weight:600;font-size:14px}
+.btn.primary{background:var(--navy);color:#fff}.btn.small{padding:4px 9px;font-size:13px}.btn.ghost{border-color:var(--line);color:var(--ink)}
+.phase{margin-bottom:14px;overflow:hidden}
+.phase>h3{margin:0;padding:10px 16px;background:#fafbfd;border-bottom:1px solid var(--line);font-family:var(--cond);font-size:18px;display:flex;gap:10px;align-items:baseline}
+.phase>h3 small{font-family:var(--body);font-size:12.5px;font-weight:500;color:var(--muted)}
+.task{display:grid;grid-template-columns:30px 1fr auto;gap:4px 12px;padding:10px 16px;border-top:1px solid #eef0f5;align-items:start}
+.task:first-of-type{border-top:0}
+.task input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ok)}
+.task .t b{font-weight:600}
+.task .t .w{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.task .when{text-align:right;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.task .when b{display:block;font-size:14px}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;margin-top:3px}
+.pill.late{background:var(--late);color:#fff}.pill.soon{background:var(--warn-soft);color:#8a5a00}.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.na{background:var(--paper);color:var(--muted)}
+.task.done .t b{text-decoration:line-through;color:var(--muted)}
+.task.na{opacity:.55}
+.task .more{grid-column:2/4;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
+.task .more button{background:none;border:0;padding:0;color:var(--navy-2);text-decoration:underline;font-size:13px}
+.task textarea{grid-column:2/4;width:100%;min-height:54px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:14px}
+.note{grid-column:2/4;font-size:13.5px;background:var(--paper);border-radius:8px;padding:6px 9px;white-space:pre-wrap}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line);background:#fafbfd}
+.addrow input,.addrow select{border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0}
+.addrow input[type=text]{flex:1;min-width:200px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;z-index:60}
+.err{background:var(--late-soft);border:1px solid #f3b8c1;color:var(--late);border-radius:10px;padding:10px 14px;margin-bottom:14px;grid-column:1/-1}
+.empty{padding:24px;text-align:center;color:var(--muted)}
+:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
+@media print{header.top,.side,.tools,.addrow,.task .more,.week{display:none!important}main{display:block}.panel{border:0}}
+</style>
+</head>
+<body>
+<header class="top"><div class="in"><h1>Competition planning<small>Every job for each competition, with its due date</small></h1><span class="mode" id="mode">Demo</span></div></header>
+<main>
+  <div class="err hidden" id="err"></div>
+  <aside class="panel side"><h2>Competitions</h2><div id="clist"></div></aside>
+  <section>
+    <div class="panel week" id="week"></div>
+    <div id="comp"></div>
+  </section>
+</main>
+<script>
+const CONFIG = {
+  firebase: { apiKey:"AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4", authDomain:"saadi-rotation.firebaseapp.com", projectId:"saadi-rotation",
+    storageBucket:"saadi-rotation.firebasestorage.app", messagingSenderId:"1066734803675", appId:"1:1066734803675:web:0188fd601adea7db08cafe" },
+  competitions: "ngl_competitions",
+  /* Saved with the staffing (same database rules): one document per competition, id "plan__<competition id>" */
+  store: "ngl_staffing", prefix: "plan__",
+  seasons: ["2026","2027"],
+  standaloneComps: [
+    {id:"ngl-2026-recreational", name:"NGL Recreational Competition", date:"2026-10-25", pathway:"recreational"},
+    {id:"ngl-2026-finals-a", name:"NGL National Finals: Level A", date:"2026-11-22", order:1},
+    {id:"ngl-2026-finals-bc", name:"NGL National Finals: Levels B and C", date:"2026-11-22", order:2}
+  ]
+};
+
+/* The standard jobs. days = days before the competition (negative = after it).
+   music: only for competitions with floor music (not Recreational). */
+const PHASES = [
+  ["p8", "8 weeks or more before"], ["p6", "6 to 4 weeks before"], ["p3", "3 to 2 weeks before"],
+  ["p1", "The week before"], ["p0", "Competition day"], ["pa", "After the competition"]
+];
+const TASKS = [
+  {id:"venue",     ph:"p8", days:84, t:"Confirm the date, venue and session times", w:"Check the competition calendar and the venue booking match."},
+  {id:"elevien",   ph:"p8", days:70, t:"Set up the competition in Elevien", w:"Events, levels, apparatus and session start times."},
+  {id:"bookings",  ph:"p8", days:70, t:"Open reservations to clubs", w:"Clubs reserve places in the NGL Club Hub; check the competition shows on the season calendar."},
+  {id:"judges",    ph:"p8", days:56, t:"Book the judges", w:"2 remote judges from the Judging Pathway, plus attending clubs' judges for the other pieces."},
+  {id:"staff",     ph:"p8", days:42, t:"Fill the staffing board", w:"Competition manager, floor manager, scoring, announcer, music, group coaches, runners, camera operators."},
+  {id:"medals",    ph:"p8", days:42, t:"Order medals and awards", w:"Allow for every level and age group, plus spares."},
+  {id:"firstaid",  ph:"p8", days:42, t:"Confirm first aid cover"},
+  {id:"pay",       ph:"p6", days:35, t:"Booking deadline: confirm every club has bought its places", w:"Chase anyone who reserved but hasn't bought on JustGo; offer spare places to the waiting list."},
+  {id:"musicopen", ph:"p6", days:35, music:true, t:"Open floor music uploads", w:"Floor music: Publish entries to the NGL Club Hub and set the upload deadline."},
+  {id:"names",     ph:"p6", days:28, t:"Ask clubs for their coaches' and judges' names", w:"One coach for every group a club has gymnasts in."},
+  {id:"entries",   ph:"p6", days:21, t:"Entries close: check the final entries in Elevien", w:"Withdrawals and late changes made in Elevien; tell Dave about anything odd."},
+  {id:"schedule",  ph:"p3", days:17, t:"Build and publish the Elevien schedule", w:"Groups by club, rotations, bib numbers. Publish it in Elevien."},
+  {id:"update",    ph:"p3", days:14, music:true, t:"Ask Claude to update from Elevien", w:"Pulls the final entries and the floor order into the music player."},
+  {id:"musicchase",ph:"p3", days:14, music:true, t:"Floor music deadline: chase missing tracks", w:"Floor music page: anyone marked No music. Email the club from the Clubs tab."},
+  {id:"intros",    ph:"p3", days:12, music:true, t:"Make the gymnast introductions", w:"Floor music, Play tab: Make introductions. Listen for any names said wrongly."},
+  {id:"sheets",    ph:"p3", days:10, t:"Rotation sheets and gymnast numbers", w:"Ask Claude for the rotation sheets PDF from the Elevien schedule."},
+  {id:"roles",     ph:"p3", days:10, t:"Who's doing what sheet", w:"Group coaches, judges, cameras, runners, announcer and music."},
+  {id:"pack",      ph:"p3", days:10, t:"Send clubs the competition pack", w:"Timings, groups and starting pieces, coaches needed, arrival, parking and the spectator app."},
+  {id:"seating",   ph:"p3", days:10, t:"Floor and seating plan"},
+  {id:"announce",  ph:"p1", days:7, t:"Record the announcements", w:"Welcome and safety, march-in by region, with the NGL anthem."},
+  {id:"print",     ph:"p1", days:5, t:"Print everything", w:"Bib numbers, rotation sheets, roles sheet, judges' sheets, signs and QR codes for results."},
+  {id:"medalsort", ph:"p1", days:3, t:"Count the medals and sort them into podium order"},
+  {id:"laptop",    ph:"p1", days:1, music:true, t:"Prepare the music laptop", w:"Save all music to this laptop, test the player and intros, export the backup to a USB stick."},
+  {id:"kit",       ph:"p1", days:1, t:"Test scoring devices and cameras", w:"Elevien tablets for every judge, cameras on the filmed pieces, Wi-Fi in the hall."},
+  {id:"setup",     ph:"p1", days:1, t:"Set up the hall", w:"Apparatus, judges' tables, scoring desk, sound system, registration desk."},
+  {id:"reg",       ph:"p0", days:0, t:"Registration desk and lanyards", w:"Staff, coaches and judges signed in; group coaches given their sheets."},
+  {id:"run",       ph:"p0", days:0, t:"Run the competition", w:"Announcements, march-in, rotations, presentations."},
+  {id:"results",   ph:"pa", days:-1, t:"Check and publish the results", w:"League table and National Qualifiers updated."},
+  {id:"social",    ph:"pa", days:-2, t:"Results post on social media"},
+  {id:"thanks",    ph:"pa", days:-3, t:"Thank clubs, judges and volunteers; pay the remote judges", w:"Remote judges £50 each."},
+  {id:"debrief",   ph:"pa", days:-7, t:"Debrief: what to change next time", w:"Add notes here so the next competition benefits."}
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const toast = m => { const t = document.createElement("div"); t.className = "toast"; t.textContent = m; document.body.appendChild(t); setTimeout(()=>t.remove(), 3000); };
+const day = 864e5, today = (()=>{ const d = new Date(); d.setHours(0,0,0,0); return d; })();
+const toDate = v => { const d = v && v.toDate ? v.toDate() : new Date(String(v).length===10 ? v+"T00:00:00" : v); d.setHours(0,0,0,0); return d; };
+const fmt = d => d.toLocaleDateString("en-GB",{weekday:"short", day:"numeric", month:"short"});
+const fmtY = d => d.toLocaleDateString("en-GB",{weekday:"long", day:"numeric", month:"long", year:"numeric"});
+const rel = n => n===0 ? "On the day" : n<0 ? `${-n} day${n===-1?"":"s"} after` : n%7===0 && n>=14 ? `${n/7} weeks before` : `${n} day${n===1?"":"s"} before`;
+
+let db = null, LIVE = false, ME = {name:"", email:""};
+const S = { comps:[], plans:{}, cur:null, showDone:true };
+
+const hasMusic = c => !/recreational/i.test(c.name + " " + (c.pathway||""));
+function tasksFor(c){
+  const p = S.plans[c.id] || {};
+  return TASKS.filter(t => !t.music || hasMusic(c)).concat((p.extra||[]).map(x=>({...x, extra:true})))
+    .map(t => { const due = new Date(toDate(c.date).getTime() - t.days*day);
+      const done = p.done && p.done[t.id], na = p.skip && p.skip[t.id];
+      const left = Math.round((due - today)/day);
+      /* once a competition has happened, only the after-the-competition jobs can still be late */
+      const over = toDate(c.date) < today && t.days >= 0;
+      const st = done ? "ok" : na ? "na" : over ? "" : left < 0 ? "late" : left <= 7 ? "soon" : "";
+      return {...t, due, done, na, left, st, note:(p.notes||{})[t.id] || ""}; })
+    .sort((a,b)=>b.days-a.days);
+}
+const counts = c => { const ts = tasksFor(c).filter(t=>!t.na); return {all:ts.length, done:ts.filter(t=>t.done).length, late:ts.filter(t=>t.st==="late").length, soon:ts.filter(t=>t.st==="soon").length}; };
+const upcoming = () => S.comps.filter(c => toDate(c.date) >= new Date(today.getTime() - 14*day));
+
+const DEL = "__delete__";   // a value of DEL removes that entry
+async function save(c, patch){
+  const p = S.plans[c.id] = S.plans[c.id] || {}, out = {};
+  for(const k in patch){ const v = patch[k];
+    if(v && typeof v==="object" && !Array.isArray(v)){ p[k] = Object.assign({}, p[k]); out[k] = {};
+      for(const j in v){ if(v[j]===DEL){ delete p[k][j]; out[k][j] = LIVE ? firebase.firestore.FieldValue.delete() : null; } else { p[k][j] = v[j]; out[k][j] = v[j]; } } }
+    else { p[k] = v; out[k] = v; } }
+  render();
+  if(!LIVE) return;
+  try{ await db.collection(CONFIG.store).doc(CONFIG.prefix + c.id).set(Object.assign({compId:c.id, compName:c.name, updatedAt:firebase.firestore.FieldValue.serverTimestamp()}, out), {merge:true}); }
+  catch(e){ console.error(e); toast(/permission/i.test(e.code||e.message) ? "The database blocked that change." : "Not saved: check the connection."); }
+}
+
+function renderList(){
+  const up = upcoming(), past = S.comps.filter(c=>!up.includes(c)).reverse();
+  const row = c => { const n = counts(c), dd = Math.round((toDate(c.date)-today)/day);
+    return `<button class="cbtn" data-c="${esc(c.id)}" aria-pressed="${c.id===S.cur}"><b>${esc(c.name)}${n.late?`<span class="flag">${n.late} late</span>`:""}</b>
+      <span>${fmt(toDate(c.date))} · ${dd>0?`${dd} days to go`:dd===0?"Today":"Finished"} · ${n.done}/${n.all} done</span><div class="bar"><i style="width:${n.all?n.done/n.all*100:0}%"></i></div></button>`; };
+  $("#clist").innerHTML = (up.map(row).join("") || `<div class="empty">No competitions coming up.</div>`) +
+    (past.length ? `<details class="past"><summary>Past competitions (${past.length})</summary>${past.map(row).join("")}</details>` : "");
+}
+function renderWeek(){
+  const items = upcoming().flatMap(c => tasksFor(c).filter(t => t.st === "late" || t.st === "soon").map(t=>({...t, c})))
+    .sort((a,b)=>a.due-b.due);
+  $("#week").innerHTML = `<h2>Due this week and overdue</h2>` + (items.length ? items.slice(0,12).map(t=>
+    `<div class="wrow ${t.st}"><span class="d">${t.left<0?`${-t.left}d late`:t.left===0?"Today":fmt(t.due)}</span><span><b>${esc(t.t)}</b> <span class="c">· ${esc(t.c.name)}</span></span></div>`).join("") + (items.length>12 ? `<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">and ${items.length-12} more: open each competition to see them.</p>` : "")
+    : `<p style="margin:0;color:var(--ok)">Nothing due in the next 7 days.</p>`);
+}
+function renderComp(){
+  const c = S.comps.find(x=>x.id===S.cur); if(!c){ $("#comp").innerHTML = `<div class="panel empty">Choose a competition.</div>`; return; }
+  const ts = tasksFor(c), n = counts(c), dd = Math.round((toDate(c.date)-today)/day);
+  const chip = (cls,txt) => `<span class="chip ${cls}">${txt}</span>`;
+  let html = `<div class="panel head"><h2>${esc(c.name)}</h2><p>${fmtY(toDate(c.date))}${c.venue?` · ${esc(c.venue)}`:""} · ${dd>0?`${dd} days to go`:dd===0?"Today":"Finished"}</p>
+    <div class="chips">${chip("ok",`${n.done} of ${n.all} done`)}${n.late?chip("late",`${n.late} overdue`):""}${n.soon?chip("soon",`${n.soon} due this week`):""}${hasMusic(c)?"":chip("",`No floor music jobs (Recreational)`)}</div></div>
+    <div class="tools"><label><input type="checkbox" id="showDone" ${S.showDone?"checked":""}> Show finished jobs</label>${n.late?`<span id="lateAll"><button class="btn small ghost" id="tickLate">Mark all ${n.late} overdue jobs as done</button></span>`:""}</div>`;
+  html += PHASES.map(([ph, name]) => { const list = ts.filter(t => t.ph===ph && (S.showDone || (!t.done && !t.na))); if(!list.length) return "";
+    return `<div class="panel phase"><h3>${esc(name)}</h3>` + list.map(t => `
+      <div class="task ${t.done?"done":""} ${t.na?"na":""}" data-t="${esc(t.id)}">
+        <input type="checkbox" data-done="${esc(t.id)}" ${t.done?"checked":""} ${t.na?"disabled":""} aria-label="Done: ${esc(t.t)}">
+        <div class="t"><b>${esc(t.t)}</b>${t.w?`<span class="w">${esc(t.w)}</span>`:""}</div>
+        <div class="when"><b>${fmt(t.due)}</b>${esc(rel(t.days))}<br>${t.done?`<span class="pill ok">Done</span>`:t.na?`<span class="pill na">Not needed</span>`:t.st==="late"?`<span class="pill late">${-t.left} day${t.left===-1?"":"s"} late</span>`:t.st==="soon"?`<span class="pill soon">${t.left===0?"Due today":`Due in ${t.left} day${t.left===1?"":"s"}`}</span>`:""}</div>
+        ${t.note?`<div class="note">${esc(t.note)}</div>`:""}
+        <div class="more">${t.done?`Done by ${esc(t.done.by||"")}${t.done.at?` on ${fmt(new Date(t.done.at))}`:""} · `:""}<button data-note="${esc(t.id)}">${t.note?"Edit note":"Add a note"}</button> · <button data-na="${esc(t.id)}">${t.na?"Needed after all":"Not needed for this competition"}</button>${t.extra?` · <button data-del="${esc(t.id)}">Remove</button>`:""}</div>
+      </div>`).join("") + `</div>`; }).join("");
+  html += `<div class="panel"><div class="addrow"><input type="text" id="newT" placeholder="Add a job just for this competition" aria-label="New job">
+    <input type="number" id="newD" value="7" min="-30" max="200" style="width:90px" aria-label="Days before the competition"><span style="align-self:center;font-size:13px;color:var(--muted)">days before</span>
+    <button class="btn primary" id="addT">Add job</button></div></div>`;
+  $("#comp").innerHTML = html;
+}
+function render(){ renderList(); renderWeek(); renderComp(); }
+
+document.addEventListener("click", e => {
+  const c = S.comps.find(x=>x.id===S.cur);
+  const cb = e.target.closest("[data-c]"); if(cb){ S.cur = cb.dataset.c; try{ localStorage.setItem("nglplan:cur", S.cur); }catch(_){} render(); window.scrollTo({top:0, behavior:"smooth"}); return; }
+  if(!c) return;
+  const nb = e.target.closest("[data-note]"); if(nb){ const id = nb.dataset.note, row = nb.closest(".task"); if(row.querySelector("textarea")) return;
+    const ta = document.createElement("textarea"); ta.value = ((S.plans[c.id]||{}).notes||{})[id] || ""; ta.setAttribute("aria-label","Note");
+    row.appendChild(ta); ta.focus(); ta.addEventListener("blur", ()=>{ const v = ta.value.trim(); save(c, {notes:{[id]: v || DEL}}); }); return; }
+  const na = e.target.closest("[data-na]"); if(na){ const id = na.dataset.na, on = !(((S.plans[c.id]||{}).skip||{})[id]);
+    save(c, {skip:{[id]: on ? true : DEL}}); return; }
+  const del = e.target.closest("[data-del]"); if(del){ const p = S.plans[c.id]||{}; save(c, {extra:(p.extra||[]).filter(x=>x.id!==del.dataset.del)}); return; }
+  if(e.target.id==="tickLate"){ $("#lateAll").innerHTML = `Sure? <button class="btn small primary" id="tickLateYes">Yes, mark them done</button> <button class="btn small ghost" id="tickLateNo">Cancel</button>`; return; }
+  if(e.target.id==="tickLateNo"){ renderComp(); return; }
+  if(e.target.id==="tickLateYes"){ const done = {}; tasksFor(c).filter(t=>t.st==="late").forEach(t=>done[t.id] = {by:ME.name||ME.email||"", at:Date.now()}); save(c, {done}); toast("Overdue jobs marked as done"); return; }
+  if(e.target.id==="addT"){ const t = $("#newT").value.trim(), d = parseInt($("#newD").value,10); if(!t) return;
+    const days = isNaN(d) ? 7 : d, ph = days>=42?"p8":days>=21?"p6":days>=8?"p3":days>=1?"p1":days===0?"p0":"pa";
+    const p = S.plans[c.id]||{}; save(c, {extra:(p.extra||[]).concat([{id:"x"+Date.now(), t, days, ph}])}); toast("Job added"); }
+});
+document.addEventListener("change", e => {
+  const c = S.comps.find(x=>x.id===S.cur);
+  if(e.target.id==="showDone"){ S.showDone = e.target.checked; renderComp(); return; }
+  const d = e.target.dataset && e.target.dataset.done; if(!d || !c) return;
+  if(e.target.checked) save(c, {done:{[d]:{by:ME.name||ME.email||"", at:Date.now()}}});
+  else save(c, {done:{[d]: DEL}});
+});
+
+async function load(){
+  let comps = [];
+  if(LIVE){
+    try{ const snap = await db.collection(CONFIG.competitions).get();
+      comps = snap.docs.map(d=>{ const x = d.data(); return {id:d.id, name:x.name||x.title||"Untitled competition", date:x.date||x.compDate||"", venue:x.venue||x.location||"", pathway:x.pathway||""}; })
+        .filter(c => c.date && CONFIG.seasons.some(y => String(toDate(c.date).getFullYear()) === y)); }
+    catch(e){ console.error(e); showErr("Couldn't read the competitions (" + (e.code||e.message) + ")."); }
+    try{ const snap = await db.collection(CONFIG.store).get();
+      snap.docs.forEach(d=>{ if(d.id.startsWith(CONFIG.prefix)) S.plans[d.id.slice(CONFIG.prefix.length)] = d.data(); }); }
+    catch(e){ console.error(e); showErr("Couldn't read the saved plans (" + (e.code||e.message) + "). Ticks won't save until this is fixed."); }
+  } else comps = [{id:"demo-r1", name:"NGL Round 1 (example)", date:new Date(today.getTime()+30*day).toISOString().slice(0,10), venue:"Harpenden"}];
+  const seen = new Set();
+  S.comps = [...CONFIG.standaloneComps, ...comps].filter(c => !seen.has(c.id) && seen.add(c.id))
+    .sort((a,b) => (toDate(a.date)-toDate(b.date)) || ((a.order||0)-(b.order||0)));
+  let saved = null; try{ saved = localStorage.getItem("nglplan:cur"); }catch(_){}
+  const next = upcoming()[0];
+  S.cur = S.comps.some(c=>c.id===saved) ? saved : (next || S.comps[0] || {}).id;
+  render();
+  if(LIVE) db.collection(CONFIG.store).onSnapshot(sn => { sn.docChanges().forEach(ch => { const id = ch.doc.id; if(id.startsWith(CONFIG.prefix)) S.plans[id.slice(CONFIG.prefix.length)] = ch.doc.data(); }); if(!document.activeElement || document.activeElement.tagName!=="TEXTAREA") render(); }, e=>console.error(e));
+}
+function showErr(m){ const el = $("#err"); el.classList.remove("hidden"); el.innerHTML += (el.innerHTML?"<br>":"") + esc(m); }
+
+if(window.firebase){
+  firebase.initializeApp(CONFIG.firebase);
+  document.addEventListener("ngl-admin-ready", e => { ME = e.detail || {}; db = firebase.firestore(); LIVE = true; $("#mode").textContent = "Live"; $("#mode").classList.add("live"); load(); }, {once:true});
+  const g = document.createElement("script"); g.src = "ngl-admin-guard.js"; g.dataset.section = "planning staffing"; document.head.appendChild(g);
+} else load();
+</script>
+</body>
+</html>
