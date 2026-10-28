@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#29235c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -19,8 +19,8 @@
 :root{
   --navy:#14254a; --navy-2:#223a70; --red:#c8202f; --gold:#d9a521; --gold-soft:#fbf1d6;
   --paper:#f4f5f8; --ink:#16213a; --muted:#5d6782; --line:#d6dbe6; --ok:#1f7a4d;
-  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --cond:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --body:'Roboto',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --cond:'Roboto Condensed','Arial Narrow',system-ui,sans-serif;
   box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
 *,*::before,*::after{box-sizing:inherit}
@@ -59,17 +59,23 @@ main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
 .hello{font-family:var(--cond);font-size:34px;color:var(--navy);margin:4px 0 2px;line-height:1.05}
 .sub{color:var(--muted);margin:0 0 20px}
 
-/* Section board: one wide row per section, colour bar = area */
-.sections{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
-.sec{display:grid;grid-template-columns:8px 1fr;background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;text-align:left;padding:0;width:100%}
-.sec .bar{background:var(--c,var(--navy))}
-.sec .in{padding:14px 16px}
-.sec h2{font-family:var(--cond);font-size:24px;margin:0;color:var(--navy);line-height:1.1}
-.sec p{margin:3px 0 0;color:var(--muted);font-size:14px}
-.sec .state{margin-top:8px;font-size:12.5px;font-weight:600;color:var(--muted)}
-.sec:hover h2{text-decoration:underline}
-.sec[disabled]{cursor:default;opacity:.65}
-.sec[disabled]:hover h2{text-decoration:none}
+/* Section board: grouped like the NGL apps; one colour per group, icon tile per area */
+.grp{margin:0 0 22px}
+.grp h3{display:flex;align-items:center;gap:8px;font-family:var(--cond);font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.grp h3 i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.sections{display:block}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.sec{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);border-radius:14px;text-align:left;padding:14px 16px;width:100%;transition:border-color .15s,transform .15s}
+.sec .ic{flex:none;width:48px;height:48px;border-radius:13px;background:var(--c);display:flex;align-items:center;justify-content:center}
+.sec .ic svg{width:26px;height:26px}
+.sec .in{min-width:0;flex:1}
+.sec h2{font-family:var(--cond);font-size:21px;margin:0;color:var(--navy);line-height:1.1}
+.sec p{margin:3px 0 0;color:var(--muted);font-size:13.5px;line-height:1.35}
+.sec .go{flex:none;color:var(--c)}.sec .go svg{width:18px;height:18px;display:block}
+.sec .state{margin-top:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.sec:hover{border-color:var(--c);transform:translateY(-1px)}
+.sec:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.sec[disabled]{cursor:default;opacity:.65}.sec[disabled]:hover{transform:none;border-color:var(--line)}
 
 /* Viewer */
 #viewer{position:fixed;inset:0;background:var(--paper);display:flex;flex-direction:column;z-index:40;padding-top:env(safe-area-inset-top,0px)}
@@ -246,21 +252,27 @@ const CONFIG = {
   usersCollection: "ngl_admin_users",   // doc id = lower-case email
   // Fill in each url with the existing admin page (same GitHub Pages site).
   // Blank url = shown as "Not linked yet".
+  /* groups, in the order they show; one colour each */
+  groups: [
+    {id:"comps", name:"Competitions", colour:"#c6152e"},
+    {id:"clubs", name:"Clubs and pathways", colour:"#0071B3"},
+    {id:"money", name:"Finance", colour:"#1f7a4d"}
+  ],
   sections: [
-    {id:"clubs",        name:"Club registrations", desc:"Every club registered on the NGL Club Hub: newest first, contact details, where they came from and licences", colour:"#3BAA4A", url:"https://club.nationalgymnasticsleague.co.uk/#admin"},
-    {id:"competitions", name:"Competitions",   desc:"Competition dates, club bookings and the season calendar", colour:"#14254a", url:"ngl-booking-system.html?admin=1"},
-    {id:"staffing",     name:"Staffing",       desc:"Who's working each competition, judge requests and staffing sheets", colour:"#c8202f", url:"NGL_Staffing_Admin.html"},
-    {id:"judging",      name:"Judging",        desc:"Judging Pathway registrations, tiers and approvals", colour:"#2c6e9b", url:"ngl-judging-pathway.html?admin=1"},
-    {id:"schools-lic",  name:"Schools licences", desc:"Schools Club Licences: invoices, mark paid, club codes and Graduations", colour:"#7b4fa0", url:"https://nglschools.co.uk/club/?admin"},
-    {id:"rec-lic",      name:"Recreational licences", desc:"Recreational Club Licences: invoices, mark paid and book orders", colour:"#d9a521", url:"https://nglrecreational.co.uk/?admin"},
-    {id:"finance",      name:"Finance",        desc:"League P&L: competitions now, judging and licensing next", colour:"#1f7a4d", url:"NGL_Finance.html"},
-    {id:"projection",   access:"finance", name:"Projected P&L", desc:"10-year licensing projection: change the variables and save scenarios", colour:"#01AFB8", url:"NGL_Projection.html"},
-    {id:"music",        name:"Floor music",    desc:"Club music uploads and downloads in floor running order", colour:"#c8202f", url:"NGL_Music_Admin.html"},
-    {id:"musicplayer",  access:"music", name:"Competition music player", desc:"Play floor music in running order on the day, offline, with announcements", colour:"#14254a", url:"NGL_Music_Admin.html#play"},
-    {id:"results",      name:"Results",        desc:"Result corrections and data quality", colour:"#5b4a9e", url:"admin-corrections.html"},
-    {id:"powerleague",  name:"Training League (boys)", desc:"Add boys to the Training League and enter their checked challenge results; the public league table updates straight away", colour:"#0071B3", url:"ngl-training-league.html?admin=1"},
-    {id:"gl-hub",       access:"results", name:"General League Hub: view as gymnast", desc:"Search any gymnast and see their General League Hub exactly as their family will, read-only", colour:"#0071B3", url:"ngl-general-league-hub-demo.html?admin=1"},
-    {id:"rotation",     name:"Rotation Planner clubs", desc:"Registered clubs and data imports for the Rotation Planner", colour:"#7a8090", url:"NGL_Admin.html"}
+    {group:"clubs", icon:'<path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/>', id:"clubs",        name:"Club registrations", desc:"Every club registered on the NGL Club Hub: newest first, contact details, where they came from and licences", url:"https://club.nationalgymnasticsleague.co.uk/#admin"},
+    {group:"comps", icon:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', id:"competitions", name:"Competitions",   desc:"Competition dates, club bookings and the season calendar", url:"ngl-booking-system.html?admin=1"},
+    {group:"comps", icon:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.2c3 .2 5.5 2.3 5.5 5.8"/>', id:"staffing",     name:"Staffing",       desc:"Who's working each competition, judge requests and staffing sheets", url:"NGL_Staffing_Admin.html"},
+    {group:"comps", icon:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v3h6V3"/><path d="M9 12l2 2 4-4M9 17h6"/>', id:"judging",      name:"Judging",        desc:"Judging Pathway registrations, tiers and approvals", url:"ngl-judging-pathway.html?admin=1"},
+    {group:"clubs", icon:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/>', id:"schools-lic",  name:"Schools licences", desc:"Schools Club Licences: invoices, mark paid, club codes and Graduations", url:"https://nglschools.co.uk/club/?admin"},
+    {group:"clubs", icon:'<circle cx="12" cy="9" r="6"/><path d="M8.5 14.5L7 22l5-3 5 3-1.5-7.5"/>', id:"rec-lic",      name:"Recreational licences", desc:"Recreational Club Licences: invoices, mark paid and book orders", url:"https://nglrecreational.co.uk/?admin"},
+    {group:"money", icon:'<path d="M16 6.5A4.5 4.5 0 0 0 8 9.5V13H6M8 13v3c0 1.5-1 3-2.5 3H18M6 13h8"/>', id:"finance",      name:"Finance",        desc:"League P&L: competitions now, judging and licensing next", url:"NGL_Finance.html"},
+    {group:"money", icon:'<path d="M3 20h18"/><path d="M5 16l4-5 4 3 6-8"/><path d="M15 6h4v4"/>', id:"projection",   access:"finance", name:"Projected P&L", desc:"10-year licensing projection: change the variables and save scenarios", url:"NGL_Projection.html"},
+    {group:"comps", icon:'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>', id:"music",        name:"Floor music",    desc:"Club music uploads and downloads in floor running order", url:"NGL_Music_Admin.html"},
+    {group:"comps", icon:'<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/>', id:"musicplayer",  access:"music", name:"Competition music player", desc:"Play floor music in running order on the day, offline, with announcements", url:"NGL_Music_Admin.html#play"},
+    {group:"comps", icon:'<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 4 4M16 6h3a3 3 0 0 1-4 4"/><path d="M12 13v4M8 21h8M9.5 21l.5-4h4l.5 4"/>', id:"results",      name:"Results",        desc:"Result corrections and data quality", url:"admin-corrections.html"},
+    {group:"clubs", icon:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', id:"powerleague",  name:"Training League (boys)", desc:"Add boys to the Training League and enter their checked challenge results; the public league table updates straight away", url:"ngl-training-league.html?admin=1"},
+    {group:"clubs", icon:'<rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M8.5 17c.6-1.8 2-3 3.5-3s2.9 1.2 3.5 3"/>', id:"gl-hub",       access:"results", name:"General League Hub: view as gymnast", desc:"Search any gymnast and see their General League Hub exactly as their family will, read-only", url:"ngl-general-league-hub-demo.html?admin=1"},
+    {group:"clubs", icon:'<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>', id:"rotation",     name:"Rotation Planner clubs", desc:"Registered clubs and data imports for the Rotation Planner", url:"NGL_Admin.html"}
   ]
 };
 /* ================================ */
@@ -687,11 +699,15 @@ const canSec = s => can(s.id) || (!!s.access && can(s.access));   // e.g. Floor 
 function renderSections(){
   const mine = CONFIG.sections.filter(canSec);
   $("#helloSub").textContent = mine.length ? "Choose an area to manage." : "You don't have access to any areas yet. Ask Dave to add you.";
-  $("#sections").innerHTML = mine.map(s=>`
-    <button class="sec" data-sec="${s.id}" style="--c:${s.colour}" ${s.url?"":"disabled"}>
-      <span class="bar"></span>
-      <span class="in"><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p>${s.url?"":'<div class="state">Not linked yet</div>'}</span>
-    </button>`).join("");
+  const IC = d => `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const GO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+  $("#sections").innerHTML = CONFIG.groups.map(g=>{ const list = mine.filter(s=>s.group===g.id); if(!list.length) return "";
+    return `<section class="grp" style="--c:${g.colour}"><h3><i></i>${esc(g.name)}</h3><div class="tiles">${list.map(s=>`
+    <button class="sec" data-sec="${s.id}" ${s.url?"":"disabled"}>
+      <span class="ic">${IC(s.icon)}</span>
+      <span class="in"><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p>${s.url?"":'<span class="state">Not linked yet</span>'}</span>
+      <span class="go">${GO}</span>
+    </button>`).join("")}</div></section>`; }).join("");
 }
 $("#sections").addEventListener("click", e=>{ const b=e.target.closest("[data-sec]"); if(b && !b.disabled) openSection(b.dataset.sec); });
 
