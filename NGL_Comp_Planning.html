@@ -83,6 +83,20 @@ main{max-width:1180px;margin:0 auto;padding:16px 16px 48px;display:grid;grid-tem
 .err{background:var(--late-soft);border:1px solid #f3b8c1;color:var(--late);border-radius:10px;padding:10px 14px;margin-bottom:14px;grid-column:1/-1}
 .empty{padding:24px;text-align:center;color:var(--muted)}
 :focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
+.steps{grid-column:2/4;display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.step{display:inline-block;border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;color:var(--navy);text-decoration:none;background:#fff}
+.step:hover{border-color:var(--navy)}.step.next{background:var(--navy);color:#fff;border-color:var(--navy)}
+.step.did{background:var(--ok-soft);border-color:#b7dfc8;color:var(--ok)}.step small{font-weight:400}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:0 7px;background:var(--paper);color:var(--muted);border:1px solid var(--line);vertical-align:1px}
+.grip{cursor:grab;color:var(--muted);font-size:18px;line-height:1;padding-top:2px;user-select:none}
+.task[draggable]{cursor:grab}.task.dragging{opacity:.4}.task.over,.dropempty.over{box-shadow:inset 0 3px 0 var(--navy)}
+.dropempty{padding:14px 16px;color:var(--muted);font-size:13px;text-align:center;border-top:1px dashed var(--line)}
+.editnote{margin:-4px 0 12px;font-size:13.5px;color:var(--muted);background:#fff;border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+.ef{padding:12px 16px;border-top:1px solid #eef0f5;background:#fbfcfe;display:grid;gap:8px}
+.ef label{display:grid;gap:3px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.ef input[type=text],.ef input[type=number],.ef textarea{border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-weight:400;color:var(--ink);font-size:14px;width:100%}
+.ef textarea{min-height:70px}.efrow{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.ef .ck{display:flex;gap:6px;align-items:center;font-weight:500}
+.hint{margin:0;font-size:12.5px;color:var(--muted)}
 @media print{header.top,.side,.tools,.addrow,.task .more,.week{display:none!important}main{display:block}.panel{border:0}}
 </style>
 </head>
@@ -111,45 +125,54 @@ const CONFIG = {
   ]
 };
 
-/* The standard jobs. days = days before the competition (negative = after it).
-   music: only for competitions with floor music (not Recreational). */
+/* The standard jobs (used until the list is edited on this page; the edited list is saved as plan__template).
+   days = days before the competition (negative = after it). music: only for competitions with floor music.
+   steps: buttons in order of priority; each click is recorded. */
 const PHASES = [
-  ["p8", "8 weeks or more before"], ["p6", "6 to 4 weeks before"], ["p3", "3 to 2 weeks before"],
-  ["p1", "The week before"], ["p0", "Competition day"], ["pa", "After the competition"]
+  [84, "3 months or more before"], [56, "2 to 3 months before"], [29, "1 to 2 months before"],
+  [8, "1 to 4 weeks before"], [1, "The week before"], [0, "Competition day"], [-9999, "After the competition"]
 ];
-const TASKS = [
-  {id:"venue",     ph:"p8", days:84, t:"Confirm the date, venue and session times", w:"Check the competition calendar and the venue booking match."},
-  {id:"elevien",   ph:"p8", days:70, t:"Set up the competition in Elevien", w:"Events, levels, apparatus and session start times."},
-  {id:"bookings",  ph:"p8", days:70, t:"Open reservations to clubs", w:"Clubs reserve places in the NGL Club Hub; check the competition shows on the season calendar."},
-  {id:"judges",    ph:"p8", days:56, t:"Book the judges", w:"2 remote judges from the Judging Pathway, plus attending clubs' judges for the other pieces."},
-  {id:"staff",     ph:"p8", days:42, t:"Fill the staffing board", w:"Competition manager, floor manager, scoring, announcer, music, group coaches, runners, camera operators."},
-  {id:"medals",    ph:"p8", days:42, t:"Order medals and awards", w:"Allow for every level and age group, plus spares."},
-  {id:"firstaid",  ph:"p8", days:42, t:"Confirm first aid cover"},
-  {id:"pay",       ph:"p6", days:35, t:"Booking deadline: confirm every club has bought its places", w:"Chase anyone who reserved but hasn't bought on JustGo; offer spare places to the waiting list."},
-  {id:"musicopen", ph:"p6", days:35, music:true, t:"Open floor music uploads", w:"Floor music: Publish entries to the NGL Club Hub and set the upload deadline."},
-  {id:"names",     ph:"p6", days:28, t:"Ask clubs for their coaches' and judges' names", w:"One coach for every group a club has gymnasts in."},
-  {id:"entries",   ph:"p6", days:21, t:"Entries close: check the final entries in Elevien", w:"Withdrawals and late changes made in Elevien; tell Dave about anything odd."},
-  {id:"schedule",  ph:"p3", days:17, t:"Build and publish the Elevien schedule", w:"Groups by club, rotations, bib numbers. Publish it in Elevien."},
-  {id:"update",    ph:"p3", days:14, music:true, t:"Ask Claude to update from Elevien", w:"Pulls the final entries and the floor order into the music player."},
-  {id:"musicchase",ph:"p3", days:14, music:true, t:"Floor music deadline: chase missing tracks", w:"Floor music page: anyone marked No music. Email the club from the Clubs tab."},
-  {id:"intros",    ph:"p3", days:12, music:true, t:"Make the gymnast introductions", w:"Floor music, Play tab: Make introductions. Listen for any names said wrongly."},
-  {id:"sheets",    ph:"p3", days:10, t:"Rotation sheets and gymnast numbers", w:"Ask Claude for the rotation sheets PDF from the Elevien schedule."},
-  {id:"roles",     ph:"p3", days:10, t:"Who's doing what sheet", w:"Group coaches, judges, cameras, runners, announcer and music."},
-  {id:"pack",      ph:"p3", days:10, t:"Send clubs the competition pack", w:"Timings, groups and starting pieces, coaches needed, arrival, parking and the spectator app."},
-  {id:"seating",   ph:"p3", days:10, t:"Floor and seating plan"},
-  {id:"announce",  ph:"p1", days:7, t:"Record the announcements", w:"Welcome and safety, march-in by region, with the NGL anthem."},
-  {id:"print",     ph:"p1", days:5, t:"Print everything", w:"Bib numbers, rotation sheets, roles sheet, judges' sheets, signs and QR codes for results."},
-  {id:"medalsort", ph:"p1", days:3, t:"Count the medals and sort them into podium order"},
-  {id:"laptop",    ph:"p1", days:1, music:true, t:"Prepare the music laptop", w:"Save all music to this laptop, test the player and intros, export the backup to a USB stick."},
-  {id:"kit",       ph:"p1", days:1, t:"Test scoring devices and cameras", w:"Elevien tablets for every judge, cameras on the filmed pieces, Wi-Fi in the hall."},
-  {id:"setup",     ph:"p1", days:1, t:"Set up the hall", w:"Apparatus, judges' tables, scoring desk, sound system, registration desk."},
-  {id:"reg",       ph:"p0", days:0, t:"Registration desk and lanyards", w:"Staff, coaches and judges signed in; group coaches given their sheets."},
-  {id:"run",       ph:"p0", days:0, t:"Run the competition", w:"Announcements, march-in, rotations, presentations."},
-  {id:"results",   ph:"pa", days:-1, t:"Check and publish the results", w:"League table and National Qualifiers updated."},
-  {id:"social",    ph:"pa", days:-2, t:"Results post on social media"},
-  {id:"thanks",    ph:"pa", days:-3, t:"Thank clubs, judges and volunteers; pay the remote judges", w:"Remote judges £50 each."},
-  {id:"debrief",   ph:"pa", days:-7, t:"Debrief: what to change next time", w:"Add notes here so the next competition benefits."}
-];
+const phaseOf = days => PHASES.findIndex(([min]) => days >= min);
+const BOOKING_ADMIN = "ngl-booking-system.html?admin=1", CLUBHUB_ADMIN = "https://club.nationalgymnasticsleague.co.uk/#admin";
+const DEFAULT_TASKS = [
+  {id:"venue",     days:120, t:"Confirm the date, venue and session times", w:"Check the competition calendar and the venue booking match."},
+  {id:"elevien",   days:112, t:"Set up the competition in Elevien", w:"Events, levels, apparatus and session start times."},
+  {id:"bookings",  days:112, t:"Open reservations to clubs", w:"Clubs reserve places in the NGL Club Hub; check the competition shows on the season calendar.", steps:[{l:"Open bookings admin", u:BOOKING_ADMIN}]},
+  {id:"buy",       days:90,  t:"Reservation deadline: clubs buy their places", w:"Reserved places must be bought 3 months before. Chase anyone who reserved but hasn't bought on JustGo.", steps:[{l:"See who hasn't bought", u:BOOKING_ADMIN}]},
+  {id:"release",   days:89,  t:"Fill any places that weren't bought", w:"Work down the list in order. Stop as soon as the places are filled.",
+    steps:[{l:"1. Offer them to the waiting list", u:BOOKING_ADMIN},{l:"2. Email every club with an NGL Club Hub account", u:CLUBHUB_ADMIN},{l:"3. Social media post", u:"https://www.instagram.com/nationalgymnasticsleague/"},{l:"4. Email all British Gymnastics clubs (Brevo)", u:"https://app.brevo.com/"}]},
+  {id:"judges",    days:84,  t:"Book the judges", w:"2 remote judges from the Judging Pathway, plus attending clubs' judges for the other pieces.", steps:[{l:"Open Judging", u:"ngl-judging-pathway.html?admin=1"}]},
+  {id:"staff",     days:75,  t:"Fill the staffing board", w:"Competition manager, floor manager, scoring, announcer, music, runners, camera operators.", steps:[{l:"Open Staffing", u:"NGL_Staffing_Admin.html"}]},
+  {id:"medals",    days:70,  t:"Order medals and awards", w:"Allow for every level and age group, plus spares."},
+  {id:"firstaid",  days:70,  t:"Confirm first aid cover"},
+  {id:"addgym",    days:60,  t:"Add all gymnasts to Elevien", w:"Every gymnast from the bought places, in the right level and age group."},
+  {id:"musicopen", days:60,  music:true, t:"Floor music uploads", w:"Ask Claude to update from Elevien, then Publish entries to the NGL Club Hub and set the upload deadline.", steps:[{l:"Open Floor music", u:"NGL_Music_Admin.html"}]},
+  {id:"spectator", days:60,  t:"Send the spectator email with the live results link", w:"For clubs to forward to their families: date, venue, timings and the live results link."},
+  {id:"chase",     days:45,  t:"Chase changes", w:"Withdrawals, swaps and level changes made in Elevien; missing floor music."},
+  {id:"jnames",    days:30,  t:"Request judges' names", w:"From every club providing a judge."},
+  {id:"cnames",    days:30,  t:"Request coaches' names", w:"One coach for every group a club has gymnasts in."},
+  {id:"schedule",  days:21,  t:"Build and publish the Elevien schedule", w:"Groups by club, rotations and bib numbers. Publish it in Elevien."},
+  {id:"update",    days:21,  music:true, t:"Ask Claude to update from Elevien", w:"Pulls the final entries and the floor order into the music player."},
+  {id:"rotations", days:14,  t:"Prepare the rotations", w:"Ask Claude for the rotation sheets and gymnast numbers PDF from the Elevien schedule."},
+  {id:"programme", days:14,  t:"Prepare the programme", w:"Timings, groups, running order, sponsors and the QR code for live results."},
+  {id:"intros",    days:14,  music:true, t:"Make the gymnast introductions", w:"Floor music, Play tab: Make introductions. Listen for any names said wrongly.", steps:[{l:"Open Floor music", u:"NGL_Music_Admin.html#play"}]},
+  {id:"roles",     days:10,  t:"Who's doing what sheet", w:"Group coaches, judges, cameras, runners, announcer and music."},
+  {id:"pack",      days:10,  t:"Send clubs the competition pack", w:"Timings, groups and starting pieces, coaches needed, arrival and parking."},
+  {id:"seating",   days:10,  t:"Floor and seating plan"},
+  {id:"announce",  days:7,   t:"Record the announcements", w:"Welcome and safety, march-in by region, with the NGL anthem."},
+  {id:"print",     days:5,   t:"Print everything", w:"Programmes, bib numbers, rotation sheets, roles sheet, judges' sheets, signs and QR codes."},
+  {id:"medalsort", days:3,   t:"Count the medals and sort them into podium order"},
+  {id:"laptop",    days:1,   music:true, t:"Prepare the music laptop", w:"Save all music to this laptop, test the player and intros, export the backup to a USB stick."},
+  {id:"kit",       days:1,   t:"Test scoring devices and cameras", w:"Elevien tablets for every judge, cameras on the filmed pieces, Wi-Fi in the hall."},
+  {id:"setup",     days:1,   t:"Set up the hall", w:"Apparatus, judges' tables, scoring desk, sound system, registration desk."},
+  {id:"reg",       days:0,   t:"Registration desk and lanyards", w:"Staff, coaches and judges signed in; group coaches given their sheets."},
+  {id:"run",       days:0,   t:"Run the competition", w:"Announcements, march-in, rotations, presentations."},
+  {id:"results",   days:-1,  t:"Check and publish the results", w:"League table and National Qualifiers updated."},
+  {id:"social",    days:-2,  t:"Results post on social media"},
+  {id:"thanks",    days:-3,  t:"Thank clubs, judges and volunteers; pay the remote judges", w:"Remote judges £50 each."},
+  {id:"debrief",   days:-7,  t:"Debrief: what to change next time", w:"Add notes here so the next competition benefits."}
+].map((t,i)=>({...t, pos:i}));
+let TEMPLATE = DEFAULT_TASKS.map(t=>({...t}));
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -161,20 +184,21 @@ const fmtY = d => d.toLocaleDateString("en-GB",{weekday:"long", day:"numeric", m
 const rel = n => n===0 ? "On the day" : n<0 ? `${-n} day${n===-1?"":"s"} after` : n%7===0 && n>=14 ? `${n/7} weeks before` : `${n} day${n===1?"":"s"} before`;
 
 let db = null, LIVE = false, ME = {name:"", email:""};
-const S = { comps:[], plans:{}, cur:null, showDone:true };
+const S = { comps:[], plans:{}, cur:null, showDone:true, edit:false, editing:null };
 
 const hasMusic = c => !/recreational/i.test(c.name + " " + (c.pathway||""));
+/* one competition's jobs: the standard list (minus any removed for this competition) plus its own extra jobs */
 function tasksFor(c){
   const p = S.plans[c.id] || {};
-  return TASKS.filter(t => !t.music || hasMusic(c)).concat((p.extra||[]).map(x=>({...x, extra:true})))
+  return TEMPLATE.filter(t => !t.music || hasMusic(c)).map(t=>({...t, std:true})).concat((p.extra||[]).map(x=>({...x, extra:true})))
     .map(t => { const due = new Date(toDate(c.date).getTime() - t.days*day);
-      const done = p.done && p.done[t.id], na = p.skip && p.skip[t.id];
+      const done = p.done && p.done[t.id], na = p.skip && p.skip[t.id], stepsDone = (p.steps||{})[t.id] || {};
       const left = Math.round((due - today)/day);
       /* once a competition has happened, only the after-the-competition jobs can still be late */
       const over = toDate(c.date) < today && t.days >= 0;
       const st = done ? "ok" : na ? "na" : over ? "" : left < 0 ? "late" : left <= 7 ? "soon" : "";
-      return {...t, due, done, na, left, st, note:(p.notes||{})[t.id] || ""}; })
-    .sort((a,b)=>b.days-a.days);
+      return {...t, due, done, na, left, st, stepsDone, note:(p.notes||{})[t.id] || ""}; })
+    .sort((a,b)=>b.days-a.days || (a.pos??999)-(b.pos??999));
 }
 const counts = c => { const ts = tasksFor(c).filter(t=>!t.na); return {all:ts.length, done:ts.filter(t=>t.done).length, late:ts.filter(t=>t.st==="late").length, soon:ts.filter(t=>t.st==="soon").length}; };
 const upcoming = () => S.comps.filter(c => toDate(c.date) >= new Date(today.getTime() - 14*day));
@@ -184,12 +208,21 @@ async function save(c, patch){
   const p = S.plans[c.id] = S.plans[c.id] || {}, out = {};
   for(const k in patch){ const v = patch[k];
     if(v && typeof v==="object" && !Array.isArray(v)){ p[k] = Object.assign({}, p[k]); out[k] = {};
-      for(const j in v){ if(v[j]===DEL){ delete p[k][j]; out[k][j] = LIVE ? firebase.firestore.FieldValue.delete() : null; } else { p[k][j] = v[j]; out[k][j] = v[j]; } } }
+      for(const j in v){ if(v[j]===DEL){ delete p[k][j]; out[k][j] = LIVE ? firebase.firestore.FieldValue.delete() : null; }
+        else if(v[j] && typeof v[j]==="object" && !Array.isArray(v[j]) && k==="steps"){ p[k][j] = Object.assign({}, p[k][j], v[j]); out[k][j] = v[j]; }
+        else { p[k][j] = v[j]; out[k][j] = v[j]; } } }
     else { p[k] = v; out[k] = v; } }
   render();
   if(!LIVE) return;
   try{ await db.collection(CONFIG.store).doc(CONFIG.prefix + c.id).set(Object.assign({compId:c.id, compName:c.name, updatedAt:firebase.firestore.FieldValue.serverTimestamp()}, out), {merge:true}); }
   catch(e){ console.error(e); toast(/permission/i.test(e.code||e.message) ? "The database blocked that change." : "Not saved: check the connection."); }
+}
+async function saveTemplate(){
+  TEMPLATE.sort((a,b)=>b.days-a.days || a.pos-b.pos).forEach((t,i)=>t.pos=i);
+  render();
+  if(!LIVE) return;
+  try{ await db.collection(CONFIG.store).doc(CONFIG.prefix + "template").set({tasks:TEMPLATE, updatedAt:firebase.firestore.FieldValue.serverTimestamp(), by:ME.email||""}); }
+  catch(e){ console.error(e); toast("The standard list wasn't saved: check the connection."); }
 }
 
 function renderList(){
@@ -201,11 +234,25 @@ function renderList(){
     (past.length ? `<details class="past"><summary>Past competitions (${past.length})</summary>${past.map(row).join("")}</details>` : "");
 }
 function renderWeek(){
-  const items = upcoming().flatMap(c => tasksFor(c).filter(t => t.st === "late" || t.st === "soon").map(t=>({...t, c})))
-    .sort((a,b)=>a.due-b.due);
+  const items = upcoming().flatMap(c => tasksFor(c).filter(t => t.st === "late" || t.st === "soon").map(t=>({...t, c}))).sort((a,b)=>a.due-b.due);
   $("#week").innerHTML = `<h2>Due this week and overdue</h2>` + (items.length ? items.slice(0,12).map(t=>
-    `<div class="wrow ${t.st}"><span class="d">${t.left<0?`${-t.left}d late`:t.left===0?"Today":fmt(t.due)}</span><span><b>${esc(t.t)}</b> <span class="c">· ${esc(t.c.name)}</span></span></div>`).join("") + (items.length>12 ? `<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">and ${items.length-12} more: open each competition to see them.</p>` : "")
+    `<div class="wrow ${t.st}"><span class="d">${t.left<0?`${-t.left}d late`:t.left===0?"Today":fmt(t.due)}</span><span><b>${esc(t.t)}</b> <span class="c">· ${esc(t.c.name)}</span></span></div>`).join("") +
+    (items.length>12 ? `<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">and ${items.length-12} more: open each competition to see them.</p>` : "")
     : `<p style="margin:0;color:var(--ok)">Nothing due in the next 7 days.</p>`);
+}
+const stepsHTML = t => !(t.steps||[]).length ? "" : `<div class="steps">${t.steps.map((st,i)=>{ const d = t.stepsDone[i];
+  const next = !t.done && !d && t.steps.slice(0,i).every((_,k)=>t.stepsDone[k]);
+  return `<a class="step ${d?"did":""} ${next?"next":""}" href="${esc(st.u||"#")}" target="_blank" rel="noopener" data-step="${esc(t.id)}|${i}">${esc(st.l)}${d?` <small>done ${fmt(new Date(d.at))}</small>`:""}</a>`; }).join("")}</div>`;
+function editForm(t){
+  return `<div class="ef" data-ef="${esc(t.id)}">
+    <label>Job<input type="text" id="efT" value="${esc(t.t)}"></label>
+    <label>Details<input type="text" id="efW" value="${esc(t.w||"")}"></label>
+    <div class="efrow"><label>Days before<input type="number" id="efD" value="${t.days}" style="width:90px"></label>
+      ${t.std?`<label class="ck"><input type="checkbox" id="efM" ${t.music?"checked":""}> Floor music competitions only</label>`:""}</div>
+    <label>Buttons, in order of priority: one per line as <i>Label | link</i><textarea id="efS">${esc((t.steps||[]).map(x=>x.l+" | "+(x.u||"")).join("\n"))}</textarea></label>
+    <div class="efrow"><button class="btn primary small" data-efsave="${esc(t.id)}">Save</button><button class="btn ghost small" data-efcancel="1">Cancel</button>
+      <button class="btn ghost small" data-efdel="${esc(t.id)}" style="margin-left:auto;color:var(--late)">${t.std?"Delete from the standard list":"Delete"}</button></div>
+    ${t.std?`<p class="hint">This is a standard job: changes apply to every competition.</p>`:""}</div>`;
 }
 function renderComp(){
   const c = S.comps.find(x=>x.id===S.cur); if(!c){ $("#comp").innerHTML = `<div class="panel empty">Choose a competition.</div>`; return; }
@@ -213,39 +260,87 @@ function renderComp(){
   const chip = (cls,txt) => `<span class="chip ${cls}">${txt}</span>`;
   let html = `<div class="panel head"><h2>${esc(c.name)}</h2><p>${fmtY(toDate(c.date))}${c.venue?` · ${esc(c.venue)}`:""} · ${dd>0?`${dd} days to go`:dd===0?"Today":"Finished"}</p>
     <div class="chips">${chip("ok",`${n.done} of ${n.all} done`)}${n.late?chip("late",`${n.late} overdue`):""}${n.soon?chip("soon",`${n.soon} due this week`):""}${hasMusic(c)?"":chip("",`No floor music jobs (Recreational)`)}</div></div>
-    <div class="tools"><label><input type="checkbox" id="showDone" ${S.showDone?"checked":""}> Show finished jobs</label>${n.late?`<span id="lateAll"><button class="btn small ghost" id="tickLate">Mark all ${n.late} overdue jobs as done</button></span>`:""}</div>`;
-  html += PHASES.map(([ph, name]) => { const list = ts.filter(t => t.ph===ph && (S.showDone || (!t.done && !t.na))); if(!list.length) return "";
-    return `<div class="panel phase"><h3>${esc(name)}</h3>` + list.map(t => `
-      <div class="task ${t.done?"done":""} ${t.na?"na":""}" data-t="${esc(t.id)}">
-        <input type="checkbox" data-done="${esc(t.id)}" ${t.done?"checked":""} ${t.na?"disabled":""} aria-label="Done: ${esc(t.t)}">
-        <div class="t"><b>${esc(t.t)}</b>${t.w?`<span class="w">${esc(t.w)}</span>`:""}</div>
+    <div class="tools"><label><input type="checkbox" id="showDone" ${S.showDone?"checked":""}> Show finished jobs</label>
+      ${n.late&&!S.edit?`<span id="lateAll"><button class="btn small ghost" id="tickLate">Mark all ${n.late} overdue jobs as done</button></span>`:""}
+      <button class="btn small ${S.edit?"primary":""}" id="editMode" style="margin-left:auto">${S.edit?"Finish editing":"Edit the list"}</button></div>
+    ${S.edit?`<p class="editnote">Drag jobs to move them (dropping a job beside another gives it that job's timing), or click Edit on any job. Standard jobs are the same for every competition; jobs you add can be just for this one.</p>`:""}`;
+  html += PHASES.map(([min, name], pi) => { const list = ts.filter(t => phaseOf(t.days)===pi && (S.edit || S.showDone || (!t.done && !t.na)));
+    if(!list.length && !S.edit) return "";
+    return `<div class="panel phase"><h3>${esc(name)}</h3><div class="plist" data-phase="${pi}">` + list.map(t => S.editing===t.id ? editForm(t) : `
+      <div class="task ${t.done?"done":""} ${t.na?"na":""}" data-t="${esc(t.id)}" ${S.edit?'draggable="true"':""}>
+        ${S.edit?`<span class="grip" title="Drag to move">&#10303;</span>`:`<input type="checkbox" data-done="${esc(t.id)}" ${t.done?"checked":""} ${t.na?"disabled":""} aria-label="Done: ${esc(t.t)}">`}
+        <div class="t"><b>${esc(t.t)}</b>${t.extra?` <span class="tag">This competition only</span>`:""}${t.music?` <span class="tag">Floor music</span>`:""}${t.w?`<span class="w">${esc(t.w)}</span>`:""}</div>
         <div class="when"><b>${fmt(t.due)}</b>${esc(rel(t.days))}<br>${t.done?`<span class="pill ok">Done</span>`:t.na?`<span class="pill na">Not needed</span>`:t.st==="late"?`<span class="pill late">${-t.left} day${t.left===-1?"":"s"} late</span>`:t.st==="soon"?`<span class="pill soon">${t.left===0?"Due today":`Due in ${t.left} day${t.left===1?"":"s"}`}</span>`:""}</div>
-        ${t.note?`<div class="note">${esc(t.note)}</div>`:""}
-        <div class="more">${t.done?`Done by ${esc(t.done.by||"")}${t.done.at?` on ${fmt(new Date(t.done.at))}`:""} · `:""}<button data-note="${esc(t.id)}">${t.note?"Edit note":"Add a note"}</button> · <button data-na="${esc(t.id)}">${t.na?"Needed after all":"Not needed for this competition"}</button>${t.extra?` · <button data-del="${esc(t.id)}">Remove</button>`:""}</div>
-      </div>`).join("") + `</div>`; }).join("");
-  html += `<div class="panel"><div class="addrow"><input type="text" id="newT" placeholder="Add a job just for this competition" aria-label="New job">
-    <input type="number" id="newD" value="7" min="-30" max="200" style="width:90px" aria-label="Days before the competition"><span style="align-self:center;font-size:13px;color:var(--muted)">days before</span>
+        ${S.edit?"":stepsHTML(t)}
+        ${t.note&&!S.edit?`<div class="note">${esc(t.note)}</div>`:""}
+        <div class="more">${S.edit?`<button data-edit="${esc(t.id)}">Edit</button>`:`${t.done?`Done by ${esc(t.done.by||"")}${t.done.at?` on ${fmt(new Date(t.done.at))}`:""} · `:""}<button data-note="${esc(t.id)}">${t.note?"Edit note":"Add a note"}</button> · <button data-na="${esc(t.id)}">${t.na?"Needed after all":"Not needed for this competition"}</button>`}</div>
+      </div>`).join("") + (S.edit&&!list.length?`<div class="dropempty" data-phase-empty="${pi}">Drop a job here</div>`:"") + `</div></div>`; }).join("");
+  html += `<div class="panel"><div class="addrow"><input type="text" id="newT" placeholder="Add a job" aria-label="New job">
+    <input type="number" id="newD" value="7" min="-60" max="365" style="width:90px" aria-label="Days before the competition"><span style="align-self:center;font-size:13px;color:var(--muted)">days before</span>
+    <select id="newScope" aria-label="Which competitions"><option value="one">This competition only</option><option value="all">Every competition</option></select>
     <button class="btn primary" id="addT">Add job</button></div></div>`;
   $("#comp").innerHTML = html;
 }
 function render(){ renderList(); renderWeek(); renderComp(); }
 
+/* ---------- editing ---------- */
+function findTask(c, id){ const std = TEMPLATE.find(t=>t.id===id); if(std) return {std:true, t:std}; const ex = ((S.plans[c.id]||{}).extra||[]).find(t=>t.id===id); return ex ? {std:false, t:ex} : null; }
+function updateTask(c, id, fn){
+  const f = findTask(c, id); if(!f) return;
+  if(f.std){ fn(f.t); saveTemplate(); }
+  else { const ex = ((S.plans[c.id]||{}).extra||[]).map(x=>({...x})); const t = ex.find(x=>x.id===id); fn(t); save(c, {extra:ex}); }
+}
+function removeTask(c, id){
+  const f = findTask(c, id); if(!f) return;
+  if(f.std){ TEMPLATE = TEMPLATE.filter(t=>t.id!==id); saveTemplate(); }
+  else save(c, {extra:((S.plans[c.id]||{}).extra||[]).filter(x=>x.id!==id)});
+}
+let dragId = null;
+document.addEventListener("dragstart", e => { const r = e.target.closest && e.target.closest(".task[draggable]"); if(!r) return; dragId = r.dataset.t; r.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; try{ e.dataTransfer.setData("text/plain", dragId); }catch(_){} });
+document.addEventListener("dragend", e => { document.querySelectorAll(".dragging,.over").forEach(x=>x.classList.remove("dragging","over")); dragId = null; });
+document.addEventListener("dragover", e => { if(!dragId) return; const r = e.target.closest(".task[draggable], .dropempty"); if(!r) return; e.preventDefault(); document.querySelectorAll(".over").forEach(x=>x.classList.remove("over")); r.classList.add("over"); });
+document.addEventListener("drop", e => {
+  if(!dragId) return; const c = S.comps.find(x=>x.id===S.cur); if(!c) return; e.preventDefault();
+  const r = e.target.closest(".task[draggable], .dropempty"); if(!r) return;
+  const ts = tasksFor(c), id = dragId; dragId = null;
+  let days, pos;
+  if(r.classList.contains("dropempty")){ days = PHASES[+r.dataset.phaseEmpty][0]; if(days < -100) days = -1; pos = -1; }
+  else { const tgt = ts.find(t=>t.id===r.dataset.t); if(!tgt || tgt.id===id) return;
+    const after = e.clientY > r.getBoundingClientRect().top + r.offsetHeight/2;
+    days = tgt.days; pos = (tgt.pos??0) + (after ? 0.5 : -0.5); }
+  updateTask(c, id, t => { t.days = days; t.pos = pos; });
+  toast("Moved");
+});
+
 document.addEventListener("click", e => {
   const c = S.comps.find(x=>x.id===S.cur);
-  const cb = e.target.closest("[data-c]"); if(cb){ S.cur = cb.dataset.c; try{ localStorage.setItem("nglplan:cur", S.cur); }catch(_){} render(); window.scrollTo({top:0, behavior:"smooth"}); return; }
+  const cb = e.target.closest("[data-c]"); if(cb){ S.cur = cb.dataset.c; S.editing = null; try{ localStorage.setItem("nglplan:cur", S.cur); }catch(_){} render(); window.scrollTo({top:0, behavior:"smooth"}); return; }
   if(!c) return;
+  const stp = e.target.closest("[data-step]"); if(stp){ const [id, i] = stp.dataset.step.split("|"); if(stp.getAttribute("href")==="#") e.preventDefault();
+    save(c, {steps:{[id]:{[i]:{by:ME.name||ME.email||"", at:Date.now()}}}}); return; }
+  if(e.target.id==="editMode"){ S.edit = !S.edit; S.editing = null; renderComp(); return; }
+  const ed = e.target.closest("[data-edit]"); if(ed){ S.editing = ed.dataset.edit; renderComp(); const f = document.getElementById("efT"); if(f) f.focus(); return; }
+  if(e.target.closest("[data-efcancel]")){ S.editing = null; renderComp(); return; }
+  const es = e.target.closest("[data-efsave]"); if(es){ const id = es.dataset.efsave, t = $("#efT").value.trim(); if(!t){ toast("The job needs a name."); return; }
+    const w = $("#efW").value.trim(), d = parseInt($("#efD").value,10), m = $("#efM") ? $("#efM").checked : false;
+    const steps = $("#efS").value.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{ const k = l.lastIndexOf("|"); return k>0 ? {l:l.slice(0,k).trim(), u:l.slice(k+1).trim()} : {l, u:""}; });
+    S.editing = null;
+    updateTask(c, id, x => { x.t = t; x.w = w; if(!isNaN(d)) x.days = d; if(findTask(c,id).std){ if(m) x.music = true; else delete x.music; } x.steps = steps; });
+    toast("Saved"); return; }
+  const edl = e.target.closest("[data-efdel]"); if(edl){ const id = edl.dataset.efdel;
+    if(edl.dataset.sure!=="1"){ edl.dataset.sure = "1"; edl.textContent = "Click again to delete"; return; }
+    S.editing = null; removeTask(c, id); toast("Deleted"); return; }
   const nb = e.target.closest("[data-note]"); if(nb){ const id = nb.dataset.note, row = nb.closest(".task"); if(row.querySelector("textarea")) return;
     const ta = document.createElement("textarea"); ta.value = ((S.plans[c.id]||{}).notes||{})[id] || ""; ta.setAttribute("aria-label","Note");
     row.appendChild(ta); ta.focus(); ta.addEventListener("blur", ()=>{ const v = ta.value.trim(); save(c, {notes:{[id]: v || DEL}}); }); return; }
-  const na = e.target.closest("[data-na]"); if(na){ const id = na.dataset.na, on = !(((S.plans[c.id]||{}).skip||{})[id]);
-    save(c, {skip:{[id]: on ? true : DEL}}); return; }
-  const del = e.target.closest("[data-del]"); if(del){ const p = S.plans[c.id]||{}; save(c, {extra:(p.extra||[]).filter(x=>x.id!==del.dataset.del)}); return; }
+  const na = e.target.closest("[data-na]"); if(na){ const id = na.dataset.na, on = !(((S.plans[c.id]||{}).skip||{})[id]); save(c, {skip:{[id]: on ? true : DEL}}); return; }
   if(e.target.id==="tickLate"){ $("#lateAll").innerHTML = `Sure? <button class="btn small primary" id="tickLateYes">Yes, mark them done</button> <button class="btn small ghost" id="tickLateNo">Cancel</button>`; return; }
   if(e.target.id==="tickLateNo"){ renderComp(); return; }
   if(e.target.id==="tickLateYes"){ const done = {}; tasksFor(c).filter(t=>t.st==="late").forEach(t=>done[t.id] = {by:ME.name||ME.email||"", at:Date.now()}); save(c, {done}); toast("Overdue jobs marked as done"); return; }
-  if(e.target.id==="addT"){ const t = $("#newT").value.trim(), d = parseInt($("#newD").value,10); if(!t) return;
-    const days = isNaN(d) ? 7 : d, ph = days>=42?"p8":days>=21?"p6":days>=8?"p3":days>=1?"p1":days===0?"p0":"pa";
-    const p = S.plans[c.id]||{}; save(c, {extra:(p.extra||[]).concat([{id:"x"+Date.now(), t, days, ph}])}); toast("Job added"); }
+  if(e.target.id==="addT"){ const t = $("#newT").value.trim(), d = parseInt($("#newD").value,10); if(!t){ toast("Type the job first."); return; }
+    const days = isNaN(d) ? 7 : d, job = {id:"x"+Date.now().toString(36), t, days, pos:999};
+    if($("#newScope").value==="all"){ TEMPLATE.push(job); saveTemplate(); toast("Added to every competition"); }
+    else { const p = S.plans[c.id]||{}; save(c, {extra:(p.extra||[]).concat([job])}); toast("Added to this competition"); } }
 });
 document.addEventListener("change", e => {
   const c = S.comps.find(x=>x.id===S.cur);
@@ -263,7 +358,8 @@ async function load(){
         .filter(c => c.date && CONFIG.seasons.some(y => String(toDate(c.date).getFullYear()) === y)); }
     catch(e){ console.error(e); showErr("Couldn't read the competitions (" + (e.code||e.message) + ")."); }
     try{ const snap = await db.collection(CONFIG.store).get();
-      snap.docs.forEach(d=>{ if(d.id.startsWith(CONFIG.prefix)) S.plans[d.id.slice(CONFIG.prefix.length)] = d.data(); }); }
+      snap.docs.forEach(d=>{ if(!d.id.startsWith(CONFIG.prefix)) return; const k = d.id.slice(CONFIG.prefix.length);
+        if(k==="template"){ const t = d.data().tasks; if(Array.isArray(t) && t.length) TEMPLATE = t; } else S.plans[k] = d.data(); }); }
     catch(e){ console.error(e); showErr("Couldn't read the saved plans (" + (e.code||e.message) + "). Ticks won't save until this is fixed."); }
   } else comps = [{id:"demo-r1", name:"NGL Round 1 (example)", date:new Date(today.getTime()+30*day).toISOString().slice(0,10), venue:"Harpenden"}];
   const seen = new Set();
@@ -273,7 +369,8 @@ async function load(){
   const next = upcoming()[0];
   S.cur = S.comps.some(c=>c.id===saved) ? saved : (next || S.comps[0] || {}).id;
   render();
-  if(LIVE) db.collection(CONFIG.store).onSnapshot(sn => { sn.docChanges().forEach(ch => { const id = ch.doc.id; if(id.startsWith(CONFIG.prefix)) S.plans[id.slice(CONFIG.prefix.length)] = ch.doc.data(); }); if(!document.activeElement || document.activeElement.tagName!=="TEXTAREA") render(); }, e=>console.error(e));
+  if(LIVE) db.collection(CONFIG.store).onSnapshot(sn => { sn.docChanges().forEach(ch => { const id = ch.doc.id; if(!id.startsWith(CONFIG.prefix)) return; const k = id.slice(CONFIG.prefix.length);
+      if(k==="template"){ const t = ch.doc.data().tasks; if(Array.isArray(t) && t.length && !dragId && !S.editing) TEMPLATE = t; } else S.plans[k] = ch.doc.data(); }); if(!S.editing && !dragId && (!document.activeElement || document.activeElement.tagName!=="TEXTAREA")) render(); }, e=>console.error(e));
 }
 function showErr(m){ const el = $("#err"); el.classList.remove("hidden"); el.innerHTML += (el.innerHTML?"<br>":"") + esc(m); }
 
