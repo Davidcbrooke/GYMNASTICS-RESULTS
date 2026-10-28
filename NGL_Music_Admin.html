@@ -802,7 +802,8 @@ function prepState(){
   $("#prepState").innerHTML = `<b>${saved} of ${ids.length}</b> uploaded tracks saved on this laptop.` +
     (ids.length-saved-bad ? ` <span style="color:#7a5a07">${ids.length-saved-bad} still to save.</span>` : (ids.length?` <span style="color:var(--ok)">Nothing left to save.</span>`:"")) +
     (bad ? ` <span style="color:var(--red)">${bad} file${bad>1?"s need":" needs"} checking (silent, very short or unreadable): listen to it and ask the club to upload again if it's wrong.</span>` : "") +
-    (none ? ` ${none} gymnast${none>1?"s have":" has"} no music uploaded.` : "");
+    (none ? ` ${none} gymnast${none>1?"s have":" has"} no music uploaded.` : "") +
+    (PL.saveMsg ? `<br><span style="color:var(--red)">${esc(PL.saveMsg)}</span>` : "");
   if(!PL.prepping) $("#prepBar").style.width = ids.length ? (saved/ids.length*100)+"%" : "0";
 }
 async function measure(blob){
@@ -820,7 +821,7 @@ async function measure(blob){
 async function prepareAll(){
   const ids = Object.keys(G).filter(id=>UP[id] && status(id)!=="saved" && status(id)!=="bad");
   if(!ids.length){ const ni = await saveIntros().catch(()=>0); toast(ni ? `${ni} introduction${ni>1?"s":""} saved on this laptop.` : "Everything uploaded is already saved on this laptop."); return; }
-  PL.prepping = true; $("#prepBtn").disabled = true; let ok=0, failed=0;
+  PL.prepping = true; PL.saveErr = null; $("#prepBtn").disabled = true; let ok=0, failed=0;
   for(let i=0;i<ids.length;i++){
     const id = ids[i], u = UP[id];
     $("#prepBtn").textContent = `Saving ${i+1} of ${ids.length}…`; $("#prepBar").style.width = (i/ids.length*100)+"%";
@@ -830,13 +831,18 @@ async function prepareAll(){
       const rec = {k:TK(id), id, url:u.url, fileName:u.fileName||"", blob, savedAt:Date.now(), ...m};
       await PDB.put("tracks", rec); PL.cache[id] = rec; if(PL.objUrls[id]){ URL.revokeObjectURL(PL.objUrls[id]); delete PL.objUrls[id]; }
       ok++;
-    }catch(e){ console.warn(id, e); failed++; }
+    }catch(e){ console.warn(id, e); failed++; if(!PL.saveErr) PL.saveErr = e; }
   }
   const ni = await saveIntros().catch(()=>0);
   PL.prepping = false; $("#prepBtn").disabled = false; $("#prepBtn").textContent = "Save all music to this laptop";
   renderPlayer();
-  if(failed && !ok) toast("The browser couldn't fetch the music. The storage bucket needs its CORS setting.");
-  else toast(`${ok} track${ok===1?"":"s"} saved` + (failed?`, ${failed} failed: try again`:"") + ".");
+  const why = (()=>{ const e = PL.saveErr; if(!e) return "";
+    if(e.name==="QuotaExceededError" || /quota/i.test(e.message||"")) return "This browser has run out of storage space for saved music. Use Chrome or Edge on the competition laptop, with plenty of free disk space.";
+    if(e instanceof TypeError) return "The browser couldn't download the music files (blocked by the storage bucket's settings).";
+    if(/^\d+$/.test(e.message||"")) return `The music server answered ${e.message}.`;
+    return `${e.name||"Error"}: ${e.message||e}`; })();
+  PL.saveMsg = failed ? `${ok} saved, ${failed} not saved. ${why}` : ""; prepState();
+  toast(`${ok} track${ok===1?"":"s"} saved` + (failed?`, ${failed} not saved. ${why}`:"") + ".");
 }
 function srcFor(id){
   const c = PL.cache[id], u = UP[id];
