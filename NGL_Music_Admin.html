@@ -128,7 +128,7 @@ tr.empty td{color:var(--muted);font-size:13px;padding:12px 14px}
 .q .qr .qc{display:flex;gap:6px;align-items:center}
 .q .qr .qc .btn{margin:0}
 @media (max-width:900px){.q .qr{grid-template-columns:22px 34px 1fr auto}.q .qr .qc{grid-column:3/-1}}
-body.playonly #progPanel,body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.playonly #updBtn,body.playonly #diffTop,body.playonly .qc label,body.playonly #backupBtn+*{display:none!important}
+body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.playonly #updBtn,body.playonly #diffTop,body.playonly .qc label,body.playonly #backupBtn+*{display:none!important}
 </style>
 </head>
 <body>
@@ -153,10 +153,6 @@ body.playonly #progPanel,body.playonly .tabs [data-tab=order],body.playonly .tab
     <button role="tab" aria-selected="false" data-tab="play">Play</button>
   </nav>
   <section id="tab-order">
-    <div class="panel" id="progPanel" style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center">
-      <div style="flex:1;min-width:240px"><b>Set the running order from Elevien</b><br><span style="font-size:14px;color:var(--muted)">In Elevien, download the schedule (Starting lists PDF) for each session, then load it here. Every gymnast goes into the right floor rotation, in programme order.</span></div>
-      <label class="btn primary">Load Elevien programme<input type="file" id="progFile" accept=".pdf,application/pdf" multiple hidden></label>
-    </div>
     <div id="levels"></div></section>
   <section id="tab-clubs" class="hidden">
     <div class="panel">
@@ -253,8 +249,8 @@ const deadline = () => ($("#dlInput") && $("#dlInput").value.trim()) || (EV && E
   $("#updBtn").onclick = ()=>{
     const at = window.NGL_MUSIC_COMPS && window.NGL_MUSIC_COMPS.updatedAt;
     openDlg("Update from Elevien", `<p style="margin:0 0 10px">Competitions and entries were last pulled from Elevien <b>${at?esc(new Date(at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})):"not yet"}</b>.</p>
-      <p style="margin:0 0 10px">To pull the latest, ask Claude: <b>"Update the NGL competitions from Elevien."</b> New competitions are added, and new or withdrawn gymnasts are updated. Rotations, absences and uploaded music are kept.</p>
-      <p style="margin:0;color:var(--muted);font-size:14px">Then click <b>Load latest</b> here. Anything that has changed since you last published is listed at the top of the page, ready to publish to the NGL Club Hub.</p>`,
+      <p style="margin:0 0 10px">To pull the latest, ask Claude: <b>"Update the NGL competitions from Elevien."</b> New competitions are added, new or withdrawn gymnasts are updated, and the floor order is read from the Elevien competition schedule. Absences and uploaded music are kept.</p>
+      <p style="margin:0;color:var(--muted);font-size:14px">Then click <b>Load latest</b> here: the floor rotations sort themselves into the Elevien order. Anything that has changed since you last published is listed at the top of the page, ready to publish to the NGL Club Hub.</p>`,
       [{l:"Close"},{l:"Load latest", cls:"primary", fn:()=>{ location.reload(); }}]);
   };
   if(!D.levels.some(L=>L.gymnasts.length)){
@@ -334,7 +330,7 @@ $("#csForm").addEventListener("submit", async e=>{
   catch(_){ $("#csErr").textContent = "Email or password isn't right."; }
 });
 function watch(){
-  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; ROT = (EV && EV.rot) || {}; ABS = (EV && EV.absent) || {}; if(!$("#dlInput").dataset.touched) $("#dlInput").value = (EV && EV.deadline) || D.deadline || ""; renderDiff(); render(); renderClubs(); renderPlayer(); }, e=>err(e,"the competition"));
+  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; ROT = (EV && EV.rot) || {}; ABS = (EV && EV.absent) || {}; if(!$("#dlInput").dataset.touched) $("#dlInput").value = (EV && EV.deadline) || D.deadline || ""; renderDiff(); render(); renderClubs(); renderPlayer(); applyElevienOrder(); }, e=>err(e,"the competition"));
   cdb.collection("musicUploads").where("compKey","==",D.compKey).onSnapshot(s=>{ UP = {}; s.docs.forEach(d=>UP[d.data().gymnastId]=d.data()); renderDiff(); render(); renderClubs(); renderPlayer(); }, e=>err(e,"uploads"));
   cdb.collection("clubs").get().then(s=>{ ACCOUNTS = s.docs.map(d=>({uid:d.id, name:d.data().name||"", bg:String(d.data().bgNumber||"").trim(), email:d.data().email||""})).sort((a,b)=>a.name.localeCompare(b.name)); renderClubs(); }).catch(e=>err(e,"club accounts"));
 }
@@ -393,7 +389,7 @@ function render(){
   $("#levels").innerHTML = SESS.map(s=>{
     const o = rotOf(s), ids = sessIds(s), n = ids.filter(id=>UP[id]).length;
     const blocks = (o.u.length ? [["u",o.u]] : []).concat(Array.from({length:nrotOf(s)},(_,i)=>[i+1,o[i+1]]));
-    return `<section class="lv"><header><h2>${esc(sessName(s))} session<small class="${n<ids.length?"gap":""}">${esc(sessDesc(s))} · ${n}/${ids.length} music uploaded</small></h2></header>
+    return `<section class="lv"><header><h2>${esc(sessName(s))} session<small class="${n<ids.length?"gap":""}">${esc(sessDesc(s))} · ${n}/${ids.length} music uploaded</small><small style="display:block">${foLine(s)}</small></h2></header>
       ${o.u.length ? `<div class="note">${o.u.length} gymnast${o.u.length>1?"s aren't":" isn't"} in a floor rotation yet. Use <b>Paste floor order</b> on each rotation, choose a rotation for each gymnast, or drag them into place.</div>` : ""}` +
       blocks.map(([r,list])=>{ const up = list.filter(id=>UP[id]).length, ab = list.filter(id=>ABS[id]).length;
         return `<div class="rot" data-s="${s.key}" data-r="${r}">
@@ -460,91 +456,28 @@ function pasteDlg(s, r){
     }}]);
 }
 
-/* ---------- running order from the Elevien programme (Starting lists PDF) ---------- */
-/* Reads an Elevien "Starting lists" schedule PDF: apparatus sections in programme order, each with its competitors in order. */
-async function readElevienProgramme(pdfjsLib, data){
-  const doc = await pdfjsLib.getDocument({data}).promise, secs = [];
-  for(let p=1;p<=doc.numPages;p++){
-    const page = await doc.getPage(p), items = (await page.getTextContent()).items.filter(i=>i.str.trim()).map(i=>({s:i.str.trim(), x:i.transform[4], y:i.transform[5]}));
-    const hashes = [...new Set(items.filter(i=>i.s==="#").map(i=>Math.round(i.x)))].sort((a,b)=>a-b);
-    const bounds = hashes.length ? hashes.map(h=>h-4) : [-1e9];
-    const colOf = x => { let c = 0; bounds.forEach((b,k)=>{ if(x>=b) c = k; }); return c; };
-    for(let c=0;c<bounds.length;c++){
-      const col = items.filter(i=>colOf(i.x)===c), lines = [];
-      col.sort((a,b)=>b.y-a.y || a.x-b.x).forEach(i=>{ const l = lines.find(l=>Math.abs(l.y-i.y)<3); if(l) l.parts.push(i); else lines.push({y:i.y, parts:[i]}); });
-      let cur = null;
-      lines.forEach(l=>{ const t = l.parts.sort((a,b)=>a.x-b.x).map(i=>i.s).join(" ").replace(/\s+/g," ");
-        const h = t.match(/^(VAULT|UNEVEN BARS|BALANCE BEAM|FLOOR|BREAK|POMMEL HORSE|RINGS|PARALLEL BARS|HIGH BAR|FLOOR EXERCISE)\b.*\(/i);
-        if(h){ cur = {app:h[1].toUpperCase(), page:p, y:l.y, col:c, names:[]}; secs.push(cur); return; }
-        const m = cur && t.match(/(?:^|\s)\d+\s*\.\s*\d+\s+(.+?)(?:\s+[A-Z]{3})?$/);
-        if(m && !/·/.test(m[1])) cur.names.push(m[1]);
-      });
+/* ---------- running order from the Elevien floor schedule ----------
+   tools/elevien_floor_order.py puts each session's floor order into D.floorOrder[session label] = {at, rotations}.
+   The first time this page sees a new "at" for a session, it replaces that session's floor rotations with it.
+   Changes made here afterwards (drag, move) stay until the next Elevien update. */
+const FO = D.floorOrder || {};
+let foBusy = false;
+async function applyElevienOrder(){
+  if(!EV || foBusy) return; foBusy = true;
+  const done = [];
+  try{
+    for(const s of SESS){ const f = FO[s.label]; if(!f || !f.rotations) continue;
+      if((EV.floorOrderAt || {})[s.key] === f.at) continue;
+      const ids = new Set(sessIds(s)), clean = {};
+      f.rotations.forEach((r,i)=>clean[i+1] = r.filter(id=>ids.has(id)));
+      await cdb.collection("musicEvents").doc(D.compKey).set({rot:{[s.key]:clean}, nrot:{[s.key]:f.rotations.length}, floorOrderAt:{[s.key]:f.at}}, {merge:true});
+      done.push(sessName(s));
     }
-  }
-  /* programme order: page, then top to bottom, then left to right */
-  secs.sort((a,b)=>a.page-b.page || (Math.abs(a.y-b.y)>3 ? b.y-a.y : a.col-b.col));
-  return secs.map(s=>({app:s.app, isBreak:s.app==="BREAK", names:s.names}));
+  }catch(e){ err(e,"the running order"); }
+  foBusy = false;
+  if(done.length) toast(`Running order updated from the Elevien floor schedule: ${done.join(" and ")} session${done.length>1?"s":""}.`);
 }
-/* Floor running order for every rotation. Groups move one piece per rotation; on each piece after the first,
-   the first gymnast moves to the back (breaks don't count), matching Elevien's generated rotations. */
-function floorRotations(secs){
-  const n = secs.length, f = secs.findIndex(s=>/^FLOOR/.test(s.app)); if(f<0) return null;
-  const out = [];
-  for(let r=0;r<n;r++){ const s = ((f-r)%n+n)%n, g = secs[s].names; if(!g.length){ out.push([]); continue; }
-    let k = 0; for(let j=0;j<r;j++) if(!secs[(s+j)%n].isBreak) k++; k %= g.length;
-    out.push(g.slice(k).concat(g.slice(0,k))); }
-  return out;
-}
-
-let PDFJS = null;
-async function pdfLib(){
-  if(PDFJS) return PDFJS;
-  await new Promise((res,rej)=>{ const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-  return PDFJS = window.pdfjsLib;
-}
-/* Elevien lists "Surname Firstname"; the entries say "Firstname Surname": compare the words in any order */
-const words = n => n.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").split(/\s+/).map(w=>w.replace(/[^a-z]/g,"")).filter(Boolean);
-function matchName(name, pool, used){
-  const w = words(name), ws = w.slice().sort().join(" ");
-  return pool.find(p=>!used.has(p.id) && p.ws===ws) || pool.find(p=>!used.has(p.id) && (p.w.every(x=>w.includes(x)) || w.every(x=>p.w.includes(x))));
-}
-function planFromRotations(rots){
-  let best = null;
-  SESS.forEach(s=>{ const pool = sessIds(s).map(id=>{ const w = words(G[id].name); return {id, w, ws:w.slice().sort().join(" ")}; }), used = new Set();
-    const o = rots.map(r=>r.map(n=>{ const m = matchName(n, pool, used); if(m){ used.add(m.id); return m.id; } return null; }));
-    const hit = o.flat().filter(Boolean).length;
-    if(!best || hit>best.hit) best = {s, o, hit, miss: rots.flatMap((r,i)=>r.filter((n,k)=>!o[i][k])), notIn: sessIds(s).filter(id=>!used.has(id))}; });
-  return best;
-}
-$("#progFile").addEventListener("change", async e=>{
-  const files = [...e.target.files]; e.target.value = ""; if(!files.length) return;
-  if(!EV){ toast("Publish the entries to the NGL Club Hub first (Clubs tab)."); return; }
-  let lib; try{ lib = await pdfLib(); }catch(_){ toast("Couldn't load the PDF reader. Check the internet connection and try again."); return; }
-  const plans = [];
-  for(const f of files){
-    let secs; try{ secs = await readElevienProgramme(lib, new Uint8Array(await f.arrayBuffer())); }catch(x){ console.error(x); toast(`Couldn't read ${f.name}.`); continue; }
-    const rots = floorRotations(secs);
-    if(!rots){ toast(`${f.name} has no Floor list. Use the Elevien schedule (Starting lists) PDF.`); continue; }
-    const best = planFromRotations(rots);
-    if(!best || !best.hit){ toast(`None of the names in ${f.name} match this competition's entries.`); continue; }
-    plans.push({file:f.name, ...best, n:rots.length, total:rots.flat().length});
-  }
-  if(!plans.length) return;
-  openDlg("Set the running order from Elevien", plans.map(p=>`<p style="margin:0 0 6px"><b>${esc(sessName(p.s))} session</b> <span style="color:var(--muted);font-size:13px">from ${esc(p.file)}</span><br>
-      ${p.n} floor rotations · ${p.hit} of ${p.total} gymnasts placed ${p.o.map((r,i)=>`<span class="lvb">R${i+1}: ${r.filter(Boolean).length}</span>`).join(" ")}</p>
-      ${p.miss.length?`<p class="note" style="margin:0 0 8px">Not matched to an entry: ${p.miss.map(esc).join(", ")}</p>`:""}
-      ${p.notIn.length?`<p class="note" style="margin:0 0 8px">Entered but not in the programme (left in “Not in a rotation yet”): ${p.notIn.map(id=>esc(G[id].name)).join(", ")}</p>`:""}`).join("") +
-    `<p style="margin:8px 0 0;font-size:14px;color:var(--muted)">This replaces the floor rotations for ${plans.length>1?"these sessions":"this session"}. Music and absences are kept.</p>`,
-    [{l:"Cancel"},{l:"Apply running order", cls:"primary", fn:()=>{ (async()=>{
-      $("#saveState").textContent = "Saving…";
-      for(const p of plans){ const clean = {}; p.o.forEach((r,i)=>clean[i+1] = r.filter(Boolean));
-        ROT[p.s.key] = clean; EV.nrot = Object.assign({}, EV.nrot, {[p.s.key]: p.n});
-        try{ await cdb.collection("musicEvents").doc(D.compKey).set({rot:{[p.s.key]:clean}, nrot:{[p.s.key]:p.n}}, {merge:true}); }
-        catch(x){ err(x,"the running order"); $("#saveState").textContent = "Not saved"; return; } }
-      render(); renderPlayer(); $("#saveState").textContent = "Saved"; toast("Running order set from the Elevien programme.");
-    })(); }}]);
-});
+const foLine = s => { const f = FO[s.label]; return f ? `Floor order from the Elevien schedule, ${esc(new Date(f.at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"}))}` : "No Elevien floor schedule yet: ask Claude to update from Elevien once the schedule is set"; };
 
 /* ---------- NGL admin uploads a track for a gymnast (e.g. a club emailed it) ----------
    Same Storage path and musicUploads record the NGL Club Hub uses, so the club sees it as done. */

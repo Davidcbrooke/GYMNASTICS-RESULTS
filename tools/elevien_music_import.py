@@ -146,6 +146,7 @@ def main():
         comp = {"compKey": key, "title": keep.get("title") or common_title([t["title"] for t in wag]),
                 "date": date, "deadline": old.get("deadline") or deadline_for(date), "floorRotations": old.get("floorRotations", 4),
                 "elevien": [t["tournamentId"] for t in wag], "clubs": clubs, "levels": levels}
+        if old.get("floorOrder"): comp["floorOrder"] = old["floorOrder"]   # set by tools/elevien_floor_order.py
         if key == "finals2026": comp["deadline"] = old.get("deadline") or "Saturday 31 October 2026"
         comps.append(comp)
         oldids = {g[0] for L in old.get("levels", []) for g in L["gymnasts"]}
