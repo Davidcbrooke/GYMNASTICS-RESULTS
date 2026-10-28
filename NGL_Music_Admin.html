@@ -194,6 +194,7 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
           <div id="elSetRow" class="hidden" style="display:grid;gap:8px;margin-bottom:8px">
             <label style="font-size:13px;font-weight:600">Voice <select id="elVoice" style="display:block;width:100%;padding:6px;border:1px solid var(--line);border-radius:4px;margin-top:3px"></select></label>
             <label style="font-size:13px;font-weight:600">Wording <input id="elTpl" style="display:block;width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:4px;margin-top:3px"></label>
+            <p id="introMsg" style="margin:0;font-size:13px;color:var(--red)"></p>
             <div class="pbar"><i id="introBar"></i></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="introGo">Make introductions</button><button class="btn ghost small" id="introHear">Hear a sample</button><button class="btn ghost small" id="elForget">Remove key from this laptop</button></div>
           </div>
@@ -509,17 +510,20 @@ const introsOn = ()=>{ try{ return localStorage.getItem("nglmusic:introsOn")!=="
 const sayClub = n => String(n||"").replace(/\s+(Ltd|Limited|C\.?I\.?C\.?)\.?$/i,"").replace(/\s*&\s*/g," and ").trim();
 const introText = id => { const g = G[id]; return (INTROS[id] && INTROS[id].custom) || EL.tpl.replace(/\{club\}/g, sayClub(clubName(g.club))).replace(/\{name\}/g, g.name); };
 const IK = id => "intro:"+id;
+/* ElevenLabs' own ready-made voices: used when the key isn't allowed to list voices */
+const EL_DEFAULT = [["JBFqnCBsd6RMkjVDRZzb","George · British · male"],["onwK4e9ZLuTAKqWW03F9","Daniel · British · male"],["Xb7hH8MSUJpSbSDYk0k2","Alice · British · female"],["pFZP5JQG7iQjIQuC4Bku","Lily · British · female"],["XB0fDUnXU5powFXDhCwa","Charlotte · female"],["nPczCjzI2devNBz1zQrb","Brian · American · male"]];
+const elMsg = async r => { try{ const j = await r.json(); const d = j.detail || j; return (typeof d==="string" ? d : (d.message || d.status || "")) || ("error " + r.status); }catch(_){ return "error " + r.status; } };
 async function elVoices(){
   const r = await fetch("https://api.elevenlabs.io/v1/voices", {headers:{"xi-api-key":EL.key}});
-  if(r.status===401) throw new Error("key"); if(!r.ok) throw new Error("http "+r.status);
+  if(!r.ok){ const m = await elMsg(r); const e = new Error(m); e.status = r.status; throw e; }
   return (await r.json()).voices || [];
 }
 async function elSpeak(text){
   const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(EL.voice)}?output_format=mp3_44100_128`, {method:"POST",
     headers:{"xi-api-key":EL.key, "Content-Type":"application/json", "Accept":"audio/mpeg"},
     body: JSON.stringify({text, model_id:"eleven_multilingual_v2", voice_settings:{stability:0.55, similarity_boost:0.75}})});
-  if(r.status===401) throw new Error("key"); if(r.status===429) throw new Error("busy");
-  if(!r.ok){ let m=""; try{ m = (await r.json()).detail?.message || ""; }catch(_){} throw new Error(m || ("http "+r.status)); }
+  if(r.status===429) throw new Error("busy");
+  if(!r.ok){ const m = await elMsg(r); throw new Error(/invalid api key|invalid_api_key/i.test(m) ? "key" : m); }
   return new Blob([await r.arrayBuffer()], {type:"audio/mpeg"});
 }
 async function makeIntro(id, custom){
@@ -546,18 +550,25 @@ function renderIntroPanel(){
 }
 async function fillVoices(){
   const sel = $("#elVoice"); sel.innerHTML = `<option value="">Loading voices…</option>`;
+  $("#introMsg").textContent = "";
   try{ const vs = await elVoices();
     sel.innerHTML = vs.map(v=>`<option value="${esc(v.voice_id)}">${esc(v.name)}${v.labels&&v.labels.accent?` · ${esc(v.labels.accent)}`:""}${v.labels&&v.labels.gender?` · ${esc(v.labels.gender)}`:""}</option>`).join("");
     if(EL.voice && vs.some(v=>v.voice_id===EL.voice)) sel.value = EL.voice; else { EL.voice = sel.value; elSave(); }
-  }catch(e){ sel.innerHTML = `<option value="">Couldn't load voices</option>`;
-    toast(e.message==="key" ? "ElevenLabs didn't accept that API key. Check it and add it again." : "Couldn't reach ElevenLabs. Check the internet connection."); }
+  }catch(e){
+    if(/invalid api key|invalid_api_key/i.test(e.message)){ sel.innerHTML = `<option value="">Key not accepted</option>`; $("#introMsg").textContent = "ElevenLabs says this API key isn't valid. Remove it, copy the key again and add it."; }
+    else if(e.status){ /* key works but can't list voices (no Voices permission): offer ElevenLabs' ready-made voices */
+      sel.innerHTML = EL_DEFAULT.map(([id,n])=>`<option value="${id}">${esc(n)}</option>`).join("");
+      if(EL.voice && EL_DEFAULT.some(v=>v[0]===EL.voice)) sel.value = EL.voice; else { EL.voice = sel.value; elSave(); }
+      $("#introMsg").textContent = `ElevenLabs wouldn't list your voices (${e.message}), so these are its ready-made voices. To see your own, give the key the Voices permission.`; }
+    else { sel.innerHTML = `<option value="">Couldn't reach ElevenLabs</option>`; $("#introMsg").textContent = "Couldn't reach ElevenLabs. Check the internet connection, then remove and add the key again."; }
+  }
   renderIntroPanel();
 }
 async function introSample(){
   if(!EL.key || !EL.voice) return;
   const id = allIds()[0]; if(!id) return;
   try{ const b = await elSpeak(introText(id)); const u = URL.createObjectURL(b); const a = new Audio(u); a.onended = ()=>URL.revokeObjectURL(u); a.play(); }
-  catch(e){ toast(e.message==="key" ? "ElevenLabs didn't accept the API key." : `ElevenLabs: ${e.message}`); }
+  catch(e){ $("#introMsg").textContent = e.message==="key" ? "ElevenLabs says this API key isn't valid." : `ElevenLabs said: ${e.message}`; }
 }
 async function generateIntros(){
   const ids = allIds().filter(introNeeded); if(!ids.length) return;
@@ -568,6 +579,7 @@ async function generateIntros(){
     catch(e){ console.warn(ids[i], e); failed++;
       if(e.message==="key"){ toast("ElevenLabs didn't accept the API key."); break; }
       if(/quota|credit/i.test(e.message)){ toast("ElevenLabs says the account is out of credits."); break; }
+      $("#introMsg").textContent = `ElevenLabs said: ${e.message}`; if(failed>=3 && !ok) break;
       if(e.message==="busy"){ await new Promise(r=>setTimeout(r,3000)); i--; failed--; continue; } }
   }
   PL.introBusy = false; $("#introGo").textContent = "Make introductions"; $("#introBar").style.width = "100%";
