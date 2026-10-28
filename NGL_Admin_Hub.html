@@ -476,7 +476,7 @@ function renderNotifications(){
   count.textContent = fresh.length > 99 ? "99+" : fresh.length;
   count.classList.toggle("hidden", !fresh.length);
   $("#bell").setAttribute("aria-label", fresh.length ? `Notifications: ${fresh.length} new sign-up${fresh.length === 1 ? "" : "s"}` : "Notifications");
-  $("#newStrip").classList.toggle("hidden", !fresh.length);
+  $("#newStrip").classList.add("hidden");   // the New sign-ups button at the top shows the count instead
   $("#newStrip").innerHTML = fresh.length ? `<b>${fresh.length} new sign-up${fresh.length === 1 ? "" : "s"}</b> <span>${[...new Set(fresh.map(i => NOTIFY.pathways[i.pathway].label))].map(esc).join(" · ")}</span><span class="go">View</span>` : "";
 
   // "2 new" on each section tile
