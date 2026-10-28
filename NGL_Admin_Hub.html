@@ -86,6 +86,24 @@ main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
 
 /* Team access */
 .panel{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px;margin-top:28px}
+/* Shared to-do list (Dave, Christine and Claude) */
+.todo{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 22px}
+.todo-h{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.todo-h h3{font-family:var(--cond);font-size:22px;margin:0;color:var(--navy)}
+#todoCount{font-size:13px;color:var(--muted)}
+.todo-show{margin-left:auto;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.ti{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:start;padding:8px 0;border-top:1px solid #eef0f5}
+.ti:first-child{border-top:0}
+.ti input{width:19px;height:19px;margin:2px 0 0;accent-color:var(--ok)}
+.ti .tx{min-width:0}.ti .tx b{font-weight:500}
+.ti .tx small{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.ti.done .tx b{text-decoration:line-through;color:var(--muted)}
+.who{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:1px;background:#eef0f5;color:var(--navy)}
+.who.Dave{background:#e4eefb;color:#0b4f86}.who.Christine{background:#fbe7f1;color:#9b1c5c}.who.Claude{background:#efe9fb;color:#5a3a9a}
+.ti .x{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;padding:0 4px}.ti .x:hover{color:var(--red)}
+.todo-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.todo-add input{flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.todo-add select{border:1px solid var(--line);border-radius:8px;padding:8px}
 .panel h3{font-family:var(--cond);font-size:22px;margin:0;color:var(--navy)}
 .panel > p{color:var(--muted);margin:2px 0 14px;font-size:14px}
 .tablewrap{overflow-x:auto}
@@ -204,6 +222,13 @@ td input[type=checkbox]{width:18px;height:18px}
     <div class="hello" id="hello"></div>
     <p class="sub" id="helloSub"></p>
     <button type="button" class="newstrip hidden" id="newStrip"></button>
+    <section class="todo hidden" id="todo">
+      <div class="todo-h"><h3>To do</h3><span id="todoCount"></span><label class="todo-show"><input type="checkbox" id="todoShowDone"> Show done</label></div>
+      <div id="todoList"></div>
+      <form class="todo-add" id="todoAdd"><input id="todoText" placeholder="Add something to do" aria-label="New to-do" autocomplete="off">
+        <select id="todoWho" aria-label="Who"><option value="">Anyone</option><option>Dave</option><option>Christine</option><option>Claude</option></select>
+        <button class="btn primary" type="submit">Add</button></form>
+    </section>
     <div class="sections" id="sections"></div>
 
     <section class="panel hidden" id="team">
@@ -688,6 +713,7 @@ async function loadMeInner(email){
   const hr = new Date().getHours();
   $("#hello").textContent = `${hr<12?"Morning":hr<18?"Afternoon":"Evening"}, ${(ME.name||"").split(" ")[0] || "there"}`;
   renderSections();
+  startTodo();
   startNotifications();
   if(ME.owner){ $("#team").classList.remove("hidden"); loadTeam(); } else $("#team").classList.add("hidden");
   const next = new URLSearchParams(location.search).get("section");
@@ -695,6 +721,67 @@ async function loadMeInner(email){
 }
 
 const can = id => ME && (ME.owner || (ME.sections||[]).includes(id));
+
+/* ---------- Shared to-do list ----------
+   Saved in ngl_staffing/plan__todo (same rules as Staffing), so anyone with the Staffing tick can see and tick it.
+   Claude can add or tick items too (from Dave's signed-in browser). */
+const TODO_REF = () => db.collection("ngl_staffing").doc("plan__todo");
+const TODO_SEED = [
+  {t:"Check with Pro-Star about Isla Vance and Autumn-Secret Mcmillan", n:"Taken out of Elevien between 20 and 27 October. If they've withdrawn, ask Claude to refresh the entries.", who:"Dave"},
+  {t:"Publish both National Finals schedules in Elevien", n:"Level A and Levels B & C both show 0 saved versions.", who:"Dave"},
+  {t:"Collect the other clubs' coach names for the Finals rotation sheets", n:"One coach for every group a club is in. Send them to Claude to fill in.", who:"Christine"},
+  {t:"Finals roles sheet: find someone for Music; fill the morning Red and Green group coaches", who:"Dave"},
+  {t:"Listen to both Finals introductions for names said wrongly", n:"SAADI, Rathgael and Lisburn especially. Then add both files to Announcements on the Floor music Play tab.", who:"Dave"},
+  {t:"Give Christine the Staffing tick in Team access", n:"She needs it to see this list and Competition planning.", who:"Dave"},
+  {t:"Competition planning: mark the Finals' overdue jobs as done", n:"Use the button on each Finals session so the list starts clean.", who:"Christine"},
+  {t:"Judging Pathway page: remove the 3-shadows rule and add \"we pay all our remote judges\"", n:"Dave to say go; Claude updates it.", who:"Claude"},
+  {t:"Training League social post", n:"On hold until Dave is ready.", who:"Dave"}
+];
+let TODO = [], todoUnsub = null;
+const todoId = () => "t" + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+function startTodo(){
+  if(!(ME && (ME.owner || can("staffing")))) return;
+  $("#todo").classList.remove("hidden");
+  if(!LIVE){ TODO = TODO_SEED.map((x,i)=>({id:"s"+i, ...x, addedBy:"Claude", addedAt:Date.now()})); renderTodo(); return; }
+  if(todoUnsub) todoUnsub();
+  todoUnsub = TODO_REF().onSnapshot(d => {
+    if(!d.exists){ TODO_REF().set({items:TODO_SEED.map((x,i)=>({id:"s"+i, ...x, addedBy:"Claude", addedAt:Date.now()}))}).catch(e=>console.error(e)); return; }
+    TODO = d.data().items || []; renderTodo();
+  }, e => { console.error(e); $("#todoList").innerHTML = `<p style="color:var(--red);margin:6px 0">Couldn't load the to-do list (${esc(e.code||e.message)}).</p>`; });
+}
+async function todoChange(fn){
+  if(!LIVE){ fn(TODO); renderTodo(); return; }
+  try{ await db.runTransaction(async tx => { const d = await tx.get(TODO_REF()); const items = (d.exists && d.data().items) || []; fn(items); tx.set(TODO_REF(), {items, updatedAt:firebase.firestore.FieldValue.serverTimestamp()}, {merge:true}); }); }
+  catch(e){ console.error(e); toast("Not saved: check the connection."); }
+}
+function renderTodo(){
+  const show = $("#todoShowDone").checked, open = TODO.filter(x=>!x.done);
+  $("#todoCount").textContent = open.length ? `${open.length} to do` : "All done";
+  const list = TODO.filter(x => show || !x.done);
+  $("#todoList").innerHTML = list.length ? list.map(x => `<div class="ti ${x.done?"done":""}">
+      <input type="checkbox" data-todo="${esc(x.id)}" ${x.done?"checked":""} aria-label="Done: ${esc(x.t)}">
+      <div class="tx"><b>${esc(x.t)}</b>${x.who?`<span class="who ${esc(x.who)}">${esc(x.who)}</span>`:""}${x.n?`<small>${esc(x.n)}</small>`:""}${x.done?`<small>Done by ${esc(x.doneBy||"")}${x.doneAt?` on ${new Date(x.doneAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}`:""}</small>`:""}</div>
+      <button class="x" data-todox="${esc(x.id)}" title="Remove" aria-label="Remove ${esc(x.t)}">&times;</button></div>`).join("")
+    : `<p style="margin:6px 0;color:var(--muted)">Nothing to do. Add something below.</p>`;
+}
+document.addEventListener("change", e => {
+  if(e.target.id==="todoShowDone"){ renderTodo(); return; }
+  const id = e.target.dataset && e.target.dataset.todo; if(!id) return;
+  const on = e.target.checked, by = (ME && (ME.name||ME.email)) || "";
+  todoChange(items => { const x = items.find(i=>i.id===id); if(!x) return; if(on){ x.done = true; x.doneBy = by; x.doneAt = Date.now(); } else { delete x.done; delete x.doneBy; delete x.doneAt; } });
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-todox]"); if(!b) return;
+  if(b.dataset.sure!=="1"){ b.dataset.sure = "1"; b.textContent = "Remove?"; b.style.fontSize = "12px"; setTimeout(()=>{ if(b.isConnected){ b.dataset.sure=""; b.innerHTML="&times;"; b.style.fontSize=""; } }, 3000); return; }
+  todoChange(items => { const i = items.findIndex(x=>x.id===b.dataset.todox); if(i>-1) items.splice(i,1); });
+});
+document.addEventListener("submit", e => {
+  if(e.target.id!=="todoAdd") return; e.preventDefault();
+  const t = $("#todoText").value.trim(); if(!t) return;
+  const item = {id:todoId(), t, who:$("#todoWho").value, addedBy:(ME && (ME.name||ME.email)) || "", addedAt:Date.now()};
+  $("#todoText").value = "";
+  todoChange(items => items.push(item));
+});
 const canSec = s => can(s.id) || (!!s.access && can(s.access));   // e.g. Floor music also opens the music player
 
 function renderSections(){
