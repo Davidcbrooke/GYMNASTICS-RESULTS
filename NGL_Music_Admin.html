@@ -128,7 +128,7 @@ tr.empty td{color:var(--muted);font-size:13px;padding:12px 14px}
 .q .qr .qc{display:flex;gap:6px;align-items:center}
 .q .qr .qc .btn{margin:0}
 @media (max-width:900px){.q .qr{grid-template-columns:22px 34px 1fr auto}.q .qr .qc{grid-column:3/-1}}
-body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.playonly #updBtn,body.playonly #diffTop,body.playonly .qc label,body.playonly #backupBtn+*{display:none!important}
+body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.playonly #updBtn,body.playonly #diffTop,body.playonly .qc label,body.playonly #backupBtn+*{display:none!important}
 </style>
 </head>
 <body>
@@ -182,6 +182,24 @@ body.playonly .tabs [data-tab=order],body.playonly .tabs [data-tab=clubs],body.p
         <p>Saved on this laptop only. Play them from here at the start of each session.</p>
         <div id="annList"></div>
         <label class="btn ghost small" style="display:inline-block;margin-top:8px">Add announcement MP3<input type="file" id="annFile" accept="audio/*" multiple hidden></label>
+      </div>
+      <div class="panel" id="introPanel">
+        <h3>3. Gymnast introductions</h3>
+        <p id="introState"></p>
+        <div class="fullonly">
+          <div id="elKeyRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+            <input id="elKey" type="password" autocomplete="off" placeholder="ElevenLabs API key" aria-label="ElevenLabs API key" style="flex:1;min-width:200px;padding:7px 9px;border:1px solid var(--line);border-radius:4px">
+            <button class="btn small primary" id="elKeySave">Add key</button>
+          </div>
+          <div id="elSetRow" class="hidden" style="display:grid;gap:8px;margin-bottom:8px">
+            <label style="font-size:13px;font-weight:600">Voice <select id="elVoice" style="display:block;width:100%;padding:6px;border:1px solid var(--line);border-radius:4px;margin-top:3px"></select></label>
+            <label style="font-size:13px;font-weight:600">Wording <input id="elTpl" style="display:block;width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:4px;margin-top:3px"></label>
+            <div class="pbar"><i id="introBar"></i></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="introGo">Make introductions</button><button class="btn ghost small" id="introHear">Hear a sample</button><button class="btn ghost small" id="elForget">Remove key from this laptop</button></div>
+          </div>
+        </div>
+        <label style="font-size:14px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="introOn"> Introduce each gymnast before her music</label>
+        <p style="margin:8px 0 0;font-size:13px">Space plays the introduction; Space again starts the music once she's in position. Use {club} and {name} in the wording. Fix a name's pronunciation with the Intro button beside her on the Running order tab.</p>
       </div>
     </div>
     <div id="stage">
@@ -330,7 +348,7 @@ $("#csForm").addEventListener("submit", async e=>{
   catch(_){ $("#csErr").textContent = "Email or password isn't right."; }
 });
 function watch(){
-  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; ROT = (EV && EV.rot) || {}; ABS = (EV && EV.absent) || {}; if(!$("#dlInput").dataset.touched) $("#dlInput").value = (EV && EV.deadline) || D.deadline || ""; renderDiff(); render(); renderClubs(); renderPlayer(); applyElevienOrder(); }, e=>err(e,"the competition"));
+  cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; ROT = (EV && EV.rot) || {}; INTROS = (EV && EV.intros) || {}; ABS = (EV && EV.absent) || {}; if(!$("#dlInput").dataset.touched) $("#dlInput").value = (EV && EV.deadline) || D.deadline || ""; renderDiff(); render(); renderClubs(); renderPlayer(); renderIntroPanel(); applyElevienOrder(); }, e=>err(e,"the competition"));
   cdb.collection("musicUploads").where("compKey","==",D.compKey).onSnapshot(s=>{ UP = {}; s.docs.forEach(d=>UP[d.data().gymnastId]=d.data()); renderDiff(); render(); renderClubs(); renderPlayer(); }, e=>err(e,"uploads"));
   cdb.collection("clubs").get().then(s=>{ ACCOUNTS = s.docs.map(d=>({uid:d.id, name:d.data().name||"", bg:String(d.data().bgNumber||"").trim(), email:d.data().email||""})).sort((a,b)=>a.name.localeCompare(b.name)); renderClubs(); }).catch(e=>err(e,"club accounts"));
 }
@@ -400,7 +418,7 @@ function render(){
             return `<tr class="${u?"ok":""} ${ABS[id]?"abs":""}" draggable="true" data-id="${id}">
               <td class="grip" title="Drag to move">&#10303;</td><td class="n">${r==="u"?"–":i+1}</td>
               <td><span class="fl"></span><span class="who">${esc(g.name)}</span> <span class="lvb">${esc(g.level)}</span>${ABS[id]?' <span class="st none">Absent</span>':""}<br><span class="club">${esc(clubName(g.club))}</span></td>
-              <td>${u?`<audio controls preload="none" src="${esc(u.url)}"></audio>`:`<span class="club" style="color:var(--red)">Not uploaded</span>`}${upLabel(id)}${u&&u.uploadedBy==="admin"?`<span class="club"> · added by NGL</span>`:""}</td>
+              <td>${u?`<audio controls preload="none" src="${esc(u.url)}"></audio>`:`<span class="club" style="color:var(--red)">Not uploaded</span>`}${upLabel(id)}<button class="btn small ghost" data-intro="${id}" style="margin-left:6px" title="${INTROS[id]?"Introduction made":"No introduction yet"}">Intro${INTROS[id]?" ✓":""}</button>${u&&u.uploadedBy==="admin"?`<span class="club"> · added by NGL</span>`:""}</td>
               <td style="white-space:nowrap"><label class="club"><input type="checkbox" data-abs="${id}" ${ABS[id]?"checked":""}> Absent</label></td>
               <td>${rotSelect(id, r)}</td>
               <td class="mv">${r!=="u"?`<button class="btn small ghost" data-mv="${id}|-1" aria-label="Move up">&uarr;</button> <button class="btn small ghost" data-mv="${id}|1" aria-label="Move down">&darr;</button>`:""}</td></tr>`;
@@ -478,6 +496,112 @@ async function applyElevienOrder(){
   if(done.length) toast(`Running order updated from the Elevien floor schedule: ${done.join(" and ")} session${done.length>1?"s":""}.`);
 }
 const foLine = s => { const f = FO[s.label]; return f ? `Floor order from the Elevien schedule, ${esc(new Date(f.at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"}))}` : "No Elevien floor schedule yet: ask Claude to update from Elevien once the schedule is set"; };
+
+
+/* ---------- gymnast introductions (ElevenLabs) ----------
+   Each intro is made once with the NGL ElevenLabs account and stored next to the music:
+   Storage music/<comp>/admin/intro-<id>.mp3, and musicEvents.intros[id] = {url, path, text, voice, at}.
+   The ElevenLabs key stays on this laptop only (localStorage), typed in by Dave. */
+let INTROS = {};
+const EL = (()=>{ try{ return Object.assign({key:"", voice:"", tpl:"On the floor, from {club}, {name}."}, JSON.parse(localStorage.getItem("nglmusic:elevenlabs")||"{}")); }catch(_){ return {key:"", voice:"", tpl:"On the floor, from {club}, {name}."}; } })();
+const elSave = ()=>{ try{ localStorage.setItem("nglmusic:elevenlabs", JSON.stringify(EL)); }catch(_){} };
+const introsOn = ()=>{ try{ return localStorage.getItem("nglmusic:introsOn")!=="0"; }catch(_){ return true; } };
+const sayClub = n => String(n||"").replace(/\s+(Ltd|Limited|C\.?I\.?C\.?)\.?$/i,"").replace(/\s*&\s*/g," and ").trim();
+const introText = id => { const g = G[id]; return (INTROS[id] && INTROS[id].custom) || EL.tpl.replace(/\{club\}/g, sayClub(clubName(g.club))).replace(/\{name\}/g, g.name); };
+const IK = id => "intro:"+id;
+async function elVoices(){
+  const r = await fetch("https://api.elevenlabs.io/v1/voices", {headers:{"xi-api-key":EL.key}});
+  if(r.status===401) throw new Error("key"); if(!r.ok) throw new Error("http "+r.status);
+  return (await r.json()).voices || [];
+}
+async function elSpeak(text){
+  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(EL.voice)}?output_format=mp3_44100_128`, {method:"POST",
+    headers:{"xi-api-key":EL.key, "Content-Type":"application/json", "Accept":"audio/mpeg"},
+    body: JSON.stringify({text, model_id:"eleven_multilingual_v2", voice_settings:{stability:0.55, similarity_boost:0.75}})});
+  if(r.status===401) throw new Error("key"); if(r.status===429) throw new Error("busy");
+  if(!r.ok){ let m=""; try{ m = (await r.json()).detail?.message || ""; }catch(_){} throw new Error(m || ("http "+r.status)); }
+  return new Blob([await r.arrayBuffer()], {type:"audio/mpeg"});
+}
+async function makeIntro(id, custom){
+  const text = custom || introText(id), blob = await elSpeak(text);
+  const path = `music/${D.compKey}/admin/intro-${id}.mp3`, ref = capp.storage().ref(path);
+  await ref.put(blob, {contentType:"audio/mpeg", customMetadata:{gymnast:G[id].name, kind:"intro"}});
+  const url = await ref.getDownloadURL(), rec = {url, path, text, voice:EL.voice, at:new Date().toISOString()};
+  if(custom) rec.custom = custom; else if(INTROS[id] && INTROS[id].custom && INTROS[id].custom===text) rec.custom = text;
+  await cdb.collection("musicEvents").doc(D.compKey).set({intros:{[id]:rec}}, {merge:true});
+  INTROS[id] = rec;
+  try{ const c = {k:TK(IK(id)), id:IK(id), url, blob, savedAt:Date.now()}; await PDB.put("tracks", c); PL.cache[IK(id)] = c; if(PL.objUrls[IK(id)]){ URL.revokeObjectURL(PL.objUrls[IK(id)]); delete PL.objUrls[IK(id)]; } }catch(_){}
+  return rec;
+}
+/* gymnasts placed in a floor rotation (not withdrawn or unplaced ones), in running order */
+const allIds = ()=> SESS.flatMap(s=>{ const o = rotOf(s); return Array.from({length:nrotOf(s)},(_,i)=>o[i+1]).flat(); });
+const introNeeded = id => !INTROS[id] || INTROS[id].text !== introText(id);
+function renderIntroPanel(){
+  const box = $("#introPanel"); if(!box) return;
+  const ids = allIds(), have = ids.filter(id=>INTROS[id]).length, todo = ids.filter(introNeeded).length;
+  $("#introState").innerHTML = `<b>${have} of ${ids.length}</b> gymnasts have an introduction.` + (todo ? ` ${todo} to make.` : ` <span style="color:var(--ok)">All done.</span>`);
+  $("#elKeyRow").classList.toggle("hidden", !!EL.key); $("#elSetRow").classList.toggle("hidden", !EL.key);
+  $("#introOn").checked = introsOn();
+  $("#introGo").disabled = !EL.key || !EL.voice || !todo || !!PL.introBusy;
+}
+async function fillVoices(){
+  const sel = $("#elVoice"); sel.innerHTML = `<option value="">Loading voices…</option>`;
+  try{ const vs = await elVoices();
+    sel.innerHTML = vs.map(v=>`<option value="${esc(v.voice_id)}">${esc(v.name)}${v.labels&&v.labels.accent?` · ${esc(v.labels.accent)}`:""}${v.labels&&v.labels.gender?` · ${esc(v.labels.gender)}`:""}</option>`).join("");
+    if(EL.voice && vs.some(v=>v.voice_id===EL.voice)) sel.value = EL.voice; else { EL.voice = sel.value; elSave(); }
+  }catch(e){ sel.innerHTML = `<option value="">Couldn't load voices</option>`;
+    toast(e.message==="key" ? "ElevenLabs didn't accept that API key. Check it and add it again." : "Couldn't reach ElevenLabs. Check the internet connection."); }
+  renderIntroPanel();
+}
+async function introSample(){
+  if(!EL.key || !EL.voice) return;
+  const id = allIds()[0]; if(!id) return;
+  try{ const b = await elSpeak(introText(id)); const u = URL.createObjectURL(b); const a = new Audio(u); a.onended = ()=>URL.revokeObjectURL(u); a.play(); }
+  catch(e){ toast(e.message==="key" ? "ElevenLabs didn't accept the API key." : `ElevenLabs: ${e.message}`); }
+}
+async function generateIntros(){
+  const ids = allIds().filter(introNeeded); if(!ids.length) return;
+  PL.introBusy = true; renderIntroPanel(); let ok = 0, failed = 0;
+  for(let i=0;i<ids.length;i++){
+    $("#introGo").textContent = `Making ${i+1} of ${ids.length}…`; $("#introBar").style.width = (i/ids.length*100)+"%";
+    try{ await makeIntro(ids[i]); ok++; }
+    catch(e){ console.warn(ids[i], e); failed++;
+      if(e.message==="key"){ toast("ElevenLabs didn't accept the API key."); break; }
+      if(/quota|credit/i.test(e.message)){ toast("ElevenLabs says the account is out of credits."); break; }
+      if(e.message==="busy"){ await new Promise(r=>setTimeout(r,3000)); i--; failed--; continue; } }
+  }
+  PL.introBusy = false; $("#introGo").textContent = "Make introductions"; $("#introBar").style.width = "100%";
+  renderIntroPanel(); render(); renderPlayer();
+  toast(`${ok} introduction${ok===1?"":"s"} made` + (failed?`, ${failed} failed: press Make introductions again`:"") + ".");
+}
+function introDlg(id){
+  const g = G[id], cur = INTROS[id];
+  openDlg(`Introduction · ${g.name}`, `<p style="margin:0 0 8px;font-size:14px;color:var(--muted)">Change the spelling to fix how a name is said (for example "Roz-kov-ska"). Only the sound changes; the name on screen stays the same.</p>
+    <input id="introTxt" value="${esc(cur && cur.custom || introText(id))}" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:4px;font-size:15px">
+    ${cur ? `<audio controls src="${esc(cur.url)}" style="width:100%;margin-top:10px"></audio>` : `<p style="margin:10px 0 0;font-size:14px">No introduction made yet.</p>`}
+    <p id="introRes" style="margin:8px 0 0;font-size:14px"></p>`,
+    [{l:"Close"}, {l: cur ? "Make again" : "Make it", cls:"primary", fn:()=>{
+      if(!EL.key || !EL.voice){ $("#introRes").textContent = "Add the ElevenLabs key and choose a voice on the Play tab first."; return false; }
+      const t = $("#introTxt").value.trim(); if(!t) return false;
+      $("#introRes").textContent = "Making it…";
+      makeIntro(id, t === introText(id) && !(cur && cur.custom) ? null : t).then(()=>{ toast(`Introduction made for ${g.name}.`); render(); renderPlayer(); renderIntroPanel(); })
+        .catch(e=>toast(e.message==="key" ? "ElevenLabs didn't accept the API key." : `Couldn't make it: ${e.message}`));
+    }}]);
+}
+function introSrc(id){
+  const c = PL.cache[IK(id)], u = INTROS[id]; if(!u) return null;
+  if(c && c.url===u.url){ if(!PL.objUrls[IK(id)]) PL.objUrls[IK(id)] = URL.createObjectURL(c.blob); return PL.objUrls[IK(id)]; }
+  return u.url;
+}
+async function saveIntros(){
+  const ids = allIds().filter(id=>INTROS[id] && !(PL.cache[IK(id)] && PL.cache[IK(id)].url===INTROS[id].url)); let n = 0;
+  for(const id of ids){ try{ const r = await fetch(INTROS[id].url); if(!r.ok) continue; const blob = await r.blob();
+    const c = {k:TK(IK(id)), id:IK(id), url:INTROS[id].url, blob, savedAt:Date.now()}; await PDB.put("tracks", c); PL.cache[IK(id)] = c; n++; }catch(_){} }
+  return n;
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-intro]"); if(b){ e.preventDefault(); introDlg(b.dataset.intro); }
+});
 
 /* ---------- NGL admin uploads a track for a gymnast (e.g. a club emailed it) ----------
    Same Storage path and musicUploads record the NGL Club Hub uses, so the club sees it as done. */
@@ -602,7 +726,7 @@ const PDB = (()=>{ let dbp;
   const tx = async (st, mode, fn)=>{ const d = await open(); return new Promise((res,rej)=>{ const t=d.transaction(st,mode), o=t.objectStore(st); const out=fn(o); t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out); t.onerror=()=>rej(t.error); }); };
   return { get:(st,k)=>tx(st,"readonly",o=>o.get(k)), put:(st,v)=>tx(st,"readwrite",o=>o.put(v)), del:(st,k)=>tx(st,"readwrite",o=>o.delete(k)), all:st=>tx(st,"readonly",o=>o.getAll()) };
 })();
-const PL = { sess:null, rot:1, cur:null, played:{}, cache:{}, ann:[], playing:null, fading:false, vol:1, objUrls:{}, wake:null, ready:false };
+const PL = { introed:{}, sess:null, rot:1, cur:null, played:{}, cache:{}, ann:[], playing:null, fading:false, vol:1, objUrls:{}, wake:null, ready:false };
 const TK = id => `${D.compKey}:${id}`;
 const fmtT = s => !isFinite(s) ? "0:00" : `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
 const audio = new Audio(); audio.preload = "auto";
@@ -627,6 +751,7 @@ function status(id){
 const ST_TXT = {saved:"On laptop", online:"Online only", none:"No music", bad:"Check file"};
 const curSess = ()=> SESS.find(s=>s.key===PL.sess) || SESS[0];
 const queue = ()=> rotOf(curSess())[PL.rot] || [];
+const wantIntro = id => !!(id && introsOn() && INTROS[id] && !PL.introed[id] && !PL.played[id]);
 const firstUp = (ids, from=0)=> { for(let i=from;i<ids.length;i++) if(!ABS[ids[i]] && !PL.played[ids[i]]) return ids[i]; for(let i=from;i<ids.length;i++) if(!ABS[ids[i]]) return ids[i]; return null; };
 function nextAfter(id){ const ids = queue(), i = ids.indexOf(id); for(let j=i+1;j<ids.length;j++) if(!ABS[ids[j]]) return ids[j]; return null; }
 function renderPlayer(){
@@ -636,12 +761,12 @@ function renderPlayer(){
   $("#sessChips").innerHTML = SESS.map(x=>`<button class="chip" data-ps="${x.key}" aria-pressed="${x.key===PL.sess}">${esc(sessName(x))} <small>${esc(sessDesc(x))}</small></button>`).join("") +
     `<span style="width:12px"></span>` + Array.from({length:nrotOf(s)},(_,i)=>{ const q = rotOf(s)[i+1], done = q.filter(id=>PL.played[id]||ABS[id]).length;
       return `<button class="chip" data-pr="${i+1}" aria-pressed="${PL.rot===i+1}">Rotation ${i+1} <small>${done}/${q.length}</small></button>`; }).join("");
-  const isAnn = PL.playing && PL.playing.kind==="ann", cur = PL.playing && PL.playing.kind==="gym" ? PL.playing.id : PL.cur, g = cur && G[cur];
+  const isAnn = PL.playing && PL.playing.kind==="ann", cur = PL.playing && (PL.playing.kind==="gym"||PL.playing.kind==="intro") ? PL.playing.id : PL.cur, g = cur && G[cur];
   const pos = cur ? ids.indexOf(cur) : -1;
   if(isAnn) $("#nowCard").innerHTML = `<div class="lbl">Now playing · announcement</div><div class="nm">${esc(PL.playing.name)}</div><div class="cl">&nbsp;</div>`;
   else if(!g) $("#nowCard").innerHTML = `<div class="lbl">${esc(sessName(s))} session · Rotation ${PL.rot}</div><div class="nm">No gymnasts in this rotation</div><div class="cl">Set the floor order on the Running order tab.</div>`;
   else { const stt = status(cur);
-    $("#nowCard").innerHTML = `<div class="lbl">${PL.playing?"Now playing":"Ready"} · ${esc(sessName(s))} · Rotation ${PL.rot} · ${pos+1} of ${ids.length}</div>
+    $("#nowCard").innerHTML = `<div class="lbl">${PL.playing ? (PL.playing.kind==="intro" ? "Now playing · introduction" : "Now playing") : (wantIntro(cur) ? "Ready for introduction" : (PL.introed[cur] && INTROS[cur] ? "Introduced · Space for music" : "Ready"))} · ${esc(sessName(s))} · Rotation ${PL.rot} · ${pos+1} of ${ids.length}</div>
       <div class="nm">${esc(g.name)}</div><div class="cl">${esc(clubName(g.club))} · Level ${esc(g.level)} <span class="st ${stt}">${ST_TXT[stt]}</span>${ABS[cur]?' <span class="st none">Marked absent</span>':""}${PL.cache[cur]&&PL.cache[cur].gainDb<-0.5?` <span style="font-size:13px;opacity:.75">level ${PL.cache[cur].gainDb.toFixed(0)} dB</span>`:""}</div>`; }
   $("#nowCard").innerHTML += `<div class="row"><div class="pbar"><i id="tBar"></i></div><div class="tm" id="tTime">0:00</div></div>`;
   const nx = cur ? nextAfter(cur) : null;
@@ -656,6 +781,7 @@ function renderPlayer(){
       <span class="qc"><button class="btn small ghost" data-qabs="${id}">${ABS[id]?"Present":"Absent"}</button>${rotSelect(id, PL.rot)}${upLabel(id)}</span></div>`; }).join("")
     : `<div class="qr empty" style="display:block">No gymnasts in this rotation yet. Drag them here from another rotation's list, or set the floor order on the Running order tab.</div>`;
   $("#goBtn").disabled = !!PL.playing;
+  $("#goBtn").innerHTML = (cur && wantIntro(cur) ? "&#9654; Introduce" : "&#9654; Play music") + "<kbd>Space</kbd>";
   prepState(); tick(); updPause();
 }
 function prepState(){
@@ -681,7 +807,7 @@ async function measure(blob){
 }
 async function prepareAll(){
   const ids = Object.keys(G).filter(id=>UP[id] && status(id)!=="saved" && status(id)!=="bad");
-  if(!ids.length){ toast("Everything uploaded is already saved on this laptop."); return; }
+  if(!ids.length){ const ni = await saveIntros().catch(()=>0); toast(ni ? `${ni} introduction${ni>1?"s":""} saved on this laptop.` : "Everything uploaded is already saved on this laptop."); return; }
   PL.prepping = true; $("#prepBtn").disabled = true; let ok=0, failed=0;
   for(let i=0;i<ids.length;i++){
     const id = ids[i], u = UP[id];
@@ -694,6 +820,7 @@ async function prepareAll(){
       ok++;
     }catch(e){ console.warn(id, e); failed++; }
   }
+  const ni = await saveIntros().catch(()=>0);
   PL.prepping = false; $("#prepBtn").disabled = false; $("#prepBtn").textContent = "Save all music to this laptop";
   renderPlayer();
   if(failed && !ok) toast("The browser couldn't fetch the music. The storage bucket needs its CORS setting.");
@@ -713,6 +840,10 @@ async function play(){
   if(PL.playing){ toast("Music is already playing. Press F to fade out."); return; }
   const id = PL.cur; if(!id) return;
   if(ABS[id] && !confirm(`${G[id].name} is marked absent. Play their music anyway?`)) return;
+  if(wantIntro(id)){ const src = introSrc(id);
+    PL.playing = {kind:"intro", id};
+    try{ await startAudio(src, 1); requestWake(); }catch(e){ PL.playing = null; PL.introed[id] = true; toast("Couldn't play the introduction. Press Space for the music."); }
+    renderPlayer(); return; }
   const s = srcFor(id);
   if(!s){ toast(`No music uploaded for ${G[id].name}.`); return; }
   PL.playing = {kind:"gym", id, local:s.local};
@@ -730,6 +861,7 @@ async function playAnn(k){
 }
 function finish(advance){
   const p = PL.playing; PL.playing = null; PL.fading = false; PL.paused = false; audio.pause();
+  if(p && p.kind==="intro"){ PL.introed[p.id] = true; plSave(); renderPlayer(); return; }
   if(p && p.kind==="gym"){ PL.played[p.id] = true; if(advance){ const nx = nextAfter(p.id); PL.cur = nx || p.id; } }
   plSave(); renderPlayer();
 }
@@ -764,7 +896,7 @@ function restart(){
 function move(d){
   if(PL.playing){ toast("Fade out the music before moving on."); return; }
   const ids = queue(); let i = ids.indexOf(PL.cur);
-  for(let j=i+d; j>=0 && j<ids.length; j+=d){ if(!ABS[ids[j]]){ PL.cur = ids[j]; break; } }
+  for(let j=i+d; j>=0 && j<ids.length; j+=d){ if(!ABS[ids[j]]){ PL.cur = ids[j]; delete PL.introed[PL.cur]; break; } }
   plSave(); renderPlayer(); $("#queue .qr.cur")?.scrollIntoView({block:"nearest"});
 }
 function tick(){
@@ -800,6 +932,14 @@ $("#tab-play").addEventListener("mouseup", e=>{ const b=e.target.closest("button
 $("#goBtn").onclick = play; $("#pauseBtn").onclick = togglePause; $("#fadeBtn").onclick = fadeOut; $("#restartBtn").onclick = restart;
 $("#prevBtn").onclick = ()=>move(-1); $("#nextBtn").onclick = ()=>move(1);
 $("#prepBtn").onclick = prepareAll;
+$("#elTpl").value = EL.tpl;
+$("#elKeySave").onclick = ()=>{ const k = $("#elKey").value.trim(); if(!k) return; EL.key = k; $("#elKey").value = ""; elSave(); renderIntroPanel(); fillVoices(); };
+$("#elForget").onclick = ()=>{ EL.key = ""; elSave(); renderIntroPanel(); toast("ElevenLabs key removed from this laptop."); };
+$("#elVoice").onchange = e=>{ EL.voice = e.target.value; elSave(); renderIntroPanel(); };
+$("#elTpl").onchange = e=>{ const v = e.target.value.trim(); if(!/\{name\}/.test(v)){ toast("The wording needs {name} in it."); e.target.value = EL.tpl; return; } EL.tpl = v; elSave(); renderIntroPanel(); };
+$("#introGo").onclick = generateIntros; $("#introHear").onclick = introSample;
+$("#introOn").onchange = e=>{ try{ localStorage.setItem("nglmusic:introsOn", e.target.checked?"1":"0"); }catch(_){} renderPlayer(); };
+if(EL.key) fillVoices();
 $("#vol").oninput = e=>{ PL.vol = e.target.value/100; if(PL.playing && !PL.fading) audio.volume = Math.min(1, PL.vol*(PL.gain||1)); plSave(); };
 $("#sessChips").addEventListener("click", e=>{
   const b = e.target.closest("[data-ps],[data-pr]"); if(!b) return;
