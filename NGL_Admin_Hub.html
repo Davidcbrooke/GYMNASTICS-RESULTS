@@ -107,6 +107,16 @@ main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
 .whosel.Dave{background:#e4eefb;color:#0b4f86;border-color:#c8dbf3}.whosel.Christine{background:#fbe7f1;color:#9b1c5c;border-color:#f2c6dc}.whosel.Claude{background:#efe9fb;color:#5a3a9a;border-color:#dccff5}
 .ti .tedit{display:block;height:auto;width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 9px;margin-bottom:6px}
 .tbtns{display:flex;gap:6px}
+.todo-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px}
+.tt{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-weight:600;font-size:13.5px;color:var(--navy);display:flex;gap:7px;align-items:center}
+.tt b{background:#eef0f5;border-radius:999px;padding:0 7px;font-size:12px}
+.tt.on{background:var(--navy);color:#fff;border-color:var(--navy)}.tt.on b{background:rgba(255,255,255,.2)}
+.tt.has-late b{background:var(--red);color:#fff}
+.due{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:1px;background:#eef0f5;color:var(--muted)}
+.due.soon{background:#fdf3dc;color:#8a5a00}.due.today{background:#fde2b8;color:#7a4a00}.due.late{background:var(--red);color:#fff}
+.tdl{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:6px}.ti .tdate{width:auto;margin:0}
+.linkb{background:none;border:0;padding:0;color:var(--navy-2);text-decoration:underline;font-size:inherit}
+.todo-add input[type=date]{flex:0 0 auto;min-width:0}
 @media(max-width:560px){.ti{grid-template-columns:24px 1fr}.tact{grid-column:2}}
 .todo-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 .todo-add input{flex:1;min-width:200px;width:auto;margin:0;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
@@ -232,8 +242,10 @@ td input[type=checkbox]{width:18px;height:18px}
     <button type="button" class="newstrip hidden" id="newStrip"></button>
     <section class="todo hidden" id="todo">
       <div class="todo-h"><h3>To do</h3><span id="todoCount"></span><label class="todo-show"><input type="checkbox" id="todoShowDone"> Show done</label></div>
+      <div class="todo-tabs" id="todoTabs" role="tablist" aria-label="Which to-dos"></div>
       <div id="todoList"></div>
       <form class="todo-add" id="todoAdd"><input id="todoText" placeholder="Add something to do" aria-label="New to-do" autocomplete="off">
+        <input type="date" id="todoDue" aria-label="Due date" title="Due date (optional)">
         <select id="todoWho" aria-label="Who"><option value="">Anyone</option><option>Dave</option><option>Christine</option><option>Claude</option></select>
         <button class="btn primary" type="submit">Add</button></form>
     </section>
@@ -765,19 +777,38 @@ async function todoChange(fn){
   try{ await db.runTransaction(async tx => { const d = await tx.get(TODO_REF()); const items = (d.exists && d.data().items) || []; fn(items); tx.set(TODO_REF(), {items, updatedAt:firebase.firestore.FieldValue.serverTimestamp()}, {merge:true}); }); }
   catch(e){ console.error(e); toast("Not saved: check the connection."); }
 }
+/* Today = due today or overdue; Next 7 days = due within a week (including today); All = everything */
+const tdISO = d => { const z = new Date(d); z.setMinutes(z.getMinutes()-z.getTimezoneOffset()); return z.toISOString().slice(0,10); };
+const tdToday = () => tdISO(new Date()), tdIn = n => { const d = new Date(); d.setDate(d.getDate()+n); return tdISO(d); };
+const TODO_VIEWS = [["today","Today", x => x.due && x.due <= tdToday()], ["week","Next 7 days", x => x.due && x.due <= tdIn(7)], ["all","All", () => true]];
+let todoView = (()=>{ try{ return localStorage.getItem("nglTodoView") || "today"; }catch(_){ return "today"; } })();
+function dueLabel(x){
+  if(!x.due) return "";
+  const d0 = new Date(tdToday()+"T00:00:00"), d = new Date(x.due+"T00:00:00"), n = Math.round((d-d0)/864e5);
+  if(x.done) return `<span class="due">${d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}</span>`;
+  if(n < 0) return `<span class="due late">${-n} day${n===-1?"":"s"} overdue</span>`;
+  if(n === 0) return `<span class="due today">Today</span>`;
+  if(n === 1) return `<span class="due soon">Tomorrow</span>`;
+  return `<span class="due ${n<=7?"soon":""}">${d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}</span>`;
+}
 function renderTodo(){
   const show = $("#todoShowDone").checked, open = TODO.filter(x=>!x.done);
   $("#todoCount").textContent = open.length ? `${open.length} to do` : "All done";
-  const list = TODO.filter(x => show || !x.done);
+  $("#todoTabs").innerHTML = TODO_VIEWS.map(([k,l,f]) => { const n = open.filter(f).length;
+    return `<button type="button" role="tab" class="tt ${k===todoView?"on":""} ${k==="today"&&open.some(x=>x.due&&x.due<tdToday())?"has-late":""}" data-todoview="${k}" aria-selected="${k===todoView}">${l}<b>${n}</b></button>`; }).join("");
+  const vf = (TODO_VIEWS.find(v=>v[0]===todoView) || TODO_VIEWS[2])[2];
+  const list = TODO.filter(x => (show || !x.done) && (x.done ? show : vf(x)))
+    .sort((a,b) => (!!a.done - !!b.done) || ((a.due||"9999") < (b.due||"9999") ? -1 : (a.due||"9999") > (b.due||"9999") ? 1 : 0) || ((a.addedAt||0)-(b.addedAt||0)));
   $("#todoList").innerHTML = list.length ? list.map(x => todoEditing===x.id ? `<div class="ti edit">
       <span></span>
       <div class="tx"><input class="tedit" id="teT" value="${esc(x.t)}" aria-label="To-do"><input class="tedit" id="teN" value="${esc(x.n||"")}" placeholder="Details (optional)" aria-label="Details">
+        <label class="tdl">Due <input type="date" class="tedit tdate" id="teD" value="${esc(x.due||"")}"></label>
         <div class="tbtns"><button class="btn primary small" data-todosave="${esc(x.id)}">Save</button><button class="btn small" data-todocancel="1">Cancel</button></div></div>
       <span></span></div>` : `<div class="ti ${x.done?"done":""}">
       <input type="checkbox" data-todo="${esc(x.id)}" ${x.done?"checked":""} aria-label="Done: ${esc(x.t)}">
-      <div class="tx"><b>${esc(x.t)}</b>${x.n?`<small>${esc(x.n)}</small>`:""}${x.done?`<small>Done by ${esc(x.doneBy||"")}${x.doneAt?` on ${new Date(x.doneAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}`:""}</small>`:""}</div>
+      <div class="tx"><b>${esc(x.t)}</b>${dueLabel(x)}${x.n?`<small>${esc(x.n)}</small>`:""}${x.done?`<small>Done by ${esc(x.doneBy||"")}${x.doneAt?` on ${new Date(x.doneAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}`:""}</small>`:""}</div>
       <div class="tact">${whoSelect(x.id, x.who)}<button class="ed" data-todoedit="${esc(x.id)}" title="Edit" aria-label="Edit ${esc(x.t)}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></button><button class="x" data-todox="${esc(x.id)}" title="Remove" aria-label="Remove ${esc(x.t)}">&times;</button></div></div>`).join("")
-    : `<p style="margin:6px 0;color:var(--muted)">Nothing to do. Add something below.</p>`;
+    : `<p style="margin:6px 0;color:var(--muted)">${todoView==="today" ? "Nothing due today." : todoView==="week" ? "Nothing due in the next 7 days." : "Nothing to do. Add something below."}${todoView!=="all" ? ` <button class="linkb" data-todoview="all">See all</button>` : ""}</p>`;
 }
 document.addEventListener("change", e => {
   if(e.target.id==="todoShowDone"){ renderTodo(); return; }
@@ -787,10 +818,11 @@ document.addEventListener("change", e => {
   todoChange(items => { const x = items.find(i=>i.id===id); if(!x) return; if(on){ x.done = true; x.doneBy = by; x.doneAt = Date.now(); } else { delete x.done; delete x.doneBy; delete x.doneAt; } });
 });
 document.addEventListener("click", e => {
+  const tv = e.target.closest("[data-todoview]"); if(tv){ todoView = tv.dataset.todoview; try{ localStorage.setItem("nglTodoView", todoView); }catch(_){} renderTodo(); return; }
   const ed = e.target.closest("[data-todoedit]"); if(ed){ todoEditing = ed.dataset.todoedit; renderTodo(); const f = $("#teT"); if(f){ f.focus(); f.select(); } return; }
   if(e.target.closest("[data-todocancel]")){ todoEditing = null; renderTodo(); return; }
-  const sv = e.target.closest("[data-todosave]"); if(sv){ const id = sv.dataset.todosave, t = $("#teT").value.trim(), n = $("#teN").value.trim(); if(!t) return;
-    todoEditing = null; todoChange(items => { const x = items.find(i=>i.id===id); if(x){ x.t = t; if(n) x.n = n; else delete x.n; } }); renderTodo(); return; }
+  const sv = e.target.closest("[data-todosave]"); if(sv){ const id = sv.dataset.todosave, t = $("#teT").value.trim(), n = $("#teN").value.trim(), du = $("#teD").value; if(!t) return;
+    todoEditing = null; todoChange(items => { const x = items.find(i=>i.id===id); if(x){ x.t = t; if(n) x.n = n; else delete x.n; if(du) x.due = du; else delete x.due; } }); renderTodo(); return; }
   const b = e.target.closest("[data-todox]"); if(!b) return;
   if(b.dataset.sure!=="1"){ b.dataset.sure = "1"; b.textContent = "Remove?"; b.style.fontSize = "12px"; setTimeout(()=>{ if(b.isConnected){ b.dataset.sure=""; b.innerHTML="&times;"; b.style.fontSize=""; } }, 3000); return; }
   todoChange(items => { const i = items.findIndex(x=>x.id===b.dataset.todox); if(i>-1) items.splice(i,1); });
@@ -803,7 +835,8 @@ document.addEventListener("keydown", e => {
 document.addEventListener("submit", e => {
   if(e.target.id!=="todoAdd") return; e.preventDefault();
   const t = $("#todoText").value.trim(); if(!t) return;
-  const item = {id:todoId(), t, who:$("#todoWho").value, addedBy:(ME && (ME.name||ME.email)) || "", addedAt:Date.now()};
+  const due = $("#todoDue").value; $("#todoDue").value = "";
+  const item = {id:todoId(), t, who:$("#todoWho").value, ...(due ? {due} : {}), addedBy:(ME && (ME.name||ME.email)) || "", addedAt:Date.now()};
   $("#todoText").value = "";
   todoChange(items => items.push(item));
 });
