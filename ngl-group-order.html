@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NGL Group Order · Staff T-shirt</title>
+<title>NGL Group Order · Club Hub</title>
+<link rel="icon" type="image/png" sizes="32x32" href="https://club.nationalgymnasticsleague.co.uk/icons/club-hub-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="https://club.nationalgymnasticsleague.co.uk/icons/club-hub-64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://club.nationalgymnasticsleague.co.uk/icons/club-hub-192.png">
+<link rel="apple-touch-icon" href="https://club.nationalgymnasticsleague.co.uk/icons/club-hub-apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <script>/* ?embed=1: inside the NGL Club Hub (no page header). ?admin: the NGL Admin view of the orders. */
@@ -76,6 +80,8 @@ h1,h2,h3{font-family:var(--cond);letter-spacing:.01em;margin:0}
 .views{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .view{background:#eef1f7;border-radius:12px;padding:8px 6px 4px;text-align:center}
 .view svg{width:100%;height:auto;display:block}
+.view{background:#fff;border:1px solid var(--line)}
+.view .shot{width:100%;aspect-ratio:1;object-fit:contain;display:block;border-radius:8px}
 .view span{font:700 11px var(--font);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .prod h2{font-size:24px;color:var(--navy);margin-top:14px}
 .prod ul{margin:8px 0 0;padding-left:18px;color:var(--muted)}
@@ -154,6 +160,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .ftr{text-align:center;color:var(--muted);font-size:13px;margin-top:28px}
 html.embed .hub-top,html.embed .ftr{display:none}
 html.embed body{background:transparent}
+html.embed .wrap{padding-top:6px}
+html.embed .sticky{position:static}
 </style>
 </head>
 <body>
@@ -194,8 +202,8 @@ html.embed body{background:transparent}
     <div class="grid">
       <aside class="card prod sticky">
         <div class="views">
-          <div class="view"><svg id="svgFront" viewBox="0 0 300 300" role="img" aria-label="Front"></svg><span>Front</span></div>
-          <div class="view"><svg id="svgBack" viewBox="0 0 300 300" role="img" aria-label="Back"></svg><span>Back</span></div>
+          <div class="view"><img class="shot" id="imgFront" alt="" hidden><svg id="svgFront" viewBox="0 0 300 300" role="img" aria-label="Front"></svg><span>Front</span></div>
+          <div class="view"><img class="shot" id="imgBack" alt="" hidden><svg id="svgBack" viewBox="0 0 300 300" role="img" aria-label="Back"></svg><span>Back</span></div>
         </div>
         <h2 id="pName"></h2>
         <ul id="pPoints"></ul>
@@ -327,19 +335,31 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 // product ordered by all clubs in the round. price: null shows "£TBC". The first band is the starting
 // price, the most anyone can pay.
 const PRODUCTS = [
-  { id:'JC001', name:'Staff T-shirt', full:'NGL Staff T-shirt · Sports style', unit:'shirt', units:'shirts', shape:'tee',
+  { id:'JC001', name:'Staff T-shirt', full:'NGL Staff T-shirt · AWDis Cool T (JC001)', unit:'shirt', units:'shirts', shape:'tee',
     blurb:'Sports style · your club logo',
-    points:['Lightweight, quick-drying sports fabric','<b>Included:</b> your club logo on the front, left chest','<b>Optional extra:</b> two lines of text or a logo across the back','Adult sizes XS to 5XL'],
+    points:['Lightweight, quick-drying sports fabric','<b>Included:</b> your club logo on the front, left chest','<b>Optional extra:</b> two lines of text or a logo across the back','Adult sizes XS to 5XL', 'All 52 AWDis Cool T colours'],
     photo:'images/groupbuy/ngl-tshirt-front-back.jpg', caption:'Example: front logo position, and two lines on the back',
     bands:[{from:1,price:null},{from:50,price:null},{from:100,price:null},{from:250,price:null},{from:500,price:null}],
     backPrice:null, sleevePrice:null, sleeve:false,
     sizes:['XS','S','M','L','XL','2XL','3XL','4XL','5XL'],
-    colourHint:'Need a different colour? There are 42 to choose from. Pick the closest and tell us in the notes.',
-    colours:[['French Navy','#1d2a4a'],['Jet Black','#1b1b1d'],['Arctic White','#ffffff'],['Royal Blue','#1f4fa8'],
-      ['Sapphire Blue','#0f6fc6'],['Sky Blue','#7fb8e6'],['Turquoise','#13a7b5'],['Fire Red','#c8202f'],
-      ['Burgundy','#6e1d2e'],['Hot Pink','#e8559a'],['Orange Crush','#f07b1e'],['Sun Yellow','#f8d438'],
-      ['Kelly Green','#21944a'],['Bottle Green','#1f4d36'],['Purple','#5b2d86'],['Charcoal','#3c3f45'],['Heather Grey','#a9adb4']] },
-  { id:'QZIP', name:'Quarter Zip', full:'NGL Staff Quarter Zip', unit:'quarter zip', units:'quarter zips', shape:'zip',
+    colourHint:'All 52 colours. Click a colour to see the real shirt.',
+    // [name, swatch colour, second colour (two-tone), maker's colour code for the product photos]
+    img: (code, side) => `https://catalogue.fullcollection.com/storage/phoenix/2026/Phoenix%20All%20Images/Just%20Cool/Product%20Images/JC001/ProductCarouselMain/JC001%20${code}%20${side}.jpg`,
+    colours:[
+      ['French Navy', '#0d1626', null, 'FNA'],['Jet Black', '#171c21', null, 'JBK'],['Arctic White', '#ffffff', null, 'ACW'],['Desert Sand', '#c8b48a', null, 'DSN'],
+      ['Vanilla', '#f0e8d6', null, 'VAN'],['Hawaiian Blue', '#2fb8d9', null, 'HWB'],['Sky Blue', '#8bd8eb', null, 'SKY'],['Airforce Blue', '#31637f', null, 'AIR'],
+      ['Seafoam', '#61bbaa', null, 'SEF'],['Ink Blue', '#173f61', null, 'IKB'],['Reflex Blue', '#0034cd', null, 'RBL'],['Oxford Navy', '#141c3c', null, 'OXN'],
+      ['Royal Blue', '#1f4fd0', null, 'ROY'],['Cornflower', '#49a9ed', null, 'COR'],['Sapphire Blue', '#1e9fe0', null, 'SAP'],['Turquoise Blue', '#14b3c4', null, 'TUR'],
+      ['Digital Lavender', '#9a90f0', null, 'DTL'],['Magenta Magic', '#a03cc8', null, 'MMG'],['Plum', '#4a1f4f', null, 'PLU'],['Purple', '#4b2a8c', null, 'PUR'],
+      ['Melon Green', '#b7eda4', null, 'MEL'],['Mint', '#9ef5d9', null, 'MIN'],['Sour Green', '#3ee8a0', null, 'SOU'],['Earthy Green', '#476240', null, 'ERG'],
+      ['Jade', '#059967', null, 'JAD'],['Bottle Green', '#0f3d1f', null, 'BOT'],['Kelly Green', '#1fa22e', null, 'KEL'],['Lime Green', '#8ee000', null, 'LIM'],
+      ['Combat Green', '#3b4a2e', null, 'CBG'],['Olive Green', '#5b5a2e', null, 'OLI'],['Citrus', '#c2fa0f', null, 'CIT'],['Electric Green', '#7dff26', null, 'ELG'],
+      ['Ash', '#e1e6e1', null, 'ASH'],['Charcoal', '#3a3f44', null, 'CHA'],['Heather Grey', '#9ca6a6', null, 'HEA'],['Hot Chocolate', '#3e2723', null, 'HOC'],
+      ['Fire Red', '#e0102e', null, 'FIR'],['Red Hot Chilli', '#a3142e', null, 'RHC'],['Burgundy', '#6e1d2e', null, 'BUR'],['Baby Pink', '#ffc2e6', null, 'BPI'],
+      ['Dusty Pink', '#ce6ead', null, 'DYP'],['Hot Pink', '#f02aa8', null, 'HPK'],['Hyper Pink', '#ff12ff', null, 'HYP'],['Electric Pink', '#ff47ff', null, 'EPI'],
+      ['Peach Sorbet', '#ff8791', null, 'PES'],['Orange Crush', '#ff6308', null, 'OCR'],['Orange Flame', '#ff3b24', null, 'ORF'],['Electric Orange', '#ff6600', null, 'EOR'],
+      ['Sherbet Lemon', '#fff25c', null, 'SHL'],['Sun Yellow', '#ffe000', null, 'SNY'],['Gold', '#ff9600', null, 'GOL'],['Electric Yellow', '#cffa03', null, 'EYL']] },
+  { id:'LV874', name:'Quarter Zip', full:'NGL Staff Quarter Zip · Finden + Hales LV874', unit:'quarter zip', units:'quarter zips', shape:'zip',
     blurb:'Long sleeve · your club logo',
     points:['Warm, smart quarter-zip sweatshirt','<b>Included:</b> your club logo on the front, left chest','<b>Optional extras:</b> two lines of text or a logo across the back, and a line of text down the left sleeve','Adult sizes XXS to 3XL (chest 32 to 52 inches)'],
     photo:'images/groupbuy/ngl-quarter-zip-side-front-back.jpg', caption:'Example: sleeve text, front logo position, and the back',
@@ -347,11 +367,12 @@ const PRODUCTS = [
     backPrice:null, sleevePrice:null, sleeve:true,
     sizes:['XXS','XS','S','M','L','XL','XXL','3XL'],
     chest:{XXS:'32/34',XS:'34/36',S:'36/38',M:'38/40',L:'42',XL:'44/46',XXL:'48','3XL':'50/52'},   // chest to fit, inches
-    colourHint:'Two-colour options have the second colour on the collar and cuffs.',
-    // two-colour tops: [name, main colour, second colour on the collar and cuffs]
-    colours:[['Black','#141414'],['Black/Emerald','#141414','#1d8a3c'],['Black/Gold','#141414','#f5a00f'],['Black/Gunmetal','#141414','#454b51'],
-      ['Black/Red','#141414','#e3001b'],['Black/White','#141414','#ffffff'],['Navy','#0e1a45'],['Navy/Royal Blue','#0e1a45','#1450d0'],
-      ['Navy/Sky Blue','#0e1a45','#73c8f5'],['Navy/White','#0e1a45','#ffffff'],['Burgundy','#8b2332']] }
+    colourHint:'Finden + Hales LV874. Click a colour to see the real top.',
+    img: (code, side) => `https://catalogue.fullcollection.com/storage/phoenix/2026/Phoenix%20All%20Images/Finden%20%26%20Hales/Product%20Images/LV874/ProductCarouselMain/LV874%20${code}%20${side}.jpg`,
+    colours:[
+      ['Black', '#000000', null, 'BLK'],['Black/Emerald', '#000000', '#1c8b38', 'BK%252fEM'],['Black/Gold', '#000000', '#ffa312', 'BK%252fGO'],['Black/Gunmetal', '#000000', '#445156', 'BK%252fGT'],
+      ['Black/Red', '#000000', '#f5002f', 'BK%252fRD'],['Black/White', '#000000', '#ffffff', 'BK%252fWH'],['Navy', '#0c184a', null, 'NAV'],['Navy/Royal Blue', '#0c184a', '#0746d9', 'NV%252fRY'],
+      ['Navy/Sky Blue', '#0c184a', '#75cfff', 'NV%252fSK'],['Navy/White', '#0c184a', '#ffffff', 'NV%252fWH'],['Burgundy', '#8b2332', null, 'BG_BG']] }
 ];
 const CLOSE_MONTHS = [2,5,8,11];  // orders close on the last day of Feb, May, Aug and Nov at 11:59pm
 const ADMIN_HUB = 'NGL_Admin_Hub.html?section=groupbuy';
@@ -456,7 +477,19 @@ function garmentSvg(side){
           ${c2 && sh.zip ? `<path d="M108 22 L192 22 L192 40 C178 50 164 54 150 54 C136 54 122 50 108 40 Z" fill="${c2}" stroke="${edge}" stroke-width="1.5"/>
             <path d="M21 242 L51 248 L50 258 L20 252 Z M279 242 L249 248 L250 258 L280 252 Z" fill="${c2}" stroke="${edge}" stroke-width="1.5"/>` : ''}${art}`;
 }
-function drawGarment(){ $('#svgFront').innerHTML = garmentSvg('front'); $('#svgBack').innerHTML = garmentSvg('back'); }
+function drawGarment(){
+  $('#svgFront').innerHTML = garmentSvg('front'); $('#svgBack').innerHTML = garmentSvg('back');
+  // The maker's own photo of the chosen colour; the drawing shows only if a photo can't load
+  [['#imgFront','#svgFront','FRONT'],['#imgBack','#svgBack','BACK']].forEach(([im, sv, side]) => {
+    const img = $(im), code = S.colour[3], url = code && P().img ? P().img(code, side) : '';
+    if (!url){ img.hidden = true; $(sv).style.display = ''; return; }
+    if (img.dataset.url === url) return;
+    img.dataset.url = url; img.alt = `${S.colour[0]} ${P().name.toLowerCase()}, ${side.toLowerCase()}`;
+    img.onload = () => { if (img.dataset.url !== url) return; img.hidden = false; $(sv).style.display = 'none'; };
+    img.onerror = () => { if (img.dataset.url !== url) return; img.hidden = true; $(sv).style.display = ''; };
+    img.src = url;
+  });
+}
 
 /* ---------- form ---------- */
 $('#prods').innerHTML = PRODUCTS.map((p, i) => `<button type="button" class="pc" role="radio" aria-checked="${i === 0}" data-pid="${p.id}"><img src="${p.photo}" alt=""><b>${esc(p.name)}</b><small>From ${money(p.bands[0].price)} each, logo included</small></button>`).join('');
@@ -631,5 +664,13 @@ function csv(name, rows){
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + t], { type:'text/csv' })); a.download = name; a.click();
 }
 </script>
+<script>/* Opened from the NGL Club Hub: fill in the club's details (?club=&email=&contact=) and tell the hub how tall this page is */
+(function(){ try{ var q = new URLSearchParams(location.search), set = function(id, v){ var el = document.getElementById(id); if(v && el && !el.value) el.value = v; };
+  set('club', q.get('club')); set('email', q.get('email')); set('contact', q.get('contact')); }catch(e){}
+  if(!document.documentElement.classList.contains('embed') || parent === window) return;
+  var last = 0; function send(){ var h = Math.ceil(document.body.getBoundingClientRect().height) + 24; if(Math.abs(h - last) > 2){ last = h; try{ parent.postMessage({nglMerchHeight:h}, '*'); }catch(e){} } }
+  try{ new ResizeObserver(send).observe(document.body); }catch(e){ setInterval(send, 800); }
+  window.addEventListener('load', send); document.addEventListener('click', function(){ setTimeout(send, 60); });
+})();</script>
 </body>
 </html>
