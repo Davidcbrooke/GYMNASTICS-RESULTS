@@ -117,6 +117,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .sizes{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
 .sz{border:1px solid var(--line);border-radius:10px;padding:6px 6px 8px;text-align:center;background:#fff}
 .sz.on{border-color:var(--navy);background:#eef1f7}
+.szgrp{grid-column:1/-1;font:700 13px var(--font);color:var(--navy);margin-top:4px}.szgrp small{color:var(--muted);font-weight:600;margin-left:6px}
 .sz .chest{display:block;font-size:11px;color:var(--muted);margin-top:-2px}
 .sz b{display:block;font:800 15px var(--cond);color:var(--navy)}
 .sz input{text-align:center;padding:6px 4px;margin-top:4px}
@@ -152,6 +153,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .hidden{display:none!important}
 
 /* ---- admin ---- */
+.cl-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 12px}
+@media(max-width:820px){.cl-steps{grid-template-columns:1fr 1fr}}
+.cl-steps>div{background:#f6f7fb;border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.cl-steps>div>span{color:var(--muted)}.cl-steps b{color:var(--navy)}.cl-steps .abtn{align-self:flex-start;margin-top:auto}
+.cl-p.ok{color:#1f7a4d}.cl-p.no{color:var(--red)}
+.cl-st{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:700;background:#eef1f7;color:var(--navy)}
+.cl-st.invoiced{background:#fff4d6;color:#7a5a00}.cl-st.paid{background:#e3f5e8;color:#1f7a4d}.cl-st.sent{background:#14254a;color:#fff}.cl-st.late{background:var(--red);color:#fff}
+.cl-act{white-space:nowrap}.cl-act .abtn{margin:2px 4px 2px 0;padding:6px 11px;font-size:13px}.abtn:disabled{opacity:.45;cursor:default}
 .admin{display:none}
 html.adminmode .admin{display:block}
 html.adminmode .shop{display:none}
@@ -201,7 +210,7 @@ html.embed .sticky{position:static}
       <span class="closes" id="closes"></span>
     </div>
     <div id="boardRows"></div>
-    <p class="board-note">Each product has its own bands. The final price is fixed when the order closes, and every club pays the same price. Prices exclude VAT.</p>
+    <p class="board-note">Each product has its own bands. The final price is fixed when the order closes, and every club pays the same price. Prices exclude VAT, which applies to adult sizes only.</p>
     <p class="board-err hidden" id="bErr"></p>
   </section>
 
@@ -211,7 +220,7 @@ html.embed .sticky{position:static}
       <div class="how" style="--c:#E8559A"><b>1. Place your order</b><span>Colour, sizes, your logo and delivery address.</span></div>
       <div class="how" style="--c:#0071B3"><b>2. Watch the price drop</b><span>As other clubs order, the total climbs through the bands.</span></div>
       <div class="how" style="--c:#01AFB8"><b>3. Order closes</b><span id="howClose">The final price is fixed on the closing date.</span></div>
-      <div class="how" style="--c:#3BAA4A"><b>4. Pay and we print</b><span>We invoice you at the final price, then it all goes to print.</span></div>
+      <div class="how" style="--c:#3BAA4A"><b>4. Pay and we print</b><span>We email your invoice at the final price. Pay within 7 days by bank transfer and your order goes to print.</span></div>
     </div>
 
     <div class="grid">
@@ -332,6 +341,7 @@ html.embed .sticky{position:static}
           <button class="abtn primary" id="aCsv" type="button">Download orders (CSV)</button>
           <button class="abtn" id="aSupplier" type="button">Download supplier sheet (CSV)</button>
         </div>
+        <div class="card" id="aClose" style="margin:6px 0 18px;border-color:var(--red)"></div>
         <h3 style="color:var(--navy);margin:8px 0">Supplier totals: product, colour and size</h3>
         <div class="scroll" id="aTotals"></div>
         <h3 style="color:var(--navy);margin:18px 0 8px">Every order</h3>
@@ -345,7 +355,7 @@ html.embed .sticky{position:static}
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, doc, onSnapshot, writeBatch, increment, serverTimestamp, query, where, getDocs, getDoc }
+import { getFirestore, collection, doc, onSnapshot, writeBatch, increment, serverTimestamp, query, where, getDocs, getDoc, updateDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
@@ -357,11 +367,12 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 const PRODUCTS = [
   { id:'JC001', name:'Staff T-shirt', full:'NGL Staff T-shirt · AWDis Cool T (JC001)', unit:'shirt', units:'shirts', shape:'tee',
     blurb:'Sports style · your club logo',
-    points:['Lightweight, quick-drying sports fabric','<b>Included:</b> your club logo on the front, left chest','<b>Optional extra:</b> two lines of text or a logo across the back','Adult sizes XS to 5XL', 'All 52 AWDis Cool T colours'],
+    points:['Lightweight, quick-drying sports fabric','<b>Included:</b> your club logo on the front, left chest','<b>Optional extra:</b> two lines of text or a logo across the back','Adult sizes XS to 5XL, and children’s sizes 3/4 to 12/13 (no VAT on children’s sizes)', 'All 52 AWDis Cool T colours'],
     photo:'images/groupbuy/ngl-tshirt-front-back.jpg', caption:'Example: front logo position, and two lines on the back',
     bands:[{from:1,price:7.45},{from:100,price:6.69},{from:200,price:5.74},{from:500,price:4.95}],
     backPrice:{text:2.00, logo:2.65}, sleevePrice:null, sleeve:false,
     sizes:['XS','S','M','L','XL','2XL','3XL','4XL','5XL'],
+    kidsSizes:['3/4','5/6','7/8','9/11','12/13'],   // children's Cool T (JC001J), same price, no VAT
     colourHint:'All 52 colours. Click a colour to see the real shirt.',
     // [name, swatch colour, second colour (two-tone), maker's colour code for the product photos]
     img: (code, side) => `https://catalogue.fullcollection.com/storage/phoenix/2026/Phoenix%20All%20Images/Just%20Cool/Product%20Images/JC001/ProductCarouselMain/JC001%20${code}%20${side}.jpg`,
@@ -395,6 +406,7 @@ const PRODUCTS = [
       ['Navy/Sky Blue', '#0c184a', '#75cfff', 'NV%252fSK'],['Navy/White', '#0c184a', '#ffffff', 'NV%252fWH'],['Burgundy', '#8b2332', null, 'BG_BG']] }
 ];
 const MIN_TOTAL = 50;      // each product's order goes ahead once all clubs together reach this many
+const VAT_RATE = 0.20;     // on adult garments, and the adult share of set-up and delivery; children's sizes are zero-rated
 const SETUP_FEE = 25;      // one-off logo set-up per club, first order only
 const DELIVERY_FEE = 20;   // delivery to each club, once per club per order round
 const CLOSE_MONTHS = [2,5,8,11];  // orders close on the last day of Feb, May, Aug and Nov at 11:59pm
@@ -415,6 +427,8 @@ const money = p => p == null ? '£TBC' : '£' + Number(p).toFixed(2);
 const fmtDate = d => d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 const prodOf = id => PRODUCTS.find(p => p.id === id) || PRODUCTS[0];
 const plural = (p, n) => n === 1 ? p.unit : p.units;
+const allSizes = p => p.sizes.concat(p.kidsSizes || []);
+const isKid = (p, z) => (p.kidsSizes || []).includes(z);
 
 /* ---------- order rounds ---------- */
 function closeOf(y, m){ return new Date(y, m, 0, 23, 59, 59); }   // last day of month m (1-12)
@@ -541,7 +555,8 @@ function setProduct(pid){
   $('#swatches').innerHTML = p.colours.map(([n, c, c2], i) => `<button type="button" class="sw" role="radio" aria-checked="${n === S.colour[0]}" aria-label="${n}" title="${n}" data-i="${i}" style="background:${c2 ? `linear-gradient(180deg,${c} 50%,${c2} 50%)` : c};--ck:${lum(c) > 0.6 ? '#14254a' : '#fff'}"></button>`).join('');
   $('#colName').textContent = S.colour[0];
   const keep = sizesNow();
-  $('#sizes').innerHTML = p.sizes.map(z => `<label class="sz ${keep[z] ? 'on' : ''}"><b>${z}</b>${p.chest ? `<small class="chest">${p.chest[z]}"</small>` : ''}<input type="number" min="0" max="500" step="1" inputmode="numeric" value="${keep[z] || 0}" data-size="${z}" aria-label="How many ${z}"></label>`).join('');
+  const box = z => `<label class="sz ${keep[z] ? 'on' : ''}"><b>${z}</b>${p.chest ? `<small class="chest">${p.chest[z]}"</small>` : isKid(p, z) ? '<small class="chest">years</small>' : ''}<input type="number" min="0" max="500" step="1" inputmode="numeric" value="${keep[z] || 0}" data-size="${z}" aria-label="How many ${z}${isKid(p, z) ? ' years' : ''}"></label>`;
+  $('#sizes').innerHTML = p.kidsSizes ? `<div class="szgrp">Adult sizes <small>+ VAT</small></div>${p.sizes.map(box).join('')}<div class="szgrp">Children’s sizes <small>no VAT</small></div>${p.kidsSizes.map(box).join('')}` : p.sizes.map(box).join('');
   document.querySelectorAll('[data-back-price]').forEach(s => s.textContent = '+' + money(p.backPrice[s.dataset.backPrice]) + ' each');
   $('#sleevePrice').textContent = '+' + money(p.sleevePrice) + ' each';
   $('#sleeveStep').classList.toggle('hidden', !p.sleeve);
@@ -582,17 +597,28 @@ function eachPrice(){
   return parts.some(x => x == null) ? null : parts.reduce((a, b) => a + b, 0);
 }
 const setupNow = () => S.setup === 'first' ? SETUP_FEE : 0;
+// Adult garments carry VAT; children's sizes don't. Set-up and delivery take VAT in proportion to the adult share.
+function priceOrder(p, sizes, back, sleeveOn, setup, unit){
+  const sz = Object.entries(sizes), kid = sz.filter(([z]) => isKid(p, z)).reduce((a, [, n]) => a + n, 0), adult = sz.reduce((a, [, n]) => a + n, 0) - kid;
+  const extra = (back !== 'none' ? p.backPrice[back] : 0) + (sleeveOn ? p.sleevePrice : 0), each = unit + extra;
+  const adultNet = adult * each, kidNet = kid * each, share = adultNet + kidNet ? adultNet / (adultNet + kidNet) : 1;
+  const fees = setup + DELIVERY_FEE, net = adultNet + kidNet + fees, vat = VAT_RATE * (adultNet + fees * share);
+  return { adult, kid, each, net, vat, total: net + vat };
+}
 function summary(){
-  const p = P(), q = qtyNow(), each = eachPrice(), setup = setupNow();
-  const total = each == null ? null : each * q + setup + DELIVERY_FEE;
+  const p = P(), setup = setupNow(), sleeveOn = p.sleeve && S.sleeve !== 'none';
+  const r = priceOrder(p, sizesNow(), S.back, sleeveOn, setup, p.bands[0].price);
   $('#summary').innerHTML = `
-    <div class="ln"><span>${q} × ${esc(S.colour[0])} ${esc(p.name.toLowerCase())}, front logo</span><span>${money(p.bands[0].price)} each</span></div>
+    ${r.adult || !r.kid ? `<div class="ln"><span>${r.adult} × ${esc(S.colour[0])} ${esc(p.name.toLowerCase())}${p.kidsSizes ? ', adult sizes' : ''}, front logo</span><span>${money(p.bands[0].price)} each</span></div>` : ''}
+    ${r.kid ? `<div class="ln"><span>${r.kid} × ${esc(S.colour[0])} ${esc(p.name.toLowerCase())}, children’s sizes (no VAT)</span><span>${money(p.bands[0].price)} each</span></div>` : ''}
     ${S.back !== 'none' ? `<div class="ln"><span>Back print: ${S.back === 'text' ? 'two lines of text' : 'logo'}</span><span>+${money(p.backPrice[S.back])} each</span></div>` : ''}
-    ${p.sleeve && S.sleeve !== 'none' ? `<div class="ln"><span>Sleeve text</span><span>+${money(p.sleevePrice)} each</span></div>` : ''}
+    ${sleeveOn ? `<div class="ln"><span>Sleeve text</span><span>+${money(p.sleevePrice)} each</span></div>` : ''}
     ${setup ? `<div class="ln"><span>Logo set-up (first order only)</span><span>${money(setup)}</span></div>` : ''}
     <div class="ln"><span>Delivery to your club</span><span>${money(DELIVERY_FEE)}</span></div>
-    <div class="ln tot"><span>Most you will pay</span><span>${total == null ? '£TBC' : money(total)} <small style="font-weight:600;color:var(--muted)">+ VAT</small></span></div>
-    <div class="hint">This is today's price. If the total for all clubs passes the next band before the order closes, your price comes down. All prices exclude VAT.</div>`;
+    <div class="ln" style="border-top:1px solid var(--line);margin-top:6px;padding-top:6px"><span>Subtotal</span><span>${money(r.net)}</span></div>
+    <div class="ln"><span>VAT at 20%${r.kid ? ' (adult sizes only)' : ''}</span><span>${money(r.vat)}</span></div>
+    <div class="ln tot"><span>Most you will pay</span><span>${money(r.total)}</span></div>
+    <div class="hint">This is today's price. If the total for all clubs passes the next band before the order closes, your price comes down.${p.kidsSizes ? ' Children’s sizes are VAT free.' : ''}</div>`;
 }
 $('#setupPrice').textContent = money(SETUP_FEE);
 $('#delPrice').textContent = money(DELIVERY_FEE);
@@ -633,6 +659,7 @@ $('#form').addEventListener('submit', async e => {
       address: { line1: val('a1'), line2: val('a2'), town: val('town'), postcode: val('pc').toUpperCase() }, notes: val('notes'),
       startPrice: p.bands[0].price, backPrice: S.back === 'none' ? 0 : p.backPrice[S.back], sleevePrice: sleeveOn ? p.sleevePrice : 0,
       setupFee: setupNow(), deliveryFee: DELIVERY_FEE,
+      kidsQty: Object.entries(sizesNow()).filter(([z]) => isKid(p, z)).reduce((a, [, n]) => a + n, 0),
       status: 'placed', createdAt: serverTimestamp()
     };
     const b = writeBatch(db);
@@ -641,7 +668,7 @@ $('#form').addEventListener('submit', async e => {
     await b.commit();
     $('#form').classList.add('hidden');
     $('#done').innerHTML = `<h2>Order placed. Thank you!</h2><p>Your reference is</p><div class="ref">${esc(refCode)}</div>
-      <p>${qty} × ${esc(S.colour[0])} ${esc(plural(p, qty))} for <b>${esc(val('club'))}</b>.<br>The order closes on <b>${fmtDate(round.close)}</b>. We'll then email your invoice at the final price.</p>
+      <p>${qty} × ${esc(S.colour[0])} ${esc(plural(p, qty))} for <b>${esc(val('club'))}</b>.<br>The order closes on <b>${fmtDate(round.close)}</b>. We'll then email your invoice at the final price. Please pay it within 7 days by bank transfer, and your kit goes to print as soon as we receive payment.</p>
       <p class="hint">Keep your reference. If anything needs changing, email admin@nationalgymnasticsleague.co.uk and quote it.</p>
       <button class="go" type="button" style="max-width:320px" onclick="location.reload()">Place another order</button>`;
     $('#done').classList.remove('hidden'); $('#formCard').scrollIntoView({ behavior:'smooth', block:'start' });
@@ -653,7 +680,7 @@ $('#form').addEventListener('submit', async e => {
 
 /* ---------- NGL Admin view (?admin) ---------- */
 let ORDERS = [];
-const ALL_SIZES = [...new Set(PRODUCTS.flatMap(p => p.sizes))];
+const ALL_SIZES = [...new Set(PRODUCTS.flatMap(allSizes))];
 if (document.documentElement.classList.contains('adminmode')){
   const rs = roundsAround();
   $('#aRound').innerHTML = rs.map(r => `<option value="${r.id}" ${r.id === ROUND.id ? 'selected' : ''}>Closes ${r.close.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}${r.id === ROUND.id ? ' (open now)' : ''}</option>`).join('');
@@ -685,9 +712,9 @@ async function loadRound(){
   $('#aTotals').innerHTML = PRODUCTS.map(p => {
     const t = totals(p.id), cols = Object.keys(t), mine = ORDERS.filter(o => (o.product || 'JC001') === p.id);
     const tot = mine.reduce((a, o) => a + (o.qty || 0), 0), backs = mine.filter(o => o.back?.type && o.back.type !== 'none').reduce((a, o) => a + o.qty, 0), sleeves = mine.filter(o => o.sleeve?.type === 'text').reduce((a, o) => a + o.qty, 0);
-    return `<h4 style="margin:12px 0 6px;color:var(--navy)">${esc(p.name)}</h4>` + (cols.length ? `<table><tr><th>Colour</th>${p.sizes.map(z => `<th class="n">${z}</th>`).join('')}<th class="n">Total</th></tr>
-      ${cols.map(c => `<tr><td><span class="dot" style="background:${hex(p, c)}"></span>${esc(c)}</td>${p.sizes.map(z => `<td class="n">${t[c][z] || ''}</td>`).join('')}<td class="n"><b>${p.sizes.reduce((a, z) => a + (t[c][z] || 0), 0)}</b></td></tr>`).join('')}
-      <tr><td><b>All colours</b></td>${p.sizes.map(z => `<td class="n"><b>${cols.reduce((a, c) => a + (t[c][z] || 0), 0) || ''}</b></td>`).join('')}<td class="n"><b>${tot}</b></td></tr></table>
+    return `<h4 style="margin:12px 0 6px;color:var(--navy)">${esc(p.name)}</h4>` + (cols.length ? `<table><tr><th>Colour</th>${allSizes(p).map(z => `<th class="n">${z}</th>`).join('')}<th class="n">Total</th></tr>
+      ${cols.map(c => `<tr><td><span class="dot" style="background:${hex(p, c)}"></span>${esc(c)}</td>${allSizes(p).map(z => `<td class="n">${t[c][z] || ''}</td>`).join('')}<td class="n"><b>${allSizes(p).reduce((a, z) => a + (t[c][z] || 0), 0)}</b></td></tr>`).join('')}
+      <tr><td><b>All colours</b></td>${allSizes(p).map(z => `<td class="n"><b>${cols.reduce((a, c) => a + (t[c][z] || 0), 0) || ''}</b></td>`).join('')}<td class="n"><b>${tot}</b></td></tr></table>
       <p class="hint">${mine.length} order${mine.length === 1 ? '' : 's'} · ${tot} ${plural(p, tot)} · ${backs} with a back print${p.sleeve ? ` · ${sleeves} with sleeve text` : ''} · price band: ${money(p.bands[bandIndex(p, tot)].price)} each</p>`
       : '<p class="hint">No orders yet.</p>');
   }).join('');
@@ -700,7 +727,140 @@ async function loadRound(){
       <td><a href="#" data-path="${esc(o.logoPath)}">Front</a>${o.back?.logoPath ? ` · <a href="#" data-path="${esc(o.back.logoPath)}">Back</a>` : ''}</td>
       <td>${esc([o.address?.line1, o.address?.line2, o.address?.town, o.address?.postcode].filter(Boolean).join(', '))}</td>
       <td>${esc(o.contactName)}<br><a href="mailto:${esc(o.email)}">${esc(o.email)}</a>${o.phone ? '<br>' + esc(o.phone) : ''}</td></tr>`; }).join('')}</table>` : '';
+  renderClose();
 }
+/* ---------- After the order closes: final prices, invoices, payment, printer orders ---------- */
+const PRINTER_EMAIL = 'printedclothingltd@outlook.com';
+const PAY_DAYS = 7;
+const SELLER = { name:'SAADI Gymnastics trading as National Gymnastics League', lines:['66 Waveney Road', 'Harpenden', 'Hertfordshire', 'AL5 4QZ'], email:'admin@nationalgymnasticsleague.co.uk',
+  bank:{ accountName:'National Gymnastics League', sortCode:'60-84-64', accountNumber:'93416867' } };
+const EMAILJS = { serviceId:'service_3qlufgh', templateId:'template_8i40iia', publicKey:'ZSjEpECoOMHkWNB1D' };
+const gbp = n => '£' + (Math.round(n * 100) / 100).toFixed(2);
+const live = o => o.status !== 'cancelled';
+function finalBands(){   // per product: total ordered, whether the minimum is met, and the final price
+  const out = {};
+  PRODUCTS.forEach(p => { const n = ORDERS.filter(o => live(o) && (o.product || 'JC001') === p.id).reduce((a, o) => a + (o.qty || 0), 0);
+    out[p.id] = { n, ok: n >= MIN_TOTAL, price: p.bands[bandIndex(p, n)].price }; });
+  return out;
+}
+function clubBills(){   // one invoice per club (same email), combining all its orders that are going ahead
+  const F = finalBands(), by = {};
+  ORDERS.filter(o => live(o) && F[o.product || 'JC001'].ok).forEach(o => { const k = (o.email || o.club).toLowerCase(); (by[k] ||= { key:k, club:o.club, contact:o.contactName, email:o.email, phone:o.phone, orders:[] }).orders.push(o); });
+  const rid = $('#aRound').value.replace('-', '');
+  return Object.values(by).sort((a, b) => a.club.localeCompare(b.club)).map((c, i) => {
+    const lines = [];
+    c.orders.forEach(o => { const p = prodOf(o.product || 'JC001'), f = F[p.id].price, kid = Object.entries(o.sizes || {}).filter(([z]) => isKid(p, z)).reduce((a, [, n]) => a + n, 0), adult = o.qty - kid;
+      [[adult, p.kidsSizes ? 'adult sizes' : '', VAT_RATE], [kid, 'children’s sizes, no VAT', 0]].filter(g => g[0]).forEach(([q, lab, r]) => {
+        lines.push({ d:`${q} × ${p.name} (${p.id}), ${o.colour}${lab ? ', ' + lab : ''}, club logo left chest · ${o.ref}`, q, u:f, r });
+        if (o.back?.type && o.back.type !== 'none') lines.push({ d:`Back print: ${o.back.type === 'text' ? 'two lines of text' : 'logo'}${lab ? ' (' + lab + ')' : ''}`, q, u:p.backPrice[o.back.type], r });
+        if (o.sleeve?.type === 'text') lines.push({ d:`Sleeve text, left sleeve${lab ? ' (' + lab + ')' : ''}`, q, u:p.sleevePrice, r }); }); });
+    const goods = lines.reduce((a, l) => a + l.q * l.u, 0), adultGoods = lines.filter(l => l.r).reduce((a, l) => a + l.q * l.u, 0), sh = goods ? adultGoods / goods : 1;
+    if (c.orders.some(o => o.setupFee)) lines.push({ d:'Logo set-up (one-off, first order)', q:1, u:SETUP_FEE, r:VAT_RATE * sh });
+    lines.push({ d:'Delivery to your club', q:1, u:DELIVERY_FEE, r:VAT_RATE * sh });
+    const net = lines.reduce((a, l) => a + l.q * l.u, 0), vat = lines.reduce((a, l) => a + l.q * l.u * l.r, 0);
+    const st = c.orders.map(o => o.status || 'placed'), stage = st.every(s => s === 'sent') ? 'sent' : st.every(s => s === 'paid' || s === 'sent') ? 'paid' : st.every(s => s !== 'placed') ? 'invoiced' : 'placed';
+    const inv = c.orders.find(o => o.invoiceNo);
+    return Object.assign(c, { lines, net, vat, total: net + vat, part: sh > 0 && sh < 1, stage, no: inv ? inv.invoiceNo : `GB${rid}-${String(i + 1).padStart(2, '0')}`,
+      invoicedAt: inv && inv.invoicedAt?.toDate ? inv.invoicedAt.toDate() : null });
+  });
+}
+function invoiceHTML(c){
+  const issued = c.invoicedAt || new Date(), due = new Date(issued.getTime() + PAY_DAYS * 864e5), d = x => x.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+  const td = 'padding:8px 10px;border-bottom:1px solid #e3e6ef;font-size:14px', a = c.orders[0].address || {};
+  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#16213a;max-width:680px;margin:0 auto">
+  <div style="background:#14254a;color:#fff;padding:18px 22px;border-bottom:5px solid #c6152e"><div style="font-size:22px;font-weight:bold">Invoice ${esc(c.no)}</div><div style="font-size:14px;opacity:.85">NGL group order · staff kit</div></div>
+  <table style="width:100%;margin:16px 0;font-size:14px"><tr><td style="vertical-align:top"><b>From</b><br>${esc(SELLER.name)}<br>${SELLER.lines.map(esc).join('<br>')}<br>${esc(SELLER.email)}</td>
+  <td style="vertical-align:top"><b>To</b><br>${esc(c.club)}<br>${esc(c.contact || '')}<br>${esc([a.line1, a.line2, a.town, a.postcode].filter(Boolean).join(', '))}<br>${esc(c.email)}</td>
+  <td style="vertical-align:top;text-align:right"><b>Date</b> ${d(issued)}<br><b>Due</b> ${d(due)}</td></tr></table>
+  <table style="width:100%;border-collapse:collapse"><tr style="background:#f1f3f8"><th style="${td};text-align:left">Item</th><th style="${td};text-align:right">Qty</th><th style="${td};text-align:right">Each</th><th style="${td};text-align:right">Amount</th></tr>
+  ${c.lines.map(l => `<tr><td style="${td}">${esc(l.d)}</td><td style="${td};text-align:right">${l.q}</td><td style="${td};text-align:right">${gbp(l.u)}</td><td style="${td};text-align:right">${gbp(l.q * l.u)}</td></tr>`).join('')}
+  <tr><td colspan="3" style="${td};text-align:right">Subtotal</td><td style="${td};text-align:right">${gbp(c.net)}</td></tr>
+  ${c.vat ? `<tr><td colspan="3" style="${td};text-align:right">VAT at ${Math.round(VAT_RATE * 100)}%${c.lines.some(l => !l.r) ? ' (adult sizes only' + (c.part ? '; set-up and delivery in proportion' : '') + ')' : ''}</td><td style="${td};text-align:right">${gbp(c.vat)}</td></tr>` : ''}
+  <tr><td colspan="3" style="${td};text-align:right;font-weight:bold;font-size:16px">Total due</td><td style="${td};text-align:right;font-weight:bold;font-size:16px">${gbp(c.total)}</td></tr></table>
+  <div style="margin:18px 0;padding:14px 16px;background:#fff4f5;border-left:4px solid #c6152e;font-size:14px"><b>Please pay within ${PAY_DAYS} days by bank transfer</b> (by ${d(due)})<br>
+  ${esc(SELLER.bank.accountName)} · Sort code ${SELLER.bank.sortCode} · Account ${SELLER.bank.accountNumber}<br>Payment reference: <b>${esc(c.no)}</b></div>
+  <p style="font-size:13px;color:#5d6782">Prices are the final group price for this order round, reached by all clubs ordering together. Your kit goes to print once payment is received.</p></div>`;
+}
+async function sendEmail(to, toName, subject, html){
+  const r = await fetch('https://api.emailjs.com/api/v1.0/email/send', { method:'POST', headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ service_id:EMAILJS.serviceId, template_id:EMAILJS.templateId, user_id:EMAILJS.publicKey, template_params:{ to_email:to, to_name:toName, subject, invoice_html:html } }) });
+  if (!r.ok) throw new Error('Email failed: ' + r.status + ' ' + (await r.text()));
+}
+async function printerHTML(c){
+  const link = async p => { try { return await getDownloadURL(ref(storage, p)); } catch (e){ return ''; } };
+  const a = c.orders[0].address || {}, td = 'padding:6px 8px;border:1px solid #d6dbe6;font-size:14px';
+  const blocks = await Promise.all(c.orders.map(async o => { const p = prodOf(o.product || 'JC001'), fl = await link(o.logoPath), bl = o.back?.logoPath ? await link(o.back.logoPath) : '';
+    const sizes = allSizes(p).filter(z => o.sizes?.[z]);
+    return `<h3 style="margin:18px 0 6px">${esc(p.id)} ${esc(p.name)} · ${esc(o.colour)} · ${o.qty} in total <span style="font-weight:normal;color:#5d6782">(${esc(o.ref)})</span></h3>
+    <table style="border-collapse:collapse"><tr>${sizes.map(z => `<th style="${td};background:#f1f3f8">${isKid(p, z) ? 'Kids ' + z : z}</th>`).join('')}</tr><tr>${sizes.map(z => `<td style="${td};text-align:center">${o.sizes[z]}</td>`).join('')}</tr></table>
+    <p style="font-size:14px;margin:8px 0">Front: club logo, left chest · ${fl ? `<a href="${fl}">download logo</a>` : 'logo link unavailable'}<br>
+    Back: ${o.back?.type === 'text' ? `two lines of text: <b>${esc(o.back.line1 || '')}</b> / <b>${esc(o.back.line2 || '')}</b>` : o.back?.type === 'logo' ? `large logo · ${bl ? `<a href="${bl}">download back logo</a>` : 'link unavailable'}` : 'plain'}
+    ${p.sleeve ? `<br>Left sleeve: ${o.sleeve?.type === 'text' ? `<b>${esc(o.sleeve.text)}</b>` : 'plain'}` : ''}${o.notes ? `<br>Club notes: ${esc(o.notes)}` : ''}</p>`; }));
+  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#16213a;max-width:680px">
+  <p>Hi, here is an NGL group order for <b>${esc(c.club)}</b>. Please invoice the NGL for it as agreed.</p>
+  ${c.orders.some(o => o.setupFee) ? '<p><b>First order for this club:</b> includes the one-off logo set-up.</p>' : ''}
+  ${blocks.join('')}
+  <h3 style="margin:18px 0 6px">Deliver to</h3><p style="font-size:14px">${esc(c.club)}<br>FAO ${esc(c.contact || '')}${c.phone ? ' · ' + esc(c.phone) : ''}<br>${esc([a.line1, a.line2, a.town, a.postcode].filter(Boolean).join(', '))}</p>
+  <p style="font-size:13px;color:#5d6782">Order reference ${esc(c.no)} · National Gymnastics League · ${esc(SELLER.email)}</p></div>`;
+}
+async function setStage(c, status, extra = {}){
+  const b = writeBatch(db); c.orders.forEach(o => b.update(doc(ordersCol, o.id), Object.assign({ status }, extra))); await b.commit();
+}
+let BILLS = [];
+function renderClose(){
+  const box = $('#aClose'); if (!box) return;
+  const r = roundsAround().find(x => x.id === $('#aRound').value), closed = r && r.close < new Date(), F = finalBands();
+  BILLS = clubBills();
+  const stageTxt = { placed:'Not invoiced', invoiced:'Invoiced, awaiting payment', paid:'Paid', sent:'Sent to printer' };
+  const overdue = c => c.stage === 'invoiced' && c.invoicedAt && new Date() > new Date(c.invoicedAt.getTime() + PAY_DAYS * 864e5);
+  box.innerHTML = `<h3 style="color:var(--navy);margin:0 0 6px">After the order closes</h3>
+    <p class="hint" style="margin:0 0 10px">${closed ? 'This order round has closed.' : `This round closes ${r ? fmtDate(r.close) : ''}. Invoicing opens then; below is how it would look if it closed now.`}</p>
+    <div class="cl-steps">
+      <div><b>1. Final prices</b>${PRODUCTS.map(p => `<div class="cl-p ${F[p.id].ok ? 'ok' : 'no'}">${esc(p.name)}: <b>${F[p.id].n}</b> ordered · ${F[p.id].ok ? `final price <b>${gbp(F[p.id].price)}</b>` : `below the minimum of ${MIN_TOTAL}: not going ahead`}</div>`).join('')}</div>
+      <div><b>2. Invoices</b><span>Emailed to each club, pay within ${PAY_DAYS} days by bank transfer</span><button class="abtn primary" id="clInvAll" ${closed && BILLS.some(c => c.stage === 'placed') ? '' : 'disabled'}>Email all invoices</button></div>
+      <div><b>3. Payment</b><span>Tick each club off as the money arrives</span></div>
+      <div><b>4. Printer</b><span>Each paid club's order goes to ${PRINTER_EMAIL}</span><button class="abtn primary" id="clPrintAll" ${BILLS.some(c => c.stage === 'paid') ? '' : 'disabled'}>Send all paid orders</button></div>
+    </div>
+    ${PRODUCTS.some(p => !F[p.id].ok && F[p.id].n) ? `<p class="err" style="font-weight:600">Orders for a product below the minimum are left out of the invoices. Let those clubs know it isn't going ahead this round.</p>` : ''}
+    ${BILLS.length ? `<div class="scroll"><table><tr><th>Invoice</th><th>Club</th><th class="n">Items</th><th class="n">Total</th><th>Status</th><th></th></tr>
+    ${BILLS.map((c, i) => `<tr><td>${esc(c.no)}</td><td><b>${esc(c.club)}</b><br><small class="hint">${esc(c.email)}</small></td><td class="n">${c.orders.reduce((a, o) => a + o.qty, 0)}</td>
+      <td class="n"><b>${gbp(c.total)}</b>${c.vat ? `<br><small class="hint">${gbp(c.net)} + ${gbp(c.vat)} VAT</small>` : ''}</td>
+      <td><span class="cl-st ${c.stage}${overdue(c) ? ' late' : ''}">${overdue(c) ? 'Overdue' : stageTxt[c.stage]}</span></td>
+      <td class="cl-act"><button class="abtn" data-cl="view" data-i="${i}">View invoice</button>
+        ${c.stage === 'placed' ? `<button class="abtn primary" data-cl="inv" data-i="${i}" ${closed ? '' : 'disabled'}>Email invoice</button>` : ''}
+        ${c.stage === 'invoiced' ? `<button class="abtn" data-cl="inv" data-i="${i}">Resend</button><button class="abtn primary" data-cl="paid" data-i="${i}">Mark paid</button>` : ''}
+        ${c.stage === 'paid' ? `<button class="abtn primary" data-cl="print" data-i="${i}">Send to printer</button><button class="abtn" data-cl="unpaid" data-i="${i}">Undo paid</button>` : ''}
+        ${c.stage === 'sent' ? `<button class="abtn" data-cl="print" data-i="${i}">Resend to printer</button>` : ''}</td></tr>`).join('')}</table></div>` : '<p class="hint">No orders to invoice yet.</p>'}
+    <p class="hint" id="clMsg"></p>`;
+}
+const clMsg = t => { const m = $('#clMsg'); if (m) m.textContent = t; };
+async function doInvoice(c){
+  if (!c.invoicedAt) c.invoicedAt = new Date();
+  await sendEmail(c.email, c.contact || c.club, `NGL group order invoice ${c.no} – ${gbp(c.total)}`, invoiceHTML(c));
+  if (c.stage === 'placed') await setStage(c, 'invoiced', { invoiceNo:c.no, invoicedAt:serverTimestamp(), invoiceTotal:Math.round(c.total * 100) / 100 });
+}
+async function doPrinter(c){
+  await sendEmail(PRINTER_EMAIL, 'Printed Clothing', `NGL group order ${c.no} – ${c.club} – ${c.orders.reduce((a, o) => a + o.qty, 0)} garments`, await printerHTML(c));
+  await setStage(c, 'sent', { sentToPrinterAt:serverTimestamp() });
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-cl], #clInvAll, #clPrintAll'); if (!b || !document.getElementById('aClose')?.contains(b)) return;
+  const c = BILLS[+b.dataset.i], act = b.dataset.cl || b.id;
+  if (act === 'view'){ const w = window.open('', '_blank'); if (w){ w.document.write(`<title>Invoice ${esc(c.no)}</title><body style="margin:24px">${invoiceHTML(c)}<p style="text-align:center"><button onclick="print()">Print or save as PDF</button></p></body>`); w.document.close(); } return; }
+  b.disabled = true;
+  try {
+    if (act === 'inv'){ clMsg('Emailing the invoice…'); await doInvoice(c); clMsg(`Invoice ${c.no} emailed to ${c.email}.`); }
+    if (act === 'paid'){ await setStage(c, 'paid', { paidAt:serverTimestamp() }); clMsg(`${c.club} marked as paid.`); }
+    if (act === 'unpaid'){ await setStage(c, 'invoiced'); }
+    if (act === 'print'){ clMsg('Sending the order to the printer…'); await doPrinter(c); clMsg(`${c.club}'s order sent to ${PRINTER_EMAIL}.`); }
+    if (act === 'clInvAll'){ const todo = BILLS.filter(x => x.stage === 'placed'); if (!confirm(`Email ${todo.length} invoice${todo.length === 1 ? '' : 's'} now?`)){ b.disabled = false; return; }
+      let n = 0; for (const x of todo){ clMsg(`Emailing invoice ${++n} of ${todo.length}…`); await doInvoice(x); } clMsg(`${todo.length} invoices emailed.`); }
+    if (act === 'clPrintAll'){ const todo = BILLS.filter(x => x.stage === 'paid'); if (!confirm(`Send ${todo.length} paid order${todo.length === 1 ? '' : 's'} to ${PRINTER_EMAIL}?`)){ b.disabled = false; return; }
+      let n = 0; for (const x of todo){ clMsg(`Sending order ${++n} of ${todo.length}…`); await doPrinter(x); } clMsg(`${todo.length} orders sent to the printer.`); }
+    await loadRound();
+  } catch (err){ console.error(err); clMsg('Something went wrong: ' + (err.message || err)); b.disabled = false; }
+});
+
 $('#aOrders').addEventListener('click', async e => { const a = e.target.closest('[data-path]'); if (!a) return; e.preventDefault();
   const w = window.open('', '_blank'); try { const u = await getDownloadURL(ref(storage, a.dataset.path)); if (w) w.location = u; else location.href = u; } catch (err){ if (w) w.close(); $('#aWho').textContent = 'Couldn’t open that logo: ' + (err.code || err.message); } });
 function csv(name, rows){
