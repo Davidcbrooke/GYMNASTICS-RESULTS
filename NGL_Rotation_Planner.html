@@ -101,7 +101,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .week-btn{ background:none; border:none; color:rgba(255,255,255,.6); padding:7px 12px; cursor:pointer; font-weight:700; font-size:.8rem; }
 .week-btn.active{ background:var(--gold); color:var(--navy); }
 .week-btn{ white-space:nowrap; }
-@media (max-width:768px){ .wk-pre{ display:none; } } /* phones: 'Week 1' / 'Week 2' so the header still fits */
+@media (max-width:768px){ .wk-pre{ display:none; } } /* phones: 'Week A' / 'Week B' so the header still fits */
 .header-clock{ font-size:1.3rem; font-weight:700; color:var(--gold); font-variant-numeric:tabular-nums; display:none; }
 .header-clock.visible{ display:block; }
 
@@ -586,8 +586,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
       <button class="secondary" onclick="saveNow()">💾 Save</button>
       <span id="saveStatus" class="save-status"></span>
       <div class="week-toggle">
-        <button id="weekABtn" class="week-btn active" onclick="setWeek('A')"><span class="wk-pre">Rotation </span>Week 1</button>
-        <button id="weekBBtn" class="week-btn" onclick="setWeek('B')"><span class="wk-pre">Rotation </span>Week 2</button>
+        <button id="weekABtn" class="week-btn active" onclick="setWeek('A')"><span class="wk-pre">Rotation </span>Week A</button>
+        <button id="weekBBtn" class="week-btn" onclick="setWeek('B')"><span class="wk-pre">Rotation </span>Week B</button>
       </div>
       <button class="secondary" onclick="doLogout()" title="Sign out">⏏ Sign Out</button>
     </div>
@@ -610,10 +610,10 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
     <div id="mobileDayView">
       <div class="mob-day-nav">
         <button onclick="mobPrevDay()">&#8592;</button>
-        <div class="mob-day-name" id="mobDayName">Monday<span id="mobWeekLabel">Rotation Week 1</span></div>
+        <div class="mob-day-name" id="mobDayName">Monday<span id="mobWeekLabel">Rotation Week A</span></div>
         <div class="mob-week-toggle">
-          <button class="mob-week-btn active" id="mobWeekABtn" onclick="mobSetWeek('A')">1</button>
-          <button class="mob-week-btn" id="mobWeekBBtn" onclick="mobSetWeek('B')">2</button>
+          <button class="mob-week-btn active" id="mobWeekABtn" onclick="mobSetWeek('A')">A</button>
+          <button class="mob-week-btn" id="mobWeekBBtn" onclick="mobSetWeek('B')">B</button>
         </div>
         <button onclick="mobNextDay()">&#8594;</button>
       </div>
@@ -691,8 +691,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 <div class="modal-overlay" id="sessionModal">
   <div class="modal-box">
     <h3 id="smTitle">Add Session</h3>
-    <div class="mf"><label>Rotation Week 1 Location</label><select id="sm_loc"></select></div>
-    <div class="mf" id="sm_locB_field"><label>Rotation Week 2 Location <span style="font-weight:400;color:var(--muted);font-size:.7rem">(optional — leave blank if same every week)</span></label><select id="sm_locB"><option value="">— Same as Rotation Week 1 —</option></select></div>
+    <div class="mf"><label>Rotation Week A Location</label><select id="sm_loc"></select></div>
+    <div class="mf" id="sm_locB_field"><label>Rotation Week B Location <span style="font-weight:400;color:var(--muted);font-size:.7rem">(optional — leave blank if same every week)</span></label><select id="sm_locB"><option value="">— Same as Rotation Week A —</option></select></div>
     <div class="mf-row">
       <div class="mf"><label>Start time</label><select id="sm_start"></select></div>
       <div class="mf"><label>Duration (mins)</label><input type="number" id="sm_dur" value="30" min="5" max="240" step="5"></div>
@@ -1089,8 +1089,8 @@ function recEnsureLocations(){
   const have = new Set(DATA.locations.map(l => l.name));
   REC_LOCS.forEach(([n, c]) => { if(!have.has(n)) DATA.locations.push({id:genId(), name:n, category:n.includes('FLOOR') ? 'Floor' : 'Other', colour:c}); });
 }
-// Rebuild the Recreational groups and their sessions. Rotation A = Rotation Week 1 apparatus
-// in Week 1; Rotation B does the other set, and they swap each week (stored as locationB).
+// Rebuild the Recreational groups and their sessions. Rotation A = Rotation Week A apparatus
+// in Week A; Rotation B does the other set, and they swap each week (stored as locationB).
 function applyRec(){
   DATA.groups = DATA.groups || []; DATA.sessions = DATA.sessions || {};
   const old = new Set(DATA.groups.filter(g => g.rec).map(g => g.id));
@@ -1137,7 +1137,7 @@ function applyRec(){
   DATA.groups = DATA.groups.filter(g => !g.rec).concat(recG);
   recG.forEach(g => g.days.sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)));
 }
-// The club's own rotation pattern for a group (Week 1 and Week 2), if it has set one
+// The club's own rotation pattern for a group (Week A and Week B), if it has set one
 function recPattern(gi, has){
   const p = DATA.rec && DATA.rec.pattern && DATA.rec.pattern[gi];
   if(!p || !Array.isArray(p.A) || !Array.isArray(p.B)) return null;
@@ -1191,7 +1191,7 @@ function openTab(id){
   const v = document.getElementById(id + 'View'); if(v) v.classList.add('active');
   if(id === 'planner') renderWeekTable(); else if(id === 'settings') renderSettings(); else if(id === 'rec') renderRec(); else if(id === 'totals') renderWeeklyTotals();
 }
-// Week 1 / Week 2 follow the term dates for Recreational clubs
+// Week A / Week B follow the term dates for Recreational clubs
 function recAutoWeek(quiet){
   if(!recActive() || !recSettings().classes.length) return;
   const wi = recWeekInfo(recTerm());
@@ -1206,7 +1206,7 @@ function renderRec(){
   const el = document.getElementById('recView');
   if(!recActive()){
     el.innerHTML = `<div class="rc-wrap"><div class="rc-card"><h2>NGL Recreational</h2>
-      <p>Clubs on the <b>NGL Recreational</b> programme can have their Recreational groups and rotations built here automatically from their club plan, switching Week 1 and Week 2 from their term dates.</p>
+      <p>Clubs on the <b>NGL Recreational</b> programme can have their Recreational groups and rotations built here automatically from their club plan, switching Week A and Week B from their term dates.</p>
       <p>Your other classes work exactly as before on the Weekly Planner.</p>
       <p><a class="rc-btn" href="https://nglrecreational.co.uk" target="_blank" rel="noopener">Find out about NGL Recreational</a></p></div></div>`;
     return;
@@ -1243,7 +1243,7 @@ function renderRec(){
   const oldRows = recOldColourRows(), custom = !!(R.pattern && Object.keys(R.pattern).length);
   const patCard = nG ? `<div class="rc-card"><h2>Your rotation pattern</h2>
       <p>Which piece each group goes to in each rotation. ${custom ? 'This is <b>your club’s own pattern</b>.' : 'This is the <b>NGL standard pattern</b>. Change any box to match what your club runs.'} The Weekly Planner, the live screen and <b>Run your class</b> in the Hub all follow it.</p>
-      <div class="rc-patwrap"><table class="rc-pat"><thead><tr><th>Group</th><th>Warm-up</th><th colspan="3">Week 1</th><th colspan="3">Week 2</th></tr>
+      <div class="rc-patwrap"><table class="rc-pat"><thead><tr><th>Group</th><th>Warm-up</th><th colspan="3">Week A</th><th colspan="3">Week B</th></tr>
         <tr class="rc-sub"><th></th><th></th><th>1st</th><th>2nd</th><th>3rd</th><th>1st</th><th>2nd</th><th>3rd</th></tr></thead><tbody>
         ${Array.from({length:nG}, (_, gi) => { const p = cur(gi); return `<tr><td><span class="rc-g"><i style="background:${REC_COLOURS[gi][1]}"></i>${REC_COLOURS[gi][0]}</span></td>
           <td><select data-rc-warm="${gi}">${locOpts((R.warmBy && R.warmBy[gi]) || R.map.warm)}</select></td>
@@ -1264,7 +1264,7 @@ function renderRec(){
     <div class="rc-card"><h2>From your club plan</h2>
       <p>Classes are <b>${t.classLen} minutes</b>: ${rule.warm} minutes warm-up, rotations, ${rule.cool} minutes cool-down. <b>This week:</b> ${recEsc(wi.label)}${wi.letter ? ` · ${weekName(wi.letter)}` : ''}.</p>
       <div class="rc-btns" style="margin:4px 0 10px"><button class="rc-btn" onclick="recPrintSheet()">🖨 Print term sheet</button><span class="rc-note" style="margin-left:8px">Both rotation weeks, class times and the term calendar on one page. Save it as a PDF for a back-up.</span></div>
-      <p class="rc-note">Week 1 and Week 2 switch on their own from your term dates. To change class length, apparatus or term dates, update your club plan in the <a href="https://nglrecreational.co.uk" target="_blank" rel="noopener">NGL Recreational Hub</a>.</p></div>
+      <p class="rc-note">Week A and Week B switch on their own from your term dates. To change class length, apparatus or term dates, update your club plan in the <a href="https://nglrecreational.co.uk" target="_blank" rel="noopener">NGL Recreational Hub</a>.</p></div>
     <div class="rc-card"><h2>Where each piece is in your hall</h2>
       <p class="rc-note">Forward and backward floor run at the same time (one group from each rotation), so they need two areas of floor.</p>
       <div class="rc-map"><b>Warm-up</b><select data-rc-map="warm">${locOpts(R.map.warm)}</select></div>
@@ -1312,7 +1312,7 @@ function recPrintSheet(){
       const a = new Date(m0), b = new Date(m0); a.setDate(a.getDate() + 7 * (c - 1)); b.setDate(b.getDate() + 7 * (c - 1) + 6); const from = a < st ? st : a;
       if(c === hw){ cells.push(`<div class="cw ht"><b>HT</b><span>${fd(from)}–${fd(b)}</span><em>Half term</em></div>`); continue; }
       const wk = hw && c > hw ? c - 1 : c, as = wk > t.weeks - 2, L = as ? (wk === t.weeks - 1 ? 1 : 2) : ((wk - 1) % 2 === 0 ? 1 : 2);
-      cells.push(`<div class="cw ${as ? 'as' : L === 1 ? 'A' : 'B'}"><b>Wk ${wk}</b><span>${fd(from)}–${fd(b)}</span><em>Week ${L}${as ? ' · Assess' : ''}</em></div>`);
+      cells.push(`<div class="cw ${as ? 'as' : L === 1 ? 'A' : 'B'}"><b>Wk ${wk}</b><span>${fd(from)}–${fd(b)}</span><em>Week ${L === 1 ? 'A' : 'B'}${as ? ' · Assess' : ''}</em></div>`);
     }
     cal = `<div class="calh">Term calendar <small>which rotation week to use · the last two weeks are assessment · weeks run Monday to Sunday</small></div><div class="cal" style="grid-template-columns:repeat(${cells.length},1fr)">${cells.join('')}</div>`;
     const mo = st.getMonth(), season = mo >= 8 ? 'Autumn' : mo <= 2 ? 'Spring' : 'Summer';
@@ -1616,7 +1616,7 @@ function setDur(v){ document.getElementById('sm_dur').value=v; document.querySel
 function getGroupById(id){ return DATA.groups.find(g=>g.id===id); }
 function getLocByName(name){ return DATA.locations.find(l=>l.name===name); }
 // Display names for the two rotation weeks — internally they are still stored as 'A' and 'B'
-function weekName(w){ return 'Rotation Week '+(w==='B'?2:1); }
+function weekName(w){ return 'Rotation Week '+(w==='B'?'B':'A'); }
 function getSessionLocation(s){ return currentWeek==='B'&&s.locationB?s.locationB:s.location; }
 
 function getDayBounds(day){
@@ -1803,7 +1803,7 @@ function openSessionModal(day,groupId,sessionIdx){
   document.getElementById('sm_autoadjust_field').style.display=isNew?'none':'block';
   // populate locations — grouped by category, alphabetically within each
   const sl=document.getElementById('sm_loc'), slB=document.getElementById('sm_locB');
-  sl.innerHTML=''; slB.innerHTML='<option value="">— Same as Rotation Week 1 —</option>';
+  sl.innerHTML=''; slB.innerHTML='<option value="">— Same as Rotation Week A —</option>';
   const catOrder=['Floor','Bars','Beam','Vault','Tumble / Track','Pommel / Rings','Rooms','Other'];
   const grouped={};
   DATA.locations.forEach(l=>{ const cat=l.category||'Other'; if(!grouped[cat]) grouped[cat]=[]; grouped[cat].push(l); });
@@ -2356,8 +2356,8 @@ function renderWeeklyTotals(){
   let html=`<div class="totals-wrap">`;
   if(hasWeekB){
     html+=`<div class="totals-week-toggle" style="margin-bottom:16px;">
-      <button class="totals-week-btn active" id="totals_weekA" onclick="switchTotalsWeek('A')">Rotation Week 1</button>
-      <button class="totals-week-btn" id="totals_weekB" onclick="switchTotalsWeek('B')">Rotation Week 2</button>
+      <button class="totals-week-btn active" id="totals_weekA" onclick="switchTotalsWeek('A')">Rotation Week A</button>
+      <button class="totals-week-btn" id="totals_weekB" onclick="switchTotalsWeek('B')">Rotation Week B</button>
     </div>
     <div id="totals_tableA">${buildView(calcTotals('A'),weekName('A'))}</div>
     <div id="totals_tableB" style="display:none">${buildView(calcTotals('B'),weekName('B'))}</div>`;

@@ -101,7 +101,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .week-btn{ background:none; border:none; color:rgba(255,255,255,.6); padding:7px 12px; cursor:pointer; font-weight:700; font-size:.8rem; }
 .week-btn.active{ background:var(--gold); color:var(--navy); }
 .week-btn{ white-space:nowrap; }
-@media (max-width:768px){ .wk-pre{ display:none; } } /* phones: 'Week 1' / 'Week 2' so the header still fits */
+@media (max-width:768px){ .wk-pre{ display:none; } } /* phones: 'Week A' / 'Week B' so the header still fits */
 .header-clock{ font-size:1.3rem; font-weight:700; color:var(--gold); font-variant-numeric:tabular-nums; display:none; }
 .header-clock.visible{ display:block; }
 
@@ -519,8 +519,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
       <button class="secondary" onclick="saveNow()">💾 Save</button>
       <span id="saveStatus" class="save-status"></span>
       <div class="week-toggle">
-        <button id="weekABtn" class="week-btn active" onclick="setWeek('A')"><span class="wk-pre">Rotation </span>Week 1</button>
-        <button id="weekBBtn" class="week-btn" onclick="setWeek('B')"><span class="wk-pre">Rotation </span>Week 2</button>
+        <button id="weekABtn" class="week-btn active" onclick="setWeek('A')"><span class="wk-pre">Rotation </span>Week A</button>
+        <button id="weekBBtn" class="week-btn" onclick="setWeek('B')"><span class="wk-pre">Rotation </span>Week B</button>
       </div>
       <button class="secondary" onclick="doLogout()" title="Sign out">⏏ Sign Out</button>
     </div>
@@ -541,10 +541,10 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
     <div id="mobileDayView">
       <div class="mob-day-nav">
         <button onclick="mobPrevDay()">&#8592;</button>
-        <div class="mob-day-name" id="mobDayName">Monday<span id="mobWeekLabel">Rotation Week 1</span></div>
+        <div class="mob-day-name" id="mobDayName">Monday<span id="mobWeekLabel">Rotation Week A</span></div>
         <div class="mob-week-toggle">
-          <button class="mob-week-btn active" id="mobWeekABtn" onclick="mobSetWeek('A')">1</button>
-          <button class="mob-week-btn" id="mobWeekBBtn" onclick="mobSetWeek('B')">2</button>
+          <button class="mob-week-btn active" id="mobWeekABtn" onclick="mobSetWeek('A')">A</button>
+          <button class="mob-week-btn" id="mobWeekBBtn" onclick="mobSetWeek('B')">B</button>
         </div>
         <button onclick="mobNextDay()">&#8594;</button>
       </div>
@@ -622,8 +622,8 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 <div class="modal-overlay" id="sessionModal">
   <div class="modal-box">
     <h3 id="smTitle">Add Session</h3>
-    <div class="mf"><label>Rotation Week 1 Location</label><select id="sm_loc"></select></div>
-    <div class="mf" id="sm_locB_field"><label>Rotation Week 2 Location <span style="font-weight:400;color:var(--muted);font-size:.7rem">(optional — leave blank if same every week)</span></label><select id="sm_locB"><option value="">— Same as Rotation Week 1 —</option></select></div>
+    <div class="mf"><label>Rotation Week A Location</label><select id="sm_loc"></select></div>
+    <div class="mf" id="sm_locB_field"><label>Rotation Week B Location <span style="font-weight:400;color:var(--muted);font-size:.7rem">(optional — leave blank if same every week)</span></label><select id="sm_locB"><option value="">— Same as Rotation Week A —</option></select></div>
     <div class="mf-row">
       <div class="mf"><label>Start time</label><select id="sm_start"></select></div>
       <div class="mf"><label>Duration (mins)</label><input type="number" id="sm_dur" value="30" min="5" max="240" step="5"></div>
@@ -1104,7 +1104,7 @@ function setDur(v){ document.getElementById('sm_dur').value=v; document.querySel
 function getGroupById(id){ return DATA.groups.find(g=>g.id===id); }
 function getLocByName(name){ return DATA.locations.find(l=>l.name===name); }
 // Display names for the two rotation weeks — internally they are still stored as 'A' and 'B'
-function weekName(w){ return 'Rotation Week '+(w==='B'?2:1); }
+function weekName(w){ return 'Rotation Week '+(w==='B'?'B':'A'); }
 function getSessionLocation(s){ return currentWeek==='B'&&s.locationB?s.locationB:s.location; }
 
 function getDayBounds(day){
@@ -1288,7 +1288,7 @@ function openSessionModal(day,groupId,sessionIdx){
   document.getElementById('sm_autoadjust_field').style.display=isNew?'none':'block';
   // populate locations — grouped by category, alphabetically within each
   const sl=document.getElementById('sm_loc'), slB=document.getElementById('sm_locB');
-  sl.innerHTML=''; slB.innerHTML='<option value="">— Same as Rotation Week 1 —</option>';
+  sl.innerHTML=''; slB.innerHTML='<option value="">— Same as Rotation Week A —</option>';
   const catOrder=['Floor','Bars','Beam','Vault','Tumble / Track','Pommel / Rings','Rooms','Other'];
   const grouped={};
   DATA.locations.forEach(l=>{ const cat=l.category||'Other'; if(!grouped[cat]) grouped[cat]=[]; grouped[cat].push(l); });
@@ -1836,8 +1836,8 @@ function renderWeeklyTotals(){
   let html=`<div class="totals-wrap">`;
   if(hasWeekB){
     html+=`<div class="totals-week-toggle" style="margin-bottom:16px;">
-      <button class="totals-week-btn active" id="totals_weekA" onclick="switchTotalsWeek('A')">Rotation Week 1</button>
-      <button class="totals-week-btn" id="totals_weekB" onclick="switchTotalsWeek('B')">Rotation Week 2</button>
+      <button class="totals-week-btn active" id="totals_weekA" onclick="switchTotalsWeek('A')">Rotation Week A</button>
+      <button class="totals-week-btn" id="totals_weekB" onclick="switchTotalsWeek('B')">Rotation Week B</button>
     </div>
     <div id="totals_tableA">${buildView(calcTotals('A'),weekName('A'))}</div>
     <div id="totals_tableB" style="display:none">${buildView(calcTotals('B'),weekName('B'))}</div>`;
