@@ -8,7 +8,7 @@ Triggered when Dave asks Claude: "Update the NGL competitions from Elevien".
 4. For every WAG event of an upcoming tournament: `list_contestant_slots(eventId)`.
    Large results are saved to tool-results files: put the path in the index as `events[].file`.
    Small results: save the Floor (W) track only to EVENT_DIR/<eventId>.json as
-   {"body":{"apparatusTracks":[{"apparatusName":"Floor (W)","contestantSlots":[{"contestantId","displayName","clubName"}]}]}}.
+   {"body":{"apparatusTracks":[{"apparatusName":"Floor (W)","contestantSlots":[{"contestantId","displayName","clubName","bibNumber"}]}]}}.
 5. (Recreational competitions are skipped: no floor music. See NO_MUSIC in the script.)
    `python3 tools/elevien_music_import.py INDEX.json EVENT_DIR --out ngl-music-comps.js`
    It prints each competition with new/withdrawn counts. Commit and push ngl-music-comps.js.

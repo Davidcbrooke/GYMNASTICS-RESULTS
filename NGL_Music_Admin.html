@@ -88,7 +88,9 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
 .now .cl{font-size:18px;opacity:.9}
 .now .row{display:flex;align-items:center;gap:10px;margin-top:14px}
 .now .tm{font-family:var(--cond);font-size:22px;min-width:120px;text-align:right}
-.now .pbar{flex:1;height:12px;background:rgba(255,255,255,.2)}.now .pbar i{background:#fff}
+.now .pbar{flex:1;height:12px;background:rgba(255,255,255,.2);cursor:pointer;position:relative;touch-action:none}.now .pbar i{background:#fff;transition:none}.now .pbar:hover{height:16px}
+.bib{display:inline-block;min-width:30px;text-align:center;background:var(--navy);color:#fff;border-radius:6px;padding:1px 6px;margin-right:6px;font:700 13px var(--cond,Roboto);vertical-align:1px}
+.bigbib{display:inline-block;background:#fff;color:var(--navy);border-radius:10px;padding:0 12px;margin-right:12px;font-weight:900;vertical-align:2px}
 .st{display:inline-block;font-size:12px;font-weight:700;border-radius:3px;padding:2px 7px;vertical-align:middle}
 .st.saved{background:var(--ok-soft);color:var(--ok)}.st.online{background:var(--gold-soft);color:#7a5a07}.st.none,.st.bad{background:#fde7e9;color:var(--red)}
 .now .st{font-size:13px}
@@ -249,7 +251,8 @@ $("#title").firstChild.textContent = D.title + " floor music";
 $("#dlInput").value = D.deadline || ""; $("#dlInput").addEventListener("input", e=>e.target.dataset.touched = "1");
 
 let capp, cdb, cauth, EV = null, UP = {}, ORDER = {}, ACCOUNTS = [];
-const G = {}; D.levels.forEach(L=>L.gymnasts.forEach(([id,name,club])=>G[id]={id,name,club,level:L.id}));
+const G = {}; D.levels.forEach(L=>L.gymnasts.forEach(([id,name,club,bib])=>G[id]={id,name,club,bib:bib||"",level:L.id}));
+const bibTag = id => G[id] && G[id].bib ? `<span class="bib" title="Elevien gymnast number">${esc(G[id].bib)}</span>` : "";
 const clubName = k => D.clubs[k]?.name || k;
 const orderFor = L => { const ids = L.gymnasts.map(g=>g[0]); const o = (ORDER[L.id]||[]).filter(id=>ids.includes(id)); return [...o, ...ids.filter(id=>!o.includes(id))]; };
 
@@ -418,7 +421,7 @@ function render(){
           (list.length ? list.map((id,i)=>{ const g=G[id], u=UP[id];
             return `<tr class="${u?"ok":""} ${ABS[id]?"abs":""}" draggable="true" data-id="${id}">
               <td class="grip" title="Drag to move">&#10303;</td><td class="n">${r==="u"?"–":i+1}</td>
-              <td><span class="fl"></span><span class="who">${esc(g.name)}</span> <span class="lvb">${esc(g.level)}</span>${ABS[id]?' <span class="st none">Absent</span>':""}<br><span class="club">${esc(clubName(g.club))}</span></td>
+              <td><span class="fl"></span>${bibTag(id)}<span class="who">${esc(g.name)}</span> <span class="lvb">${esc(g.level)}</span>${ABS[id]?' <span class="st none">Absent</span>':""}<br><span class="club">${esc(clubName(g.club))}</span></td>
               <td>${u?`<audio controls preload="none" src="${esc(u.url)}"></audio>`:`<span class="club" style="color:var(--red)">Not uploaded</span>`}${upLabel(id)}<button class="btn small ghost" data-intro="${id}" style="margin-left:6px" title="${INTROS[id]?"Introduction made":"No introduction yet"}">Intro${INTROS[id]?" ✓":""}</button>${u&&u.uploadedBy==="admin"?`<span class="club"> · added by NGL</span>`:""}</td>
               <td style="white-space:nowrap"><label class="club"><input type="checkbox" data-abs="${id}" ${ABS[id]?"checked":""}> Absent</label></td>
               <td>${rotSelect(id, r)}</td>
@@ -779,16 +782,16 @@ function renderPlayer(){
   else if(!g) $("#nowCard").innerHTML = `<div class="lbl">${esc(sessName(s))} session · Rotation ${PL.rot}</div><div class="nm">No gymnasts in this rotation</div><div class="cl">Set the floor order on the Running order tab.</div>`;
   else { const stt = status(cur);
     $("#nowCard").innerHTML = `<div class="lbl">${PL.playing ? (PL.playing.kind==="intro" ? "Now playing · introduction" : "Now playing") : (wantIntro(cur) ? "Ready for introduction" : (PL.introed[cur] && INTROS[cur] ? "Introduced · Space for music" : "Ready"))} · ${esc(sessName(s))} · Rotation ${PL.rot} · ${pos+1} of ${ids.length}</div>
-      <div class="nm">${esc(g.name)}</div><div class="cl">${esc(clubName(g.club))} · Level ${esc(g.level)} <span class="st ${stt}">${ST_TXT[stt]}</span>${ABS[cur]?' <span class="st none">Marked absent</span>':""}${PL.cache[cur]&&PL.cache[cur].gainDb<-0.5?` <span style="font-size:13px;opacity:.75">level ${PL.cache[cur].gainDb.toFixed(0)} dB</span>`:""}</div>`; }
+      <div class="nm">${g.bib?`<span class="bigbib">${esc(g.bib)}</span>`:""}${esc(g.name)}</div><div class="cl">${esc(clubName(g.club))} · Level ${esc(g.level)} <span class="st ${stt}">${ST_TXT[stt]}</span>${ABS[cur]?' <span class="st none">Marked absent</span>':""}${PL.cache[cur]&&PL.cache[cur].gainDb<-0.5?` <span style="font-size:13px;opacity:.75">level ${PL.cache[cur].gainDb.toFixed(0)} dB</span>`:""}</div>`; }
   $("#nowCard").innerHTML += `<div class="row"><div class="pbar"><i id="tBar"></i></div><div class="tm" id="tTime">0:00</div></div>`;
   const nx = cur ? nextAfter(cur) : null;
-  $("#nextUp").innerHTML = nx ? `<span style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Next up</span><br><b>${esc(G[nx].name)}</b> <span class="club">${esc(clubName(G[nx].club))} · Level ${esc(G[nx].level)}</span> <span class="st ${status(nx)}">${ST_TXT[status(nx)]}</span>`
+  $("#nextUp").innerHTML = nx ? `<span style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Next up</span><br>${bibTag(nx)}<b>${esc(G[nx].name)}</b> <span class="club">${esc(clubName(G[nx].club))} · Level ${esc(G[nx].level)}</span> <span class="st ${status(nx)}">${ST_TXT[status(nx)]}</span>`
                             : `<span style="font-size:12px;color:var(--muted);font-weight:600">END OF ROTATION ${PL.rot}${PL.rot<nrotOf(s)?` · choose Rotation ${PL.rot+1} when floor is ready`:""}</span>`;
   $("#queue").dataset.s = s.key; $("#queue").dataset.r = PL.rot;
   $("#queue").innerHTML = ids.length ? ids.map((id,i)=>{ const st=status(id);
     return `<div class="qr ${id===cur?"cur":""} ${PL.played[id]?"done":""} ${ABS[id]?"abs":""}" data-id="${id}" draggable="true" data-qid="${id}">
       <span class="grip" title="Drag to move">&#10303;</span><span class="n">${i+1}</span>
-      <span class="qn"><b>${esc(G[id].name)}</b> <span class="club">${esc(clubName(G[id].club))} · ${esc(G[id].level)}</span>${PL.played[id]?' <span class="club">· played</span>':""}${ABS[id]?' <span class="st none">Absent</span>':""}</span>
+      <span class="qn">${bibTag(id)}<b>${esc(G[id].name)}</b> <span class="club">${esc(clubName(G[id].club))} · ${esc(G[id].level)}</span>${PL.played[id]?' <span class="club">· played</span>':""}${ABS[id]?' <span class="st none">Absent</span>':""}</span>
       <span class="st ${st}">${ST_TXT[st]}</span>
       <span class="qc"><button class="btn small ghost" data-qabs="${id}">${ABS[id]?"Present":"Absent"}</button>${rotSelect(id, PL.rot)}${upLabel(id)}</span></div>`; }).join("")
     : `<div class="qr empty" style="display:block">No gymnasts in this rotation yet. Drag them here from another rotation's list, or set the floor order on the Running order tab.</div>`;
@@ -924,6 +927,15 @@ function tick(){
   else { b.style.width = "0"; const cd = PL.cache[PL.cur]; t.textContent = cd && cd.duration ? fmtT(cd.duration) : "0:00"; }
 }
 audio.addEventListener("timeupdate", tick);
+/* Click or drag on the time bar to jump to that point in the music */
+(function(){ let drag = false;
+  const seekTo = e => { const bar = $("#tBar") && $("#tBar").parentElement; const d = audio.duration;
+    if(!bar || !PL.playing || !isFinite(d) || !d) return; const r = bar.getBoundingClientRect();
+    const f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); audio.currentTime = f * d; tick(); };
+  document.addEventListener("pointerdown", e => { if(!e.target.closest("#nowCard .pbar")) return; drag = true; seekTo(e); e.preventDefault(); });
+  document.addEventListener("pointermove", e => { if(drag) seekTo(e); });
+  document.addEventListener("pointerup", () => { drag = false; });
+})();
 audio.addEventListener("ended", ()=>{ if(PL.playing) finish(true); });
 audio.addEventListener("error", ()=>{
   const p = PL.playing; if(!p) return;
