@@ -1201,6 +1201,19 @@ function recAutoWeek(quiet){
   if(a) a.classList.toggle('active', currentWeek === 'A'); if(b) b.classList.toggle('active', currentWeek === 'B');
   if(!quiet) showToast('This week is ' + weekName(currentWeek) + ' (from your term dates)');
 }
+// Live screen label, matching the lesson plans: "Week 9 and 10, Rotation Week A" (assessment for the last two weeks).
+// Falls back to "Rotation Week A" when there are no term dates, or the week shown has been switched by hand.
+function liveWeekName(){
+  const name = weekName(currentWeek);
+  if(!recActive()) return name;
+  const t = recTerm(); if(!t.start) return name;
+  const wi = recWeekInfo(t); if(wi.letter !== currentWeek) return name;
+  const m = /^Week (\d+) of (\d+)/.exec(wi.label || ''); if(!m) return name;
+  const wk = +m[1], W = +m[2];
+  if(wk > W - 2) return 'Assessment Week ' + (W - 1) + ' and ' + W + ', ' + name;
+  const w1 = wk % 2 ? wk : wk - 1;
+  return (w1 + 1 > W - 2 ? 'Week ' + w1 : 'Week ' + w1 + ' and ' + (w1 + 1)) + ', ' + name;
+}
 function recEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderRec(){
   const el = document.getElementById('recView');
@@ -2572,7 +2585,7 @@ function enterLive(){
   document.getElementById('sponsorBand').style.display='none';
   document.getElementById('liveClock').classList.add('visible');
   const day=getTodayName();
-  document.getElementById('liveDayLabel').textContent=day+' — '+weekName(currentWeek);
+  document.getElementById('liveDayLabel').textContent=day+' — '+liveWeekName();
   // show persistent QR for parents/coaches to scan
   const baseUrl = window.location.href.replace(/\/[^\/]*$/, '/');
   const streamUrl = `${baseUrl}NGL_Live.html?c=${currentClubId}`;
@@ -2708,7 +2721,7 @@ function renderTimeline(day){
     if(!groups.length) return;
     const sep=document.createElement('div'); sep.className='tl-sep'; sep.style.width=totalW+'px'; sep.style.height=sepH+'px'; sep.style.fontSize=sepH<22?'.6rem':'.68rem';
     const hasWeekBInSection = groups.some(g=>DAYS.some(day=>(DATA.sessions[day]&&DATA.sessions[day][g.id]||[]).some(s=>s.locationB)));
-    sep.innerHTML=`<span>${section==='squad'?(hasWeekBInSection?'Squads — '+weekName(currentWeek):'Squads'):'Recreational — '+weekName(currentWeek)}</span>`; inner.appendChild(sep);
+    sep.innerHTML=`<span>${section==='squad'?(hasWeekBInSection?'Squads — '+weekName(currentWeek):'Squads'):'Recreational — '+liveWeekName()}</span>`; inner.appendChild(sep);
     groups.forEach(group=>{
       const sessions=(DATA.sessions[day]&&DATA.sessions[day][group.id])||[];
       const row=document.createElement('div'); row.className='tl-row'; row.style.width=totalW+'px'; row.style.height=rowH+'px';
@@ -2859,7 +2872,7 @@ function updateSideClock(n){
   document.getElementById('lsMM').textContent=String(n.getMinutes()).padStart(2,'0');
   document.getElementById('lsSecs').textContent=':'+String(n.getSeconds()).padStart(2,'0');
   document.getElementById('lsColon').classList.toggle('off', n.getSeconds()%2===1);
-  document.getElementById('lsDate').innerHTML='<div>'+n.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+'</div><div class="ls-week">'+weekName(currentWeek)+'</div>';
+  document.getElementById('lsDate').innerHTML='<div>'+n.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+'</div><div class="ls-week">'+liveWeekName()+'</div>';
 }
 
 // scale everything in the right-hand panel from its own width so it fills the space on any screen
