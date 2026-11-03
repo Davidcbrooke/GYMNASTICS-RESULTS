@@ -358,6 +358,25 @@ if(/[?&]admin/.test(location.search)) document.documentElement.classList.add('ad
     .modal-body { padding: 14px; }
   }
 
+  .mm-tpls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px}
+  .mm-tpls button{text-align:left;border:2px solid var(--border);background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer;font-family:var(--font)}
+  .mm-tpls button b{display:block;font-size:0.9rem;color:var(--navy)}
+  .mm-tpls button span{font-size:0.74rem;color:var(--grey-mid)}
+  .mm-tpls button.on{border-color:#0071B3;background:#eaf4fb}
+  .mm-info{font-size:0.8rem;background:#f5f6fa;border-radius:8px;padding:10px 12px;margin:0 0 12px;line-height:1.5}
+  .mm-info .warn{color:#b45309;font-weight:700}
+  .mm-sec{font-weight:800;font-size:0.82rem;color:var(--navy);margin:14px 0 6px}
+  .mm-sec small{display:block;font-weight:400;color:var(--grey-mid);font-size:0.72rem}
+  .mm-sec select{margin-left:8px;font-family:var(--font);font-size:0.78rem;padding:3px 6px}
+  .mm-link{display:grid;grid-template-columns:200px 1fr;gap:8px;align-items:center;margin:0 0 6px;font-size:0.78rem}
+  .mm-link input{width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--border);font-family:var(--font);font-size:0.78rem}
+  .mm-link input.miss{border-color:#c6152e;background:#fff5f5}
+  .mm-clubs{width:100%;border-collapse:collapse;font-size:0.78rem}
+  .mm-clubs th,.mm-clubs td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left}
+  .mm-clubs td.n,.mm-clubs th.n{text-align:center}
+  .mm-status{font-size:0.8rem;margin:10px 0 0;min-height:1em}
+  .mm-status.ok{color:#2e7d32;font-weight:700}.mm-status.err{color:#c6152e;font-weight:700}
+  @media (max-width:640px){.mm-tpls{grid-template-columns:1fr}.mm-link{grid-template-columns:1fr}}
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(13,27,62,0.6); z-index: 1000; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: var(--white); border: 1px solid var(--border); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; margin: 20px; }
@@ -737,21 +756,27 @@ html.embed #panel-home > div[style*="text-align:center"]{display:none}
 </div>
 
 <div class="modal-overlay" id="mail-modal">
-  <div class="modal" style="max-width:620px">
-    <div class="modal-head">&#x2709;&#xFE0F; Email clubs to book on JustGo
+  <div class="modal" style="max-width:860px">
+    <div class="modal-head">&#x2709;&#xFE0F; Email clubs: booking on MyBG
       <button class="modal-close" onclick="window.closeMailModal()">&#x2715;</button></div>
     <div class="modal-body">
-      <p id="mm-who" style="font-size:0.82rem;margin:0 0 10px"></p>
-      <label style="display:flex;gap:8px;align-items:center;font-size:0.78rem;margin:0 0 12px"><input type="checkbox" id="mm-wait" onchange="window.mailRefresh()"> Include clubs on the waiting list</label>
-      <div class="fg"><label>JustGo booking link for this competition</label><input type="url" id="mm-link" placeholder="https://..." oninput="window.mailRefresh()"></div>
-      <div class="fg"><label>Subject</label><input type="text" id="mm-subj"></div>
-      <div class="fg"><label>Message</label><textarea id="mm-body" rows="12" style="width:100%;font-family:var(--font);font-size:0.8rem;padding:8px;border:1px solid var(--border)"></textarea></div>
-      <p style="font-size:0.72rem;color:var(--grey-mid);margin:6px 0 0">Clubs go in BCC, so no club sees another’s address. The link is saved on the competition for next time.</p>
+      <div class="mm-tpls" id="mm-tpls">
+        <button type="button" data-tpl="open" onclick="window.mailTpl('open')"><b>1. Booking now open</b><span>4 months before the competition (1 month before the deadline)</span></button>
+        <button type="button" data-tpl="remind" onclick="window.mailTpl('remind')"><b>2. One week to go</b><span>Reminder 1 week before the deadline</span></button>
+      </div>
+      <div id="mm-info" class="mm-info"></div>
+      <div class="mm-sec">Private MyBG links <small>Paste the link for each competition from MyBG. It's saved, so you only do this once.</small></div>
+      <div id="mm-links"></div>
+      <div class="mm-sec">Clubs <small>Each club gets its own email showing only its places. Untick any club you don't want to email.</small></div>
+      <div id="mm-clubs"></div>
+      <div class="mm-sec">Preview <select id="mm-prev" onchange="window.mailPreview()"></select></div>
+      <iframe id="mm-frame" title="Email preview" style="width:100%;height:460px;border:1px solid var(--border);background:#e9ebf2"></iframe>
+      <p id="mm-status" class="mm-status"></p>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="window.mailCopy('emails')">Copy addresses</button>
-      <button class="btn-cancel" onclick="window.mailCopy('body')">Copy message</button>
-      <button class="btn-save" onclick="window.mailOpen()">Open email</button>
+      <button class="btn-cancel" onclick="window.mailCopyHtml()" title="Copies the club shown in the preview, ready to paste into a new Gmail message">Copy this email</button>
+      <button class="btn-cancel" onclick="window.mailSend(true)">Send me a test</button>
+      <button class="btn-save" id="mm-send" onclick="window.mailSend(false)">Send</button>
     </div>
   </div>
 </div>
@@ -1038,6 +1063,7 @@ onSnapshot(query(compsCol, orderBy('date')), snap => {
   if (adminLoggedIn) renderAdminComps();
   updateStats();
   populateFilter();
+  maybeDeepMail();
 });
 
 onSnapshot(query(bookingsCol, orderBy('bookedAt', 'desc')), snap => {
@@ -1551,12 +1577,14 @@ function enterAdmin() {
       mergeBookings();
       if (adminLoggedIn) renderBookingsTable();
       showMigrateNotice();
+      maybeDeepMail();
     }, e => console.warn('Contacts not loaded', e));
   }
   renderAdminComps();
   renderBookingsTable();
   updateStats();
   showMigrateNotice();
+  maybeDeepMail();
 }
 function leaveAdmin(msg) {
   adminLoggedIn = false;
@@ -1921,80 +1949,192 @@ function getUniqueClubEmails() {
   return emails;
 }
 
-/* ── Email the clubs that reserved places at one competition ── */
+/* ── Email the clubs that reserved places: two branded templates, one email per club ──
+   1. "Booking now open": 4 months before the competition (1 month before the deadline)
+   2. "One week to go": 1 week before the deadline (3 months before the competition)
+   Competitions on the same day at the same venue (e.g. two age groups) go in one email per club.
+   Emails are sent from admin@nationalgymnasticsleague.co.uk by the NGL Mailer (a Google Apps Script
+   under that account), which only accepts requests from signed-in NGL admins. */
+const MAILER_URL = 'MAILER_URL_HERE';
+const CALL_URL = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ1pa5emRK483nT6yVVO9pG6v13zlrOaVoitoINi0GNLdXv6FkVn97TjfmYGduvNPOcocQLt6F8B';
+const NGL_LOGO = 'https://davidcbrooke.github.io/GYMNASTICS-RESULTS/brand/ngl-logo-full.png';
 let MAIL = null;
-function mailRecipients(compId, withWait){
-  const seen = new Set(), out = [];
-  allBookings.filter(b => b.compId === compId && (withWait || !b.waitlist)).forEach(b => {
-    const e = (b.email || '').trim(), k = e.toLowerCase();
-    if (e && !seen.has(k)) { seen.add(k); out.push({email:e, club:b.club}); }
+const mEsc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const titleCase = s => String(s||'').toLowerCase().replace(/\b([a-z])/g, m => m.toUpperCase());
+function compParts(c){
+  const bits = String(c.name||'').split(',').map(x => x.trim()).filter(Boolean);
+  const ageBit = bits.find(b => /\d/.test(b) && /yrs?|years|ages?/i.test(b));
+  const age = ageBit ? ageBit.replace(/YRS?/i,' yrs').replace(/(\d)-(\d)/g,'$1–$2').replace(/\s+/g,' ').replace(/AGES/i,'Ages').trim() : (c.name||'');
+  const region = c.region ? titleCase(c.region) : (bits[0] ? titleCase(bits[0]) : '');
+  const level = String(c.level||'').split('|').map(x => x.trim().toLowerCase()).filter(Boolean).join(', ');
+  return { age, region: region.replace(/ Region$/i,'') + (region ? ' Region' : ''), level: level ? level.charAt(0).toUpperCase() + level.slice(1) : '' };
+}
+const longDate = d => d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+const dayDate  = d => d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
+const shortDate= d => d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+function mailGroup(c){
+  const v = String(c.venue||'').trim().toLowerCase();
+  return allCompetitions.filter(x => x.date === c.date && String(x.venue||'').trim().toLowerCase() === v)
+    .sort((a,b) => (a.name||'').localeCompare(b.name||'', undefined, {numeric:true}));
+}
+function mailClubs(group){
+  const ids = new Set(group.map(c => c.id)), by = {};
+  allBookings.filter(b => ids.has(b.compId) && !b.waitlist).forEach(b => {
+    const e = String(b.email||'').trim(), k = e.toLowerCase(); if (!e) return;
+    const r = by[k] = by[k] || {email:e, club:b.club||e, places:{}};
+    r.places[b.compId] = (r.places[b.compId]||0) + (parseInt(b.spaces)||1);
   });
-  return out;
+  return Object.values(by).sort((a,b) => a.club.localeCompare(b.club));
 }
-function mailText(c, link){
-  const d = new Date(c.date + 'T00:00:00');
-  const nice = d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const due = new Date(d.getFullYear(), d.getMonth() - 3, d.getDate()).toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  return 'Hello,\n\n' +
-    'Thank you for reserving places at ' + c.name + ' on ' + nice + (c.venue ? ' at ' + c.venue : '') + '.\n\n' +
-    'This NGL competition is now available to book, exclusively for your club, on the British Gymnastics JustGo website. Follow this link to book:\n' +
-    (link || '[JustGo link]') + '\n\n' +
-    'Please complete your booking by ' + due + ', 3 months before the competition date.\n\n' +
-    'If you have any questions, just reply to this email.\n\n' +
-    'Kind regards,\nNational Gymnastics League';
+function mailCtx(){
+  const c0 = MAIL.group[0], d = new Date(c0.date + 'T00:00:00');
+  const due = new Date(d.getFullYear(), d.getMonth() - 3, d.getDate());
+  const p = compParts(c0), path = PATHWAYS[compPathway(c0)] || {};
+  return { d, due, region:p.region, pathway:(path.label||'NGL').toUpperCase(), accent:path.accent||'#0071B3', venue:c0.venue ? titleCase(c0.venue).replace(/\bSaadi\b/,'SAADI').replace(/\bNbc\b/,'NBC') : '' };
 }
-window.openMailModal = function(compId){
+function mailBuild(tpl, club){
+  const x = mailCtx(), open = tpl === 'open';
+  const rows = MAIL.group.filter(c => club.places[c.id]).map((c,i) => { const p = compParts(c), col = i % 2 ? '#29235c' : x.accent, link = MAIL.links[c.id] || '#';
+    return `<tr><td style="padding:14px 16px;border-bottom:1px solid #e6e8f0;font:15px/1.4 Roboto,Arial,sans-serif;color:#2b3555"><b style="color:#29235c">${mEsc(p.age)}</b>${p.level?`<br><span style="color:#5d6782;font-size:14px">${mEsc(p.level)}</span>`:''}</td>
+<td align="center" style="padding:14px 10px;border-bottom:1px solid #e6e8f0;font:900 24px Roboto,Arial,sans-serif;color:${col}">${club.places[c.id]}</td>
+<td align="right" style="padding:14px 16px;border-bottom:1px solid #e6e8f0"><a href="${mEsc(link)}" target="_blank" style="display:inline-block;background:${col};color:#ffffff;text-decoration:none;font:bold 14px Roboto,Arial,sans-serif;padding:10px 16px;border-radius:999px">${open?'Book on MyBG':'Confirm on MyBG'}</a></td></tr>`; }).join('');
+  const subject = open ? `Booking now open: NGL ${x.region}, ${shortDate(x.d)}` : `1 week to go: confirm your places by ${dayDate(x.due)} (NGL ${x.region}, ${shortDate(x.d)})`;
+  const h1 = open ? 'Your places are ready to book' : `Confirm your places by ${dayDate(x.due)}`;
+  const intro = open
+    ? `Thank you for reserving places at our ${mEsc(x.region)} competition on ${dayDate(x.d)}. Booking is now open on the British Gymnastics MyBG (JustGo) site, exclusively for clubs with reservations.`
+    : `Thank you for reserving places at our ${mEsc(x.region)} competition on ${dayDate(x.d)}. There's one week left to confirm and pay for your places on the MyBG (JustGo) site. If you've already booked, thank you: there's nothing more to do.`;
+  const box = open
+    ? `<b style="color:#29235c">Please book by ${longDate(x.due)},</b> 3 months before the competition.`
+    : `<b style="color:#29235c">Deadline: ${longDate(x.due)}.</b> If you'd like to enter, please confirm your places on MyBG before then.`;
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${mEsc(h1)}</title></head>
+<body style="margin:0;padding:0;background:#e9ebf2">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#e9ebf2"><tr><td align="center" style="padding:20px 10px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
+<tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${['#E8559A','#F8D438','#E88230','#0071B3','#01AFB8','#3BAA4A','#7A4C9E'].map(c=>`<td height="8" style="background:${c};font-size:0">&nbsp;</td>`).join('')}</tr></table></td></tr>
+<tr><td style="padding:30px 36px 6px;font-family:Roboto,Arial,Helvetica,sans-serif;color:#2b3555;font-size:16px;line-height:1.6">
+<img src="${NGL_LOGO}" width="150" alt="NGL" style="display:block;width:150px;height:auto;border:0;margin:0 0 18px">
+<div style="font-size:12px;font-weight:bold;letter-spacing:3px;color:${x.accent}">${mEsc(x.pathway)} · ${mEsc(x.region.toUpperCase())}</div>
+<h1 style="margin:8px 0 6px;font-size:27px;line-height:1.15;font-weight:900;color:#29235c">${mEsc(h1)}</h1>
+<p style="margin:0 0 18px;font-size:15px;color:#5d6782">Competition: ${longDate(x.d)}${x.venue?` at ${mEsc(x.venue)}`:''}</p>
+<p style="margin:0 0 14px">Hello ${mEsc(club.club)},</p>
+<p style="margin:0 0 18px">${intro}</p>
+<div style="font-size:12px;font-weight:bold;letter-spacing:2px;color:#29235c;margin:0 0 6px">YOUR RESERVED PLACES</div>
+</td></tr>
+<tr><td style="padding:0 36px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e6e8f0;border-radius:10px;border-collapse:separate;overflow:hidden">${rows}</table></td></tr>
+<tr><td style="padding:22px 36px 8px;font-family:Roboto,Arial,Helvetica,sans-serif;color:#2b3555;font-size:16px;line-height:1.6">
+<div style="background:#eaf4fb;border-left:5px solid ${x.accent};border-radius:6px;padding:14px 16px;margin:0 0 14px">${box}</div>
+<p style="margin:0 0 14px"><b style="color:#29235c">There's absolutely no obligation</b> to take the places you've reserved. If your numbers have changed, you can book fewer places, or simply leave them.</p>
+<p style="margin:0 0 14px">After the deadline, any places that haven't been booked will be offered to clubs on the waiting list and then go on general sale.</p>
+<p style="margin:0 0 22px">Any questions, just reply to this email or <a href="${CALL_URL}" style="color:#c6152e;font-weight:bold">book a quick call with Dave</a> on a Tuesday morning.</p>
+<p style="margin:0">Best wishes,</p>
+<p style="margin:2px 0 26px"><b style="color:#29235c">The National Gymnastics League</b></p>
+</td></tr>
+<tr><td style="background:#c6152e;padding:18px 30px;font-family:Roboto,Arial,sans-serif;color:#ffffff;font-size:13px;line-height:1.5" align="center"><b style="font-size:15px">Exclusively for British Gymnastics Clubs</b><br>Official sponsor: JustGo · #ItsAllConnected<br><a href="https://www.nationalgymnasticsleague.co.uk" style="color:#ffffff">nationalgymnasticsleague.co.uk</a> · <a href="mailto:admin@nationalgymnasticsleague.co.uk" style="color:#ffffff">admin@nationalgymnasticsleague.co.uk</a></td></tr>
+<tr><td style="padding:14px 30px 18px;font:11px/1.5 Roboto,Arial,sans-serif;color:#8a91ad" align="center">You're receiving this because your club reserved places at an NGL competition.<br>SAADI Gymnastics trading as National Gymnastics League, 66 Waveney Road, Harpenden, Herts AL5 4QZ.</td></tr>
+</table></td></tr></table></body></html>`;
+  const text = `Hello ${club.club},\n\n${intro.replace(/<[^>]+>/g,'')}\n\nYour reserved places:\n` +
+    MAIL.group.filter(c => club.places[c.id]).map(c => `- ${compParts(c).age}: ${club.places[c.id]} places. Book here: ${MAIL.links[c.id]||''}`).join('\n') +
+    `\n\n${box.replace(/<[^>]+>/g,'')}\n\nThere's absolutely no obligation to take the places you've reserved. After the deadline, any places that haven't been booked will be offered to clubs on the waiting list and then go on general sale.\n\nBest wishes,\nThe National Gymnastics League`;
+  return { subject, html, text };
+}
+function mailDefaultTpl(){
+  const d = new Date(MAIL.group[0].date + 'T00:00:00'), due = new Date(d.getFullYear(), d.getMonth() - 3, d.getDate());
+  return (due - new Date()) / 864e5 <= 14 ? 'remind' : 'open';
+}
+window.openMailModal = function(compId, tpl){
   const c = allCompetitions.find(x => x.id === compId); if (!c) return;
-  MAIL = {c};
-  document.getElementById('mm-wait').checked = false;
-  document.getElementById('mm-link').value = c.justgoUrl || '';
-  const d = new Date(c.date + 'T00:00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
-  document.getElementById('mm-subj').value = 'Now open on JustGo: ' + c.name + ', ' + d;
-  window.mailRefresh();
+  const group = mailGroup(c);
+  MAIL = { group, clubs: mailClubs(group), links: Object.fromEntries(group.map(g => [g.id, g.justgoUrl || ''])), skip: {} };
+  MAIL.tpl = tpl === 'open' || tpl === 'remind' ? tpl : mailDefaultTpl();
+  document.getElementById('mm-status').textContent = ''; document.getElementById('mm-status').className = 'mm-status';
+  mailRender();
   document.getElementById('mail-modal').classList.add('open');
 };
-window.mailRefresh = function(){
-  if (!MAIL) return;
-  const withWait = document.getElementById('mm-wait').checked, link = document.getElementById('mm-link').value.trim();
-  MAIL.list = mailRecipients(MAIL.c.id, withWait);
-  const clubs = [...new Set(MAIL.list.map(x => x.club))];
-  document.getElementById('mm-who').innerHTML = MAIL.list.length
-    ? '<b>' + MAIL.list.length + ' email address' + (MAIL.list.length === 1 ? '' : 'es') + '</b> from ' + clubs.length + ' club' + (clubs.length === 1 ? '' : 's') + ': ' + clubs.map(x => String(x).replace(/</g, '&lt;')).join(', ')
-    : '<b style="color:var(--red)">No clubs with reservations for this competition yet.</b>';
-  document.getElementById('mm-body').value = mailText(MAIL.c, link);
+window.mailTpl = function(t){ if (!MAIL) return; MAIL.tpl = t; mailRender(); };
+function mailRender(){
+  const x = mailCtx();
+  document.querySelectorAll('#mm-tpls button').forEach(b => b.classList.toggle('on', b.dataset.tpl === MAIL.tpl));
+  const log = (MAIL.group[0].mailLog || {})[MAIL.tpl];
+  document.getElementById('mm-info').innerHTML = `<b>${mEsc(longDate(x.d))}</b>${x.venue?` at ${mEsc(x.venue)}`:''} · ${MAIL.group.length} competition${MAIL.group.length===1?'':'s'} that day<br>Booking deadline: <b>${mEsc(longDate(x.due))}</b> (3 months before)` +
+    (log ? `<br><span class="warn">This email was already sent on ${mEsc(new Date(log.at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}))} by ${mEsc(log.by||'')} to ${log.n} club${log.n===1?'':'s'}.</span>` : '');
+  document.getElementById('mm-links').innerHTML = MAIL.group.map(c => `<div class="mm-link"><label for="mml-${c.id}"><b>${mEsc(compParts(c).age)}</b></label><input type="url" id="mml-${c.id}" data-lk="${c.id}" class="${MAIL.links[c.id]?'':'miss'}" placeholder="https://mybg.british-gymnastics.org/..." value="${mEsc(MAIL.links[c.id])}"></div>`).join('');
+  document.querySelectorAll('#mm-links input').forEach(i => i.addEventListener('input', () => { MAIL.links[i.dataset.lk] = i.value.trim(); i.classList.toggle('miss', !i.value.trim()); window.mailPreview(); }));
+  const on = MAIL.clubs.filter(r => !MAIL.skip[r.email.toLowerCase()]);
+  document.getElementById('mm-clubs').innerHTML = MAIL.clubs.length ? `<table class="mm-clubs"><tr><th></th><th>Club</th><th>Email</th>${MAIL.group.map(c => `<th class="n">${mEsc(compParts(c).age)}</th>`).join('')}</tr>` +
+    MAIL.clubs.map(r => `<tr><td><input type="checkbox" data-cl="${mEsc(r.email.toLowerCase())}" ${MAIL.skip[r.email.toLowerCase()]?'':'checked'}></td><td>${mEsc(r.club)}</td><td>${mEsc(r.email)}</td>${MAIL.group.map(c => `<td class="n">${r.places[c.id]||'–'}</td>`).join('')}</tr>`).join('') + '</table>'
+    : '<p style="color:#c6152e;font-size:0.8rem;font-weight:700">No clubs have reserved places at these competitions yet.</p>';
+  document.querySelectorAll('#mm-clubs input[data-cl]').forEach(i => i.addEventListener('change', () => { MAIL.skip[i.dataset.cl] = !i.checked; mailButtons(); }));
+  const sel = document.getElementById('mm-prev'), keep = sel.value;
+  sel.innerHTML = MAIL.clubs.map((r,i) => `<option value="${i}">${mEsc(r.club)}</option>`).join('');
+  if (keep && +keep < MAIL.clubs.length) sel.value = keep;
+  mailButtons(); window.mailPreview();
+}
+function mailButtons(){
+  const n = MAIL.clubs.filter(r => !MAIL.skip[r.email.toLowerCase()]).length;
+  const b = document.getElementById('mm-send'); b.textContent = `Send to ${n} club${n===1?'':'s'}`; b.disabled = !n;
+}
+window.mailPreview = function(){
+  if (!MAIL || !MAIL.clubs.length) { document.getElementById('mm-frame').srcdoc = ''; return; }
+  const r = MAIL.clubs[+document.getElementById('mm-prev').value || 0];
+  const m = mailBuild(MAIL.tpl, r);
+  document.getElementById('mm-frame').srcdoc = `<div style="font:13px Arial;padding:8px 12px;background:#fff;border-bottom:1px solid #ddd"><b>To:</b> ${mEsc(r.email)}<br><b>Subject:</b> ${mEsc(m.subject)}</div>` + m.html;
 };
 window.closeMailModal = function(){ document.getElementById('mail-modal').classList.remove('open'); };
-async function mailSaveLink(){
-  const link = document.getElementById('mm-link').value.trim();
-  if (MAIL && link && link !== (MAIL.c.justgoUrl || '')) {
-    try { await updateDoc(doc(db, 'ngl_competitions', MAIL.c.id), {justgoUrl: link}); MAIL.c.justgoUrl = link; } catch (e) { console.warn('JustGo link not saved', e); }
-  }
+async function mailSaveLinks(){
+  for (const c of MAIL.group) { const l = MAIL.links[c.id] || '';
+    if (l && l !== (c.justgoUrl || '')) { try { await updateDoc(doc(db, 'ngl_competitions', c.id), {justgoUrl: l}); c.justgoUrl = l; } catch (e) { console.warn('MyBG link not saved', e); } } }
 }
-window.mailCopy = async function(what){
+function mailSay(msg, cls){ const s = document.getElementById('mm-status'); s.textContent = msg; s.className = 'mm-status ' + (cls||''); }
+async function mailPost(messages){
+  if (!/^https:/.test(MAILER_URL)) throw new Error('The NGL Mailer isn’t connected yet. Use "Copy this email" for now.');
+  const u = auth.currentUser; if (!u) throw new Error('Please sign in to NGL Admin again.');
+  const r = await fetch(MAILER_URL, { method:'POST', body: JSON.stringify({ idToken: await u.getIdToken(), messages }) });
+  const j = await r.json(); if (!j.ok) throw new Error(j.error || 'The mailer refused the request.');
+  return j;
+}
+window.mailSend = async function(test){
   if (!MAIL) return;
-  const text = what === 'emails' ? MAIL.list.map(x => x.email).join('; ') : document.getElementById('mm-body').value;
-  try { await navigator.clipboard.writeText(text); alert(what === 'emails' ? MAIL.list.length + ' addresses copied. Paste them into BCC.' : 'Message copied.'); }
-  catch (_) { prompt('Copy this:', text); }
-  if (what === 'body') mailSaveLink();
-};
-// Address lists for mailto: keep @ and the commas readable, as some mail apps don't decode %40 / %2C
-const mailtoList = list => list.map(e => encodeURIComponent(String(e).trim()).replace(/%40/g, '@')).join(',');
-window.mailOpen = async function(){
-  if (!MAIL || !MAIL.list.length) { alert('No clubs to email for this competition.'); return; }
-  const link = document.getElementById('mm-link').value.trim();
-  if (!link && !confirm('There is no JustGo link yet, so the email will say [JustGo link]. Continue anyway?')) return;
-  await mailSaveLink();
-  const url = 'mailto:?bcc=' + mailtoList(MAIL.list.map(x => x.email)) +
-    '&subject=' + encodeURIComponent(document.getElementById('mm-subj').value) +
-    '&body=' + encodeURIComponent(document.getElementById('mm-body').value);
-  if (url.length > 1900) {
-    try { await navigator.clipboard.writeText(MAIL.list.map(x => x.email).join('; ')); } catch (_) {}
-    alert('This list is too long for one email link, so the addresses are copied. Paste them into BCC once the email opens.');
-    location.href = 'mailto:?subject=' + encodeURIComponent(document.getElementById('mm-subj').value) + '&body=' + encodeURIComponent(document.getElementById('mm-body').value);
+  const list = MAIL.clubs.filter(r => !MAIL.skip[r.email.toLowerCase()]);
+  if (!list.length) return mailSay('No clubs selected.', 'err');
+  const missing = MAIL.group.filter(c => list.some(r => r.places[c.id]) && !MAIL.links[c.id]);
+  if (missing.length) return mailSay('Paste the MyBG link for: ' + missing.map(c => compParts(c).age).join(', '), 'err');
+  await mailSaveLinks();
+  const me = (adminUser && adminUser.email) || '';
+  if (test) {
+    const r = MAIL.clubs[+document.getElementById('mm-prev').value || 0], m = mailBuild(MAIL.tpl, r);
+    mailSay('Sending a test to ' + me + '…');
+    try { await mailPost([{ to: me, subject: '[TEST] ' + m.subject, html: m.html, text: m.text }]); mailSay('Test sent to ' + me + '. Check the inbox, then press Send.', 'ok'); }
+    catch (e) { mailSay(e.message, 'err'); }
     return;
   }
-  location.href = url;
+  const log = (MAIL.group[0].mailLog || {})[MAIL.tpl];
+  if (!confirm((log ? 'This email was already sent once. ' : '') + 'Send the "' + (MAIL.tpl === 'open' ? 'Booking now open' : 'One week to go') + '" email to ' + list.length + ' club' + (list.length===1?'':'s') + ' now?')) return;
+  const btn = document.getElementById('mm-send'); btn.disabled = true; mailSay('Sending…');
+  try {
+    const j = await mailPost(list.map(r => { const m = mailBuild(MAIL.tpl, r); return { to: r.email, subject: m.subject, html: m.html, text: m.text }; }));
+    const ok = (j.sent||[]).filter(s => s.ok).length, bad = (j.sent||[]).filter(s => !s.ok);
+    const entry = { at: Date.now(), by: (adminUser && adminUser.name) || me, n: ok };
+    for (const c of MAIL.group) { try { await updateDoc(doc(db, 'ngl_competitions', c.id), { ['mailLog.' + MAIL.tpl]: entry }); c.mailLog = Object.assign({}, c.mailLog, { [MAIL.tpl]: entry }); } catch (e) { console.warn(e); } }
+    mailSay('Sent to ' + ok + ' club' + (ok===1?'':'s') + ' from admin@nationalgymnasticsleague.co.uk.' + (bad.length ? ' Not sent: ' + bad.map(b => b.to).join(', ') : ''), bad.length ? 'err' : 'ok');
+  } catch (e) { mailSay(e.message, 'err'); }
+  btn.disabled = false;
 };
+window.mailCopyHtml = async function(){
+  if (!MAIL || !MAIL.clubs.length) return;
+  await mailSaveLinks();
+  const r = MAIL.clubs[+document.getElementById('mm-prev').value || 0], m = mailBuild(MAIL.tpl, r);
+  try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([m.html], {type:'text/html'}), 'text/plain': new Blob([m.text], {type:'text/plain'}) })]);
+    mailSay('Copied the email for ' + r.club + '. Open a new Gmail message to ' + r.email + ', subject "' + m.subject + '", and paste.', 'ok'); }
+  catch (e) { mailSay('Your browser blocked copying. Use Send instead.', 'err'); }
+};
+// Opening this page with ?admin=1&mail=<competition id>&tpl=open|remind (from Competition planning) opens the right email.
+let mailDeepDone = false;
+function maybeDeepMail(){
+  if (mailDeepDone || !adminLoggedIn) return;
+  const q = new URLSearchParams(location.search), id = q.get('mail'); if (!id) { mailDeepDone = true; return; }
+  if (!allCompetitions.some(c => c.id === id) || !Object.keys(contactsById).length) return;
+  mailDeepDone = true; window.openMailModal(id, q.get('tpl'));
+}
 
 window.emailAllClubs = function() {
   const emails = getUniqueClubEmails();

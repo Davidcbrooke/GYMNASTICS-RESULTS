@@ -138,6 +138,8 @@ const DEFAULT_TASKS = [
   {id:"venue",     days:120, t:"Confirm the date, venue and session times", w:"Check the competition calendar and the venue booking match."},
   {id:"elevien",   days:112, t:"Set up the competition in Elevien", w:"Events, levels, apparatus and session start times."},
   {id:"bookings",  days:112, t:"Open reservations to clubs", w:"Clubs reserve places in the NGL Club Hub; check the competition shows on the season calendar.", steps:[{l:"Open bookings admin", u:BOOKING_ADMIN}]},
+  {id:"mlink",     days:120, t:"Email clubs their MyBG booking link", w:"Paste the private MyBG link for each competition that day, check the preview, send a test, then Send. Each club gets its own email with its places.", steps:[{l:"Open the email", u:BOOKING_ADMIN+"&mail={comp}&tpl=open"}]},
+  {id:"mremind",   days:97,  t:"Reminder: one week to the booking deadline", w:"Same email screen, second template. Goes to every club with reserved places.", steps:[{l:"Open the reminder", u:BOOKING_ADMIN+"&mail={comp}&tpl=remind"}]},
   {id:"buy",       days:90,  t:"Reservation deadline: clubs buy their places", w:"Reserved places must be bought 3 months before. Chase anyone who reserved but hasn't bought on JustGo.", steps:[{l:"See who hasn't bought", u:BOOKING_ADMIN}]},
   {id:"release",   days:89,  t:"Fill any places that weren't bought", w:"Work down the list in order. Stop as soon as the places are filled.",
     steps:[{l:"1. Offer them to the waiting list", u:BOOKING_ADMIN},{l:"2. Email every club with an NGL Club Hub account", u:CLUBHUB_ADMIN},{l:"3. Social media post", u:"https://www.instagram.com/nationalgymnasticsleague/"},{l:"4. Email all British Gymnastics clubs (Brevo)", u:"https://app.brevo.com/"}]},
@@ -173,6 +175,13 @@ const DEFAULT_TASKS = [
   {id:"debrief",   days:-7,  t:"Debrief: what to change next time", w:"Add notes here so the next competition benefits."}
 ].map((t,i)=>({...t, pos:i}));
 let TEMPLATE = DEFAULT_TASKS.map(t=>({...t}));
+/* Standard jobs added after the list was first edited and saved: they join a saved list once (unless already there or deleted since). */
+const ADDED_LATER = ["mlink","mremind"];
+function addNewStd(list, seen){
+  const have = new Set(list.map(t=>t.id)), was = new Set(seen||[]);
+  const add = DEFAULT_TASKS.filter(t => ADDED_LATER.includes(t.id) && !have.has(t.id) && !was.has(t.id)).map(t=>({...t}));
+  return add.length ? list.concat(add).sort((a,b)=>b.days-a.days || (a.pos??0)-(b.pos??0)) : list;
+}
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -221,7 +230,7 @@ async function saveTemplate(){
   TEMPLATE.sort((a,b)=>b.days-a.days || a.pos-b.pos).forEach((t,i)=>t.pos=i);
   render();
   if(!LIVE) return;
-  try{ await db.collection(CONFIG.store).doc(CONFIG.prefix + "template").set({tasks:TEMPLATE, updatedAt:firebase.firestore.FieldValue.serverTimestamp(), by:ME.email||""}); }
+  try{ await db.collection(CONFIG.store).doc(CONFIG.prefix + "template").set({tasks:TEMPLATE, seen:[...new Set(TEMPLATE.map(t=>t.id).concat(ADDED_LATER))], updatedAt:firebase.firestore.FieldValue.serverTimestamp(), by:ME.email||""}); }
   catch(e){ console.error(e); toast("The standard list wasn't saved: check the connection."); }
 }
 
@@ -240,9 +249,9 @@ function renderWeek(){
     (items.length>12 ? `<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">and ${items.length-12} more: open each competition to see them.</p>` : "")
     : `<p style="margin:0;color:var(--ok)">Nothing due in the next 7 days.</p>`);
 }
-const stepsHTML = t => !(t.steps||[]).length ? "" : `<div class="steps">${t.steps.map((st,i)=>{ const d = t.stepsDone[i];
+const stepsHTML = (t, c) => !(t.steps||[]).length ? "" : `<div class="steps">${t.steps.map((st,i)=>{ const d = t.stepsDone[i];
   const next = !t.done && !d && t.steps.slice(0,i).every((_,k)=>t.stepsDone[k]);
-  return `<a class="step ${d?"did":""} ${next?"next":""}" href="${esc(st.u||"#")}" target="_blank" rel="noopener" data-step="${esc(t.id)}|${i}">${esc(st.l)}${d?` <small>done ${fmt(new Date(d.at))}</small>`:""}</a>`; }).join("")}</div>`;
+  return `<a class="step ${d?"did":""} ${next?"next":""}" href="${esc(String(st.u||"#").replace("{comp}", encodeURIComponent(c ? c.id : "")))}" target="_blank" rel="noopener" data-step="${esc(t.id)}|${i}">${esc(st.l)}${d?` <small>done ${fmt(new Date(d.at))}</small>`:""}</a>`; }).join("")}</div>`;
 function editForm(t){
   return `<div class="ef" data-ef="${esc(t.id)}">
     <label>Job<input type="text" id="efT" value="${esc(t.t)}"></label>
@@ -271,7 +280,7 @@ function renderComp(){
         ${S.edit?`<span class="grip" title="Drag to move">&#10303;</span>`:`<input type="checkbox" data-done="${esc(t.id)}" ${t.done?"checked":""} ${t.na?"disabled":""} aria-label="Done: ${esc(t.t)}">`}
         <div class="t"><b>${esc(t.t)}</b>${t.extra?` <span class="tag">This competition only</span>`:""}${t.music?` <span class="tag">Floor music</span>`:""}${t.w?`<span class="w">${esc(t.w)}</span>`:""}</div>
         <div class="when"><b>${fmt(t.due)}</b>${esc(rel(t.days))}<br>${t.done?`<span class="pill ok">Done</span>`:t.na?`<span class="pill na">Not needed</span>`:t.st==="late"?`<span class="pill late">${-t.left} day${t.left===-1?"":"s"} late</span>`:t.st==="soon"?`<span class="pill soon">${t.left===0?"Due today":`Due in ${t.left} day${t.left===1?"":"s"}`}</span>`:""}</div>
-        ${S.edit?"":stepsHTML(t)}
+        ${S.edit?"":stepsHTML(t, c)}
         ${t.note&&!S.edit?`<div class="note">${esc(t.note)}</div>`:""}
         <div class="more">${S.edit?`<button data-edit="${esc(t.id)}">Edit</button>`:`${t.done?`Done by ${esc(t.done.by||"")}${t.done.at?` on ${fmt(new Date(t.done.at))}`:""} · `:""}<button data-note="${esc(t.id)}">${t.note?"Edit note":"Add a note"}</button> · <button data-na="${esc(t.id)}">${t.na?"Needed after all":"Not needed for this competition"}</button>`}</div>
       </div>`).join("") + (S.edit&&!list.length?`<div class="dropempty" data-phase-empty="${pi}">Drop a job here</div>`:"") + `</div></div>`; }).join("");
@@ -359,7 +368,7 @@ async function load(){
     catch(e){ console.error(e); showErr("Couldn't read the competitions (" + (e.code||e.message) + ")."); }
     try{ const snap = await db.collection(CONFIG.store).get();
       snap.docs.forEach(d=>{ if(!d.id.startsWith(CONFIG.prefix)) return; const k = d.id.slice(CONFIG.prefix.length);
-        if(k==="template"){ const t = d.data().tasks; if(Array.isArray(t) && t.length) TEMPLATE = t; } else S.plans[k] = d.data(); }); }
+        if(k==="template"){ const t = d.data().tasks; if(Array.isArray(t) && t.length) TEMPLATE = addNewStd(t, d.data().seen); } else S.plans[k] = d.data(); }); }
     catch(e){ console.error(e); showErr("Couldn't read the saved plans (" + (e.code||e.message) + "). Ticks won't save until this is fixed."); }
   } else comps = [{id:"demo-r1", name:"NGL Round 1 (example)", date:new Date(today.getTime()+30*day).toISOString().slice(0,10), venue:"Harpenden"}];
   const seen = new Set();
@@ -370,7 +379,7 @@ async function load(){
   S.cur = S.comps.some(c=>c.id===saved) ? saved : (next || S.comps[0] || {}).id;
   render();
   if(LIVE) db.collection(CONFIG.store).onSnapshot(sn => { sn.docChanges().forEach(ch => { const id = ch.doc.id; if(!id.startsWith(CONFIG.prefix)) return; const k = id.slice(CONFIG.prefix.length);
-      if(k==="template"){ const t = ch.doc.data().tasks; if(Array.isArray(t) && t.length && !dragId && !S.editing) TEMPLATE = t; } else S.plans[k] = ch.doc.data(); }); if(!S.editing && !dragId && (!document.activeElement || document.activeElement.tagName!=="TEXTAREA")) render(); }, e=>console.error(e));
+      if(k==="template"){ const t = ch.doc.data().tasks; if(Array.isArray(t) && t.length && !dragId && !S.editing) TEMPLATE = addNewStd(t, ch.doc.data().seen); } else S.plans[k] = ch.doc.data(); }); if(!S.editing && !dragId && (!document.activeElement || document.activeElement.tagName!=="TEXTAREA")) render(); }, e=>console.error(e));
 }
 function showErr(m){ const el = $("#err"); el.classList.remove("hidden"); el.innerHTML += (el.innerHTML?"<br>":"") + esc(m); }
 
