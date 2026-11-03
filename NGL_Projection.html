@@ -159,7 +159,7 @@ function defaults(){
       recreational: {y1:10, share:1,   gyms:300, fee:1250, disc:0,    bookPrice:5, bookCost:2.5, buyBook:0.95, booksNew:0, booksYear:0.75, stay:0, medalPrice:3, medalCost:1.5, medalsPer:3,  buyMedal:0.5, poster:0}
     },
     // Merchandise (Group Buying rebate + NGL t-shirts sold to clubs) and media (competition routine videos), added Nov 2026
-    mm: {gbShare:0.3, gbOrders:4, gbSpend:350, gbRebate:0.10, tsBuy:0.1, tsPrice:12, tsCost:10,
+    mm: {gbShare:0.3, gbOrders:4, gbSpend:350, gbRebate:0.10, gbMargin:0.10, tsBuy:0.1, tsPrice:12, tsCost:10,
          mGyms:1383, mGrowth:0.1, mTake:0.2, mPrice:15, mCostPer:1, mFixed:500},
     roles: [
       {name:'Dave',                     pay:[24000, 36000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000]},
@@ -203,7 +203,8 @@ function model(D){
   for(let t=0;t<N;t++){
     clubs[t] = Math.max(...PATHS.map(P=>out.paths[P.k].lic[t]));
     X.gbSpend[t] = clubs[t]*mm.gbShare*mm.gbOrders*mm.gbSpend;
-    X.gbInc[t] = X.gbSpend[t]*mm.gbRebate;
+    const gbCost = X.gbSpend[t]/(1+(mm.gbMargin||0));   // club spend includes the NGL margin; the rebate is on the supplier price
+    X.gbInc[t] = gbCost*mm.gbRebate + (X.gbSpend[t]-gbCost);
     X.ts[t] = T.gyms[t]*mm.tsBuy; X.tsInc[t] = X.ts[t]*mm.tsPrice; X.tsCost[t] = X.ts[t]*mm.tsCost;
     X.merchGp[t] = X.gbInc[t] + X.tsInc[t] - X.tsCost[t];
     X.mGyms[t] = mm.mGyms*Math.pow(1+mm.mGrowth, t); X.vids[t] = X.mGyms[t]*mm.mTake;
@@ -296,7 +297,7 @@ function renderTable(M){
   }
   rows.push({band:{name:'Merchandise and media', c:'#c6152e'}});
   R('Group Buying: what clubs spend', M.X.gbSpend, {sub:true, cls:'i', total:true});
-  R('Group Buying rebate from suppliers', M.X.gbInc);
+  R('Group Buying rebate and margin', M.X.gbInc);
   R('NGL t-shirts sold to clubs', M.X.ts, {fmt:'n'});
   R('NGL t-shirt sales', M.X.tsInc); R('NGL t-shirt costs', M.X.tsCost.map(v=>-v));
   R('Merchandise profit', M.X.merchGp, {cls:'b t'});
@@ -362,6 +363,7 @@ const MV = [
   ['gbOrders', 'Group Buying: order rounds per year', 'n', 'Quarterly = 4'],
   ['gbSpend', 'Group Buying: average club spend per round', 'gbp', 'Garments, before VAT'],
   ['gbRebate', 'Group Buying: supplier rebate', 'pct', 'Agreed 10% on all clothing'],
+  ['gbMargin', 'Group Buying: NGL margin on supplier price', 'pct', '10% added to the t-shirt prices'],
   ['tsBuy', 'NGL t-shirts: share of gymnasts buying a year', 'pct', ''],
   ['tsPrice', 'NGL t-shirt: price to clubs', 'gbp', ''],
   ['tsCost', 'NGL t-shirt: cost to NGL', 'gbp', ''],

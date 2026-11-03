@@ -291,16 +291,17 @@ const PNL_DEFAULTS = {
   annual:[ {id:"a_opsmgr", name:"National Ops Manager salary", type:"cost", amount:500, basis:"month"} ],
   custom:[],
   // Merchandise and media (Nov 2026): supplier rebate on Group Buying clothing, and routine video packs sold to families
-  gbRebate:10, mediaFrom:2027, mediaTake:20, mediaPrice:15, mediaCostPer:1, mediaFixed:500
+  gbRebate:10, gbMargin:10, mediaFrom:2027, mediaTake:20, mediaPrice:15, mediaCostPer:1, mediaFixed:500
 };
-// Group Buying price bands (garment price per item, before VAT), as on the Group Buying page
+// Group Buying SUPPLIER price bands (garment cost per item, before VAT). Clubs pay these plus the NGL margin (gbMargin) where set.
+const GB_MARGIN_ON = ['JC001'];   // products carrying the NGL margin on the Group Buying page (t-shirts, Nov 2026)
 const GB_BANDS = { JC001:[[1,7.45],[100,6.69],[200,5.74],[500,4.95]], LV874:[[1,17.45],[100,16.69],[200,15.74],[500,14.95]] };
 let gbRounds = [];   // ngl_groupbuy_rounds: {round, product, shirts}
 function gbForSeason(yr){
   const rows = gbRounds.filter(r=>String(r.round||"").slice(0,4)===String(yr));
-  let items = 0, spend = 0;
-  rows.forEach(r=>{ const q = +r.shirts||0, b = GB_BANDS[r.product]; if(!b||!q) return; let p = b[0][1]; b.forEach(([min,pr])=>{ if(q>=min) p = pr; }); items += q; spend += q*p; });
-  return {items, spend, rebate: spend*(+A.gbRebate||0)/100, rounds: new Set(rows.map(r=>r.round)).size};
+  let items = 0, spend = 0, mSpend = 0;
+  rows.forEach(r=>{ const q = +r.shirts||0, b = GB_BANDS[r.product]; if(!b||!q) return; let p = b[0][1]; b.forEach(([min,pr])=>{ if(q>=min) p = pr; }); items += q; spend += q*p; if(GB_MARGIN_ON.includes(r.product)) mSpend += q*p; });
+  return {items, spend, rebate: spend*(+A.gbRebate||0)/100, margin: mSpend*(+A.gbMargin||0)/100, rounds: new Set(rows.map(r=>r.round)).size};
 }
 function mediaFor(gyms){ const on = (+season||0) >= (+A.mediaFrom||0); const n = on ? gyms*(+A.mediaTake||0)/100 : 0; const inc = n*(+A.mediaPrice||0); return {on, n, inc, cost: n*(+A.mediaCostPer||0)}; }
 const MAX_JUDGES = 2;
@@ -355,7 +356,7 @@ function normalise(x){
   return a;
 }
 function annualMerch(){ const m = A.annual.filter(l=>/merch/i.test(l.name||"")); return {inc: m.filter(l=>l.type==="income").reduce((s,l)=>s+annualAmt(l),0), cost: m.filter(l=>l.type!=="income").reduce((s,l)=>s+annualAmt(l),0)}; }
-const MM_FIELDS = [["gbRebate","Group Buying supplier rebate (%)"],["mediaFrom","Media starts with season"],["mediaTake","Families buying the video pack (%)"],["mediaPrice","Video pack price per gymnast (£)"],["mediaCostPer","Cost per pack: clips, storage, delivery (£)"],["mediaFixed","Media fixed cost per season: cameras, storage plan (£)"]];
+const MM_FIELDS = [["gbRebate","Group Buying supplier rebate (%)"],["gbMargin","Group Buying NGL margin on t-shirts (% on supplier price)"],["mediaFrom","Media starts with season"],["mediaTake","Families buying the video pack (%)"],["mediaPrice","Video pack price per gymnast (£)"],["mediaCostPer","Cost per pack: clips, storage, delivery (£)"],["mediaFixed","Media fixed cost per season: cameras, storage plan (£)"]];
 function renderMM(force){
   const el = document.getElementById("mmEditor"); if(!el) return;
   if(!force && el.contains(document.activeElement)) return;
@@ -558,6 +559,7 @@ function buildConsolidated(){
   else { inc.push(["Licensing", zero, "no licensed clubs yet", "pend"]); cost.push(["Licensing", zero, "no licensed clubs yet", "pend"]); }
   const gb = gbForSeason(season);
   inc.push(["Group Buying rebate", flat(gb.rebate), gb.items ? `${A.gbRebate}% of ${gbp(gb.spend)} clothing, ${gb.items} items` : "no orders this season yet", gb.items?"":"pend"]);
+  inc.push(["Group Buying margin", flat(gb.margin), gb.items ? `${A.gbMargin}% added to the supplier t-shirt price` : "no orders this season yet", gb.items?"":"pend"]);
   const gy = [all.B.gymnasts, all.F.gymnasts-all.B.gymnasts, Math.round(all.F.gymnasts*all.pct/100), all.F.gymnasts].map(mediaFor);
   const mFixed = gy[0].on ? (+A.mediaFixed||0) : 0;
   inc.push(["Media: routine video packs", gy.map(m=>m.inc), gy[0].on ? `${A.mediaTake}% of gymnasts at ${gbp(+A.mediaPrice||0)}` : `starts ${A.mediaFrom}`, gy[0].on?"":"pend"]);
@@ -1057,7 +1059,7 @@ function renderOverview(force){
   { const gb = gbForSeason(season), mi = c.inc.find(r=>r[0].startsWith("Media")), mc = c.cost.find(r=>r[0].startsWith("Media")), me = annualMerch();
     const row3 = (i, k, ok) => `<div class="rows"><span class="k">Income</span><span class="v">${gbp(i)}</span><span class="k">Costs</span><span class="v">${gbp(-k)}</span><span class="k p">Profit</span><span class="v p ${i-k>=0?"pnl-pos":"pnl-neg"}">${gbp(i-k)}</span></div>`;
     $("#cats").innerHTML +=
-      `<div class="cat" style="--c:#c6152e"><span class="bar"></span><div class="in"><h3>Merchandise</h3>${row3(gb.rebate+me.inc, me.cost)}<div class="note">Group Buying: ${gb.items ? `${gb.items} items, ${gbp(gb.spend)} ordered, ${A.gbRebate}% rebate ${gbp(gb.rebate)}` : "no orders this season yet"}${me.inc||me.cost ? `. Plus your merchandise lines below.` : ""}</div><button class="link" data-go="mm">Edit figures</button></div></div>` +
+      `<div class="cat" style="--c:#c6152e"><span class="bar"></span><div class="in"><h3>Merchandise</h3>${row3(gb.rebate+gb.margin+me.inc, me.cost)}<div class="note">Group Buying: ${gb.items ? `${gb.items} items, ${gbp(gb.spend)} ordered, ${A.gbRebate}% rebate ${gbp(gb.rebate)}, t-shirt margin ${gbp(gb.margin)}` : "no orders this season yet"}${me.inc||me.cost ? `. Plus your merchandise lines below.` : ""}</div><button class="link" data-go="mm">Edit figures</button></div></div>` +
       `<div class="cat" style="--c:#7A4C9E"><span class="bar"></span><div class="in"><h3>Media</h3>${mi && mi[1][3] ? row3(mi[1][0], mc[1][0]) + `<div class="note">Routine video packs: ${A.mediaTake}% of gymnasts at ${gbp(+A.mediaPrice||0)}. ${gbp(mi[1][3]-mc[1][3])} profit if every competition sells out.</div>` : `<div class="note">Starts with the ${esc(A.mediaFrom)} season: routine video packs for families (floor, plus beam where filmed).</div>`}<button class="link" data-go="mm">Edit figures</button></div></div>`; }
   $("#nglStmt").innerHTML = stmtHTML(c, `NGL ${season}`);
   renderMM(force);
