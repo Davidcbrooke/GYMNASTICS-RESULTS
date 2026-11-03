@@ -56,6 +56,14 @@
     background:var(--red);
     border-radius:0 0 16px 16px;
   }
+  .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0 0}
+  .hero-cta a{display:inline-block;text-decoration:none;font-weight:800;font-size:clamp(15px,1.6vw,17px);border-radius:999px;padding:14px 24px;line-height:1.2}
+  .hero-cta .hc-primary{background:var(--gold);color:var(--navy);box-shadow:0 12px 24px -12px rgba(242,169,0,.8)}
+  .hero-cta .hc-secondary{border:2px solid rgba(255,255,255,.7);color:var(--white)}
+  .hero-cta a:hover{transform:translateY(-1px)}
+  @media (max-width:520px){.hero-cta a{width:100%;text-align:center}}
+  .hero p.hero-family{margin:16px 0 0;font-size:15px}
+  .hero p.hero-family a{color:var(--gold);font-weight:700;text-decoration:none}
   .what-ngl{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 22px;max-width:860px;margin:16px 0 0}
   .what-ngl div{border-left:4px solid var(--gold);padding:2px 0 2px 12px;color:var(--white);font-size:clamp(14px,1.4vw,16px);line-height:1.45}
   .what-ngl b{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
@@ -792,6 +800,8 @@
   .start-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
   @media (max-width:640px){.start-cards{grid-template-columns:minmax(0,1fr)}}
   .start-card{display:flex;flex-direction:column;align-items:flex-start;background:#fff;color:var(--navy);border-radius:16px;padding:22px 22px 20px;text-decoration:none;box-shadow:0 16px 30px -18px rgba(0,0,0,.55);transition:transform .15s ease}
+  .start-prospectus{margin:18px 0 0;font-size:15px;color:rgba(255,255,255,.85)}
+  .start-prospectus a{color:#fff;font-weight:800}
   .start-card:hover{transform:translateY(-2px)}
   .start-card .who{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px}
   .start-card b{font-size:clamp(20px,2.4vw,24px);font-weight:900;line-height:1.15;margin-bottom:6px}
@@ -813,11 +823,12 @@
     <div class="hero-text">
     <h1>The National Gymnastics League</h1>
     <p class="mission">Helping British Gymnastics clubs become the <em>first choice</em> for every parent.</p>
-    <p>One connected framework for British Gymnastics clubs — training, awards, competitions and club support, across seven pathways spanning every age and ability. Powered by technology that lifts the experience: remote judging, live competition scoring, dynamic lesson plans, live rotation plans and pathway apps.</p>
-    <div class="what-ngl">
-      <div><b>For clubs</b><span>Awards schemes, competitions and club support in one connected system, run from your free NGL Club Hub.</span></div>
-      <div><b>For families</b><span>Where your gymnast earns their awards, competes all season and follows their scores in the National League Table.</span></div>
+    <p>One connected framework for clubs: awards, competitions, lesson plans and club support across seven pathways, from Pre-School to Masters.</p>
+    <div class="hero-cta">
+      <a class="hc-primary" href="https://club.nationalgymnasticsleague.co.uk/#register" target="_top">Register your club free &rarr;</a>
+      <a class="hc-secondary" href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/prospectus/" target="_blank" rel="noopener">Read the 2027 Club Prospectus</a>
     </div>
+    <p class="hero-family">Parent or gymnast? <a href="https://club.nationalgymnasticsleague.co.uk/family/" target="_top">Go to the NGL Family Hub &rarr;</a></p>
     </div>
     <figure class="hero-video">
       <video id="heroVid" src="brand/ngl-what-is-the-ngl.mp4" poster="brand/ngl-what-is-the-ngl-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="What is the NGL? A 17-second introduction"></video>
@@ -861,6 +872,7 @@
         <em class="go" style="font-style:normal">Register for the Family Hub →</em>
       </a>
     </div>
+    <p class="start-prospectus">New to the NGL? <a href="https://davidcbrooke.github.io/GYMNASTICS-RESULTS/prospectus/" target="_blank" rel="noopener">Read the 2027 Club Prospectus &rarr;</a></p>
   </section>
 
   <section class="helper" aria-labelledby="helper-title">
