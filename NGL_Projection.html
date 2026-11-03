@@ -158,6 +158,9 @@ function defaults(){
       schools:      {y1:10, share:0.3, gyms:200, fee:750,  disc:0.05, bookPrice:5, bookCost:2.5, buyBook:0.95, booksNew:1, booksYear:0,    stay:3, medalPrice:5, medalCost:1.5, medalsPer:1,  buyMedal:0.5, poster:0},
       recreational: {y1:10, share:1,   gyms:300, fee:1250, disc:0,    bookPrice:5, bookCost:2.5, buyBook:0.95, booksNew:0, booksYear:0.75, stay:0, medalPrice:3, medalCost:1.5, medalsPer:3,  buyMedal:0.5, poster:0}
     },
+    // Merchandise (Group Buying rebate + NGL t-shirts sold to clubs) and media (competition routine videos), added Nov 2026
+    mm: {gbShare:0.3, gbOrders:4, gbSpend:350, gbRebate:0.10, tsBuy:0.1, tsPrice:12, tsCost:10,
+         mGyms:1383, mGrowth:0.1, mTake:0.2, mPrice:15, mCostPer:1, mFixed:500},
     roles: [
       {name:'Dave',                     pay:[24000, 36000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000]},
       {name:'Second member of staff',   pay:[0, 0, 36000, 36000, 36000, 36000, 36000, 36000, 36000, 36000]},
@@ -196,19 +199,28 @@ function model(D){
     out.paths[P.k] = r;
   }
   const clubs = z(), postIn = z(), totalInc = z(), staff = z(), post = z(), mkt = z(), host = z(), costs = z(), net = z(), cum = z();
+  const mm = D.mm, X = {gbSpend:z(), gbInc:z(), ts:z(), tsInc:z(), tsCost:z(), merchGp:z(), mGyms:z(), vids:z(), mInc:z(), mCost:z(), mediaGp:z(), inc:z(), gp:z()};
   for(let t=0;t<N;t++){
     clubs[t] = Math.max(...PATHS.map(P=>out.paths[P.k].lic[t]));
+    X.gbSpend[t] = clubs[t]*mm.gbShare*mm.gbOrders*mm.gbSpend;
+    X.gbInc[t] = X.gbSpend[t]*mm.gbRebate;
+    X.ts[t] = T.gyms[t]*mm.tsBuy; X.tsInc[t] = X.ts[t]*mm.tsPrice; X.tsCost[t] = X.ts[t]*mm.tsCost;
+    X.merchGp[t] = X.gbInc[t] + X.tsInc[t] - X.tsCost[t];
+    X.mGyms[t] = mm.mGyms*Math.pow(1+mm.mGrowth, t); X.vids[t] = X.mGyms[t]*mm.mTake;
+    X.mInc[t] = X.vids[t]*mm.mPrice; X.mCost[t] = X.vids[t]*mm.mCostPer + (X.mInc[t] ? mm.mFixed : 0);
+    X.mediaGp[t] = X.mInc[t] - X.mCost[t];
+    X.inc[t] = X.gbInc[t] + X.tsInc[t] + X.mInc[t]; X.gp[t] = X.merchGp[t] + X.mediaGp[t];
     postIn[t] = T.lic[t]*D.orders*D.postIn;
-    totalInc[t] = T.inc[t]+postIn[t];
+    totalInc[t] = T.inc[t]+postIn[t]+X.inc[t];
     staff[t] = D.roles.reduce((a,r)=>a+(+r.pay[t]||0),0)*(1+D.oncost);
     post[t] = T.lic[t]*D.orders*D.postOut;
     mkt[t] = Math.max(D.mktMin, totalInc[t]*D.mktPct);
     host[t] = D.hosting;
     costs[t] = staff[t]+post[t]+mkt[t]+host[t];
-    net[t] = T.gp[t]+postIn[t]-costs[t];
+    net[t] = T.gp[t]+postIn[t]+X.gp[t]-costs[t];
     cum[t] = (t?cum[t-1]:0)+net[t];
   }
-  Object.assign(out, {T, clubs, postIn, totalInc, staff, post, mkt, host, costs, net, cum});
+  Object.assign(out, {T, X, clubs, postIn, totalInc, staff, post, mkt, host, costs, net, cum});
   return out;
 }
 const sum = a => a.reduce((x,y)=>x+y,0);
@@ -282,14 +294,26 @@ function renderTable(M){
     if(sum(r.posterCost)) R('Posters for new clubs', r.posterCost.map(v=>-v));
     R(`${P.name} profit`, r.gp, {cls:'b t'});
   }
+  rows.push({band:{name:'Merchandise and media', c:'#c6152e'}});
+  R('Group Buying: what clubs spend', M.X.gbSpend, {sub:true, cls:'i', total:true});
+  R('Group Buying rebate from suppliers', M.X.gbInc);
+  R('NGL t-shirts sold to clubs', M.X.ts, {fmt:'n'});
+  R('NGL t-shirt sales', M.X.tsInc); R('NGL t-shirt costs', M.X.tsCost.map(v=>-v));
+  R('Merchandise profit', M.X.merchGp, {cls:'b t'});
+  R('Competing gymnasts', M.X.mGyms, {fmt:'n', total:false});
+  R('Routine video packs sold', M.X.vids, {fmt:'n'});
+  R('Media sales', M.X.mInc); R('Media costs (delivery, storage, kit)', M.X.mCost.map(v=>-v));
+  R('Media profit', M.X.mediaGp, {cls:'b t'});
   rows.push({band:{name:'All pathways', c:'#14254a'}});
   R('Licences (all three pathways)', M.T.lic, {fmt:'n1', total:false});
   R('Clubs, at least', M.clubs, {fmt:'n1', total:false, cls:'i'});
   R('Gymnasts', M.T.gyms, {fmt:'n', total:false});
   R('Club Licence fees', M.T.licInc); R('Book sales', M.T.bookInc); R('Medal sales', M.T.medalInc);
   R('Postage charged to clubs', M.postIn);
+  R('Merchandise and media income', M.X.inc);
   R('Total income', M.totalInc, {cls:'b t'});
   R('Profit from licences, books and medals', M.T.gp);
+  R('Profit from merchandise and media', M.X.gp);
   rows.push({head:'Running costs'});
   D.roles.forEach(ro => R(`Salary: ${ro.name}`, ro.pay.map(v=>-(+v||0)), {sub:true, cls:'i'}));
   R('Staff costs (salaries and on-costs)', M.staff.map(v=>-v));
@@ -333,6 +357,21 @@ const PV = [
   ['buyMedal', 'Gymnasts who buy medals', 'pct', ''],
   ['poster', 'A1 poster per new licence (cost)', 'gbp', 'Pre-School only']
 ];
+const MV = [
+  ['gbShare', 'Group Buying: share of clubs ordering', 'pct', 'Of licensed clubs, each order round'],
+  ['gbOrders', 'Group Buying: order rounds per year', 'n', 'Quarterly = 4'],
+  ['gbSpend', 'Group Buying: average club spend per round', 'gbp', 'Garments, before VAT'],
+  ['gbRebate', 'Group Buying: supplier rebate', 'pct', 'Agreed 10% on all clothing'],
+  ['tsBuy', 'NGL t-shirts: share of gymnasts buying a year', 'pct', ''],
+  ['tsPrice', 'NGL t-shirt: price to clubs', 'gbp', ''],
+  ['tsCost', 'NGL t-shirt: cost to NGL', 'gbp', ''],
+  ['mGyms', 'Media: competing gymnasts in year 1', 'n', '2027 bookings: 1,383 places'],
+  ['mGrowth', 'Media: yearly growth in gymnasts', 'pct', ''],
+  ['mTake', 'Media: families who buy the video pack', 'pct', ''],
+  ['mPrice', 'Media: price per gymnast per competition', 'gbp', 'Floor (and beam where filmed)'],
+  ['mCostPer', 'Media: cost per pack', 'gbp', 'Clip cutting, storage, delivery'],
+  ['mFixed', 'Media: fixed cost per year', 'gbp', 'Cameras, storage plan']
+];
 const GV = [
   ['firstYear', 'First licence year', 'yr', 'Licence year from September'],
   ['maxClubs', 'Most clubs NGL expects to sign up', 'n', 'BG lists about 1,000 clubs across all disciplines'],
@@ -356,6 +395,7 @@ function renderVars(){
   const D = S();
   const simple = (list) => list.map(([k,l,kind,n])=>`<div class="vrow"><label>${esc(l)}${n?`<small>${esc(n)}</small>`:''}</label>${inp(k, D[k], kind)}</div>`).join('');
   let h = `<div class="vgrid"><div class="vbox"><h4>General</h4>${simple(GV)}</div><div class="vbox"><h4>Running costs</h4>${simple(CV)}</div></div>`;
+  h += `<div class="vbox" style="margin-top:14px"><h4>Merchandise and media</h4><div class="vgrid">${MV.map(([k,l,kind,n])=>`<div class="vrow"><label>${esc(l)}${n?`<small>${esc(n)}</small>`:''}</label>${inp('mm.'+k, D.mm[k], kind)}</div>`).join('')}</div></div>`;
   h += `<div class="vbox" style="margin-top:14px"><h4>Licence growth on the year before</h4><div class="yrs"><table class="vt"><thead><tr><th></th>${[...Array(N)].map((_,t)=>`<th>${D.firstYear+t}</th>`).join('')}</tr></thead><tbody><tr><td class="lab">Growth<small>100% = doubles</small></td>${D.growth.map((g,t)=>`<td>${t===0?'<span class="note">start</span>':inp(`growth.${t}`, g, 'pct')}</td>`).join('')}</tr></tbody></table></div><p id="growthNote" class="capnote warn"></p></div>`;
   h += `<div class="vbox" style="margin-top:14px"><h4>Per pathway</h4><div class="yrs"><table class="vt"><thead><tr><th></th>${PATHS.map(P=>`<th class="p" style="background:${P.c};${P.dark?'color:#14254a':''}">${P.name}</th>`).join('')}</tr></thead><tbody>` +
     PV.map(([k,l,kind,n])=>`<tr><td class="lab">${esc(l)}${n?`<small>${esc(n)}</small>`:''}</td>${PATHS.map(P=>`<td>${inp(`paths.${P.k}.${k}`, D.paths[P.k][k], kind)}</td>`).join('')}</tr>`).join('') + `</tbody></table></div></div>`;
@@ -428,6 +468,7 @@ function normalise(st){
   for(const [n, sc] of Object.entries(st.scenarios)){
     const m = Object.assign(defaults(), sc);
     m.paths = {}; for(const P of PATHS) m.paths[P.k] = Object.assign({}, d.paths[P.k], (sc.paths||{})[P.k]);
+    m.mm = Object.assign({}, d.mm, sc.mm||{});
     m.growth = [...Array(N)].map((_,t)=> (sc.growth||[])[t] ?? d.growth[t]);
     m.roles = (sc.roles || d.roles).map(r=>({name:r.name||'Role', pay:[...Array(N)].map((_,t)=> +((r.pay||[])[t]||0))}));
     st.scenarios[n] = m;

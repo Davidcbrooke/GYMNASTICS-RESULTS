@@ -174,6 +174,10 @@ details.bycomp summary{cursor:pointer;padding:12px 16px;font-weight:600;color:va
       <div class="tablewrap"><table class="stmt" id="nglStmt"></table></div>
       <div class="pnl-toolbar" style="padding-top:14px"><button class="btn ghost" id="exportNgl">Export NGL P&amp;L</button></div>
     </div>
+    <div class="panel-card" id="mmCard">
+      <div class="pc-head">Merchandise and media <span>Group Buying rebate (live from order totals) and routine video packs for families</span></div>
+      <div class="pnl-assump always" id="mmEditor"></div>
+    </div>
     <div class="panel-card">
       <div class="pc-head">Annual income and overheads <span>Salaries, sponsorship and anything not tied to one area</span></div>
       <div class="pnl-assump always" id="annualEditor"></div>
@@ -285,8 +289,20 @@ const PNL_DEFAULTS = {
   medalPrice:1.5, subdivisions:8, defaultPieces:4, aaMedals:0, recAllMedal:1, cardFee:1, hostKit:60, hostPay2:7.5, hostPay4:10,
   over:{},
   annual:[ {id:"a_opsmgr", name:"National Ops Manager salary", type:"cost", amount:500, basis:"month"} ],
-  custom:[]
+  custom:[],
+  // Merchandise and media (Nov 2026): supplier rebate on Group Buying clothing, and routine video packs sold to families
+  gbRebate:10, mediaFrom:2027, mediaTake:20, mediaPrice:15, mediaCostPer:1, mediaFixed:500
 };
+// Group Buying price bands (garment price per item, before VAT), as on the Group Buying page
+const GB_BANDS = { JC001:[[1,7.45],[100,6.69],[200,5.74],[500,4.95]], LV874:[[1,17.45],[100,16.69],[200,15.74],[500,14.95]] };
+let gbRounds = [];   // ngl_groupbuy_rounds: {round, product, shirts}
+function gbForSeason(yr){
+  const rows = gbRounds.filter(r=>String(r.round||"").slice(0,4)===String(yr));
+  let items = 0, spend = 0;
+  rows.forEach(r=>{ const q = +r.shirts||0, b = GB_BANDS[r.product]; if(!b||!q) return; let p = b[0][1]; b.forEach(([min,pr])=>{ if(q>=min) p = pr; }); items += q; spend += q*p; });
+  return {items, spend, rebate: spend*(+A.gbRebate||0)/100, rounds: new Set(rows.map(r=>r.round)).size};
+}
+function mediaFor(gyms){ const on = (+season||0) >= (+A.mediaFrom||0); const n = on ? gyms*(+A.mediaTake||0)/100 : 0; const inc = n*(+A.mediaPrice||0); return {on, n, inc, cost: n*(+A.mediaCostPer||0)}; }
 const MAX_JUDGES = 2;
 // League-wide lines added once to existing saved settings (they can then be edited or removed)
 const MIGRATIONS = [
@@ -338,6 +354,14 @@ function normalise(x){
   MIGRATIONS.forEach(m=>{ if(a[m.flag]) return; if(m.over) Object.entries(m.over).forEach(([k,v])=>{ a.over[k]=Object.assign({}, v, a.over[k]||{}); }); (m.lines||[]).forEach(l=>{ if(!a.annual.some(x=>x.id===l.id)) a.annual.push(Object.assign({},l)); }); a[m.flag]=true; migrated=true; });
   return a;
 }
+function annualMerch(){ const m = A.annual.filter(l=>/merch/i.test(l.name||"")); return {inc: m.filter(l=>l.type==="income").reduce((s,l)=>s+annualAmt(l),0), cost: m.filter(l=>l.type!=="income").reduce((s,l)=>s+annualAmt(l),0)}; }
+const MM_FIELDS = [["gbRebate","Group Buying supplier rebate (%)"],["mediaFrom","Media starts with season"],["mediaTake","Families buying the video pack (%)"],["mediaPrice","Video pack price per gymnast (£)"],["mediaCostPer","Cost per pack: clips, storage, delivery (£)"],["mediaFixed","Media fixed cost per season: cameras, storage plan (£)"]];
+function renderMM(force){
+  const el = document.getElementById("mmEditor"); if(!el) return;
+  if(!force && el.contains(document.activeElement)) return;
+  el.innerHTML = MM_FIELDS.map(([k,l])=>`<label>${esc(l)}<input type="number" step="any" min="0" data-mm="${k}" value="${esc(A[k])}"></label>`).join("");
+}
+document.addEventListener("input", e=>{ const k = e.target.dataset && e.target.dataset.mm; if(!k) return; A[k] = parseFloat(e.target.value)||0; save(); renderAll(); });
 const annualAmt = l => (parseFloat(l.amount)||0) * (l.basis==="month"?12:1);
 const annualCost = () => A.annual.filter(l=>l.type!=="income").reduce((s,l)=>s+annualAmt(l),0);
 const annualInc  = () => A.annual.filter(l=>l.type==="income").reduce((s,l)=>s+annualAmt(l),0);
@@ -532,6 +556,12 @@ function buildConsolidated(){
   const lic = LIC_PATHS.map(k=>({k, r:buildLicensing(k, season)})).filter(x=>x.r.n);
   if(lic.length) lic.forEach(({k,r})=>{ inc.push([`${PATHWAYS[k].short} licensing`, flat(r.TI[3]), `${r.n} club${r.n===1?"":"s"}${r.F.source==="plan"?", planning":""}`]); cost.push([`${PATHWAYS[k].short} licensing`, flat(r.TC[3])]); });
   else { inc.push(["Licensing", zero, "no licensed clubs yet", "pend"]); cost.push(["Licensing", zero, "no licensed clubs yet", "pend"]); }
+  const gb = gbForSeason(season);
+  inc.push(["Group Buying rebate", flat(gb.rebate), gb.items ? `${A.gbRebate}% of ${gbp(gb.spend)} clothing, ${gb.items} items` : "no orders this season yet", gb.items?"":"pend"]);
+  const gy = [all.B.gymnasts, all.F.gymnasts-all.B.gymnasts, Math.round(all.F.gymnasts*all.pct/100), all.F.gymnasts].map(mediaFor);
+  const mFixed = gy[0].on ? (+A.mediaFixed||0) : 0;
+  inc.push(["Media: routine video packs", gy.map(m=>m.inc), gy[0].on ? `${A.mediaTake}% of gymnasts at ${gbp(+A.mediaPrice||0)}` : `starts ${A.mediaFrom}`, gy[0].on?"":"pend"]);
+  cost.push(["Media: delivery, storage and kit", gy.map((m,i)=>m.cost + (i===1?0:mFixed)), gy[0].on ? "" : `starts ${A.mediaFrom}`, gy[0].on?"":"pend"]);
   A.annual.forEach(l=>{ const a=annualAmt(l); (l.type==="income"?inc:cost).push([l.name||(l.type==="income"?"Annual income":"Annual cost"), flat(a), l.basis==="month"?"monthly, league-wide":"yearly, league-wide"]); });
   const sum = rows => rows.reduce((a,r)=>a.map((x,i)=>x+r[1][i]), [0,0,0,0]);
   const TI = sum(inc), TC = sum(cost), NET = TI.map((x,i)=>x-TC[i]), MARGIN = TI.map((x,i)=>x?Math.round(NET[i]/x*100):null);
@@ -1024,7 +1054,13 @@ function renderOverview(force){
       (r.n ? `<div class="rows"><span class="k">Income</span><span class="v">${gbp(r.TI[3])}</span><span class="k">Costs</span><span class="v">${gbp(-r.TC[3])}</span><span class="k p">Profit</span><span class="v p ${r.NET[3]>=0?"pnl-pos":"pnl-neg"}">${gbp(r.NET[3])}</span></div><div class="note">${r.n} club${r.n===1?"":"s"}, ${r.summary}. ${r.F.source==="live"?"Live from Hub orders":"Planning figures"}, ${esc(licYearLabel(season))}.</div>`
         : `<div class="note">${licSource==="live" && LIC.state!=="live" ? `Sign in on the Licensing tab to bring in ${HUB_NAME[k]} orders.` : "No licensed clubs yet."}</div>`) +
       `<button class="link" data-go="licensing" data-lic-go="${k}">Open this P&amp;L</button></div></div>`; }).join("");
+  { const gb = gbForSeason(season), mi = c.inc.find(r=>r[0].startsWith("Media")), mc = c.cost.find(r=>r[0].startsWith("Media")), me = annualMerch();
+    const row3 = (i, k, ok) => `<div class="rows"><span class="k">Income</span><span class="v">${gbp(i)}</span><span class="k">Costs</span><span class="v">${gbp(-k)}</span><span class="k p">Profit</span><span class="v p ${i-k>=0?"pnl-pos":"pnl-neg"}">${gbp(i-k)}</span></div>`;
+    $("#cats").innerHTML +=
+      `<div class="cat" style="--c:#c6152e"><span class="bar"></span><div class="in"><h3>Merchandise</h3>${row3(gb.rebate+me.inc, me.cost)}<div class="note">Group Buying: ${gb.items ? `${gb.items} items, ${gbp(gb.spend)} ordered, ${A.gbRebate}% rebate ${gbp(gb.rebate)}` : "no orders this season yet"}${me.inc||me.cost ? `. Plus your merchandise lines below.` : ""}</div><button class="link" data-go="mm">Edit figures</button></div></div>` +
+      `<div class="cat" style="--c:#7A4C9E"><span class="bar"></span><div class="in"><h3>Media</h3>${mi && mi[1][3] ? row3(mi[1][0], mc[1][0]) + `<div class="note">Routine video packs: ${A.mediaTake}% of gymnasts at ${gbp(+A.mediaPrice||0)}. ${gbp(mi[1][3]-mc[1][3])} profit if every competition sells out.</div>` : `<div class="note">Starts with the ${esc(A.mediaFrom)} season: routine video packs for families (floor, plus beam where filmed).</div>`}<button class="link" data-go="mm">Edit figures</button></div></div>`; }
   $("#nglStmt").innerHTML = stmtHTML(c, `NGL ${season}`);
+  renderMM(force);
   renderAnnual(force);
 }
 function renderAnnual(force){
@@ -1044,7 +1080,7 @@ $("#annualEditor").addEventListener("click", e=>{
   if(t.dataset.adda){ A.annual.push({id:"a"+Date.now().toString(36), name:"", type:t.dataset.adda, amount:0, basis:"month"}); save(); renderAll(true); }
   if(t.dataset.dela){ const l=A.annual.find(x=>x.id===t.dataset.dela); if(!confirm(`Remove "${(l&&l.name)||"Unnamed"}"?`)) return; A.annual=A.annual.filter(x=>x.id!==t.dataset.dela); save(); renderAll(true); }
 });
-$("#cats").addEventListener("click", e=>{ const g=e.target.dataset.go; if(!g) return; if(e.target.dataset.licGo){ licView=e.target.dataset.licGo; renderLicensing(); if($("#licAssump").classList.contains("open")) renderLicAssump(); } if(e.target.dataset.view){ compView=e.target.dataset.view; renderCompetitions(); if($("#pnl-assump").classList.contains("open")) renderAssump(); updateAssumpBtn(); } document.querySelector(`.tabs [data-tab="${g}"]`).click(); window.scrollTo(0,0); });
+$("#cats").addEventListener("click", e=>{ const g=e.target.dataset.go; if(!g) return; if(g==="mm"){ document.getElementById("mmCard").scrollIntoView({behavior:"smooth", block:"start"}); return; } if(e.target.dataset.licGo){ licView=e.target.dataset.licGo; renderLicensing(); if($("#licAssump").classList.contains("open")) renderLicAssump(); } if(e.target.dataset.view){ compView=e.target.dataset.view; renderCompetitions(); if($("#pnl-assump").classList.contains("open")) renderAssump(); updateAssumpBtn(); } document.querySelector(`.tabs [data-tab="${g}"]`).click(); window.scrollTo(0,0); });
 
 /* ===== Tabs, season ===== */
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
@@ -1078,6 +1114,7 @@ function startLive(){
   }, err=>{ console.error(err); toast("Couldn't load finance settings. Check the ngl_finance Firestore rule."); });
   db.collection(CONFIG.collections.competitions).onSnapshot(s=>{ comps = s.docs.map(d=>({id:d.id,...d.data()})); fillSeasons(); renderAll(); });
   db.collection(CONFIG.collections.bookings).onSnapshot(s=>{ bookings = s.docs.map(d=>({id:d.id,...d.data()})); renderAll(); });
+  db.collection("ngl_groupbuy_rounds").onSnapshot(s=>{ gbRounds = s.docs.map(d=>{ const x=d.data(), i=d.id.indexOf("_"); return {round:d.id.slice(0,i), product:d.id.slice(i+1), shirts:x.shirts||0}; }); renderAll(); }, err=>console.warn("Group Buying totals not read", err));
 }
 function startDemo(){
   $("#mode").classList.remove("hidden");
@@ -1086,6 +1123,7 @@ function startDemo(){
     {id:"c2",name:"NGL Recreational Spring",date:"2027-03-14",venue:"Hemel Leisure Centre",pathway:"recreational",apparatus:"2piece",maxPlaces:30},
     {id:"c3",name:"NGL Performance Open",date:"2027-04-18",venue:"Stevenage Arena",pathway:"performance",gender:"both"}
   ];
+  gbRounds = [{round:"2027-02", product:"JC001", shirts:140},{round:"2027-02", product:"LV874", shirts:30}];
   bookings = [{compId:"c1",spaces:18},{compId:"c2",spaces:22},{compId:"c3",spaces:9},{compId:"c3",spaces:4,waitlist:true}];
   try{ A = normalise(JSON.parse(localStorage.getItem(CONFIG.legacyLocalKey)||"null")); }catch(_){}
   fillSeasons(); renderAll();
