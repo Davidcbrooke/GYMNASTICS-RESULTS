@@ -519,7 +519,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
   </div>
   <div class="auth-overview">
     <p class="auth-overview-text">A free digital tool for gymnastics clubs. Build your weekly session schedule once, then display it live on any screen in your gym. The planner automatically detects the current time and day — as the session progresses, the display moves in real time so coaches and gymnasts always know exactly where they should be.</p>
-    <a href="NGL_Rotation_Planner_Guide.html" target="_blank" class="auth-guide-btn">📖 View Instructions Guide</a>
+    <a href="https://club.nationalgymnasticsleague.co.uk/rotation-planner/guide/" target="_blank" class="auth-guide-btn">📖 View Instructions Guide</a>
   </div>
   <div class="auth-box">
     <h2>Welcome <span>Back</span></h2>
@@ -918,6 +918,9 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
+// Public links use the NGL address, not GitHub
+var NGL_ROTA_URL = 'https://club.nationalgymnasticsleague.co.uk/rotation-planner/';
+
 // ================================================================
 // FIREBASE CONFIG
 // ================================================================
@@ -1362,7 +1365,8 @@ h2{font-family:'Roboto Condensed',Arial,sans-serif;font-size:12pt;margin:0 0 1mm
 <h2>Within each class</h2><div class="box">Warm-up ${rule.warm} min · ${nR} rotations of about ${base} min · cool-down ${rule.cool} min.<br>Example, ${hm(first)} class: rotations at ${eg}, cool-down ${hm(first + t.classLen - rule.cool)}.</div>
 <h2>Apparatus and areas</h2><div class="box key">${areas}</div></div></div>
 ${cal}<div class="foot"><span>NGL Recreational · nglrecreational.co.uk</span><span>Choose “Save as PDF” in the print window to keep a copy.</span></div>
-</div><script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { const i = document.querySelector('img'); const go = () => setTimeout(() => window.print(), 150); if(i && !i.complete){ i.onload = i.onerror = go; } else go(); });<\/script></body></html>`);
+</div><script>
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { const i = document.querySelector('img'); const go = () => setTimeout(() => window.print(), 150); if(i && !i.complete){ i.onload = i.onerror = go; } else go(); });<\/script></body></html>`);
   w.document.close();
 }
 function recChanged(){ applyRec(); recAutoWeek(true); scheduleAutoSave(); renderRec(); }
@@ -1675,7 +1679,7 @@ function renderTabs(){
   // small admin unlock link if not yet unlocked
   if(!adminUnlocked){
     const sep=document.createElement('span'); sep.style.cssText='flex:1;';
-    const guide=document.createElement('a'); guide.textContent='📖 Instructions'; guide.href='NGL_Rotation_Planner_Guide.html'; guide.target='_blank';
+    const guide=document.createElement('a'); guide.textContent='📖 Instructions'; guide.href=NGL_ROTA_URL+'guide/'; guide.target='_blank';
     guide.style.cssText='color:rgba(255,255,255,.4);font-size:.72rem;padding:10px 14px;text-decoration:none;white-space:nowrap;';
     guide.onmouseover=()=>guide.style.color='rgba(255,255,255,.8)';
     guide.onmouseout=()=>guide.style.color='rgba(255,255,255,.4)';
@@ -1692,7 +1696,7 @@ function renderTabs(){
     el.appendChild(sep); el.appendChild(guide); el.appendChild(mv); el.appendChild(profile);
   } else {
     const sep=document.createElement('span'); sep.style.cssText='flex:1;';
-    const guide=document.createElement('a'); guide.textContent='📖 Instructions'; guide.href='NGL_Rotation_Planner_Guide.html'; guide.target='_blank';
+    const guide=document.createElement('a'); guide.textContent='📖 Instructions'; guide.href=NGL_ROTA_URL+'guide/'; guide.target='_blank';
     guide.style.cssText='color:rgba(255,255,255,.4);font-size:.72rem;padding:10px 14px;text-decoration:none;white-space:nowrap;';
     guide.onmouseover=()=>guide.style.color='rgba(255,255,255,.8)';
     guide.onmouseout=()=>guide.style.color='rgba(255,255,255,.4)';
@@ -2399,8 +2403,7 @@ function sortTotals(col){
 // FEEDBACK WIDGET
 // ================================================================
 function showStreamLink(){
-  const baseUrl = window.location.href.replace(/\/[^\/]*$/, '/');
-  const url = `${baseUrl}NGL_Rotation_Live.html?c=${currentClubId}`;
+    const url = `${NGL_ROTA_URL}stream/?c=${currentClubId}`;
   document.getElementById('streamUrl').textContent = url;
   // generate QR code using free API
   const qrDiv = document.getElementById('streamQR');
@@ -2484,8 +2487,7 @@ function renderMobDay(){
   document.getElementById('mobWeekBBtn').classList.toggle('active', currentWeek==='B');
 
   // set live link
-  const baseUrl = window.location.href.replace(/\/[^\/]*$/, '/');
-  const liveUrl = baseUrl + 'NGL_Live.html?c=' + currentClubId;
+    const liveUrl = NGL_ROTA_URL + 'live/?c=' + currentClubId;
   document.getElementById('mobLiveLink').href = liveUrl;
 
   const wrap = document.getElementById('mobGroups');
@@ -2587,8 +2589,7 @@ function enterLive(){
   const day=getTodayName();
   document.getElementById('liveDayLabel').textContent=day+' — '+liveWeekName();
   // show persistent QR for parents/coaches to scan
-  const baseUrl = window.location.href.replace(/\/[^\/]*$/, '/');
-  const streamUrl = `${baseUrl}NGL_Live.html?c=${currentClubId}`;
+    const streamUrl = `${NGL_ROTA_URL}live/?c=${currentClubId}`;
   const qrImg = document.getElementById('liveQRImg');
   if(qrImg){
     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(streamUrl)}`;
