@@ -58,6 +58,14 @@
   .btn[disabled]{opacity:.55;cursor:default;}
   .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
 
+  /* Why now: video + pitch */
+  .whynow{display:grid;grid-template-columns:1fr;gap:16px;align-items:start;}
+  @media(min-width:820px){.whynow{grid-template-columns:.85fr 1.15fr;}}
+  .whynow video{width:100%;aspect-ratio:4/5;border-radius:16px;background:#000;display:block;box-shadow:0 16px 40px rgba(0,0,0,.45);}
+  .snip{position:relative;display:block;max-height:420px;overflow:hidden;border-radius:12px;background:#fff;margin:12px 0 14px;}
+  .snip img{width:100%;display:block;}
+  .snip::after{content:"";position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 85%);}
+  .snip .more{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:1;background:var(--navy);color:#fff;font-weight:800;font-size:13px;padding:8px 14px;border-radius:999px;white-space:nowrap;}
   /* Landing */
   .hero{display:grid;grid-template-columns:1fr;gap:24px;align-items:center;padding:14px 0 6px;}
   @media(min-width:820px){.hero{grid-template-columns:1.25fr .75fr;}}
@@ -2586,6 +2594,28 @@ function pitchHTML(signedInView){
     </div>
     <img src="data:image/jpeg;base64,${BOOK_COVER}" alt="NGL Schools Awards Book">
   </section>`}
+
+  ${signedInView ? '' : `
+  <div class="section">
+    <p class="eyebrow">Why now</p>
+    <h2>School sport funding is changing. Is your local school ready?</h2>
+    <p class="muted">The PE and Sport Premium ends after this school year. From April 2027 schools no longer get direct payments, and they will be looking for a ready-made PE offer. NGL Schools is built for the new model.</p>
+    <div class="whynow" style="margin-top:14px">
+      <video src="schools/ngl-schools-why-now.mp4" poster="schools/ngl-schools-why-now-poster.jpg" controls playsinline preload="metadata"></video>
+      <div class="card" style="margin:0">
+        <h3>NGL Schools Gymnastics: a pitch for schools</h3>
+        <p class="muted" style="margin:0">Ready to share with your local schools: why gymnastics, the funding change, two ways to run it and everything that's included.</p>
+        <a class="snip" href="schools/NGL-Schools-Pitch-for-Schools.pdf" target="_blank" rel="noopener" aria-label="Open the pitch for schools PDF">
+          <img src="schools/pitch-page4.jpg" alt="Page from the NGL Schools pitch: school sport funding is changing" loading="lazy">
+          <span class="more">Read the full pitch</span>
+        </a>
+        <div class="btn-row">
+          <a class="btn" href="schools/NGL-Schools-Pitch-for-Schools.pdf" target="_blank" rel="noopener">Open the pitch (PDF)</a>
+          <a class="btn ghost" href="schools/NGL-Schools-Pitch-for-Schools.pdf" download>Download</a>
+        </div>
+      </div>
+    </div>
+  </div>`}
 
   <div class="section grid3">
     <div class="card"><div class="stat">£10</div><p class="muted" style="margin-top:8px">Typical amount schools pay per gymnast, per session.</p></div>
