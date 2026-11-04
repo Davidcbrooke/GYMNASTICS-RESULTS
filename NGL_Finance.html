@@ -703,7 +703,7 @@ const HUB_NAME = {recreational:"Recreational Hub", preschool:"Pre-School Hub", s
 const LIC_DEFAULTS = {
   recreational:{
     clubPrice:{xs:200, sm:300, s:500, m:1000, m2:1250, l:1500, xl:2000},
-    bookPrice:5, bookCost:2.5, booksPerGym:90,
+    bookPrice:5, bookCost:0.75, booksPerGym:90,
     medalPrice:3, medalCost:1.5, medalsPerTerm:1,
     shirtPrice:12, shirtCost:10, shirtsPerClub:0,
     postPct:3, cardPct:0, cardFixed:0, hubYear:0
@@ -713,7 +713,7 @@ const LIC_DEFAULTS = {
   preschool:{
     clubPrice:{xs:150, sm:250, s:400, m:750},
     packPrice:100, seasonalPrice:50, packsPerClub:1, seasonalPct:50,
-    passportPrice:5, passportCost:2.5, passportsPerChild:100,
+    passportPrice:5, passportCost:0.75, passportsPerChild:100,
     medalPrice:2, medalCost:1, medalsPerTerm:3,
     posterCost:15, postCostPct:100, cardPct:0, cardFixed:0, hubYear:0
   },
@@ -724,9 +724,9 @@ const LIC_DEFAULTS = {
   // that is club income, so it isn't in NGL's P&L. Costs marked "planning" are placeholders to replace.
   schools:{
     clubPrice:{xs:150, sm:250, s:400, m:750, m2:1000, l:1250, xl:1500},
-    bookPrice:5, bookCost:2, newBooksPct:33,
+    bookPrice:5, bookCost:0.75, newBooksPct:33,
     certPrice:0.10, certUnitCost:0.03, certsPerChild:3,
-    gradFee:5, medalCost:1.5, gradPct:60,
+    gradFee:5, gradVatIncl:true, medalCost:1.5, gradPct:60,
     shirtPrice:12, shirtCost:10, shirtsPerClub:0,
     postCostPct:100, cardPct:0, cardFixed:0, hubYear:0
   }
@@ -736,6 +736,8 @@ function licA(path){ A.lic = A.lic || {}; const d = JSON.parse(JSON.stringify(LI
   const cp = {}; Object.entries(cur.clubPrice||{}).forEach(([k,v]) => { if(!LEGACY_BAND[k]) cp[k] = v; });   // old small/mid/large overrides are dropped for the new price list
   const m = Object.assign({}, d, cur); m.clubPrice = Object.assign({}, d.clubPrice, cp);
   delete m.clubFounding; delete m.clubFull; delete m.gymMonthly; delete m.monthsPerTerm; delete m.newBooks; delete m.certCost; delete m.postPerClub; delete m.postPerOrder; delete m.medalsPerGym;
+  if(m.bookCost===2.5 || m.bookCost===2) m.bookCost = 0.75;            // Nov 2026: every pathway's books cost NGL 75p
+  if(m.passportCost===2.5) m.passportCost = 0.75;
   return m; }
 function licSetA(path, m){ A.lic = A.lic || {}; A.lic[path] = m; }
 function licClubs(path, s){ A.licClubs = A.licClubs || {}; const k = path+"_"+(s||season); return A.licClubs[k] || (A.licClubs[k] = []); }
@@ -745,6 +747,7 @@ const seasonOfDate = d => { const y = d.getMonth()>=8 ? d.getFullYear() : d.getF
 const orderSeason = o => o.season || seasonOfDate(toJsDate(o.createdAt));
 const orderPath = o => o.pathway==="preschool" ? "preschool" : o.pathway==="schools" ? "schools" : "recreational";
 const termOfDate = d => { const m = d.getMonth(); return m>=8 ? 0 : (m<=2 ? 1 : 2); };
+const gradNet = (v, L) => L && L.gradVatIncl ? Math.round(v / 1.2 * 100) / 100 : v;   // NGL's Graduation fee includes VAT
 const toJsDate = c => !c ? new Date() : (typeof c.toDate==="function" ? c.toDate() : (c.seconds ? new Date(c.seconds*1000) : new Date(c)));
 
 /* Live source: the NGL Recreational Hub (nglrecreational.co.uk) keeps club accounts and licence
@@ -826,7 +829,7 @@ function licFigures(path, s){
         else if(l.kind==="poster") F.posters[t]+=q;
         else if(l.kind==="postage") F.postInc[t]+=v;
         else if(l.kind==="cert"){ F.certInc[t]+=v; F.certs[t]+=q; }
-        else if(l.kind==="graduation"){ F.gradInc[t]+=v; F.grads[t]+=q; }
+        else if(l.kind==="graduation"){ F.gradInc[t]+=gradNet(v, L); F.grads[t]+=q; }
         else if(l.kind==="discount") F.clubFee[t]+=v;       // multi-pathway discount (negative)
       });
       (o.status==="paid" ? F.paid : F.unpaid)[t] += net;
@@ -843,7 +846,7 @@ function licFigures(path, s){
       const bk = Math.round(g * (c.first ? 100 : L.newBooksPct) / 100), ct = g*L.certsPerChild, gr = Math.round(g*L.gradPct/100);
       F.books[t0] += bk; F.bookInc[t0] += bk*L.bookPrice;
       F.certs[t0] += ct; F.certInc[t0] += ct*L.certPrice;
-      F.grads[2] += gr; F.gradInc[2] += gr*L.gradFee; if(gr) F.orders[2]++;      // Graduations in the summer term
+      F.grads[2] += gr; F.gradInc[2] += gradNet(gr*L.gradFee, L); if(gr) F.orders[2]++;      // Graduations in the summer term
       F.shirts[t0] += L.shirtsPerClub; F.shirtInc[t0] += L.shirtsPerClub*L.shirtPrice;
       const items = bk + Math.ceil(ct/10) + L.shirtsPerClub; if(items) F.postInc[t0] += items<=20?4:items<=100?8:12;
     });
@@ -934,7 +937,7 @@ function buildSchools(s){
   if(F.gymFee.some(v=>v)) inc.push(["Per-gymnast licences", F.gymFee, "older orders"]);
   inc.push(["Awards Book sales", F.bookInc, live ? F.note : `£${L.bookPrice} each, ${L.newBooksPct}% of children after year 1`],
     ["Certificate sales", F.certInc, live ? F.note : `£${L.certPrice.toFixed(2)} each, ${L.certsPerChild} per child`],
-    ["Graduation fees", F.gradInc, live ? F.note : `£${L.gradFee} a graduate, ${L.gradPct}% of children`],
+    ["Graduation fees", F.gradInc, (live ? "from Hub orders" : `£${L.gradFee} a graduate, ${L.gradPct}% of children`) + (L.gradVatIncl ? ", less VAT" : "")],
     ["T-shirt sales", F.shirtInc, live ? F.note : `£${L.shirtPrice} each`],
     ["Postage charged", F.postInc, "on supplies orders"]);
   const TIt = T.map(t => inc.reduce((a,r)=>a+r[1][t],0));
@@ -998,7 +1001,7 @@ function renderLicensing(){
   $("#licNotes").innerHTML = (sch ? ((live
       ? "Income comes from the orders clubs place on the Schools Club Hub (Club Licences, books, certificates, t-shirts, postage and Graduation medals), in the term each order was placed. Unpaid orders are included unless you tick Paid orders only. Costs use the assumptions below."
       : "Each club pays its yearly Schools Club Licence in the term it starts. Tick First year when every child needs a book; after that only new children buy one. Graduations are counted in the summer term.") +
-      " What clubs charge schools (suggested £950 a school a year) and parents is the club's own income, so it isn't in NGL's P&L.") : (live
+      " What clubs charge schools (suggested £950 a school a year) and parents is the club's own income, so it isn't in NGL's P&L. Graduation: families pay the club £12 (gymnast and one spectator) and £6 per extra spectator; NGL's £5 per graduate includes VAT, so NGL keeps £4.17.") : (live
       ? (ps ? "Income comes from the orders clubs place on the Pre-School Hub (licences, Lesson Plan Packs, passports, medals and postage), in the term each order was placed. It is kept separate from Recreational. Unpaid orders are included unless you tick Paid orders only. Costs use the assumptions below."
             : "Income comes from the orders clubs place on the Recreational Hub, in the term each order is for. Unpaid orders are included unless you tick Paid orders only. Costs use the assumptions below.")
       : (ps ? "Each club pays its yearly Pre-School Club Licence in the term it starts and gets the A1 poster free. Packs, passports and medals use the planning assumptions below; postage follows the Hub's £4 / £8 / £12 scale."
@@ -1063,7 +1066,7 @@ function renderLicAssump(){
     `<h4>Schools Club Licence (per year, + VAT)</h4>` + LIC_BANDS.map(([b,t])=>`<label>${t.replace("gymnasts","children")}<input type="number" min="0" step="50" data-lb="clubPrice.${b}" value="${L.clubPrice[b]}"></label>`).join("") +
     `<h4>Awards Books</h4>` + f("bookPrice","Price to clubs") + f("bookCost","Cost each (print)",0.05) + f("newBooksPct","Planning: new children after year 1 (%)",1) +
     `<h4>Certificates</h4>` + f("certPrice","Price to clubs",0.01) + f("certUnitCost","Cost each",0.01) + f("certsPerChild","Certificates per child per year",1) +
-    `<h4>Graduation</h4>` + f("gradFee","NGL fee per graduate (medal included)",0.5) + f("medalCost","Medal cost each",0.05) + f("gradPct","Planning: children who graduate (%)",5) +
+    `<h4>Graduation</h4>` + f("gradFee","NGL fee per graduate, incl. VAT (medal included)",0.5) + f("medalCost","Medal cost each",0.05) + f("gradPct","Planning: children who graduate (%)",5) +
     `<h4>T-shirts</h4>` + f("shirtPrice","Price to clubs") + f("shirtCost","Cost each") + f("shirtsPerClub","Planning: t-shirts per club per year",1) +
     `<h4>Other costs</h4>` + f("postCostPct","Postage cost, % of postage charged",5) + f("cardPct","Payment fee %",0.1) + f("cardFixed","Payment fee per order",0.05) + f("hubYear","Hub and hosting per year",10);
     return; }
