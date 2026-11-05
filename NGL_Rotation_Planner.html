@@ -233,7 +233,18 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .ls-final-body{ margin-top:.8em; font-size:5em; max-width:100%; }
 .ls-final-body .ls-alert-label{ color:var(--navy); opacity:.75; }
 .ls-final-body .ls-chip{ background:rgba(26,42,74,.16); }
-@keyframes lsFinalPulse{ 0%,100%{ background:#c9a227; } 50%{ background:#e0b93a; } }
+/* big "where are you going" boxes: one per group, in the group colour, with the apparatus icon */
+.live-side.wide{ overflow:visible; z-index:40; }
+.live-side.wide .ls-alert, .live-side.wide .ls-final{ left:auto; right:0; width:72vw; border-left:3px solid rgba(255,255,255,.25); box-shadow:-1.5vw 0 3vw rgba(0,0,0,.35); }
+.ls-alert, .ls-final{ padding:1.2vh 1.2vw; justify-content:flex-start; }
+.ls-head{ flex:none; font-weight:900; letter-spacing:.12em; text-transform:uppercase; font-size:clamp(14px,2.4vh,30px); padding:.2em .6em .5em; }
+.go-grid{ flex:1; width:100%; min-height:0; display:grid; gap:1vh; }
+.go-box{ position:relative; border-radius:1.6vh; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; box-shadow:0 .6vh 1.6vh rgba(0,0,0,.35); border:.5vh solid rgba(255,255,255,.85); }
+.go-box .gb-grp{ position:absolute; top:.35em; left:.5em; font-weight:900; letter-spacing:.02em; opacity:.95; }
+.go-box svg{ display:block; }
+.go-box .gb-app{ font-weight:900; line-height:1; text-transform:uppercase; letter-spacing:.01em; margin-top:.08em; text-align:center; }
+.go-box .gb-band{ position:absolute; left:0; right:0; bottom:0; }
+@keyframes lsFinalPulse{ 0%,100%{ background:#c9a227; } 50%{ background:#d9b236; } }
 @keyframes lsAlertIn{ from{ opacity:0; transform:scale(.92); } to{ opacity:1; transform:scale(1); } }
 @keyframes lsAlertPulse{ 0%,100%{ background:#c0392b; } 50%{ background:#e04b3b; } }
 @media (max-width:700px){
@@ -682,15 +693,12 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
           <div class="ls-date" id="lsDate"></div>
         </div>
         <div class="ls-final" id="lsFinal">
-          <div class="ls-final-icon">⏳</div>
-          <div class="ls-final-title"><span>FINAL</span> <span>GOES</span></div>
-          <div class="ls-final-sub">Rotating in 1 minute</div>
-          <div class="ls-final-body" id="lsFinalBody"></div>
+          <div class="ls-head">⏳ Final goes · rotating in 1 minute</div>
+          <div class="go-grid" id="lsFinalBody"></div>
         </div>
         <div class="ls-alert" id="lsAlert">
-          <div class="ls-alert-bell">🔔</div>
-          <div class="ls-alert-title"><span>ROTATE</span> <span>NOW</span></div>
-          <div class="ls-alert-body" id="lsAlertBody"></div>
+          <div class="ls-head">🔔 Rotate now</div>
+          <div class="go-grid" id="lsAlertBody"></div>
         </div>
       </div>
     </div>
@@ -2924,6 +2932,66 @@ function locInfo(sess){
   const loc = getLocByName(name);
   return { name, colour: loc ? loc.colour : '#555', start: sess.start_min };
 }
+// simple apparatus icons, picked from the location name
+const APP_ICONS = {
+  vault:'<path d="M8 40h48"/><path d="M14 40l4-16h28l4 16"/><path d="M18 24c0-4 4-6 14-6s14 2 14 6"/><path d="M24 40v12M40 40v12"/>',
+  bars:'<path d="M14 56V8M50 56V8"/><path d="M8 16h48M8 32h48"/><path d="M8 56h12M44 56h12"/>',
+  beam:'<path d="M4 26h56v7H4z"/><path d="M14 33l-4 21M50 33l4 21"/><path d="M8 54h8M48 54h8"/>',
+  floor:'<rect x="6" y="10" width="52" height="44" rx="3"/><path d="M6 32h52M32 10v44"/><circle cx="32" cy="32" r="6"/>',
+  tramp:'<ellipse cx="32" cy="28" rx="26" ry="8"/><path d="M8 30l4 22M56 30l-4 22M24 36l-2 16M40 36l2 16"/><path d="M32 4v12M27 9l5-5 5 5"/>',
+  tumble:'<path d="M4 40h56v8H4z"/><path d="M12 30c6-14 14-14 20 0M32 30c6-14 14-14 20 0"/><path d="M48 22l4 8 6-4"/>',
+  rings:'<path d="M18 4v26M46 4v26"/><circle cx="18" cy="40" r="10"/><circle cx="46" cy="40" r="10"/>',
+  horse:'<path d="M6 34h52"/><path d="M10 34l4-10h36l4 10"/><path d="M22 24c0-6 4-8 4-8M42 24c0-6-4-8-4-8"/><path d="M18 34v20M46 34v20"/>',
+  block:'<rect x="10" y="22" width="44" height="26" rx="3"/><path d="M10 34h44"/>',
+  other:'<path d="M32 6l7.5 15.5 17 2.4-12.3 12 2.9 17L32 45l-15.1 7.9 2.9-17-12.3-12 17-2.4z"/>'
+};
+function appIcon(name){
+  const n=(name||'').toLowerCase();
+  const k = /vault|spring|table/.test(n)?'vault' : /bar/.test(n)?'bars' : /beam/.test(n)?'beam' : /tramp|dmt/.test(n)?'tramp'
+          : /tumbl|track|rod|air/.test(n)?'tumble' : /ring/.test(n)?'rings' : /horse|pommel|mushroom/.test(n)?'horse'
+          : /floor|mat/.test(n)?'floor' : /block|box|pit|conditioning/.test(n)?'block' : 'other';
+  return APP_ICONS[k];
+}
+// fill a panel with one box per group, as big as the space allows
+function renderGoGrid(body, sections){
+  const items = [];
+  sections.forEach(sec => sec.items.forEach(g => items.push(g)));
+  const n = Math.max(items.length, 1);
+  const W = body.clientWidth || body.parentElement.clientWidth, H = body.clientHeight || (body.parentElement.clientHeight*0.85);
+  let best = { cols:1, size:0 };
+  for(let cols=1; cols<=n; cols++){
+    const rows = Math.ceil(n/cols);
+    const cw = W/cols, ch = H/rows;
+    const size = Math.min(cw, ch*1.25);          // boxes look best a little wider than tall
+    if(size > best.size) best = { cols, size };
+  }
+  const rows = Math.ceil(n/best.cols);
+  body.style.gridTemplateColumns = `repeat(${best.cols},1fr)`;
+  body.style.gridTemplateRows = `repeat(${rows},1fr)`;
+  const cell = Math.min(W/best.cols, H/rows);
+  body.innerHTML = items.map(g => {
+    const gc = g.colour || '#1a2a4a', light = isLight(gc), fg = light ? '#1a1a1a' : '#fff';
+    const app = g.dest ? g.dest.name : '';
+    const appFs = Math.max(14, Math.min(cell*0.17, (W/best.cols)*1.5/Math.max(app.length,4)));
+    return `<div class="go-box" style="background:${gc};color:${fg}">
+      <div class="gb-grp" style="font-size:${Math.max(12,cell*0.09)}px">${escHtml(g.name)}</div>
+      <svg viewBox="0 0 64 64" width="${cell*0.42}" height="${cell*0.42}" fill="none" stroke="${fg}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">${appIcon(app)}</svg>
+      <div class="gb-app" style="font-size:${appFs}px">${escHtml(app||'—')}</div>
+      ${g.dest ? `<div class="gb-band" style="height:${Math.max(6,cell*0.05)}px;background:${g.dest.colour||'#555'}"></div>` : ''}
+    </div>`;
+  }).join('');
+  // shrink any apparatus name that is too long for its box
+  body.querySelectorAll('.gb-app').forEach(t=>{
+    const box=t.parentElement; let f=parseFloat(t.style.fontSize);
+    t.style.whiteSpace = t.textContent.includes(' ') ? 'normal' : 'nowrap';
+    for(let i=0;i<40 && (t.scrollWidth>box.clientWidth*0.92 || t.offsetHeight>box.clientHeight*0.42); i++){ f*=0.93; t.style.fontSize=f+'px'; }
+  });
+}
+function widenSide(on){
+  const side=document.getElementById('liveSide'); if(!side) return;
+  if(window.matchMedia('(max-width:700px)').matches) on=false;
+  side.classList.toggle('wide', !!on);
+}
 // a chip that reads "Red -> Vault": group colour on the left, apparatus colour on the right
 function goChipHTML(g){
   const gc = g.colour || '#1a2a4a';
@@ -2937,12 +3005,9 @@ function showRotationAlert(sections){
   const body=document.getElementById('lsAlertBody');
   if(!el||!body) return;
   // shrink the group names a little when lots of groups rotate at once
-  const total=sections.reduce((n,s)=>n+s.items.map(g=>g.name+(g.dest?' '+g.dest.name+'   ':'')).join(' ').length,0);
-  body.style.fontSize=(total<40?6:total<90?4.6:total<160?3.7:total<280?3:2.4)+'em';
-  body.innerHTML=sections.map(s=>
-    `<div class="ls-alert-label">${escHtml(s.label)}</div><div class="ls-alert-names">${s.items.map(goChipHTML).join('')}</div>`
-  ).join('');
+  widenSide(true);
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); // restart the pop-in animation
+  renderGoGrid(body, sections);
   clearTimeout(el._t);
   el._t=setTimeout(hideRotationAlert, ROTATE_ALERT_MS);
 }
@@ -2951,6 +3016,7 @@ function hideRotationAlert(){
   const el=document.getElementById('lsAlert'); if(!el) return;
   clearTimeout(el._t);
   el.classList.remove('show');
+  if(!document.getElementById('lsFinal')?.classList.contains('show')) widenSide(false);
 }
 
 // ================================================================
@@ -3001,12 +3067,9 @@ function showFinalGoes(groups){
   const rec = sorted.filter(g=>g.section!=='squad');
   if(squads.length) sections.push({ label:'Squads', items:squads });
   if(rec.length) sections.push({ label:'Recreational', items:rec });
-  const total = sections.reduce((n,s)=>n+s.items.map(g=>g.name+(g.dest?' '+g.dest.name+'   ':'')).join(' ').length,0);
-  body.style.fontSize = (total<40?5.2:total<90?4.2:total<160?3.5:total<280?2.9:2.3)+'em';
-  body.innerHTML = sections.map(s=>
-    `<div class="ls-alert-label">${escHtml(s.label)}</div><div class="ls-alert-names">${s.items.map(goChipHTML).join('')}</div>`
-  ).join('');
+  widenSide(true);
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  renderGoGrid(body, sections);
   clearTimeout(el._t);
   el._t = setTimeout(hideFinalGoes, FINAL_GOES_MS);
   if(bellEnabled){
@@ -3019,6 +3082,7 @@ function hideFinalGoes(){
   const el = document.getElementById('lsFinal'); if(!el) return;
   clearTimeout(el._t);
   el.classList.remove('show');
+  if(!document.getElementById('lsAlert')?.classList.contains('show')) widenSide(false);
 }
 
 // two quick pings — clearly different from the ding-dong used for ROTATE NOW
