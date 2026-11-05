@@ -42,6 +42,11 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
 .spinner{ width:40px; height:40px; border:3px solid rgba(255,255,255,.2); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
 .footer{ text-align:center; padding:20px 16px; color:rgba(255,255,255,.3); font-size:.72rem; }
 .footer img{ height:18px; vertical-align:middle; opacity:.4; margin-left:4px; }
+.nownext{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 14px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.nn-pill{display:inline-flex;align-items:baseline;gap:6px;font-weight:800;font-size:.98rem;padding:5px 11px;border-radius:999px;white-space:nowrap}
+.nn-pill small{font-size:.62rem;letter-spacing:1.5px;opacity:.85}
+.nn-arrow{font-size:1.3rem;font-weight:900;color:#fff;opacity:.8}
+.nn-time{font-size:.85rem;font-weight:700;color:rgba(255,255,255,.75);margin-left:2px}
 </style>
 </head>
 <body>
@@ -168,6 +173,23 @@ function render(){
       hdr.className='group-hdr';
       hdr.innerHTML='<span class="group-dot" style="background:'+(group.colour||'#888')+'"></span><span class="group-name">'+group.name+'</span>';
       card.appendChild(hdr);
+      // Now -> Next strip: where this group is and which piece it rotates to next
+      (function(){
+        var sorted = sessions.slice().sort(function(a,b){ return a.start_min-b.start_min; });
+        var cur = sorted.find(function(x){ return now>=x.start_min && now<x.start_min+x.duration; });
+        var nxt = sorted.find(function(x){ return x.start_min >= (cur ? cur.start_min+cur.duration : now) - 0.01; });
+        if(!cur && !nxt) return;
+        function pill(x, lead){
+          var name = getSessionLoc(x, week) || ''; var ld = getLocByName(name); var c = ld ? ld.colour : '#555';
+          return '<span class="nn-pill" style="background:'+c+';color:'+(isLight(c)?'#1a1a1a':'#fff')+'"><small>'+lead+'</small>'+name+'</span>';
+        }
+        var strip = document.createElement('div'); strip.className = 'nownext';
+        var h = '';
+        if(cur) h += pill(cur, 'NOW');
+        if(nxt) h += (cur ? '<span class="nn-arrow">&#8594;</span>' : '') + pill(nxt, cur ? 'NEXT' : 'STARTS') + '<span class="nn-time">'+fmtTime(nxt.start_min)+'</span>';
+        else h += '<span class="nn-time">Last rotation</span>';
+        strip.innerHTML = h; card.appendChild(strip);
+      })();
       var sess = document.createElement('div');
       sess.className='sessions';
       sessions.forEach(function(s){

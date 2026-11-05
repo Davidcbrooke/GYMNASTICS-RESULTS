@@ -214,6 +214,14 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .ls-alert-label{ margin-top:.6em; font-size:.55em; font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); }
 .ls-alert-names{ margin-top:.2em; }
 .ls-chip{ display:inline-block; margin:.12em; padding:.08em .5em; border-radius:.5em; background:rgba(0,0,0,.28); font-weight:800; }
+/* group -> next apparatus chips (ROTATE NOW + FINAL GOES) */
+.ls-chip.go{ padding:0; overflow:hidden; display:inline-flex; align-items:stretch; box-shadow:0 .06em .2em rgba(0,0,0,.25); }
+.ls-chip.go b, .ls-chip.go i{ font-style:normal; font-weight:900; padding:.08em .42em; display:inline-flex; align-items:center; }
+.ls-chip.go i:before{ content:"\2192"; margin-right:.3em; opacity:.85; }
+/* "Next" tag under each group name on the timeline */
+.tl-lbl.has-next{ flex-direction:column; align-items:flex-start; justify-content:center; gap:3px; white-space:normal; }
+.tl-lbl .tl-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.tl-next{ display:inline-block; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:800; border-radius:4px; padding:1px 6px; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
 
 /* FINAL GOES announcement (right-hand panel, sits under the red ROTATE NOW alert) */
 .ls-final{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--gold); color:var(--navy); padding:3em 4em; z-index:4; overflow:hidden; }
@@ -966,7 +974,7 @@ function calcPxPerMin(){
 }
 function calcLabelWidth(){
   const screenW = getTimelineWidth();
-  return screenW < 700 ? 90 : screenW < 1100 ? 120 : 140;
+  return screenW < 700 ? 110 : screenW < 1100 ? 150 : 180;
 }
 const NO_CONFLICT = ['TBC'];
 
@@ -2728,7 +2736,16 @@ function renderTimeline(day){
     groups.forEach(group=>{
       const sessions=(DATA.sessions[day]&&DATA.sessions[day][group.id])||[];
       const row=document.createElement('div'); row.className='tl-row'; row.style.width=totalW+'px'; row.style.height=rowH+'px';
-      const lbl=document.createElement('div'); lbl.className='tl-lbl'; lbl.style.width=lblW+'px'; lbl.textContent=group.name;
+      const lbl=document.createElement('div'); lbl.className='tl-lbl'; lbl.style.width=lblW+'px'; lbl.dataset.name=group.name;
+      { // "Next: Vault · 5:30" under the group name, in the apparatus colour
+        const cur = sessions.find(x=>nowMin>=x.start_min && nowMin<x.start_min+x.duration);
+        const nxt = locInfo(nextSessionFor(group, day, cur ? cur.start_min+cur.duration : nowMin));
+        if(nxt && rowH >= 30){
+          lbl.classList.add('has-next');
+          const fs = rowH>50 ? '.72rem' : rowH>38 ? '.64rem' : '.56rem';
+          lbl.innerHTML = `<span class="tl-name">${escHtml(group.name)}</span><span class="tl-next" style="font-size:${fs};background:${nxt.colour};color:${isLight(nxt.colour)?'#1a1a1a':'#fff'}">&#8594; ${escHtml(nxt.name)} ${fmtTime(nxt.start)}</span>`;
+        } else lbl.textContent=group.name;
+      }
       lbl.style.background=group.colour||'#1a2a4a';
       lbl.style.color=isLight(group.colour||'#1a2a4a')?'#1a1a1a':'#fff';
       lbl.style.borderRight='2px solid rgba(0,0,0,.2)';
@@ -2747,7 +2764,7 @@ function renderTimeline(day){
         block.style.background=bg; block.style.color=isLight(bg)?'#2b2b2b':'#fff';
         block.style.fontSize=rowH>50?'.85rem':rowH>38?'.72rem':'.6rem';
         block.style.padding=rowH>50?'0 10px':'0 5px';
-        block.dataset.startMin=s.start_min; block.dataset.endMin=s.start_min+s.duration;
+        block.dataset.startMin=s.start_min; block.dataset.endMin=s.start_min+s.duration; block.dataset.loc=activeLoc||'';
         block.innerHTML=`<span class="b-loc">${activeLoc}${s.title?' · '+s.title:''}</span><span class="b-t">${fmtTime(s.start_min)}</span>`;
         track.appendChild(block);
       });
@@ -2896,15 +2913,34 @@ function sizeLiveSide(){
 const ROTATE_ALERT_MS = 4000; // how long the alert stays up before the clock comes back
 function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+// where a group goes next: the first session that starts at or after `fromMin`
+function nextSessionFor(group, day, fromMin){
+  const ss = ((DATA.sessions[day]&&DATA.sessions[day][group.id])||[]).slice().sort((a,b)=>a.start_min-b.start_min);
+  return ss.find(x=>x.start_min >= fromMin - 0.01) || null;
+}
+function locInfo(sess){
+  if(!sess) return null;
+  const name = getSessionLocation(sess) || '';
+  const loc = getLocByName(name);
+  return { name, colour: loc ? loc.colour : '#555', start: sess.start_min };
+}
+// a chip that reads "Red -> Vault": group colour on the left, apparatus colour on the right
+function goChipHTML(g){
+  const gc = g.colour || '#1a2a4a';
+  const left = `<b style="background:${gc};color:${isLight(gc)?'#1a1a1a':'#fff'}">${escHtml(g.name)}</b>`;
+  if(!g.dest) return `<span class="ls-chip go">${left}</span>`;
+  const lc = g.dest.colour || '#555';
+  return `<span class="ls-chip go">${left}<i style="background:${lc};color:${isLight(lc)?'#1a1a1a':'#fff'}">${escHtml(g.dest.name)}</i></span>`;
+}
 function showRotationAlert(sections){
   const el=document.getElementById('lsAlert');
   const body=document.getElementById('lsAlertBody');
   if(!el||!body) return;
   // shrink the group names a little when lots of groups rotate at once
-  const total=sections.reduce((n,s)=>n+s.names.join(' ').length,0);
-  body.style.fontSize=(total<40?7:total<90?5.5:total<160?4.5:total<280?3.6:2.9)+'em';
+  const total=sections.reduce((n,s)=>n+s.items.map(g=>g.name+(g.dest?' '+g.dest.name+'   ':'')).join(' ').length,0);
+  body.style.fontSize=(total<40?6:total<90?4.6:total<160?3.7:total<280?3:2.4)+'em';
   body.innerHTML=sections.map(s=>
-    `<div class="ls-alert-label">${escHtml(s.label)}</div><div class="ls-alert-names">${s.names.map(n=>`<span class="ls-chip">${escHtml(n)}</span>`).join('')}</div>`
+    `<div class="ls-alert-label">${escHtml(s.label)}</div><div class="ls-alert-names">${s.items.map(goChipHTML).join('')}</div>`
   ).join('');
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); // restart the pop-in animation
   clearTimeout(el._t);
@@ -2937,8 +2973,9 @@ function checkFinalGoes(){
     ss.forEach(s=>{
       const end = s.start_min + s.duration;
       // only when the group actually moves on to another session shortly after
-      if(!ss.some(n=>n.start_min>=end && n.start_min<=end+FINAL_GOES_MAXGAP)) return;
-      (ends[end] = ends[end]||[]).push(g);
+      const nxt = ss.filter(n=>n.start_min>=end && n.start_min<=end+FINAL_GOES_MAXGAP).sort((a,b)=>a.start_min-b.start_min)[0];
+      if(!nxt) return;
+      (ends[end] = ends[end]||[]).push(Object.assign({}, g, { dest: locInfo(nxt) }));
     });
   });
   Object.keys(ends).forEach(k=>{
@@ -2960,14 +2997,14 @@ function showFinalGoes(groups){
     return a.name.localeCompare(b.name);
   });
   const sections = [];
-  const squads = sorted.filter(g=>g.section==='squad').map(g=>g.name);
-  const rec = sorted.filter(g=>g.section!=='squad').map(g=>g.name);
-  if(squads.length) sections.push({ label:'Squads', names:squads });
-  if(rec.length) sections.push({ label:'Recreational', names:rec });
-  const total = sections.reduce((n,s)=>n+s.names.join(' ').length,0);
-  body.style.fontSize = (total<40?6:total<90?5:total<160?4.2:total<280?3.4:2.8)+'em';
+  const squads = sorted.filter(g=>g.section==='squad');
+  const rec = sorted.filter(g=>g.section!=='squad');
+  if(squads.length) sections.push({ label:'Squads', items:squads });
+  if(rec.length) sections.push({ label:'Recreational', items:rec });
+  const total = sections.reduce((n,s)=>n+s.items.map(g=>g.name+(g.dest?' '+g.dest.name+'   ':'')).join(' ').length,0);
+  body.style.fontSize = (total<40?5.2:total<90?4.2:total<160?3.5:total<280?2.9:2.3)+'em';
   body.innerHTML = sections.map(s=>
-    `<div class="ls-alert-label">${escHtml(s.label)}</div><div class="ls-alert-names">${s.names.map(n=>`<span class="ls-chip">${escHtml(n)}</span>`).join('')}</div>`
+    `<div class="ls-alert-label">${escHtml(s.label)}</div><div class="ls-alert-names">${s.items.map(goChipHTML).join('')}</div>`
   ).join('');
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(el._t);
@@ -3029,10 +3066,12 @@ function checkFlash(){
       const row = b.closest('.tl-row');
       if(row){
         const lbl = row.querySelector('.tl-lbl');
-        if(lbl && !flashingGroups.find(g=>g.name===lbl.textContent)){
+        const gname = lbl ? (lbl.dataset.name || lbl.textContent) : '';
+        if(lbl && !flashingGroups.find(g=>g.name===gname)){
           // find the group's section from DATA
-          const group = DATA.groups.find(g=>g.name===lbl.textContent);
-          flashingGroups.push({ name:lbl.textContent, section:group?group.section:'squad' });
+          const group = DATA.groups.find(g=>g.name===gname);
+          const loc = getLocByName(b.dataset.loc||'');
+          flashingGroups.push({ name:gname, section:group?group.section:'squad', colour:group?group.colour:'', dest: b.dataset.loc ? { name:b.dataset.loc, colour: loc?loc.colour:'#555' } : null });
         }
       }
     }
@@ -3048,11 +3087,11 @@ function checkFlash(){
         return a.name.localeCompare(b.name);
       });
       // build display string with section labels
-      const squads = flashingGroups.filter(g=>g.section==='squad').map(g=>g.name);
-      const rec = flashingGroups.filter(g=>g.section==='recreational').map(g=>g.name);
+      const squads = flashingGroups.filter(g=>g.section==='squad');
+      const rec = flashingGroups.filter(g=>g.section==='recreational');
       const parts = [];
-      if(squads.length) parts.push({ label:'Squads', names:squads });
-      if(rec.length) parts.push({ label:'Recreational', names:rec });
+      if(squads.length) parts.push({ label:'Squads', items:squads });
+      if(rec.length) parts.push({ label:'Recreational', items:rec });
       showRotationAlert(parts);
       if(bellEnabled) ringBell();
     }
