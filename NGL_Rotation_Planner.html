@@ -206,6 +206,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .ls-week{ margin-top:.35em; font-size:1.2em; font-weight:800; color:var(--gold); }
 .ls-date{ margin-top:1.4em; font-size:4.6em; font-weight:600; color:rgba(255,255,255,.75); letter-spacing:.02em; }
 .ls-alert{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--red); color:#fff; padding:3em 4em; z-index:5; overflow:hidden; }
+.ls-alert.show.settled{ animation:none; background:#c0392b; }
 .ls-alert.show{ display:flex; animation:lsAlertIn .35s ease-out, lsAlertPulse 1s ease-in-out .35s infinite; }
 .ls-alert-bell{ font-size:12em; line-height:1; margin-bottom:.1em; }
 .ls-alert-title{ font-size:17em; font-weight:900; letter-spacing:.02em; line-height:.95; white-space:nowrap; }
@@ -697,7 +698,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
           <div class="go-grid" id="lsFinalBody"></div>
         </div>
         <div class="ls-alert" id="lsAlert">
-          <div class="ls-head">🔔 Rotate now</div>
+          <div class="ls-head" id="lsAlertHead">🔔 Rotate now</div>
           <div class="go-grid" id="lsAlertBody"></div>
         </div>
       </div>
@@ -2918,7 +2919,8 @@ function sizeLiveSide(){
 }
 
 // ---- Right-hand panel: ROTATE NOW takes over the whole panel, then the clock returns ----
-const ROTATE_ALERT_MS = 4000; // how long the alert stays up before the clock comes back
+const ROTATE_ALERT_MS = 5 * 60 * 1000;   // the where-to-go boxes stay up for 5 minutes
+const ROTATE_PULSE_MS = 20000;           // flash for the first 20 seconds, then hold still // how long the alert stays up before the clock comes back
 function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 // where a group goes next: the first session that starts at or after `fromMin`
@@ -3009,15 +3011,18 @@ function showRotationAlert(sections){
   if(!el||!body) return;
   // shrink the group names a little when lots of groups rotate at once
   widenSide(true);
-  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); // restart the pop-in animation
+  const head=document.getElementById('lsAlertHead'); if(head) head.textContent='🔔 Rotate now';
+  el.classList.remove('show','settled'); void el.offsetWidth; el.classList.add('show'); // restart the pop-in animation
   renderGoGrid(body, sections);
+  clearTimeout(el._s);
+  el._s=setTimeout(()=>{ el.classList.add('settled'); if(head) head.textContent='Where to go · since '+fmtTime(Math.floor(nowMinutes())); }, ROTATE_PULSE_MS);
   clearTimeout(el._t);
   el._t=setTimeout(hideRotationAlert, ROTATE_ALERT_MS);
 }
 
 function hideRotationAlert(){
   const el=document.getElementById('lsAlert'); if(!el) return;
-  clearTimeout(el._t);
+  clearTimeout(el._t); clearTimeout(el._s);
   el.classList.remove('show');
   if(!document.getElementById('lsFinal')?.classList.contains('show')) widenSide(false);
 }
@@ -3070,6 +3075,7 @@ function showFinalGoes(groups){
   const rec = sorted.filter(g=>g.section!=='squad');
   if(squads.length) sections.push({ label:'Squads', items:squads });
   if(rec.length) sections.push({ label:'Recreational', items:rec });
+  hideRotationAlert();
   widenSide(true);
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   renderGoGrid(body, sections);
