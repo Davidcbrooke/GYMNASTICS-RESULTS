@@ -2648,6 +2648,7 @@ function exitLive(){
 
 function startLiveClock(){
   let lastGroupCount = 0;
+  lastAlertMin = -999; lastFinalGoes = -999;
   function tick(){
     const n=new Date();
     const ts=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
@@ -3005,19 +3006,23 @@ function goChipHTML(g){
   const lc = g.dest.colour || '#555';
   return `<span class="ls-chip go">${left}<i style="background:${lc};color:${isLight(lc)?'#1a1a1a':'#fff'}">${escHtml(g.dest.name)}</i></span>`;
 }
-function showRotationAlert(sections){
+function showRotationAlert(sections, holdMs, sinceMin){
   const el=document.getElementById('lsAlert');
   const body=document.getElementById('lsAlertBody');
   if(!el||!body) return;
   // shrink the group names a little when lots of groups rotate at once
+  if(document.getElementById('lsFinal')?.classList.contains('show')) hideFinalGoes();
   widenSide(true);
   const head=document.getElementById('lsAlertHead'); if(head) head.textContent='🔔 Rotate now';
   el.classList.remove('show','settled'); void el.offsetWidth; el.classList.add('show'); // restart the pop-in animation
   renderGoGrid(body, sections);
   clearTimeout(el._s);
-  el._s=setTimeout(()=>{ el.classList.add('settled'); if(head) head.textContent='Where to go · since '+fmtTime(Math.floor(nowMinutes())); }, ROTATE_PULSE_MS);
+  const since = sinceMin != null ? sinceMin : Math.floor(nowMinutes());
+  const hold = holdMs != null ? holdMs : ROTATE_ALERT_MS;
+  el._until = Date.now() + hold;
+  el._s=setTimeout(()=>{ el.classList.add('settled'); if(head) head.textContent='Where to go · since '+fmtTime(since); }, Math.min(ROTATE_PULSE_MS, hold));
   clearTimeout(el._t);
-  el._t=setTimeout(hideRotationAlert, ROTATE_ALERT_MS);
+  el._t=setTimeout(hideRotationAlert, hold);
 }
 
 function hideRotationAlert(){
@@ -3055,7 +3060,7 @@ function checkFinalGoes(){
   Object.keys(ends).forEach(k=>{
     const end = +k;
     const from = end - FINAL_GOES_LEAD;
-    if(nowMin>=from && nowMin<from+0.5 && lastFinalGoes!==end){
+    if(nowMin>=from && nowMin<end && lastFinalGoes!==end){
       lastFinalGoes = end;
       showFinalGoes(ends[k]);
     }
@@ -3130,45 +3135,43 @@ window.previewFinalGoes = function(){ showFinalGoes((DATA.groups||[]).slice(0,4)
 function checkFlash(){
   if(!liveMode) return;
   const nowMin = nowMinutes();
+  const blocks = [...document.querySelectorAll('.tl-block')];
+  blocks.forEach(b=>{ b.classList.toggle('flash', Math.abs(parseInt(b.dataset.startMin) - nowMin) < 1.5); });
+  // backstop for the hide timer (timers can be held back when the screen is busy or in the background)
+  const al = document.getElementById('lsAlert');
+  if(al && al.classList.contains('show') && al._until && Date.now() > al._until + 2000) hideRotationAlert();
+  // The most recent rotation in the last 5 minutes. Looking back (not only at the exact minute) means a
+  // rotation is never missed if the screen's timer skipped a beat, or the page was reloaded just after it.
+  const holdMin = ROTATE_ALERT_MS / 60000;
+  let latest = null;
+  blocks.forEach(b=>{ const st = parseInt(b.dataset.startMin); if(st <= nowMin + 0.02 && nowMin - st < holdMin && (latest === null || st > latest)) latest = st; });
+  if(latest === null || latest === lastAlertMin) return;
+  lastAlertMin = latest;
   const flashingGroups = [];
-  document.querySelectorAll('.tl-block').forEach(b=>{
-    const diff = parseInt(b.dataset.startMin) - nowMin;
-    const isFlashing = diff > -0.5 && diff < 0.5;
-    b.classList.toggle('flash', Math.abs(diff) < 1.5);
-    if(isFlashing){
-      const row = b.closest('.tl-row');
-      if(row){
-        const lbl = row.querySelector('.tl-lbl');
-        const gname = lbl ? (lbl.dataset.name || lbl.textContent) : '';
-        if(lbl && !flashingGroups.find(g=>g.name===gname)){
-          // find the group's section from DATA
-          const group = DATA.groups.find(g=>g.name===gname);
-          const loc = getLocByName(b.dataset.loc||'');
-          flashingGroups.push({ name:gname, section:group?group.section:'squad', colour:group?group.colour:'', dest: b.dataset.loc ? { name:b.dataset.loc, colour: loc?loc.colour:'#555' } : null });
-        }
-      }
-    }
+  blocks.forEach(b=>{
+    if(parseInt(b.dataset.startMin) !== latest) return;
+    const row = b.closest('.tl-row'); if(!row) return;
+    const lbl = row.querySelector('.tl-lbl');
+    const gname = lbl ? (lbl.dataset.name || lbl.textContent) : '';
+    if(!lbl || flashingGroups.find(g=>g.name===gname)) return;
+    const group = DATA.groups.find(g=>g.name===gname);
+    const loc = getLocByName(b.dataset.loc||'');
+    flashingGroups.push({ name:gname, section:group?group.section:'squad', colour:group?group.colour:'', dest: b.dataset.loc ? { name:b.dataset.loc, colour: loc?loc.colour:'#555' } : null });
   });
-  // show alert and ring bell at rotation changes
-  if(flashingGroups.length > 0){
-    const alertKey = Math.round(nowMin * 2) / 2;
-    if(alertKey !== lastAlertMin){
-      lastAlertMin = alertKey;
-      // sort: squads first, then recreational, alphabetically within each
-      flashingGroups.sort((a,b)=>{
-        if(a.section !== b.section) return a.section==='squad'?-1:1;
-        return a.name.localeCompare(b.name);
-      });
-      // build display string with section labels
-      const squads = flashingGroups.filter(g=>g.section==='squad');
-      const rec = flashingGroups.filter(g=>g.section==='recreational');
-      const parts = [];
-      if(squads.length) parts.push({ label:'Squads', items:squads });
-      if(rec.length) parts.push({ label:'Recreational', items:rec });
-      showRotationAlert(parts);
-      if(bellEnabled) ringBell();
-    }
-  }
+  if(!flashingGroups.length) return;
+  // squads first, then recreational, alphabetically within each
+  flashingGroups.sort((a,b)=>{
+    if(a.section !== b.section) return a.section==='squad'?-1:1;
+    return a.name.localeCompare(b.name);
+  });
+  const squads = flashingGroups.filter(g=>g.section==='squad');
+  const rec = flashingGroups.filter(g=>g.section==='recreational');
+  const parts = [];
+  if(squads.length) parts.push({ label:'Squads', items:squads });
+  if(rec.length) parts.push({ label:'Recreational', items:rec });
+  const late = (nowMin - latest) * 60000;
+  showRotationAlert(parts, Math.max(5000, ROTATE_ALERT_MS - late), latest);
+  if(bellEnabled && late < 60000) ringBell();
 }
 
 // ================================================================
