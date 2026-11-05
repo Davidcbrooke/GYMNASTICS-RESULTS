@@ -2943,11 +2943,13 @@ const APP_ICONS = {
   rings:'<path d="M18 4v26M46 4v26"/><circle cx="18" cy="40" r="10"/><circle cx="46" cy="40" r="10"/>',
   horse:'<path d="M6 34h52"/><path d="M10 34l4-10h36l4 10"/><path d="M22 24c0-6 4-8 4-8M42 24c0-6-4-8-4-8"/><path d="M18 34v20M46 34v20"/>',
   block:'<rect x="10" y="22" width="44" height="26" rx="3"/><path d="M10 34h44"/>',
+  fwdfloor:'<rect x="6" y="14" width="52" height="36" rx="3"/><path d="M14 32h30M36 24l8 8-8 8"/>',
+  warm:'<circle cx="32" cy="10" r="5"/><path d="M32 16v20M32 22l-14-8M32 22l14-8M32 36l-12 20M32 36l12 20"/>',
   other:'<path d="M32 6l7.5 15.5 17 2.4-12.3 12 2.9 17L32 45l-15.1 7.9 2.9-17-12.3-12 17-2.4z"/>'
 };
 function appIcon(name){
   const n=(name||'').toLowerCase();
-  const k = /vault|spring|table/.test(n)?'vault' : /bar/.test(n)?'bars' : /beam/.test(n)?'beam' : /tramp|dmt/.test(n)?'tramp'
+  const k = /warm|cool|stretch|flex/.test(n)?'warm' : /forward/.test(n)?'fwdfloor' : /vault|spring|table/.test(n)?'vault' : /bar/.test(n)?'bars' : /beam/.test(n)?'beam' : /tramp|dmt/.test(n)?'tramp'
           : /tumbl|track|rod|air/.test(n)?'tumble' : /ring/.test(n)?'rings' : /horse|pommel|mushroom/.test(n)?'horse'
           : /floor|mat/.test(n)?'floor' : /block|box|pit|conditioning/.test(n)?'block' : 'other';
   return APP_ICONS[k];
