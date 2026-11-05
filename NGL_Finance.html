@@ -726,7 +726,7 @@ const LIC_DEFAULTS = {
     clubPrice:{xs:150, sm:250, s:400, m:750, m2:1000, l:1250, xl:1500},
     bookPrice:5, bookCost:0.75, newBooksPct:33,
     certPrice:0.10, certUnitCost:0.03, certsPerChild:3,
-    gradFee:5, gradVatIncl:true, medalCost:1.5, gradPct:60,
+    gradFee:5, spectatorFee:5, extraSpect:1, medalCost:1.5, gradPct:60,
     shirtPrice:12, shirtCost:10, shirtsPerClub:0,
     postCostPct:100, cardPct:0, cardFixed:0, hubYear:0
   }
@@ -773,6 +773,7 @@ function schoolOrder(o){
   if(!(x.lines && x.lines.length)){
     const q = +x.qty||0, u = +x.price||0;
     x.lines = [{kind: x.type==="graduation" ? "graduation" : "club", desc: x.type || "licence", qty: x.type==="graduation" ? q : 1, unit: x.type==="graduation" ? u : q*u}];
+    if(x.type==="graduation" && x.spectators) x.lines.push({kind:"spectator", desc:"extra spectators", qty:+x.spectators||0, unit:+x.spectatorPrice||5});
   }
   if(x.type==="club-licence" && x.kind==="upgrade" && x.upgradeTo) x.band = x.upgradeTo;
   return x;
@@ -810,7 +811,7 @@ function liveOrders(s, path){
 function licFigures(path, s){
   const L = licA(path), T=[0,1,2], z=()=>[0,0,0];
   const F = {clubFee:z(), gymFee:z(), bookInc:z(), medalInc:z(), shirtInc:z(), books:z(), medals:z(), shirts:z(), orders:z(), paid:z(), unpaid:z(), clubs:0,
-             packInc:z(), packs:z(), passInc:z(), passports:z(), postInc:z(), posters:z(), certInc:z(), certs:z(), gradInc:z(), grads:z()};
+             packInc:z(), packs:z(), passInc:z(), passports:z(), postInc:z(), posters:z(), certInc:z(), certs:z(), gradInc:z(), grads:z(), specInc:z(), specs:z()};
   if(licSource==="live" && LIC.state==="live"){
     const clubs = new Set();
     liveOrders(s, path).forEach(o=>{
@@ -830,6 +831,7 @@ function licFigures(path, s){
         else if(l.kind==="postage") F.postInc[t]+=v;
         else if(l.kind==="cert"){ F.certInc[t]+=v; F.certs[t]+=q; }
         else if(l.kind==="graduation"){ F.gradInc[t]+=gradNet(v, L); F.grads[t]+=q; }
+        else if(l.kind==="spectator"){ F.specInc[t]+=v; F.specs[t]+=q; }
         else if(l.kind==="discount") F.clubFee[t]+=v;       // multi-pathway discount (negative)
       });
       (o.status==="paid" ? F.paid : F.unpaid)[t] += net;
@@ -846,7 +848,8 @@ function licFigures(path, s){
       const bk = Math.round(g * (c.first ? 100 : L.newBooksPct) / 100), ct = g*L.certsPerChild, gr = Math.round(g*L.gradPct/100);
       F.books[t0] += bk; F.bookInc[t0] += bk*L.bookPrice;
       F.certs[t0] += ct; F.certInc[t0] += ct*L.certPrice;
-      F.grads[2] += gr; F.gradInc[2] += gradNet(gr*L.gradFee, L); if(gr) F.orders[2]++;      // Graduations in the summer term
+      F.grads[2] += gr; F.gradInc[2] += gradNet(gr*L.gradFee, L); if(gr) F.orders[2]++;
+      const sp = Math.round(gr*L.extraSpect); F.specs[2] += sp; F.specInc[2] += sp*L.spectatorFee;      // Graduations in the summer term
       F.shirts[t0] += L.shirtsPerClub; F.shirtInc[t0] += L.shirtsPerClub*L.shirtPrice;
       const items = bk + Math.ceil(ct/10) + L.shirtsPerClub; if(items) F.postInc[t0] += items<=20?4:items<=100?8:12;
     });
@@ -937,7 +940,8 @@ function buildSchools(s){
   if(F.gymFee.some(v=>v)) inc.push(["Per-gymnast licences", F.gymFee, "older orders"]);
   inc.push(["Awards Book sales", F.bookInc, live ? F.note : `£${L.bookPrice} each, ${L.newBooksPct}% of children after year 1`],
     ["Certificate sales", F.certInc, live ? F.note : `£${L.certPrice.toFixed(2)} each, ${L.certsPerChild} per child`],
-    ["Graduation fees", F.gradInc, (live ? "from Hub orders" : `£${L.gradFee} a graduate, ${L.gradPct}% of children`) + (L.gradVatIncl ? ", less VAT" : "")],
+    ["Graduation fees", F.gradInc, (live ? "from Hub orders" : `£${L.gradFee} a graduate, ${L.gradPct}% of children`) + ", + VAT"],
+    ["Extra spectator tickets", F.specInc, (live ? "from Hub orders" : `£${L.spectatorFee} each, ${L.extraSpect} per graduate`) + ", + VAT"],
     ["T-shirt sales", F.shirtInc, live ? F.note : `£${L.shirtPrice} each`],
     ["Postage charged", F.postInc, "on supplies orders"]);
   const TIt = T.map(t => inc.reduce((a,r)=>a+r[1][t],0));
@@ -956,7 +960,7 @@ function buildSchools(s){
   const NET = TI.map((x,i)=>x-TC[i]), MARGIN = TI.map((x,i)=>x?Math.round(NET[i]/x*100):null);
   const sum = a => a.reduce((x,y)=>x+y,0);
   return {path, L, F, n:F.clubs, books:F.books, medals:F.grads, shirts:F.shirts, gyms:F.certs, inc:I, cost:C, TI, TC, NET, MARGIN, flags:[],
-    info:[["Awards Books", F.books],["Certificates", F.certs],["Graduates", F.grads]],
+    info:[["Awards Books", F.books],["Certificates", F.certs],["Graduates", F.grads],["Extra spectators", F.specs]],
     summary:`${sum(F.books)} books, ${sum(F.certs)} certificates and ${sum(F.grads)} graduates`};
 }
 function licStmtHTML(r){
@@ -1001,7 +1005,7 @@ function renderLicensing(){
   $("#licNotes").innerHTML = (sch ? ((live
       ? "Income comes from the orders clubs place on the Schools Club Hub (Club Licences, books, certificates, t-shirts, postage and Graduation medals), in the term each order was placed. Unpaid orders are included unless you tick Paid orders only. Costs use the assumptions below."
       : "Each club pays its yearly Schools Club Licence in the term it starts. Tick First year when every child needs a book; after that only new children buy one. Graduations are counted in the summer term.") +
-      " What clubs charge schools (suggested £950 a school a year) and parents is the club's own income, so it isn't in NGL's P&L. Graduation: families pay the club £12 (gymnast and one spectator) and £6 per extra spectator; NGL's £5 per graduate includes VAT, so NGL keeps £4.17.") : (live
+      " What clubs charge schools (suggested £950 a school a year) and parents is the club's own income, so it isn't in NGL's P&L. Graduation: families pay the club £12 (gymnast and one spectator, VAT included): the club keeps £5 and NGL invoices £5 + VAT. Extra spectators (£6) all go to NGL, invoiced at £5 + VAT. Figures here are before VAT.") : (live
       ? (ps ? "Income comes from the orders clubs place on the Pre-School Hub (licences, Lesson Plan Packs, passports, medals and postage), in the term each order was placed. It is kept separate from Recreational. Unpaid orders are included unless you tick Paid orders only. Costs use the assumptions below."
             : "Income comes from the orders clubs place on the Recreational Hub, in the term each order is for. Unpaid orders are included unless you tick Paid orders only. Costs use the assumptions below.")
       : (ps ? "Each club pays its yearly Pre-School Club Licence in the term it starts and gets the A1 poster free. Packs, passports and medals use the planning assumptions below; postage follows the Hub's £4 / £8 / £12 scale."
@@ -1066,7 +1070,7 @@ function renderLicAssump(){
     `<h4>Schools Club Licence (per year, + VAT)</h4>` + LIC_BANDS.map(([b,t])=>`<label>${t.replace("gymnasts","children")}<input type="number" min="0" step="50" data-lb="clubPrice.${b}" value="${L.clubPrice[b]}"></label>`).join("") +
     `<h4>Awards Books</h4>` + f("bookPrice","Price to clubs") + f("bookCost","Cost each (print)",0.05) + f("newBooksPct","Planning: new children after year 1 (%)",1) +
     `<h4>Certificates</h4>` + f("certPrice","Price to clubs",0.01) + f("certUnitCost","Cost each",0.01) + f("certsPerChild","Certificates per child per year",1) +
-    `<h4>Graduation</h4>` + f("gradFee","NGL fee per graduate, incl. VAT (medal included)",0.5) + f("medalCost","Medal cost each",0.05) + f("gradPct","Planning: children who graduate (%)",5) +
+    `<h4>Graduation</h4>` + f("gradFee","NGL fee per graduate, + VAT (medal included)",0.5) + f("spectatorFee","NGL fee per extra spectator, + VAT",0.5) + f("extraSpect","Planning: extra spectators per graduate",0.5) + f("medalCost","Medal cost each",0.05) + f("gradPct","Planning: children who graduate (%)",5) +
     `<h4>T-shirts</h4>` + f("shirtPrice","Price to clubs") + f("shirtCost","Cost each") + f("shirtsPerClub","Planning: t-shirts per club per year",1) +
     `<h4>Other costs</h4>` + f("postCostPct","Postage cost, % of postage charged",5) + f("cardPct","Payment fee %",0.1) + f("cardFixed","Payment fee per order",0.05) + f("hubYear","Hub and hosting per year",10);
     return; }
