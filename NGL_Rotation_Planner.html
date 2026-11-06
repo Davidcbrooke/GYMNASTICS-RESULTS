@@ -248,6 +248,12 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 /* Pre-School "this week" box: the week's social post and the Book 1 / Book 2 sticker skills */
 .ls-pre{ position:absolute; inset:0; display:none; z-index:3; background:#28225c; color:#fff; padding:2vh 1.6vw; gap:1.8vw; align-items:stretch; overflow:hidden; border-top:1vh solid #E8559A; }
 .ls-pre.show{ display:flex; animation:lsAlertIn .35s ease-out; }
+.ls-pre.narrow{ flex-direction:column; gap:1.2vh; padding:1.6vh 1.2vw; }
+.ls-pre.narrow .pp-img{ height:46%; align-self:center; }
+.ls-pre.narrow .pp-txt{ justify-content:flex-start; gap:.9vh; }
+.ls-pre.narrow .pp-k{ font-size:1.8vh; } .ls-pre.narrow .pp-t{ font-size:4.4vh; } .ls-pre.narrow .pp-w{ display:none; }
+.ls-pre.narrow .pp-b{ padding:.9vh .8vw; } .ls-pre.narrow .pp-b img{ width:4.6vh; height:4.6vh; }
+.ls-pre.narrow .pp-b h4{ font-size:1.8vh; } .ls-pre.narrow .pp-b div div{ font-size:2.2vh; }
 .live-side.wide .ls-pre{ left:auto; right:0; width:72vw; border-left:3px solid rgba(255,255,255,.25); box-shadow:-1.5vw 0 3vw rgba(0,0,0,.35); }
 .ls-pre .pp-img{ flex:none; height:100%; width:auto; aspect-ratio:4/5; object-fit:contain; border-radius:1.6vh; box-shadow:0 1vh 3vh rgba(0,0,0,.45); }
 .ls-pre .pp-txt{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:1.4vh; }
@@ -3066,8 +3072,10 @@ let lastFinalGoes = -999;
 /* ---------- Pre-School "this week" box ----------
    A group is Pre-School if it's ticked as a Pre-School class, or its name says so. For the first 10 minutes of a
    Pre-School class the live screen shows the week's social post and both books' sticker skills, taken from the
-   club's Pre-School Hub term planner. Rotate-now and final-goes boxes always come first. */
-const PRE_HOLD_MIN = 10, PS_BASE = 'https://club.nationalgymnasticsleague.co.uk/preschool/';
+   club's Pre-School Hub term planner. It shows for the whole class: across the screen when only Pre-School is on,
+   and in the right-hand panel (so the timeline stays visible) when other classes are running too.
+   Rotate-now and final-goes boxes always come first. */
+const PS_BASE = 'https://club.nationalgymnasticsleague.co.uk/preschool/';
 function isPreGroup(g){ return g && (g.preschool === true || (g.preschool !== false && /pre[\s-]?school|tots|toddler/i.test(g.name || ''))); }
 let preShownFor = null;
 function preWeek(){
@@ -3084,21 +3092,24 @@ function preBoxHTML(r){
     <div class="pp-txt"><div class="pp-k">Pre-School · this week</div><div class="pp-t">${e(t.name)}</div>
       ${r.seasonal ? '<div class="pp-w">A seasonal themed class. No new passport skills this week.</div>' : `<div class="pp-w">Around the World with Somi &amp; Flic · week ${r.w} of 40</div>${book(r.b1, 1)}${book(r.b2, 2)}`}</div>`;
 }
-function hidePreschool(){ const el = document.getElementById('lsPre'); if(el && el.classList.contains('show')){ el.classList.remove('show'); const busy = ['lsAlert','lsFinal'].some(id => document.getElementById(id)?.classList.contains('show')); if(!busy) widenSide(false); } }
+function hidePreschool(){ const el = document.getElementById('lsPre'); if(el && el.classList.contains('show')){ el.classList.remove('show', 'narrow'); const busy = ['lsAlert','lsFinal'].some(id => document.getElementById(id)?.classList.contains('show')); if(!busy) widenSide(false); } }
 function checkPreschool(){
   const el = document.getElementById('lsPre'); if(!el || !liveMode) return;
   const day = getTodayName(), nowMin = nowMinutes();
-  let start = null;
-  DATA.groups.filter(isPreGroup).forEach(g => {
+  let start = null, others = false;
+  DATA.groups.forEach(g => {
     const ss = (DATA.sessions[day] || {})[g.id] || []; if(!ss.length) return;
     const st = Math.min(...ss.map(x => +x.start_min)), en = Math.max(...ss.map(x => +x.start_min + (+x.duration || 0)));
-    if(nowMin >= st && nowMin < Math.min(en, st + PRE_HOLD_MIN) && (start === null || st > start)) start = st;
+    if(!(nowMin >= st && nowMin < en)) return;
+    if(isPreGroup(g)){ if(start === null || st > start) start = st; } else others = true;
   });
   const busy = ['lsAlert','lsFinal'].some(id => document.getElementById(id)?.classList.contains('show'));
   if(start === null || busy){ if(start === null) preShownFor = null; hidePreschool(); return; }
   const r = preWeek(); if(!r){ hidePreschool(); return; }
   const key = start + '|' + r.date;
-  if(preShownFor !== key || !el.classList.contains('show')){ el.innerHTML = preBoxHTML(r); preShownFor = key; el.classList.add('show'); widenSide(true); }
+  if(preShownFor !== key || !el.classList.contains('show')){ el.innerHTML = preBoxHTML(r); preShownFor = key; el.classList.add('show'); }
+  el.classList.toggle('narrow', others);
+  widenSide(!others);
 }
 function checkFinalGoes(){
   if(!liveMode || !DATA || !DATA.groups) return;
