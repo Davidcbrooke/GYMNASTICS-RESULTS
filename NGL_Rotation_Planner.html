@@ -245,6 +245,22 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 .go-box svg{ display:block; }
 .go-box .gb-app{ font-weight:900; line-height:1; text-transform:uppercase; letter-spacing:.01em; margin-top:.08em; text-align:center; }
 .go-box .gb-band{ position:absolute; left:0; right:0; bottom:0; }
+/* Pre-School "this week" box: the week's social post and the Book 1 / Book 2 sticker skills */
+.ls-pre{ position:absolute; inset:0; display:none; z-index:3; background:#28225c; color:#fff; padding:2vh 1.6vw; gap:1.8vw; align-items:stretch; overflow:hidden; border-top:1vh solid #E8559A; }
+.ls-pre.show{ display:flex; animation:lsAlertIn .35s ease-out; }
+.live-side.wide .ls-pre{ left:auto; right:0; width:72vw; border-left:3px solid rgba(255,255,255,.25); box-shadow:-1.5vw 0 3vw rgba(0,0,0,.35); }
+.ls-pre .pp-img{ flex:none; height:100%; width:auto; aspect-ratio:4/5; object-fit:contain; border-radius:1.6vh; box-shadow:0 1vh 3vh rgba(0,0,0,.45); }
+.ls-pre .pp-txt{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:1.4vh; }
+.ls-pre .pp-k{ font-weight:900; letter-spacing:.16em; text-transform:uppercase; color:#E8559A; font-size:2.6vh; }
+.ls-pre .pp-t{ font-weight:900; font-size:6.6vh; line-height:1; text-transform:uppercase; }
+.ls-pre .pp-w{ font-weight:700; font-size:2.4vh; color:#c9cbee; }
+.ls-pre .pp-b{ background:rgba(255,255,255,.08); border-radius:1.6vh; padding:1.4vh 1.2vw; display:flex; gap:1vw; align-items:flex-start; border-left:.8vh solid #E8559A; }
+.ls-pre .pp-b.b2{ border-left-color:#c9cbee; }
+.ls-pre .pp-b img{ width:7vh; height:7vh; flex:none; }
+.ls-pre .pp-b h4{ margin:0 0 .4vh; font-size:2.6vh; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:#ffd1e6; }
+.ls-pre .pp-b.b2 h4{ color:#dfe0ff; }
+.ls-pre .pp-b div div{ font-size:3.2vh; font-weight:800; line-height:1.2; }
+.ls-pre .pp-b div div:before{ content:"\2B50"; margin-right:.4em; font-size:.8em; }
 @keyframes lsFinalPulse{ 0%,100%{ background:#c9a227; } 50%{ background:#d9b236; } }
 @keyframes lsAlertIn{ from{ opacity:0; transform:scale(.92); } to{ opacity:1; transform:scale(1); } }
 @keyframes lsAlertPulse{ 0%,100%{ background:#c0392b; } 50%{ background:#e04b3b; } }
@@ -697,6 +713,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
           <div class="ls-head">⏳ Final goes · rotating in 1 minute</div>
           <div class="go-grid" id="lsFinalBody"></div>
         </div>
+        <div class="ls-pre" id="lsPre"></div>
         <div class="ls-alert" id="lsAlert">
           <div class="ls-head" id="lsAlertHead">🔔 Rotate now</div>
           <div class="go-grid" id="lsAlertBody"></div>
@@ -758,6 +775,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
     <h3 id="gmTitle">Add Group</h3>
     <div class="mf"><label>Group name</label><input type="text" id="gm_name" placeholder="e.g. WAG Pearl 1"></div>
     <div class="mf"><label>Section</label><select id="gm_section"><option value="squad">Squad</option><option value="recreational">Recreational</option></select></div>
+    <div class="mf"><label class="day-check-lbl" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="gm_pre">Pre-School class (show this week’s Pre-School theme and skills on the live screen)</label></div>
     <div class="mf"><label>Colour</label><div class="colour-swatches" id="gm_swatches"></div></div>
     <div class="mf"><label>Active days</label><div class="day-checks" id="gm_days">
       <label class="day-check-lbl"><input type="checkbox" value="Monday">Mon</label>
@@ -935,6 +953,7 @@ header h1 .club-name{ color:var(--gold); font-size:.9rem; font-weight:600; margi
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://club.nationalgymnasticsleague.co.uk/preschool/data.js" defer></script>
 
 <script>
 // Public links use the NGL address, not GitHub
@@ -2093,6 +2112,7 @@ function openGroupModal(id=null,defaultSection='squad'){
   document.getElementById('gm_del').style.display=g?'block':'none';
   document.getElementById('gm_name').value=g?g.name:'';
   document.getElementById('gm_section').value=g?g.section:defaultSection;
+  document.getElementById('gm_pre').checked=g?isPreGroup(g):false;
   selectedGroupColour=g?g.colour:SWATCH_COLOURS[0];
   renderSwatches('gm_swatches',selectedGroupColour,c=>{selectedGroupColour=c;});
   const ad=g?(g.days||DAYS):DAYS;
@@ -2106,8 +2126,9 @@ function saveGroup(){
   if(!name){alert('Please enter a group name.');return;}
   const section=document.getElementById('gm_section').value;
   const days=[...document.querySelectorAll('#gm_days input:checked')].map(c=>c.value);
-  if(editingGroup){const g=getGroupById(editingGroup);g.name=name;g.section=section;g.colour=selectedGroupColour;g.days=days;}
-  else{DATA.groups.push({id:genId(),name,section,colour:selectedGroupColour,days});}
+  const pre=document.getElementById('gm_pre').checked;
+  if(editingGroup){const g=getGroupById(editingGroup);g.name=name;g.section=section;g.colour=selectedGroupColour;g.days=days;g.preschool=pre;}
+  else{DATA.groups.push({id:genId(),name,section,colour:selectedGroupColour,days,preschool:pre});}
   closeModal('groupModal'); renderSettings(); renderWeekTable(); scheduleAutoSave();
 }
 
@@ -2658,6 +2679,7 @@ function startLiveClock(){
     updateNowLine();
     checkFlash();
     checkFinalGoes();
+    checkPreschool();
     // re-render timeline every minute to show/hide groups as sessions start and end
     if(n.getSeconds()===0){
       renderTimeline(getTodayName());
@@ -3041,6 +3063,43 @@ const FINAL_GOES_SPOKEN  = true;  // also say "Final goes" out loud (only while 
 const FINAL_GOES_MAXGAP  = 5;     // a session only counts as "rotating" if the group's next one starts within this many minutes
 let lastFinalGoes = -999;
 
+/* ---------- Pre-School "this week" box ----------
+   A group is Pre-School if it's ticked as a Pre-School class, or its name says so. For the first 10 minutes of a
+   Pre-School class the live screen shows the week's social post and both books' sticker skills, taken from the
+   club's Pre-School Hub term planner. Rotate-now and final-goes boxes always come first. */
+const PRE_HOLD_MIN = 10, PS_BASE = 'https://club.nationalgymnasticsleague.co.uk/preschool/';
+function isPreGroup(g){ return g && (g.preschool === true || (g.preschool !== false && /pre[\s-]?school|tots|toddler/i.test(g.name || ''))); }
+let preShownFor = null;
+function preWeek(){
+  const P = window.NGLPS, plan = CLUB && CLUB.preschoolPlan; if(!P || !plan) return null;
+  const rows = P.plan(plan), today = P.iso(new Date()); let row = null;
+  rows.forEach(r => { if(r.date <= today) row = r; });
+  if(!row || (P.parse(today) - P.parse(row.date)) >= 7 * 86400000) return null;   // half term or holidays
+  return row;
+}
+function preBoxHTML(r){
+  const t = r.theme, p2 = n => String(n).padStart(2, '0'), e = x => String(x).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const book = (b, n) => `<div class="pp-b${n === 2 ? ' b2' : ''}"><img src="${PS_BASE}img/medal${p2(b.country.n)}.png" alt=""><div><h4>Book ${n} · ${e(b.country.name)}</h4>${b.skills.map(x => `<div>${e(x)}</div>`).join('')}</div></div>`;
+  return `<img class="pp-img" src="${PS_BASE}img/post_${t.file}.jpg" alt="">
+    <div class="pp-txt"><div class="pp-k">Pre-School · this week</div><div class="pp-t">${e(t.name)}</div>
+      ${r.seasonal ? '<div class="pp-w">A seasonal themed class. No new passport skills this week.</div>' : `<div class="pp-w">Around the World with Somi &amp; Flic · week ${r.w} of 40</div>${book(r.b1, 1)}${book(r.b2, 2)}`}</div>`;
+}
+function hidePreschool(){ const el = document.getElementById('lsPre'); if(el && el.classList.contains('show')){ el.classList.remove('show'); const busy = ['lsAlert','lsFinal'].some(id => document.getElementById(id)?.classList.contains('show')); if(!busy) widenSide(false); } }
+function checkPreschool(){
+  const el = document.getElementById('lsPre'); if(!el || !liveMode) return;
+  const day = getTodayName(), nowMin = nowMinutes();
+  let start = null;
+  DATA.groups.filter(isPreGroup).forEach(g => {
+    const ss = (DATA.sessions[day] || {})[g.id] || []; if(!ss.length) return;
+    const st = Math.min(...ss.map(x => +x.start_min)), en = Math.max(...ss.map(x => +x.start_min + (+x.duration || 0)));
+    if(nowMin >= st && nowMin < Math.min(en, st + PRE_HOLD_MIN) && (start === null || st > start)) start = st;
+  });
+  const busy = ['lsAlert','lsFinal'].some(id => document.getElementById(id)?.classList.contains('show'));
+  if(start === null || busy){ if(start === null) preShownFor = null; hidePreschool(); return; }
+  const r = preWeek(); if(!r){ hidePreschool(); return; }
+  const key = start + '|' + r.date;
+  if(preShownFor !== key || !el.classList.contains('show')){ el.innerHTML = preBoxHTML(r); preShownFor = key; el.classList.add('show'); widenSide(true); }
+}
 function checkFinalGoes(){
   if(!liveMode || !DATA || !DATA.groups) return;
   const day = getTodayName();
