@@ -71,7 +71,8 @@ main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
 .sec .in{min-width:0;flex:1}
 .sec h2{font-family:var(--cond);font-size:21px;margin:0;color:var(--navy);line-height:1.1}
 .sec p{margin:3px 0 0;color:var(--muted);font-size:13.5px;line-height:1.35}
-.sec .go{flex:none;color:var(--c)}.sec .go svg{width:18px;height:18px;display:block}
+.sec .go{flex:none;color:var(--c)}
+.sec .count{flex:none;min-width:30px;height:30px;padding:0 9px;border-radius:999px;background:#c6152e;color:#fff;font-weight:800;font-size:15px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(198,21,46,.35)}.sec .go svg{width:18px;height:18px;display:block}
 .sec .state{margin-top:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
 .sec:hover{border-color:var(--c);transform:translateY(-1px)}
 .sec:focus-visible{outline:3px solid var(--c);outline-offset:2px}
@@ -856,6 +857,19 @@ function renderSections(){
       <span class="in"><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p>${s.url?"":'<span class="state">Not linked yet</span>'}</span>
       <span class="go">${GO}</span>
     </button>`).join("")}</div></section>`; }).join("");
+  showPlanningCount();
+}
+/* Red number on the Competition planning tile: jobs still to do whose due date has passed.
+   Competition planning saves the due dates (summary__planning) whenever it is opened or a job is ticked. */
+let PLAN_DUE = null, planWatch = null;
+function showPlanningCount(){
+  const tile = document.querySelector('.sec[data-sec="planning"]'); if(!tile) return;
+  if(!planWatch && LIVE){ planWatch = db.collection("ngl_staffing").doc("summary__planning").onSnapshot(d => { PLAN_DUE = (d.exists && d.data().due) || []; showPlanningCount(); }, e => console.error(e)); }
+  tile.querySelector(".count")?.remove(); if(!PLAN_DUE) return;
+  const t = new Date(), today = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
+  const n = PLAN_DUE.filter(d => d < today).length; if(!n) return;
+  const b = document.createElement("span"); b.className = "count"; b.textContent = n > 99 ? "99+" : n; b.title = `${n} overdue job${n===1?"":"s"}`;
+  tile.querySelector(".go").before(b);
 }
 $("#sections").addEventListener("click", e=>{ const b=e.target.closest("[data-sec]"); if(b && !b.disabled) openSection(b.dataset.sec); });
 

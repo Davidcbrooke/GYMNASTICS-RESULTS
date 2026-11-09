@@ -213,6 +213,19 @@ const counts = c => { const ts = tasksFor(c).filter(t=>!t.na); return {all:ts.le
 const upcoming = () => S.comps.filter(c => toDate(c.date) >= new Date(today.getTime() - 14*day));
 
 const DEL = "__delete__";   // a value of DEL removes that entry
+/* A small summary for the Admin Hub tile: the due date of every job still to do (not done, not "not needed").
+   The hub counts the ones whose date has passed, so the number stays right day by day without opening this page. */
+let sumTimer = null;
+function saveSummary(){
+  if(!LIVE) return; clearTimeout(sumTimer);
+  sumTimer = setTimeout(async () => {
+    const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const items = S.comps.flatMap(c => { const past = toDate(c.date) < today;
+      return tasksFor(c).filter(t => !t.done && !t.na && !(past && t.days >= 0)).map(t => iso(t.due)); }).sort();
+    try{ await db.collection(CONFIG.store).doc("summary__planning").set({due:items, updatedAt:firebase.firestore.FieldValue.serverTimestamp()}); }
+    catch(e){ console.error("summary", e); }
+  }, 1500);
+}
 async function save(c, patch){
   const p = S.plans[c.id] = S.plans[c.id] || {}, out = {};
   for(const k in patch){ const v = patch[k];
@@ -225,8 +238,10 @@ async function save(c, patch){
   if(!LIVE) return;
   try{ await db.collection(CONFIG.store).doc(CONFIG.prefix + c.id).set(Object.assign({compId:c.id, compName:c.name, updatedAt:firebase.firestore.FieldValue.serverTimestamp()}, out), {merge:true}); }
   catch(e){ console.error(e); toast(/permission/i.test(e.code||e.message) ? "The database blocked that change." : "Not saved: check the connection."); }
+  saveSummary();
 }
 async function saveTemplate(){
+  saveSummary();
   TEMPLATE.sort((a,b)=>b.days-a.days || a.pos-b.pos).forEach((t,i)=>t.pos=i);
   render();
   if(!LIVE) return;
@@ -377,7 +392,7 @@ async function load(){
   let saved = null; try{ saved = localStorage.getItem("nglplan:cur"); }catch(_){}
   const next = upcoming()[0];
   S.cur = S.comps.some(c=>c.id===saved) ? saved : (next || S.comps[0] || {}).id;
-  render();
+  render(); saveSummary();
   if(LIVE) db.collection(CONFIG.store).onSnapshot(sn => { sn.docChanges().forEach(ch => { const id = ch.doc.id; if(!id.startsWith(CONFIG.prefix)) return; const k = id.slice(CONFIG.prefix.length);
       if(k==="template"){ const t = ch.doc.data().tasks; if(Array.isArray(t) && t.length && !dragId && !S.editing) TEMPLATE = addNewStd(t, ch.doc.data().seen); } else S.plans[k] = ch.doc.data(); }); if(!S.editing && !dragId && (!document.activeElement || document.activeElement.tagName!=="TEXTAREA")) render(); }, e=>console.error(e));
 }
