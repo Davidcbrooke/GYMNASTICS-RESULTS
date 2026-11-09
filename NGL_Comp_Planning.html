@@ -26,8 +26,8 @@ header.top h1 small{display:block;font-family:var(--body);font-size:12.5px;font-
 main{max-width:1180px;margin:0 auto;padding:16px 16px 48px;display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
 @media(max-width:860px){main{grid-template-columns:1fr}}
 .panel{background:#fff;border:1px solid var(--line);border-radius:12px}
-.side{padding:10px;position:sticky;top:10px}
-@media(max-width:860px){.side{position:static}}
+.side{padding:10px;position:sticky;top:10px;max-height:calc(100vh - 20px);overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:860px){.side{position:static;max-height:none;overflow:visible}}
 .side h2{font-family:var(--cond);font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 8px 8px}
 .cbtn{display:block;width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:10px;padding:9px 10px;margin-bottom:4px}
 .cbtn:hover{background:var(--paper)}
