@@ -48,6 +48,11 @@ p.lead{color:var(--muted);margin:0 0 14px}
 .cat h3{font-family:var(--cond);font-size:22px;margin:0;color:var(--navy)}
 .cat .rows{margin-top:8px;display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:14px}
 .cat .rows .k{color:var(--muted)}
+.jg-how{background:#f4f6fb;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;margin:4px 0 12px}
+.jg-how ol{margin:6px 0 0 18px;padding:0}.jg-bm{display:inline-block;background:#c6152e;color:#fff!important;font-weight:700;padding:6px 12px;border-radius:8px;text-decoration:none;cursor:grab}
+.jg-t td,.jg-t th{padding:6px 8px;border-bottom:1px solid var(--line);font-size:13.5px;text-align:right;vertical-align:top}.jg-t td:nth-child(-n+3),.jg-t th:nth-child(-n+3){text-align:left}
+.jg-t select{font:inherit;font-size:12.5px;max-width:260px}.jg-short{color:#c6152e;font-weight:700}.jg-ok{color:var(--ok);font-weight:700}
+.jg-clubs{font-size:12.5px;color:var(--muted);text-align:left!important}
 .cat .rows .v{text-align:right;font-variant-numeric:tabular-nums}
 .cat .rows .p{font-weight:700;border-top:1px solid var(--line);padding-top:4px;margin-top:2px}
 .cat .note{font-size:13px;color:var(--muted);margin-top:8px}
@@ -205,6 +210,10 @@ details.bycomp summary{cursor:pointer;padding:12px 16px;font-weight:600;color:va
         <div class="tablewrap"><table class="pnl-table" id="pnl-table"></table></div>
       </details>
       <div class="pnl-notes" id="pnl-notes"></div>
+    </div>
+    <div class="panel-card" id="jgCard">
+      <div class="pc-head">JustGo ticket sales <span id="jgSub">Gymnast places and spectator tickets actually bought, gross</span></div>
+      <div id="jgBody"></div>
     </div>
   </section>
 
@@ -434,7 +443,7 @@ const fixedFor = view => fixedLines().filter(l => view==="all" ? true : l.path==
 const sharedFixed = () => fixedLines().filter(l => !PATHWAYS[l.path]);
 function compTotals(){
   const list = viewComps();
-  const rows = list.map(c=>pnlRow(c, Math.min(bookedFor(c), compMax(c))));
+  const rows = list.map(bookedRow);
   const full = list.map(c=>pnlRow(c, compMax(c)));
   rows.forEach((r,i)=>{ r.unsoldPlaces=full[i].gymnasts-r.gymnasts; r.unsold=full[i].income-r.income; r.unsoldProfit=full[i].profit-r.profit; });
   const sum=(arr,k)=>arr.reduce((s,r)=>s+r[k],0);
@@ -457,7 +466,7 @@ function aggregate(rows){
   rows.forEach(r=>{
     const p = compPathway(r.c);
     g.gymnasts += r.gymnasts; g.entry[p] = (g.entry[p]||0) + r.entry; g.spec += r.spec;
-    g.venue += r.venue; g.ops += r.ops; g.cams += r.cams; g.judges += r.judges; g.elev += r.elev; g.med += r.med; g.medalN += r.medalN; g.card += r.card; g.kit += r.kit; g.hostPay += r.hostPay;
+    g.venue += r.venue; g.ops += r.ops; g.cams += r.cams; g.judges += r.judges; g.elev += r.elev; g.med += r.med; g.medalN += r.medalN; g.card += r.card; g.kit += r.kit; g.hostPay += r.hostPay; g.jgOther = (g.jgOther||0) + (r.jgOther||0);
     Object.entries(r.lines).forEach(([id,v])=>{ g.line[id] = (g.line[id]||0) + v; });
   });
   return g;
@@ -465,7 +474,7 @@ function aggregate(rows){
 function buildStatement(list, view){
   view = view || "all";
   const pct = Math.min(100, Math.max(1, parseFloat(A.scenarioPct)||80));
-  const booked = list.map(c=>pnlRow(c, Math.min(bookedFor(c), compMax(c))));
+  const booked = list.map(bookedRow);
   const scen   = list.map(c=>pnlRow(c, Math.round(compMax(c)*pct/100)));
   const full   = list.map(c=>pnlRow(c, compMax(c)));
   const B = aggregate(booked), P = aggregate(scen), F = aggregate(full);
@@ -483,6 +492,7 @@ function buildStatement(list, view){
   const inc = [];
   paths.forEach(k=>inc.push([`Entry fees: ${PATHWAYS[k].short}`, val(g=>g.entry[k]||0)]));
   inc.push(["Spectator tickets", val(g=>g.spec)]);
+  if(B.jgOther) inc.push(["Other JustGo sales (e.g. T-shirts)", [B.jgOther, 0, B.jgOther, B.jgOther], "sold on JustGo"]);
   perComp.filter(l=>l.type==="income").forEach(l=>inc.push([l.name||"Other income", val(g=>g.line[l.id]||0), l.basis==="gymnast"?"per gymnast":"per competition"]));
   fixed.filter(l=>l.type==="income").forEach(l=>{ const a=fixedAmt(l); inc.push([l.name||"Other income", [a,0,a,a], l.basis==="month"?"monthly":"yearly"]); });
   const TI = sumRows(inc);
@@ -1199,8 +1209,93 @@ function fillSeasons(){
 }
 $("#season").addEventListener("change", e=>{ season=e.target.value; renderAll(); });
 // force=true redraws the annual editor even if it has focus (after adding/removing a line or a remote update)
-function renderAll(force){ renderCompetitions(); renderLicensing(); renderOverview(force); }
+function renderAll(force){ renderCompetitions(); renderJustGo(); renderLicensing(); renderOverview(force); }
 try{ const v = localStorage.getItem("ngl_lic_source"); if(v==="plan"||v==="live") licSource = v; }catch(_){}
+
+
+/* ===== JustGo ticket sales (synced from MyBG with the "Sync NGL sales" bookmark) =====
+   Stored in ngl_finance/justgo: {events:{EV00xxxx:{...totals}}, map:{EV00xxxx: compId}, syncedAt}.
+   Totals only: tickets by type with gross income, and gymnast places per booking club. */
+let JG = {events:{}, map:{}, syncedAt:null};
+const jgNorm = t => String(t||"").toLowerCase().replace(/gymnastics?|club|academy|ltd|limited|c\.i\.c|cic|community|centre|center|the|&|and/g," ").replace(/[^a-z0-9]+/g," ").trim();
+function jgAutoMatch(e){
+  const same = comps.filter(c=>c.date===e.date); if(!same.length) return "";
+  if(same.length===1) return same[0].id;
+  const n = (e.name||"").toUpperCase();
+  const score = c => { const m = (c.name||"").toUpperCase(); let k = 0;
+    if(/6-8|9-11/.test(n) && /6-8|9-11/.test(m)) k += 3; if(/12-14|15\+/.test(n) && /12-14|15\+/.test(m)) k += 3;
+    const lv = n.match(/LEVEL ([ABC])/); if(lv && new RegExp("LEVEL "+lv[1]).test(m)) k += 3;
+    ["EAST","WEST","IRELAND","SOUTH","NORTH","FLOOR","VAULT","BOYS","MEN","WOMEN"].forEach(w=>{ if(n.includes(w) && m.includes(w)) k++; });
+    return k; };
+  return same.slice().sort((a,b)=>score(b)-score(a))[0].id;
+}
+const jgComp = ref => (JG.map && ref in JG.map) ? JG.map[ref] : jgAutoMatch(JG.events[ref]||{});
+function jgFor(c){
+  const evs = Object.values(JG.events||{}).filter(e=>jgComp(e.ref)===c.id); if(!evs.length) return null;
+  const t = {gymnasts:0, spectators:0, gymInc:0, specInc:0, otherInc:0, income:0, refs:[]};
+  evs.forEach(e=>{ ["gymnasts","spectators","gymInc","specInc","otherInc","income"].forEach(k=>t[k]+=+e[k]||0); t.refs.push(e.ref); });
+  return t;
+}
+/* The "booked to date" row: JustGo sales when synced, otherwise club reservations */
+function bookedRow(c){
+  const s = jgFor(c);
+  if(!s) return pnlRow(c, Math.min(bookedFor(c), compMax(c)));
+  const r = pnlRow(c, s.gymnasts);
+  r.entry = s.gymInc; r.spec = s.specInc; r.jgOther = s.otherInc; r.otherInc += s.otherInc;
+  r.income = r.entry + r.spec + r.otherInc; r.profit = r.income - r.costs; r.jg = s;
+  return r;
+}
+function jgBookmark(){
+  return "javascript:(()=>{const s=document.createElement('script');s.src='https://davidcbrooke.github.io/GYMNASTICS-RESULTS/justgo-sync.js?v='+Date.now();document.body.appendChild(s)})()";
+}
+function renderJustGo(){
+  const el = $("#jgBody"); if(!el) return;
+  const evs = Object.values(JG.events||{}).sort((a,b)=>a.date.localeCompare(b.date)||a.ref.localeCompare(b.ref));
+  const when = JG.syncedAt ? new Date(JG.syncedAt).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "never";
+  $("#jgSub").textContent = `Gross, as bought on JustGo · last synced ${when}`;
+  const opts = sel => `<option value="">Not in the P&amp;L</option>` + comps.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")).filter(c=>(c.date||"")>="2026").map(c=>`<option value="${esc(c.id)}"${c.id===sel?" selected":""}>${esc(c.date)} · ${esc(c.name)}</option>`).join("");
+  const how = `<div class="jg-how"><b>To update:</b><ol>
+    <li>Once only: drag this button to your bookmarks bar: <a class="jg-bm" href="${jgBookmark()}" onclick="event.preventDefault();toast('Drag the button to your bookmarks bar, then use it on MyBG')">Sync NGL sales</a></li>
+    <li>Log in to MyBG, open <b>Event Management</b> and switch to <b>National Gymnastics League</b>.</li>
+    <li>Click <b>Sync NGL sales</b> in your bookmarks. This page opens and saves the totals (allow pop-ups for MyBG if asked).</li></ol></div>`;
+  if(!evs.length){ el.innerHTML = how + `<p style="color:var(--muted)">No JustGo sales synced yet.</p>`; return; }
+  const resBy = cid => { const m = {}; bookings.filter(b=>b.compId===cid && !b.waitlist).forEach(b=>{ m[b.club||"Unknown club"] = (m[b.club||"Unknown club"]||0) + (parseInt(b.spaces)||1); }); return m; };
+  const rows = evs.map(e=>{
+    const cid = jgComp(e.ref), res = cid ? resBy(cid) : {}, resTot = Object.values(res).reduce((a,b)=>a+b,0);
+    // match each reserving club to what was bought, by club name inside JustGo's "booked by"
+    const bought = {}; Object.entries(e.bookers||{}).forEach(([b,q])=>{ const club = Object.keys(res).find(k=>jgNorm(k) && jgNorm(b).includes(jgNorm(k))) || ("Not reserved: " + b.replace(/^[^-]*-/,"")); bought[club] = (bought[club]||0) + q; });
+    const clubs = [...new Set([...Object.keys(res), ...Object.keys(bought)])].sort().map(k=>{ const r = res[k]||0, b = bought[k]||0;
+      return `${esc(k)}: ${r?`reserved ${r}, `:""}bought ${b}${r&&b<r?` <span class="jg-short">(${r-b} short)</span>`:r&&b>=r?` <span class="jg-ok">✓</span>`:""}`; }).join("<br>");
+    const other = Object.entries(e.tickets||{}).filter(([n])=>!/gymnast|spectator/i.test(n)).map(([n,t])=>`${t.qty} ${esc(n.toLowerCase())}`).join(", ");
+    return `<tr><td>${esc(e.date.split("-").reverse().join("/"))}<br><small style="color:var(--muted)">${esc(e.ref)}</small></td>
+      <td>${esc(e.name)}${clubs?`<details><summary style="cursor:pointer;color:var(--muted);font-size:12.5px">Clubs: reserved v bought</summary><div class="jg-clubs">${clubs}</div></details>`:""}</td>
+      <td><select data-jgmap="${esc(e.ref)}">${opts(cid)}</select></td>
+      <td>${e.gymnasts}${resTot?`<br><small>${resTot} reserved</small>`:""}</td><td>${e.spectators}</td><td>${other||"–"}</td><td><b>${gbp(e.income)}</b></td></tr>`; }).join("");
+  const tot = evs.reduce((a,e)=>a+(+e.income||0),0);
+  el.innerHTML = how + `<div class="tablewrap"><table class="jg-t" style="width:100%;border-collapse:collapse"><thead><tr><th>Date</th><th>JustGo event</th><th>P&amp;L competition</th><th>Gymnasts</th><th>Spectators</th><th>Other</th><th>Gross</th></tr></thead><tbody>${rows}</tbody>
+    <tfoot><tr><td></td><td colspan="5" style="text-align:right"><b>Total gross on JustGo</b></td><td><b>${gbp(tot)}</b></td></tr></tfoot></table></div>
+    <p style="font-size:13px;color:var(--muted);margin-top:8px">Synced competitions use these real sales in the P&amp;L "booked to date" column instead of reservations. Change the P&amp;L competition if a JustGo event is matched wrongly.</p>`;
+}
+document.addEventListener("change", async e=>{ const ref = e.target.dataset && e.target.dataset.jgmap; if(!ref || !LIVE) return;
+  try{ await db.collection(CONFIG.collections.finance).doc("justgo").set({map:{[ref]:e.target.value}}, {merge:true}); toast("Saved"); }catch(err){ console.error(err); toast("Couldn't save the match."); } });
+/* Receiving a sync from the bookmark on MyBG */
+function jgListen(){
+  if(!/[?&]jgsync=1/.test(location.search) || !window.opener) return;
+  window.addEventListener("message", async ev=>{
+    if(ev.origin !== "https://mybg.british-gymnastics.org" || !ev.data || ev.data.type !== "ngl-jg-sales") return;
+    const events = {}; (ev.data.events||[]).forEach(x=>{ if(/^EV\d{6}$/.test(x.ref)) events[x.ref] = x; });
+    try{
+      await db.collection(CONFIG.collections.finance).doc("justgo").set({events, syncedAt:ev.data.at || new Date().toISOString()}, {merge:true});
+      JG.events = Object.assign({}, JG.events, events);
+      const matched = Object.keys(events).filter(r=>jgComp(r)).length;
+      ev.source.postMessage({type:"ngl-jg-saved", count:Object.keys(events).length, matched}, ev.origin);
+      toast(`JustGo sales saved: ${Object.keys(events).length} events`);
+      const t = document.querySelector('[data-tab="competitions"]'); if(t) t.click();
+      setTimeout(()=>document.getElementById("jgCard")?.scrollIntoView({behavior:"smooth"}), 600);
+    }catch(err){ console.error(err); toast("Couldn't save the JustGo sales: " + (err.code||err.message)); }
+  });
+  window.opener.postMessage("ngl-jg-ready", "https://mybg.british-gymnastics.org");
+}
 
 /* ===== Data ===== */
 function startLive(){
@@ -1217,6 +1312,8 @@ function startLive(){
   }, err=>{ console.error(err); toast("Couldn't load finance settings. Check the ngl_finance Firestore rule."); });
   db.collection(CONFIG.collections.competitions).onSnapshot(s=>{ comps = s.docs.map(d=>({id:d.id,...d.data()})); fillSeasons(); renderAll(); });
   db.collection(CONFIG.collections.bookings).onSnapshot(s=>{ bookings = s.docs.map(d=>({id:d.id,...d.data()})); renderAll(); });
+  db.collection(CONFIG.collections.finance).doc("justgo").onSnapshot(d=>{ const x = d.exists ? d.data() : {}; JG = {events:x.events||{}, map:x.map||{}, syncedAt:x.syncedAt||null}; renderAll(); }, err=>console.error(err));
+  jgListen();
   db.collection("ngl_groupbuy_rounds").onSnapshot(s=>{ gbRounds = s.docs.map(d=>{ const x=d.data(), i=d.id.indexOf("_"); return {round:d.id.slice(0,i), product:d.id.slice(i+1), shirts:x.shirts||0}; }); renderAll(); }, err=>console.warn("Group Buying totals not read", err));
 }
 function startDemo(){
