@@ -393,7 +393,7 @@ function chInit(){
   CH.app.auth().onAuthStateChanged(u => { const first = !CH.ready; CH.user = u; CH.ready = true; CH.state = u ? "live" : "signin"; if(u && ME && ME.owner) TEAM.forEach(syncMusicStaff); if(!first || u) refreshNotifications(); else renderNotifications(); });
 }
 const INTEREST_LABEL = {preschool:"NGL Pre-School", performance:"NGL Performance League", university:"NGL University League", masters:"NGL Masters"};
-const SRC_LABEL = {"email-campaign":"from an NGL email", clubhub:"on the NGL Club Hub", recreational:"on the Recreational Hub", schools:"on the Schools Hub"};
+const SRC_LABEL = {"email-campaign":"from an NGL email", clubhub:"on the NGL Club Hub", rotations:"on the Rotation Planner", recreational:"on the Recreational Hub", schools:"on the Schools Hub"};
 async function scanClubHub(add){
   if(!CH.user) return;
   try{
