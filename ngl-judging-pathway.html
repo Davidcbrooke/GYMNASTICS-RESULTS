@@ -235,6 +235,11 @@
   .app-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto auto; gap: 10px; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--grey-light); font-size: 0.79rem; }
   .app-row:last-child { border-bottom: none; }
   @media (max-width: 900px) { .app-row { grid-template-columns: 1fr; gap: 4px; } }
+  .app-row > * { min-width: 0; }
+  .app-row .aj-meta { overflow-wrap: anywhere; }
+  .judge-row { grid-template-columns: 1fr 1fr auto; }
+  .judge-row .jr-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 900px) { .judge-row { grid-template-columns: 1fr; gap: 6px; } }
   .app-row .aj-name { font-weight: 700; color: var(--navy); }
   .app-row .aj-meta { color: var(--grey-mid); font-size: 0.72rem; }
   .no-rows { text-align: center; padding: 40px; color: var(--grey-mid); font-size: 0.84rem; }
@@ -1928,11 +1933,11 @@ function renderAdminJudgesList() {
   const sorted = [...allJudges].sort((a,b) => (a.name||'').localeCompare(b.name||''));
   el.innerHTML = sorted.map(j => {
     const tier = getJudgeTier(j);
-    return '<div class="app-row" style="grid-template-columns:1fr 1fr auto auto">' +
+    return '<div class="app-row judge-row">' +
       '<div><div class="aj-name">' + (j.name||'') + '</div><div class="aj-meta">' + (j.email||'') + (j.club ? ' &middot; ' + j.club : '') + '</div></div>' +
       '<div><span class="role-pill">' + tier.icon + ' ' + tier.name + '</span><div class="aj-meta">BG: ' + formatQualifications(j) + '</div></div>' +
-      '<button class="btn btn-ghost btn-small" onclick="window.openQualModal(\'' + j.uid + '\')">Edit Qualification</button>' +
-      '<button class="btn btn-ghost btn-small" style="color:var(--red)" onclick="window.deleteJudge(\'' + j.uid + '\')">Delete</button>' +
+      '<div class="jr-btns"><button class="btn btn-ghost btn-small" onclick="window.openQualModal(\'' + j.uid + '\')">Edit Qualification</button>' +
+      '<button class="btn btn-ghost btn-small" style="color:var(--red)" onclick="window.deleteJudge(\'' + j.uid + '\')">Delete</button></div>' +
       '</div>';
   }).join('');
 }
