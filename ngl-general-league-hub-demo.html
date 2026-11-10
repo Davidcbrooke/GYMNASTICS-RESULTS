@@ -615,5 +615,56 @@ function start(){
 <script src="ngl-player-card.js"></script>
 <script>start();</script>
 
+<!-- NGL pull-to-refresh: iPhone home-screen apps have no pull-to-refresh, so this adds one (only when installed). -->
+<script>
+(function(){
+  var standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!standalone || !('ontouchstart' in window) || window.__nglPtr) return; window.__nglPtr = 1;
+  var TH = 80, startY = null, dy = 0, el = null, busy = false;
+  function ui(){
+    if(el) return el;
+    el = document.createElement('div');
+    el.setAttribute('aria-hidden','true');
+    el.style.cssText = 'position:fixed;left:50%;top:0;width:40px;height:40px;margin-left:-20px;border-radius:50%;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:2147483647;display:flex;align-items:center;justify-content:center;transform:translateY(-60px);opacity:0;pointer-events:none;transition:none';
+    el.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c6152e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>';
+    document.body.appendChild(el); return el;
+  }
+  function scrolledInside(t){
+    for(var n = t; n && n !== document.body && n.nodeType === 1; n = n.parentNode){
+      if(n.scrollTop > 0) return true;
+      var cs = getComputedStyle(n);
+      if(cs.position === 'fixed' && n !== document.documentElement) return true;   // modals, overlays
+    }
+    return false;
+  }
+  function atTop(){ return (window.scrollY || document.documentElement.scrollTop || 0) <= 0; }
+  document.addEventListener('touchstart', function(e){
+    if(busy || e.touches.length !== 1 || !atTop() || scrolledInside(e.target)) { startY = null; return; }
+    startY = e.touches[0].clientY; dy = 0;
+  }, {passive:true});
+  document.addEventListener('touchmove', function(e){
+    if(startY == null) return;
+    dy = e.touches[0].clientY - startY;
+    if(dy <= 0 || !atTop()){ dy = 0; if(el){ el.style.opacity = 0; el.style.transform = 'translateY(-60px)'; } return; }
+    var d = Math.min(dy * 0.5, 90), b = ui();
+    b.style.opacity = Math.min(1, d / 40);
+    b.style.transform = 'translateY(' + (d - 20) + 'px) rotate(' + (dy * 2) + 'deg)';
+  }, {passive:true});
+  document.addEventListener('touchend', function(){
+    if(startY == null) return; startY = null;
+    if(dy * 0.5 >= TH * 0.5 && dy >= TH){
+      busy = true; var b = ui();
+      b.style.transition = 'transform .2s'; b.style.transform = 'translateY(40px)';
+      b.firstChild.style.animation = 'nglPtrSpin .7s linear infinite';
+      var st = document.createElement('style'); st.textContent = '@keyframes nglPtrSpin{to{transform:rotate(360deg)}}'; document.head.appendChild(st);
+      setTimeout(function(){ location.reload(); }, 150);
+    } else if(el){
+      el.style.transition = 'transform .2s, opacity .2s'; el.style.transform = 'translateY(-60px)'; el.style.opacity = 0;
+      setTimeout(function(){ if(el) el.style.transition = 'none'; }, 220);
+    }
+    dy = 0;
+  }, {passive:true});
+})();
+</script>
 </body>
 </html>
