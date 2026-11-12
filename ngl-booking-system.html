@@ -1974,6 +1974,8 @@ function compParts(c){
   const age = ageBit ? ageBit.replace(/YRS?/i,' yrs').replace(/(\d)-(\d)/g,'$1–$2').replace(/\s+/g,' ').replace(/AGES/i,'Ages').trim() : (c.name||'');
   const region = c.region ? titleCase(c.region) : (bits[0] ? titleCase(bits[0]) : '');
   const level = String(c.level||'').split('|').map(x => x.trim().toLowerCase()).filter(Boolean).join(', ');
+  const rec = String(c.name||'').match(/RECREATIONAL COMPETITION\s*[-–]\s*([^,]+)/i);
+  if (rec) return { age: titleCase(rec[1]).replace(/\((\d[^)]*)\)/, (m, t) => '(' + t.toLowerCase() + ')'), region: 'Recreational', level: level ? level.charAt(0).toUpperCase() + level.slice(1) : '', rec: true };
   return { age, region: region.replace(/ Region$/i,'') + (region ? ' Region' : ''), level: level ? level.charAt(0).toUpperCase() + level.slice(1) : '' };
 }
 const longDate = d => d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
@@ -2061,7 +2063,7 @@ function mailBuildOpen(tpl, club){
   const rows = shown.map((c,i) => { const p = compParts(c), col = i % 2 ? '#29235c' : x.accent, link = MAIL.links[c.id] || '#', n = av[c.id];
     return `<tr><td style="padding:14px 16px;border-bottom:1px solid #e6e8f0;font:15px/1.4 Roboto,Arial,sans-serif;color:#2b3555"><b style="color:#29235c">${mEsc(p.age)}</b>${p.level?`<br><span style="color:#5d6782;font-size:14px">${mEsc(p.level)}</span>`:''}</td>
 <td align="center" style="padding:14px 10px;border-bottom:1px solid #e6e8f0;font:15px/1.2 Roboto,Arial,sans-serif;color:#5d6782;white-space:nowrap">${n === '' || n == null ? '' : `<b style="display:block;font:900 24px Roboto,Arial,sans-serif;color:${col}">${n}</b>place${n===1?'':'s'} left`}</td>
-<td align="right" style="padding:14px 16px;border-bottom:1px solid #e6e8f0"><a href="${mEsc(link)}" target="_blank" style="display:inline-block;background:${col};color:#ffffff;text-decoration:none;font:bold 14px Roboto,Arial,sans-serif;padding:10px 16px;border-radius:999px">Book on MyBG</a></td></tr>`; }).join('');
+<td align="right" style="padding:14px 16px;border-bottom:1px solid #e6e8f0"><a href="${mEsc(link)}" target="_blank" style="display:inline-block;background:${col};color:#ffffff;text-decoration:none;font:bold 14px Roboto,Arial,sans-serif;padding:10px 16px;border-radius:999px;white-space:nowrap">Book on MyBG</a></td></tr>`; }).join('');
   const subject = wl ? `Places available: NGL ${x.region}, ${shortDate(x.d)} (you're on the waiting list)` : `Places available: NGL ${x.region} competition, ${shortDate(x.d)}`;
   const h1 = wl ? 'Good news: places are available' : 'Places available to book now';
   const intro = wl
@@ -2100,10 +2102,11 @@ const TPL_NAME = { open:'Booking now open', remind:'One week to go', waitlist:'P
 function mailBuild(tpl, club){
   if (tpl === 'waitlist' || tpl === 'hub') return mailBuildOpen(tpl, club);
   const x = mailCtx(), open = tpl === 'open';
-  const rows = MAIL.group.filter(c => club.places[c.id]).map((c,i) => { const p = compParts(c), col = i % 2 ? '#29235c' : x.accent, link = MAIL.links[c.id] || '#';
+  const recDay = MAIL.group.some(c => compParts(c).rec);
+  const rows = MAIL.group.filter(c => recDay || club.places[c.id]).map((c,i) => { const p = compParts(c), col = i % 2 ? '#29235c' : x.accent, link = MAIL.links[c.id] || '#';
     return `<tr><td style="padding:14px 16px;border-bottom:1px solid #e6e8f0;font:15px/1.4 Roboto,Arial,sans-serif;color:#2b3555"><b style="color:#29235c">${mEsc(p.age)}</b>${p.level?`<br><span style="color:#5d6782;font-size:14px">${mEsc(p.level)}</span>`:''}</td>
-<td align="center" style="padding:14px 10px;border-bottom:1px solid #e6e8f0;font:900 24px Roboto,Arial,sans-serif;color:${col}">${club.places[c.id]}</td>
-<td align="right" style="padding:14px 16px;border-bottom:1px solid #e6e8f0"><a href="${mEsc(link)}" target="_blank" style="display:inline-block;background:${col};color:#ffffff;text-decoration:none;font:bold 14px Roboto,Arial,sans-serif;padding:10px 16px;border-radius:999px">${open?'Book on MyBG':'Confirm on MyBG'}</a></td></tr>`; }).join('');
+<td align="center" style="padding:14px 10px;border-bottom:1px solid #e6e8f0;font:900 24px Roboto,Arial,sans-serif;color:${col}">${recDay ? '' : club.places[c.id]}</td>
+<td align="right" style="padding:14px 16px;border-bottom:1px solid #e6e8f0"><a href="${mEsc(link)}" target="_blank" style="display:inline-block;background:${col};color:#ffffff;text-decoration:none;font:bold 14px Roboto,Arial,sans-serif;padding:10px 16px;border-radius:999px;white-space:nowrap">${open?'Book on MyBG':'Confirm on MyBG'}</a></td></tr>`; }).join('');
   const subject = open ? `Booking now open: NGL ${x.region}, ${shortDate(x.d)}` : `1 week to go: confirm your places by ${dayDate(x.due)} (NGL ${x.region}, ${shortDate(x.d)})`;
   const h1 = open ? 'Your places are ready to book' : `Confirm your places by ${dayDate(x.due)}`;
   const intro = open
@@ -2124,7 +2127,7 @@ function mailBuild(tpl, club){
 <p style="margin:0 0 18px;font-size:15px;color:#5d6782">Competition: ${longDate(x.d)}${x.venue?` at ${mEsc(x.venue)}`:''}</p>
 <p style="margin:0 0 14px">Hello ${mEsc(club.club)},</p>
 <p style="margin:0 0 18px">${intro}</p>
-<div style="font-size:12px;font-weight:bold;letter-spacing:2px;color:#29235c;margin:0 0 6px">YOUR RESERVED PLACES</div>
+${recDay ? (() => { const tot = MAIL.group.reduce((a, c) => a + (club.places[c.id]||0), 0); return `<p style="margin:0 0 14px">You reserved <b style="color:#29235c">${tot} place${tot===1?'':'s'}</b> for the day. Book each gymnast into the session for their level:</p><div style="font-size:12px;font-weight:bold;letter-spacing:2px;color:#29235c;margin:0 0 6px">THE TWO SESSIONS</div>`; })() : '<div style="font-size:12px;font-weight:bold;letter-spacing:2px;color:#29235c;margin:0 0 6px">YOUR RESERVED PLACES</div>'}
 </td></tr>
 <tr><td style="padding:0 36px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e6e8f0;border-radius:10px;border-collapse:separate;overflow:hidden">${rows}</table></td></tr>
 <tr><td style="padding:22px 36px 8px;font-family:Roboto,Arial,Helvetica,sans-serif;color:#2b3555;font-size:16px;line-height:1.6">
@@ -2139,7 +2142,8 @@ function mailBuild(tpl, club){
 <tr><td style="padding:14px 30px 18px;font:11px/1.5 Roboto,Arial,sans-serif;color:#8a91ad" align="center">You're receiving this because your club reserved places at an NGL competition.<br>SAADI Gymnastics trading as National Gymnastics League, 66 Waveney Road, Harpenden, Herts AL5 4QZ.</td></tr>
 </table></td></tr></table></body></html>`;
   const text = `Hello ${club.club},\n\n${intro.replace(/<[^>]+>/g,'')}\n\nYour reserved places:\n` +
-    MAIL.group.filter(c => club.places[c.id]).map(c => `- ${compParts(c).age}: ${club.places[c.id]} places. Book here: ${MAIL.links[c.id]||''}`).join('\n') +
+    (recDay ? `You reserved ${MAIL.group.reduce((a, c) => a + (club.places[c.id]||0), 0)} places for the day. Book each gymnast into the session for their level:\n` : '') +
+    MAIL.group.filter(c => recDay || club.places[c.id]).map(c => recDay ? `- ${compParts(c).age}. Book here: ${MAIL.links[c.id]||''}` : `- ${compParts(c).age}: ${club.places[c.id]} places. Book here: ${MAIL.links[c.id]||''}`).join('\n') +
     `\n\n${box.replace(/<[^>]+>/g,'')}\n\nThere's absolutely no obligation to take the places you've reserved. After the deadline, any places that haven't been booked will be offered to clubs on the waiting list and then go on general sale.\n\nBest wishes,\nThe National Gymnastics League`;
   return { subject, html, text };
 }
@@ -2213,7 +2217,8 @@ window.mailSend = async function(test){
   const avMode = MAIL.tpl === 'waitlist' || MAIL.tpl === 'hub';
   if (avMode && MAIL.group.every(c => MAIL.avail[c.id] === 0)) return mailSay('Every competition shows 0 places available, so there is nothing to offer.', 'err');
   if (avMode && !test && MAIL.group.some(c => MAIL.avail[c.id] === '') && !confirm('Some competitions have no "places available" number, so the email won’t show one for them. Send anyway?')) return;
-  const missing = MAIL.group.filter(c => list.some(r => r.places[c.id]) && !MAIL.links[c.id] && (!avMode || MAIL.avail[c.id] !== 0));
+  const recDay = MAIL.group.some(c => compParts(c).rec);
+  const missing = MAIL.group.filter(c => (recDay || avMode || list.some(r => r.places[c.id])) && !MAIL.links[c.id] && (!avMode || MAIL.avail[c.id] !== 0));
   if (missing.length) return mailSay('Paste the MyBG link for: ' + missing.map(c => compParts(c).age).join(', '), 'err');
   await mailSaveLinks();
   const me = (adminUser && adminUser.email) || '';
