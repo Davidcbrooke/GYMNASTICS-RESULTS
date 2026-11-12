@@ -2077,7 +2077,7 @@ function mailBuildOpen(tpl, club){
 <tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${['#E8559A','#F8D438','#E88230','#0071B3','#01AFB8','#3BAA4A','#7A4C9E'].map(c=>`<td height="8" style="background:${c};font-size:0">&nbsp;</td>`).join('')}</tr></table></td></tr>
 <tr><td style="padding:30px 36px 6px;font-family:Roboto,Arial,Helvetica,sans-serif;color:#2b3555;font-size:16px;line-height:1.6">
 <img src="${NGL_LOGO}" width="150" alt="NGL" style="display:block;width:150px;height:auto;border:0;margin:0 0 18px">
-<div style="font-size:12px;font-weight:bold;letter-spacing:3px;color:${x.accent}">${mEsc(x.pathway)} · ${mEsc(x.region.toUpperCase())}</div>
+<div style="font-size:12px;font-weight:bold;letter-spacing:3px;color:${x.accent}">${mEsc(x.pathway)}${x.region === 'Recreational' ? '' : ' · ' + mEsc(x.region.toUpperCase())}</div>
 <h1 style="margin:8px 0 6px;font-size:27px;line-height:1.15;font-weight:900;color:#29235c">${mEsc(h1)}</h1>
 <p style="margin:0 0 18px;font-size:15px;color:#5d6782">Competition: ${longDate(x.d)}${x.venue?` at ${mEsc(x.venue)}`:''}</p>
 <p style="margin:0 0 14px">Hello ${mEsc(club.club)},</p>
@@ -2122,7 +2122,7 @@ function mailBuild(tpl, club){
 <tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${['#E8559A','#F8D438','#E88230','#0071B3','#01AFB8','#3BAA4A','#7A4C9E'].map(c=>`<td height="8" style="background:${c};font-size:0">&nbsp;</td>`).join('')}</tr></table></td></tr>
 <tr><td style="padding:30px 36px 6px;font-family:Roboto,Arial,Helvetica,sans-serif;color:#2b3555;font-size:16px;line-height:1.6">
 <img src="${NGL_LOGO}" width="150" alt="NGL" style="display:block;width:150px;height:auto;border:0;margin:0 0 18px">
-<div style="font-size:12px;font-weight:bold;letter-spacing:3px;color:${x.accent}">${mEsc(x.pathway)} · ${mEsc(x.region.toUpperCase())}</div>
+<div style="font-size:12px;font-weight:bold;letter-spacing:3px;color:${x.accent}">${mEsc(x.pathway)}${x.region === 'Recreational' ? '' : ' · ' + mEsc(x.region.toUpperCase())}</div>
 <h1 style="margin:8px 0 6px;font-size:27px;line-height:1.15;font-weight:900;color:#29235c">${mEsc(h1)}</h1>
 <p style="margin:0 0 18px;font-size:15px;color:#5d6782">Competition: ${longDate(x.d)}${x.venue?` at ${mEsc(x.venue)}`:''}</p>
 <p style="margin:0 0 14px">Hello ${mEsc(club.club)},</p>
