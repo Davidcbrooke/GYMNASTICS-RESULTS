@@ -87,6 +87,9 @@ main{max-width:1180px;margin:0 auto;padding:16px 16px 48px;display:grid;grid-tem
 .step{display:inline-block;border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;color:var(--navy);text-decoration:none;background:#fff}
 .step:hover{border-color:var(--navy)}.step.next{background:var(--navy);color:#fff;border-color:var(--navy)}
 .step.did{background:var(--ok-soft);border-color:#b7dfc8;color:var(--ok)}.step small{font-weight:400}
+.step.skip{background:#f1f2f6;color:#8a91ad;border-style:dashed;cursor:default}
+.wlnote{grid-column:2/4;font-size:13px;border-radius:8px;padding:7px 10px;margin-top:6px}
+.wlnote.yes{background:#fff4e0;border:1px solid #f3c76b;color:#7a4b00}.wlnote.no{background:#eef6ff;border:1px solid #b9d7f5;color:#0b4a80}
 .tag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:0 7px;background:var(--paper);color:var(--muted);border:1px solid var(--line);vertical-align:1px}
 .grip{cursor:grab;color:var(--muted);font-size:18px;line-height:1;padding-top:2px;user-select:none}
 .task[draggable]{cursor:grab}.task.dragging{opacity:.4}.task.over,.dropempty.over{box-shadow:inset 0 3px 0 var(--navy)}
@@ -142,7 +145,7 @@ const DEFAULT_TASKS = [
   {id:"mremind",   days:97,  t:"Reminder: one week to the booking deadline", w:"Same email screen, second template. Goes to every club with reserved places.", steps:[{l:"Open the reminder", u:BOOKING_ADMIN+"&mail={comp}&tpl=remind"}]},
   {id:"buy",       days:90,  t:"Reservation deadline: clubs buy their places", w:"Reserved places must be bought 3 months before. Chase anyone who reserved but hasn't bought on JustGo.", steps:[{l:"See who hasn't bought", u:BOOKING_ADMIN}]},
   {id:"release",   days:89,  t:"Fill any places that weren't bought", w:"Work down the list in order. Stop as soon as the places are filled.",
-    steps:[{l:"1. Offer them to the waiting list", u:BOOKING_ADMIN},{l:"2. Email every club with an NGL Club Hub account", u:CLUBHUB_ADMIN},{l:"3. Social media post", u:"https://www.instagram.com/nationalgymnasticsleague/"},{l:"4. Email all British Gymnastics clubs (Brevo)", u:"https://app.brevo.com/"}]},
+    steps:[{l:"1. Email the waiting list", u:BOOKING_ADMIN+"&mail={comp}&tpl=waitlist"},{l:"2. Email every club with an NGL Club Hub account", u:BOOKING_ADMIN+"&mail={comp}&tpl=hub"},{l:"3. Social media post", u:"https://www.instagram.com/nationalgymnasticsleague/"},{l:"4. Email all British Gymnastics clubs (Brevo)", u:"https://app.brevo.com/"}]},
   {id:"judges",    days:84,  t:"Book the judges", w:"2 remote judges from the Judging Pathway, plus attending clubs' judges for the other pieces.", steps:[{l:"Open Judging", u:"ngl-judging-pathway.html?admin=1"}]},
   {id:"staff",     days:75,  t:"Fill the staffing board", w:"Competition manager, floor manager, scoring, announcer, music, runners, camera operators.", steps:[{l:"Open Staffing", u:"NGL_Staffing_Admin.html"}]},
   {id:"medals",    days:70,  t:"Order medals and awards", w:"Allow for every level and age group, plus spares."},
@@ -264,9 +267,34 @@ function renderWeek(){
     (items.length>12 ? `<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">and ${items.length-12} more: open each competition to see them.</p>` : "")
     : `<p style="margin:0;color:var(--ok)">Nothing due in the next 7 days.</p>`);
 }
-const stepsHTML = (t, c) => !(t.steps||[]).length ? "" : `<div class="steps">${t.steps.map((st,i)=>{ const d = t.stepsDone[i];
+/* "Fill any places that weren't bought": say plainly whether there's a waiting list, and send each email straight from the booking system's mailer. */
+function waitInfo(c){
+  if(!c || !S.bookings) return null;
+  const grp = S.comps.filter(x => x.date === c.date && String(x.venue||"").trim().toLowerCase() === String(c.venue||"").trim().toLowerCase()).map(x=>x.id);
+  const ids = new Set(grp.length ? grp : [c.id]);
+  const wl = S.bookings.filter(b => ids.has(b.compId) && b.waitlist);
+  return { n: wl.length, clubs: [...new Set(wl.map(b => b.club).filter(Boolean))] };
+}
+function releaseSteps(t, c){
+  const wi = waitInfo(c), steps = (t.steps||[]).map(x=>({...x})), done = {...t.stepsDone};
+  if(steps[0]) steps[0].u = BOOKING_ADMIN+"&mail={comp}&tpl=waitlist";
+  if(steps[1]) { steps[1].u = BOOKING_ADMIN+"&mail={comp}&tpl=hub"; steps[1].l = "2. Email every club with an NGL Club Hub account"; }
+  let note = "";
+  if(wi && steps[0]){
+    if(wi.n){ steps[0].l = `1. Email the waiting list (${wi.clubs.length} club${wi.clubs.length===1?"":"s"})`;
+      note = `<div class="wlnote yes"><b>Waiting list: ${wi.clubs.length} club${wi.clubs.length===1?"":"s"}</b> ${esc(wi.clubs.join(", "))}. Email them first.</div>`; }
+    else { steps[0].l = "1. No waiting list"; steps[0].u = "#"; steps[0].skip = true; if(!done[0]) done[0] = {skip:true};
+      note = `<div class="wlnote no"><b>No waiting list</b> for this competition, so go straight to step 2: email every club with an NGL Club Hub account.</div>`; }
+  }
+  return { steps, done, note };
+}
+const stepsHTML = (t0, c) => { if(!(t0.steps||[]).length) return "";
+  let t = t0, note = "";
+  if(t0.id === "release"){ const r = releaseSteps(t0, c); t = {...t0, steps:r.steps, stepsDone:r.done}; note = r.note; }
+  return note + `<div class="steps">${t.steps.map((st,i)=>{ const d = t.stepsDone[i];
+  if(st.skip) return `<span class="step skip">${esc(st.l)}</span>`;
   const next = !t.done && !d && t.steps.slice(0,i).every((_,k)=>t.stepsDone[k]);
-  return `<a class="step ${d?"did":""} ${next?"next":""}" href="${esc(String(st.u||"#").replace("{comp}", encodeURIComponent(c ? c.id : "")))}" target="_blank" rel="noopener" data-step="${esc(t.id)}|${i}">${esc(st.l)}${d?` <small>done ${fmt(new Date(d.at))}</small>`:""}</a>`; }).join("")}</div>`;
+  return `<a class="step ${d?"did":""} ${next?"next":""}" href="${esc(String(st.u||"#").replace("{comp}", encodeURIComponent(c ? c.id : "")))}" target="_blank" rel="noopener" data-step="${esc(t.id)}|${i}">${esc(st.l)}${d&&d.at?` <small>done ${fmt(new Date(d.at))}</small>`:""}</a>`; }).join("")}</div>`; };
 function editForm(t){
   return `<div class="ef" data-ef="${esc(t.id)}">
     <label>Job<input type="text" id="efT" value="${esc(t.t)}"></label>
@@ -381,6 +409,9 @@ async function load(){
       comps = snap.docs.map(d=>{ const x = d.data(); return {id:d.id, name:x.name||x.title||"Untitled competition", date:x.date||x.compDate||"", venue:x.venue||x.location||"", pathway:x.pathway||""}; })
         .filter(c => c.date && CONFIG.seasons.some(y => String(toDate(c.date).getFullYear()) === y)); }
     catch(e){ console.error(e); showErr("Couldn't read the competitions (" + (e.code||e.message) + ")."); }
+    try{ const snap = await db.collection("ngl_bookings").get();
+      S.bookings = snap.docs.map(d=>{ const x = d.data(); return {compId:x.compId, club:x.club||"", waitlist:!!x.waitlist}; }); }
+    catch(e){ console.warn("Bookings not loaded", e); S.bookings = null; }
     try{ const snap = await db.collection(CONFIG.store).get();
       snap.docs.forEach(d=>{ if(!d.id.startsWith(CONFIG.prefix)) return; const k = d.id.slice(CONFIG.prefix.length);
         if(k==="template"){ const t = d.data().tasks; if(Array.isArray(t) && t.length) TEMPLATE = addNewStd(t, d.data().seen); } else S.plans[k] = d.data(); }); }

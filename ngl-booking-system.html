@@ -763,6 +763,8 @@ html.embed #panel-home > div[style*="text-align:center"]{display:none}
       <div class="mm-tpls" id="mm-tpls">
         <button type="button" data-tpl="open" onclick="window.mailTpl('open')"><b>1. Booking now open</b><span>4 months before the competition (1 month before the deadline)</span></button>
         <button type="button" data-tpl="remind" onclick="window.mailTpl('remind')"><b>2. One week to go</b><span>Reminder 1 week before the deadline</span></button>
+        <button type="button" data-tpl="waitlist" onclick="window.mailTpl('waitlist')"><b>3. Places for the waiting list</b><span>After the deadline: clubs on the waiting list</span></button>
+        <button type="button" data-tpl="hub" onclick="window.mailTpl('hub')"><b>4. Places for every Club Hub club</b><span>If places are left: every club with an NGL Club Hub account</span></button>
       </div>
       <div id="mm-info" class="mm-info"></div>
       <div class="mm-sec">Private MyBG links <small>Paste the link for each competition from MyBG. It's saved, so you only do this once.</small></div>
@@ -1977,8 +1979,35 @@ function mailGroup(c){
   return allCompetitions.filter(x => x.date === c.date && String(x.venue||'').trim().toLowerCase() === v)
     .sort((a,b) => (a.name||'').localeCompare(b.name||'', undefined, {numeric:true}));
 }
-function mailClubs(group){
+const SCHOOLS_FB = { apiKey:"AIzaSyBK8gNFh4lYv6829YRFm-7Ia0tzh_RwMKQ", authDomain:"ngl-schools.firebaseapp.com", projectId:"ngl-schools",
+  storageBucket:"ngl-schools.firebasestorage.app", messagingSenderId:"202087533031", appId:"1:202087533031:web:a905eaa461925256b71542" };
+let HUB_CLUBS = null, HUB_ERR = '';
+// Every club with an NGL Club Hub account (ngl-schools project). Needs the NGL Admin Hub sign-in on this site.
+async function loadHubClubs(){
+  if (HUB_CLUBS) return HUB_CLUBS;
+  try {
+    const { getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const happ = getApps().find(a => a.name === 'ngl-schools') || initializeApp(SCHOOLS_FB, 'ngl-schools');
+    const hauth = getAuth(happ);
+    await (hauth.authStateReady ? hauth.authStateReady() : Promise.resolve());
+    if (!hauth.currentUser) { HUB_ERR = 'Open the NGL Admin Hub and sign in to the Club Hub side first, then reopen this email.'; return []; }
+    const snap = await getDocs(collection(getFirestore(happ), 'clubs'));
+    HUB_CLUBS = snap.docs.map(d => d.data()).map(c => ({ email: String(c.email||'').trim(), club: c.name || c.email || '' }))
+      .filter(c => /@/.test(c.email) && !/saadigymnastics\.co\.uk$|nationalgym/i.test(c.email));
+    return HUB_CLUBS;
+  } catch (e) { console.warn(e); HUB_ERR = 'Couldn’t read the Club Hub clubs (' + (e.code || e.message) + ').'; return []; }
+}
+function mailClubs(group, tpl){
   const ids = new Set(group.map(c => c.id)), by = {};
+  if (tpl === 'waitlist' || tpl === 'hub') {
+    const skip = new Set(allBookings.filter(b => ids.has(b.compId) && (tpl === 'hub' || !b.waitlist)).map(b => String(b.email||'').trim().toLowerCase()).filter(Boolean));
+    const src = tpl === 'waitlist'
+      ? allBookings.filter(b => ids.has(b.compId) && b.waitlist).map(b => ({ email: String(b.email||'').trim(), club: b.club || b.email }))
+      : (HUB_CLUBS || []);
+    src.forEach(r => { const k = r.email.toLowerCase(); if (!r.email || (tpl === 'hub' && skip.has(k)) || (tpl === 'waitlist' && skip.has(k))) return;
+      by[k] = by[k] || { email: r.email, club: r.club, places: Object.fromEntries(group.map(c => [c.id, 'Open'])) }; });
+    return Object.values(by).sort((a,b) => a.club.localeCompare(b.club));
+  }
   allBookings.filter(b => ids.has(b.compId) && !b.waitlist).forEach(b => {
     const e = String(b.email||'').trim(), k = e.toLowerCase(); if (!e) return;
     const r = by[k] = by[k] || {email:e, club:b.club||e, places:{}};
@@ -1992,7 +2021,48 @@ function mailCtx(){
   const p = compParts(c0), path = PATHWAYS[compPathway(c0)] || {};
   return { d, due, region:p.region, pathway:(path.label||'NGL').toUpperCase(), accent:path.accent||'#0071B3', venue:c0.venue ? titleCase(c0.venue).replace(/\bSaadi\b/,'SAADI').replace(/\bNbc\b/,'NBC') : '' };
 }
+function mailBuildOpen(tpl, club){
+  const x = mailCtx(), wl = tpl === 'waitlist';
+  const rows = MAIL.group.map((c,i) => { const p = compParts(c), col = i % 2 ? '#29235c' : x.accent, link = MAIL.links[c.id] || '#';
+    return `<tr><td style="padding:14px 16px;border-bottom:1px solid #e6e8f0;font:15px/1.4 Roboto,Arial,sans-serif;color:#2b3555"><b style="color:#29235c">${mEsc(p.age)}</b>${p.level?`<br><span style="color:#5d6782;font-size:14px">${mEsc(p.level)}</span>`:''}</td>
+<td align="right" style="padding:14px 16px;border-bottom:1px solid #e6e8f0"><a href="${mEsc(link)}" target="_blank" style="display:inline-block;background:${col};color:#ffffff;text-decoration:none;font:bold 14px Roboto,Arial,sans-serif;padding:10px 16px;border-radius:999px">Book on MyBG</a></td></tr>`; }).join('');
+  const subject = wl ? `Places available: NGL ${x.region}, ${shortDate(x.d)} (you're on the waiting list)` : `Places available: NGL ${x.region} competition, ${shortDate(x.d)}`;
+  const h1 = wl ? 'Good news: places are available' : 'Places available to book now';
+  const intro = wl
+    ? `You're on the waiting list for our ${mEsc(x.region)} competition on ${dayDate(x.d)}, and places have now become available. You're among the first to hear: book on the British Gymnastics MyBG (JustGo) site using the links below.`
+    : `We have places available at our ${mEsc(x.region)} competition on ${dayDate(x.d)}, and as a club with an NGL Club Hub account you're hearing about them first. Book on the British Gymnastics MyBG (JustGo) site using the links below.`;
+  const box = `<b style="color:#29235c">First come, first served.</b> Places go to the clubs that book first, so book as soon as you can.`;
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${mEsc(h1)}</title></head>
+<body style="margin:0;padding:0;background:#e9ebf2">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#e9ebf2"><tr><td align="center" style="padding:20px 10px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
+<tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${['#E8559A','#F8D438','#E88230','#0071B3','#01AFB8','#3BAA4A','#7A4C9E'].map(c=>`<td height="8" style="background:${c};font-size:0">&nbsp;</td>`).join('')}</tr></table></td></tr>
+<tr><td style="padding:30px 36px 6px;font-family:Roboto,Arial,Helvetica,sans-serif;color:#2b3555;font-size:16px;line-height:1.6">
+<img src="${NGL_LOGO}" width="150" alt="NGL" style="display:block;width:150px;height:auto;border:0;margin:0 0 18px">
+<div style="font-size:12px;font-weight:bold;letter-spacing:3px;color:${x.accent}">${mEsc(x.pathway)} · ${mEsc(x.region.toUpperCase())}</div>
+<h1 style="margin:8px 0 6px;font-size:27px;line-height:1.15;font-weight:900;color:#29235c">${mEsc(h1)}</h1>
+<p style="margin:0 0 18px;font-size:15px;color:#5d6782">Competition: ${longDate(x.d)}${x.venue?` at ${mEsc(x.venue)}`:''}</p>
+<p style="margin:0 0 14px">Hello ${mEsc(club.club)},</p>
+<p style="margin:0 0 18px">${intro}</p>
+<div style="font-size:12px;font-weight:bold;letter-spacing:2px;color:#29235c;margin:0 0 6px">COMPETITIONS THAT DAY</div>
+</td></tr>
+<tr><td style="padding:0 36px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e6e8f0;border-radius:10px;border-collapse:separate;overflow:hidden">${rows}</table></td></tr>
+<tr><td style="padding:22px 36px 8px;font-family:Roboto,Arial,Helvetica,sans-serif;color:#2b3555;font-size:16px;line-height:1.6">
+<div style="background:#eaf4fb;border-left:5px solid ${x.accent};border-radius:6px;padding:14px 16px;margin:0 0 14px">${box}</div>
+<p style="margin:0 0 22px">Any questions, just reply to this email or <a href="${CALL_URL}" style="color:#c6152e;font-weight:bold">book a quick call with Dave</a> on a Tuesday morning.</p>
+<p style="margin:0">Best wishes,</p>
+<p style="margin:2px 0 26px"><b style="color:#29235c">The National Gymnastics League</b></p>
+</td></tr>
+<tr><td style="background:#c6152e;padding:18px 30px;font-family:Roboto,Arial,sans-serif;color:#ffffff;font-size:13px;line-height:1.5" align="center"><b style="font-size:15px">Exclusively for British Gymnastics Clubs</b><br>Official sponsor: JustGo · #ItsAllConnected<br><a href="https://www.nationalgymnasticsleague.co.uk" style="color:#ffffff">nationalgymnasticsleague.co.uk</a> · <a href="mailto:admin@nationalgymnasticsleague.co.uk" style="color:#ffffff">admin@nationalgymnasticsleague.co.uk</a></td></tr>
+<tr><td style="padding:14px 30px 18px;font:11px/1.5 Roboto,Arial,sans-serif;color:#8a91ad" align="center">You're receiving this because ${wl ? 'your club joined the waiting list for an NGL competition' : 'your club has an NGL Club Hub account'}.<br>SAADI Gymnastics trading as National Gymnastics League, 66 Waveney Road, Harpenden, Herts AL5 4QZ.</td></tr>
+</table></td></tr></table></body></html>`;
+  const text = `Hello ${club.club},\n\n${intro.replace(/<[^>]+>/g,'')}\n\n` + MAIL.group.map(c => `- ${compParts(c).age}: book here: ${MAIL.links[c.id]||''}`).join('\n') +
+    `\n\nFirst come, first served: places go to the clubs that book first.\n\nBest wishes,\nThe National Gymnastics League`;
+  return { subject, html, text };
+}
+const TPL_NAME = { open:'Booking now open', remind:'One week to go', waitlist:'Places for the waiting list', hub:'Places for every Club Hub club' };
 function mailBuild(tpl, club){
+  if (tpl === 'waitlist' || tpl === 'hub') return mailBuildOpen(tpl, club);
   const x = mailCtx(), open = tpl === 'open';
   const rows = MAIL.group.filter(c => club.places[c.id]).map((c,i) => { const p = compParts(c), col = i % 2 ? '#29235c' : x.accent, link = MAIL.links[c.id] || '#';
     return `<tr><td style="padding:14px 16px;border-bottom:1px solid #e6e8f0;font:15px/1.4 Roboto,Arial,sans-serif;color:#2b3555"><b style="color:#29235c">${mEsc(p.age)}</b>${p.level?`<br><span style="color:#5d6782;font-size:14px">${mEsc(p.level)}</span>`:''}</td>
@@ -2041,16 +2111,18 @@ function mailDefaultTpl(){
   const d = new Date(MAIL.group[0].date + 'T00:00:00'), due = new Date(d.getFullYear(), d.getMonth() - 3, d.getDate());
   return (due - new Date()) / 864e5 <= 14 ? 'remind' : 'open';
 }
-window.openMailModal = function(compId, tpl){
+window.openMailModal = async function(compId, tpl){
   const c = allCompetitions.find(x => x.id === compId); if (!c) return;
   const group = mailGroup(c);
-  MAIL = { group, clubs: mailClubs(group), links: Object.fromEntries(group.map(g => [g.id, g.justgoUrl || ''])), skip: {} };
-  MAIL.tpl = tpl === 'open' || tpl === 'remind' ? tpl : mailDefaultTpl();
+  MAIL = { group, clubs: [], links: Object.fromEntries(group.map(g => [g.id, g.justgoUrl || ''])), skip: {} };
+  MAIL.tpl = TPL_NAME[tpl] ? tpl : mailDefaultTpl();
+  if (MAIL.tpl === 'hub') await loadHubClubs();
+  MAIL.clubs = mailClubs(group, MAIL.tpl);
   document.getElementById('mm-status').textContent = ''; document.getElementById('mm-status').className = 'mm-status';
   mailRender();
   document.getElementById('mail-modal').classList.add('open');
 };
-window.mailTpl = function(t){ if (!MAIL) return; MAIL.tpl = t; mailRender(); };
+window.mailTpl = async function(t){ if (!MAIL) return; MAIL.tpl = t; if (t === 'hub') await loadHubClubs(); MAIL.clubs = mailClubs(MAIL.group, t); MAIL.skip = {}; mailRender(); };
 function mailRender(){
   const x = mailCtx();
   document.querySelectorAll('#mm-tpls button').forEach(b => b.classList.toggle('on', b.dataset.tpl === MAIL.tpl));
@@ -2062,7 +2134,7 @@ function mailRender(){
   const on = MAIL.clubs.filter(r => !MAIL.skip[r.email.toLowerCase()]);
   document.getElementById('mm-clubs').innerHTML = MAIL.clubs.length ? `<table class="mm-clubs"><tr><th></th><th>Club</th><th>Email</th>${MAIL.group.map(c => `<th class="n">${mEsc(compParts(c).age)}</th>`).join('')}</tr>` +
     MAIL.clubs.map(r => `<tr><td><input type="checkbox" data-cl="${mEsc(r.email.toLowerCase())}" ${MAIL.skip[r.email.toLowerCase()]?'':'checked'}></td><td>${mEsc(r.club)}</td><td>${mEsc(r.email)}</td>${MAIL.group.map(c => `<td class="n">${r.places[c.id]||'–'}</td>`).join('')}</tr>`).join('') + '</table>'
-    : '<p style="color:#c6152e;font-size:0.8rem;font-weight:700">No clubs have reserved places at these competitions yet.</p>';
+    : '<p style="color:#c6152e;font-size:0.8rem;font-weight:700">' + (MAIL.tpl === 'waitlist' ? 'There is no waiting list for these competitions. Go to email 4 to offer the places to every Club Hub club.' : MAIL.tpl === 'hub' ? (HUB_ERR || 'No Club Hub clubs to email (every club has already booked).') : 'No clubs have reserved places at these competitions yet.') + '</p>';
   document.querySelectorAll('#mm-clubs input[data-cl]').forEach(i => i.addEventListener('change', () => { MAIL.skip[i.dataset.cl] = !i.checked; mailButtons(); }));
   const sel = document.getElementById('mm-prev'), keep = sel.value;
   sel.innerHTML = MAIL.clubs.map((r,i) => `<option value="${i}">${mEsc(r.club)}</option>`).join('');
@@ -2108,7 +2180,7 @@ window.mailSend = async function(test){
     return;
   }
   const log = (MAIL.group[0].mailLog || {})[MAIL.tpl];
-  if (!confirm((log ? 'This email was already sent once. ' : '') + 'Send the "' + (MAIL.tpl === 'open' ? 'Booking now open' : 'One week to go') + '" email to ' + list.length + ' club' + (list.length===1?'':'s') + ' now?')) return;
+  if (!confirm((log ? 'This email was already sent once. ' : '') + 'Send the "' + TPL_NAME[MAIL.tpl] + '" email to ' + list.length + ' club' + (list.length===1?'':'s') + ' now?')) return;
   const btn = document.getElementById('mm-send'); btn.disabled = true; mailSay('Sending…');
   try {
     const j = await mailPost(list.map(r => { const m = mailBuild(MAIL.tpl, r); return { to: r.email, subject: m.subject, html: m.html, text: m.text }; }));
