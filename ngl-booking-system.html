@@ -371,12 +371,15 @@ if(/[?&]admin/.test(location.search)) document.documentElement.classList.add('ad
   .mm-link{display:grid;grid-template-columns:200px 1fr;gap:8px;align-items:center;margin:0 0 6px;font-size:0.78rem}
   .mm-link input{width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--border);font-family:var(--font);font-size:0.78rem}
   .mm-link input.miss{border-color:#c6152e;background:#fff5f5}
+  .mm-link.av{grid-template-columns:200px 1fr 120px}
+  .mm-link .avn{display:flex;align-items:center;gap:6px}.mm-link .avn input{width:64px;text-align:center;font-weight:700}
+  .mm-avnote{font-size:0.74rem;color:#5d6782;margin:2px 0 8px}
   .mm-clubs{width:100%;border-collapse:collapse;font-size:0.78rem}
   .mm-clubs th,.mm-clubs td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left}
   .mm-clubs td.n,.mm-clubs th.n{text-align:center}
   .mm-status{font-size:0.8rem;margin:10px 0 0;min-height:1em}
   .mm-status.ok{color:#2e7d32;font-weight:700}.mm-status.err{color:#c6152e;font-weight:700}
-  @media (max-width:640px){.mm-tpls{grid-template-columns:1fr}.mm-link{grid-template-columns:1fr}}
+  @media (max-width:640px){.mm-tpls{grid-template-columns:1fr}.mm-link,.mm-link.av{grid-template-columns:1fr}}
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(13,27,62,0.6); z-index: 1000; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: var(--white); border: 1px solid var(--border); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; margin: 20px; }
@@ -1982,6 +1985,35 @@ function mailGroup(c){
 const SCHOOLS_FB = { apiKey:"AIzaSyBK8gNFh4lYv6829YRFm-7Ia0tzh_RwMKQ", authDomain:"ngl-schools.firebaseapp.com", projectId:"ngl-schools",
   storageBucket:"ngl-schools.firebasestorage.app", messagingSenderId:"202087533031", appId:"1:202087533031:web:a905eaa461925256b71542" };
 let HUB_CLUBS = null, HUB_ERR = '';
+// Places available = the competition's capacity minus gymnast places actually bought on JustGo
+// (synced into ngl_finance/justgo with the "Sync NGL sales" bookmark in NGL Finance).
+let JG_SALES = null;
+async function loadJustGoSales(){
+  if (JG_SALES) return JG_SALES;
+  try { const d = await getDoc(doc(db, 'ngl_finance', 'justgo')); const x = d.exists() ? d.data() : {};
+    JG_SALES = { events: x.events || {}, map: x.map || {}, syncedAt: x.syncedAt || null }; }
+  catch (e) { console.warn('JustGo sales not loaded', e); JG_SALES = { events:{}, map:{}, syncedAt:null, err:true }; }
+  return JG_SALES;
+}
+function jgMatch(e){
+  const same = allCompetitions.filter(c => c.date === e.date); if (!same.length) return '';
+  if (same.length === 1) return same[0].id;
+  const n = (e.name||'').toUpperCase();
+  const score = c => { const m = (c.name||'').toUpperCase(); let k = 0;
+    if (/6-8|9-11/.test(n) && /6-8|9-11/.test(m)) k += 3; if (/12-14|15\+/.test(n) && /12-14|15\+/.test(m)) k += 3;
+    const lv = n.match(/LEVEL ([ABC])/); if (lv && new RegExp('LEVEL ' + lv[1]).test(m)) k += 3;
+    ['EAST','WEST','IRELAND','SOUTH','NORTH','FLOOR','VAULT','BOYS','MEN','WOMEN'].forEach(w => { if (n.includes(w) && m.includes(w)) k++; });
+    return k; };
+  return same.slice().sort((a,b) => score(b) - score(a))[0].id;
+}
+function soldFor(c){
+  const J = JG_SALES; if (!J) return null;
+  const evs = Object.values(J.events).filter(e => ((J.map && e.ref in J.map) ? J.map[e.ref] : jgMatch(e)) === c.id);
+  return evs.length ? evs.reduce((s, e) => s + (+e.gymnasts || 0), 0) : null;
+}
+function availDefaults(group){
+  return Object.fromEntries(group.map(c => { const sold = soldFor(c); return [c.id, sold == null ? '' : Math.max(0, compMax(c) - sold)]; }));
+}
 // Every club with an NGL Club Hub account (ngl-schools project). Needs the NGL Admin Hub sign-in on this site.
 async function loadHubClubs(){
   if (HUB_CLUBS) return HUB_CLUBS;
@@ -2023,8 +2055,10 @@ function mailCtx(){
 }
 function mailBuildOpen(tpl, club){
   const x = mailCtx(), wl = tpl === 'waitlist';
-  const rows = MAIL.group.map((c,i) => { const p = compParts(c), col = i % 2 ? '#29235c' : x.accent, link = MAIL.links[c.id] || '#';
+  const av = MAIL.avail || {}, shown = MAIL.group.filter(c => av[c.id] !== 0);
+  const rows = shown.map((c,i) => { const p = compParts(c), col = i % 2 ? '#29235c' : x.accent, link = MAIL.links[c.id] || '#', n = av[c.id];
     return `<tr><td style="padding:14px 16px;border-bottom:1px solid #e6e8f0;font:15px/1.4 Roboto,Arial,sans-serif;color:#2b3555"><b style="color:#29235c">${mEsc(p.age)}</b>${p.level?`<br><span style="color:#5d6782;font-size:14px">${mEsc(p.level)}</span>`:''}</td>
+<td align="center" style="padding:14px 10px;border-bottom:1px solid #e6e8f0;font:15px/1.2 Roboto,Arial,sans-serif;color:#5d6782;white-space:nowrap">${n === '' || n == null ? '' : `<b style="display:block;font:900 24px Roboto,Arial,sans-serif;color:${col}">${n}</b>place${n===1?'':'s'} left`}</td>
 <td align="right" style="padding:14px 16px;border-bottom:1px solid #e6e8f0"><a href="${mEsc(link)}" target="_blank" style="display:inline-block;background:${col};color:#ffffff;text-decoration:none;font:bold 14px Roboto,Arial,sans-serif;padding:10px 16px;border-radius:999px">Book on MyBG</a></td></tr>`; }).join('');
   const subject = wl ? `Places available: NGL ${x.region}, ${shortDate(x.d)} (you're on the waiting list)` : `Places available: NGL ${x.region} competition, ${shortDate(x.d)}`;
   const h1 = wl ? 'Good news: places are available' : 'Places available to book now';
@@ -2044,7 +2078,7 @@ function mailBuildOpen(tpl, club){
 <p style="margin:0 0 18px;font-size:15px;color:#5d6782">Competition: ${longDate(x.d)}${x.venue?` at ${mEsc(x.venue)}`:''}</p>
 <p style="margin:0 0 14px">Hello ${mEsc(club.club)},</p>
 <p style="margin:0 0 18px">${intro}</p>
-<div style="font-size:12px;font-weight:bold;letter-spacing:2px;color:#29235c;margin:0 0 6px">COMPETITIONS THAT DAY</div>
+<div style="font-size:12px;font-weight:bold;letter-spacing:2px;color:#29235c;margin:0 0 6px">PLACES AVAILABLE</div>
 </td></tr>
 <tr><td style="padding:0 36px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e6e8f0;border-radius:10px;border-collapse:separate;overflow:hidden">${rows}</table></td></tr>
 <tr><td style="padding:22px 36px 8px;font-family:Roboto,Arial,Helvetica,sans-serif;color:#2b3555;font-size:16px;line-height:1.6">
@@ -2056,7 +2090,7 @@ function mailBuildOpen(tpl, club){
 <tr><td style="background:#c6152e;padding:18px 30px;font-family:Roboto,Arial,sans-serif;color:#ffffff;font-size:13px;line-height:1.5" align="center"><b style="font-size:15px">Exclusively for British Gymnastics Clubs</b><br>Official sponsor: JustGo · #ItsAllConnected<br><a href="https://www.nationalgymnasticsleague.co.uk" style="color:#ffffff">nationalgymnasticsleague.co.uk</a> · <a href="mailto:admin@nationalgymnasticsleague.co.uk" style="color:#ffffff">admin@nationalgymnasticsleague.co.uk</a></td></tr>
 <tr><td style="padding:14px 30px 18px;font:11px/1.5 Roboto,Arial,sans-serif;color:#8a91ad" align="center">You're receiving this because ${wl ? 'your club joined the waiting list for an NGL competition' : 'your club has an NGL Club Hub account'}.<br>SAADI Gymnastics trading as National Gymnastics League, 66 Waveney Road, Harpenden, Herts AL5 4QZ.</td></tr>
 </table></td></tr></table></body></html>`;
-  const text = `Hello ${club.club},\n\n${intro.replace(/<[^>]+>/g,'')}\n\n` + MAIL.group.map(c => `- ${compParts(c).age}: book here: ${MAIL.links[c.id]||''}`).join('\n') +
+  const text = `Hello ${club.club},\n\n${intro.replace(/<[^>]+>/g,'')}\n\n` + shown.map(c => `- ${compParts(c).age}${av[c.id]===''||av[c.id]==null?'':`: ${av[c.id]} place${av[c.id]===1?'':'s'} left`}. Book here: ${MAIL.links[c.id]||''}`).join('\n') +
     `\n\nFirst come, first served: places go to the clubs that book first.\n\nBest wishes,\nThe National Gymnastics League`;
   return { subject, html, text };
 }
@@ -2117,6 +2151,7 @@ window.openMailModal = async function(compId, tpl){
   MAIL = { group, clubs: [], links: Object.fromEntries(group.map(g => [g.id, g.justgoUrl || ''])), skip: {} };
   MAIL.tpl = TPL_NAME[tpl] ? tpl : mailDefaultTpl();
   if (MAIL.tpl === 'hub') await loadHubClubs();
+  await loadJustGoSales(); MAIL.avail = availDefaults(group);
   MAIL.clubs = mailClubs(group, MAIL.tpl);
   document.getElementById('mm-status').textContent = ''; document.getElementById('mm-status').className = 'mm-status';
   mailRender();
@@ -2129,8 +2164,13 @@ function mailRender(){
   const log = (MAIL.group[0].mailLog || {})[MAIL.tpl];
   document.getElementById('mm-info').innerHTML = `<b>${mEsc(longDate(x.d))}</b>${x.venue?` at ${mEsc(x.venue)}`:''} · ${MAIL.group.length} competition${MAIL.group.length===1?'':'s'} that day<br>Booking deadline: <b>${mEsc(longDate(x.due))}</b> (3 months before)` +
     (log ? `<br><span class="warn">This email was already sent on ${mEsc(new Date(log.at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}))} by ${mEsc(log.by||'')} to ${log.n} club${log.n===1?'':'s'}.</span>` : '');
-  document.getElementById('mm-links').innerHTML = MAIL.group.map(c => `<div class="mm-link"><label for="mml-${c.id}"><b>${mEsc(compParts(c).age)}</b></label><input type="url" id="mml-${c.id}" data-lk="${c.id}" class="${MAIL.links[c.id]?'':'miss'}" placeholder="https://mybg.british-gymnastics.org/..." value="${mEsc(MAIL.links[c.id])}"></div>`).join('');
-  document.querySelectorAll('#mm-links input').forEach(i => i.addEventListener('input', () => { MAIL.links[i.dataset.lk] = i.value.trim(); i.classList.toggle('miss', !i.value.trim()); window.mailPreview(); }));
+  const avMode = MAIL.tpl === 'waitlist' || MAIL.tpl === 'hub';
+  const syncTxt = JG_SALES && JG_SALES.syncedAt ? 'JustGo sales last synced ' + new Date(JG_SALES.syncedAt).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'JustGo sales haven’t been synced';
+  document.getElementById('mm-links').innerHTML = (avMode ? `<p class="mm-avnote"><b>Places available</b> = capacity minus places bought on JustGo (${mEsc(syncTxt)}). Sync in NGL Finance first for up-to-date numbers, or type the number. A competition with 0 places is left out of the email.</p>` : '') +
+    MAIL.group.map(c => `<div class="mm-link${avMode?' av':''}"><label for="mml-${c.id}"><b>${mEsc(compParts(c).age)}</b></label><input type="url" id="mml-${c.id}" data-lk="${c.id}" class="${MAIL.links[c.id]?'':'miss'}" placeholder="https://mybg.british-gymnastics.org/..." value="${mEsc(MAIL.links[c.id])}">` +
+    (avMode ? `<span class="avn"><input type="number" min="0" data-av="${c.id}" class="${MAIL.avail[c.id]===''?'miss':''}" value="${MAIL.avail[c.id]}" title="Places available (capacity ${compMax(c)})"> places</span>` : '') + `</div>`).join('');
+  document.querySelectorAll('#mm-links input[data-av]').forEach(i => i.addEventListener('input', () => { MAIL.avail[i.dataset.av] = i.value === '' ? '' : Math.max(0, parseInt(i.value) || 0); i.classList.toggle('miss', i.value === ''); window.mailPreview(); }));
+  document.querySelectorAll('#mm-links input[data-lk]').forEach(i => i.addEventListener('input', () => { MAIL.links[i.dataset.lk] = i.value.trim(); i.classList.toggle('miss', !i.value.trim()); window.mailPreview(); }));
   const on = MAIL.clubs.filter(r => !MAIL.skip[r.email.toLowerCase()]);
   document.getElementById('mm-clubs').innerHTML = MAIL.clubs.length ? `<table class="mm-clubs"><tr><th></th><th>Club</th><th>Email</th>${MAIL.group.map(c => `<th class="n">${mEsc(compParts(c).age)}</th>`).join('')}</tr>` +
     MAIL.clubs.map(r => `<tr><td><input type="checkbox" data-cl="${mEsc(r.email.toLowerCase())}" ${MAIL.skip[r.email.toLowerCase()]?'':'checked'}></td><td>${mEsc(r.club)}</td><td>${mEsc(r.email)}</td>${MAIL.group.map(c => `<td class="n">${r.places[c.id]||'–'}</td>`).join('')}</tr>`).join('') + '</table>'
@@ -2168,7 +2208,10 @@ window.mailSend = async function(test){
   if (!MAIL) return;
   const list = MAIL.clubs.filter(r => !MAIL.skip[r.email.toLowerCase()]);
   if (!list.length) return mailSay('No clubs selected.', 'err');
-  const missing = MAIL.group.filter(c => list.some(r => r.places[c.id]) && !MAIL.links[c.id]);
+  const avMode = MAIL.tpl === 'waitlist' || MAIL.tpl === 'hub';
+  if (avMode && MAIL.group.every(c => MAIL.avail[c.id] === 0)) return mailSay('Every competition shows 0 places available, so there is nothing to offer.', 'err');
+  if (avMode && !test && MAIL.group.some(c => MAIL.avail[c.id] === '') && !confirm('Some competitions have no "places available" number, so the email won’t show one for them. Send anyway?')) return;
+  const missing = MAIL.group.filter(c => list.some(r => r.places[c.id]) && !MAIL.links[c.id] && (!avMode || MAIL.avail[c.id] !== 0));
   if (missing.length) return mailSay('Paste the MyBG link for: ' + missing.map(c => compParts(c).age).join(', '), 'err');
   await mailSaveLinks();
   const me = (adminUser && adminUser.email) || '';
