@@ -1149,13 +1149,14 @@ function applyRec(){
   const t = recTerm(), rule = REC_RULES[t.classLen] || REC_RULES[60], map = R.map;
   const has = c => !['VT','BM','BA'].includes(c) || t.pieces[c] !== 'none';
   const setA = REC_WEEK_A.filter(has), setB = REC_WEEK_B.filter(has);
-  const rots = (set, j, start) => {
-    const teach = t.classLen - rule.warm - rule.cool, n = set.length, base = Math.floor(teach / n), out = [];
-    let at = start + rule.warm;
+  const rots = (set, j, start, len, rl) => {
+    const teach = len - rl.warm - rl.cool, n = set.length, base = Math.floor(teach / n), out = [];
+    let at = start + rl.warm;
     for(let r = 0; r < n; r++){ const d = r === n - 1 ? teach - base * (n - 1) : base; out.push({code:set[(j + r) % n], at, d}); at += d; }
     return out;
   };
   R.classes.slice().sort((a, b) => a.start - b.start).forEach(c => cDays(c).forEach(day => {
+    const len = cLen(c, t), rl = cRule(c, t);
     for(let gi = 0; gi < Math.min(6, +c.groups || 0); gi++){
       const [cname, hex] = REC_COLOURS[gi], rotA = gi < REC_MAX, j = rotA ? gi : gi - REC_MAX;
       // one row per colour: every class's Orange group sits on the Orange row, one after the other
@@ -1165,10 +1166,10 @@ function applyRec(){
       if(!g.days.includes(day)) g.days.push(day);
       const nm = (c.names && c.names[gi]) || '';
       const pat = recPattern(gi, has);
-      const wk1 = pat ? rots(pat.A, 0, c.start) : rots(rotA ? setA : setB, j, c.start);
-      const wk2 = pat ? rots(pat.B, 0, c.start) : rots(rotA ? setB : setA, j, c.start);
+      const wk1 = pat ? rots(pat.A, 0, c.start, len, rl) : rots(rotA ? setA : setB, j, c.start, len, rl);
+      const wk2 = pat ? rots(pat.B, 0, c.start, len, rl) : rots(rotA ? setB : setA, j, c.start, len, rl);
       const warmLoc = (R.warmBy && R.warmBy[gi]) || map.warm, coolLoc = map.cool || map.warm;
-      const L = [{location:warmLoc, start_min:c.start, duration:rule.warm, title:nm ? nm + ' · Warm-up' : 'Warm-up', shared:true}];
+      const L = [{location:warmLoc, start_min:c.start, duration:rl.warm, title:nm ? nm + ' · Warm-up' : 'Warm-up', shared:true}];
       for(let r = 0; r < Math.max(wk1.length, wk2.length); r++){
         const a = wk1[r] || wk1[wk1.length - 1], b = wk2[r] || wk2[wk2.length - 1];
         // when the two weeks have different numbers of rotations (no bars, say) the timings differ: keep week 1's
@@ -1176,7 +1177,7 @@ function applyRec(){
         if(map[b.code] !== map[a.code]) s.locationB = map[b.code];
         L.push(s);
       }
-      L.push({location:coolLoc, start_min:c.start + t.classLen - rule.cool, duration:rule.cool, title:'Cool-down', shared:true});
+      L.push({location:coolLoc, start_min:c.start + len - rl.cool, duration:rl.cool, title:'Cool-down', shared:true});
       DATA.sessions[day][id] = (DATA.sessions[day][id] || []).concat(L).sort((a, b) => a.start_min - b.start_min);
     }
   }));
@@ -1223,6 +1224,10 @@ function recCopyFromRows(){
   const w = Object.values(R.warmBy); if(w.length) R.map.warm = w[0];
   return n;
 }
+// A class can have its own length and warm-up/cool-down (a 45-minute pre-school class, say); otherwise the club plan's
+function cLen(c, t){ return +(c && c.len) || (t || recTerm()).classLen; }
+function cRule(c, t){ const L = cLen(c, t), d = REC_RULES[L] || REC_RULES[60];
+  return {warm:c && c.warm != null && c.warm !== '' ? +c.warm : d.warm, cool:c && c.cool != null && c.cool !== '' ? +c.cool : d.cool}; }
 // A class runs on one or more days (older saves had a single day)
 function cDays(c){ return (c.days && c.days.length ? c.days : [c.day || 'Monday']).slice().sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)); }
 function recGuard(groupId){
@@ -1275,16 +1280,19 @@ function renderRec(){
   const locOpts = sel => DATA.locations.map(l => `<option ${l.name === sel ? 'selected' : ''}>${recEsc(l.name)}</option>`).join('');
   const used = ['FF','BF','VT','BM','BA','FT'].filter(c => !['VT','BM','BA'].includes(c) || t.pieces[c] !== 'none');
   const rows = R.classes.map(c => {
-    const end = c.start + t.classLen;
-    const clash = R.classes.find(o => o !== c && cDays(o).some(d => cDays(c).includes(d)) && o.start < end && c.start < o.start + t.classLen);
+    const end = c.start + cLen(c, t), cr = cRule(c, t);
+    const clash = R.classes.find(o => o !== c && cDays(o).some(d => cDays(c).includes(d)) && o.start < end && c.start < o.start + cLen(o, t));
     const hh = String(Math.floor(c.start / 60)).padStart(2, '0') + ':' + String(c.start % 60).padStart(2, '0');
     return `<div class="rc-slot" data-id="${c.id}">
       <div class="rc-f rc-daysf"><label>Days</label><div class="rc-days">${DAYS.map(d => `<button type="button" class="rc-day ${cDays(c).includes(d) ? 'on' : ''}" data-rc-day="${d}">${d.slice(0,3)}</button>`).join('')}</div></div>
       <div class="rc-f"><label>Class starts</label><input type="time" step="300" data-rc="start" value="${hh}"></div>
       <div class="rc-f"><label>Groups</label><select data-rc="groups">${[1,2,3,4,5,6].map(n => `<option ${n === +c.groups ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
       <button class="rc-del" data-rc-del>Remove</button>
+      <div class="rc-f"><label>Length</label><select data-rc="len"><option value="">Club plan (${t.classLen} min)</option>${[30,45,60,75,90].map(n => `<option value="${n}" ${n === +c.len ? 'selected' : ''}>${n} min</option>`).join('')}</select></div>
+      <div class="rc-f"><label>Warm-up (min)</label><input type="number" min="0" max="30" data-rc="warm" value="${c.warm != null ? c.warm : ''}" placeholder="${cr.warm}"></div>
+      <div class="rc-f"><label>Cool-down (min)</label><input type="number" min="0" max="30" data-rc="cool" value="${c.cool != null ? c.cool : ''}" placeholder="${cr.cool}"></div>
       <div class="rc-names">${Array.from({length:+c.groups}, (_, gi) => `<span class="rc-g"><i style="background:${REC_COLOURS[gi][1]}"></i><input data-rc-name="${gi}" value="${recEsc((c.names && c.names[gi]) || '')}" placeholder="${REC_COLOURS[gi][0]}"><small>Rotation ${gi < REC_MAX ? 'A' : 'B'}</small></span>`).join('')}</div>
-      <p class="rc-note">${fmtTime(c.start)} to ${fmtTime(end)}${clash ? ` <b class="rc-warn">Overlaps the ${fmtTime(clash.start)} class</b>` : ''}</p></div>`;
+      <p class="rc-note">${fmtTime(c.start)} to ${fmtTime(end)} · warm-up ${cr.warm} min, cool-down ${cr.cool} min${clash ? ` <b class="rc-warn">Overlaps the ${fmtTime(clash.start)} class</b>` : ''}</p></div>`;
   }).join('');
   // Rotation pattern grid
   const nG = Math.max(0, ...R.classes.map(c => +c.groups || 0));
@@ -1431,6 +1439,7 @@ document.addEventListener('change', e => {
   if(!slot) return;
   const c = R.classes.find(x => x.id === slot.dataset.id); if(!c) return;
   if(e.target.dataset.rc === 'groups') c.groups = +e.target.value;
+  else if(['len','warm','cool'].includes(e.target.dataset.rc)){ const k = e.target.dataset.rc, v = e.target.value; if(v === '') delete c[k]; else c[k] = Math.max(0, +v); }
   else if(e.target.dataset.rc === 'start'){ const [h, m] = e.target.value.split(':').map(Number); if(!isNaN(h)) c.start = h * 60 + (m || 0); }
   else if(e.target.dataset.rcName != null){ c.names = c.names || []; c.names[+e.target.dataset.rcName] = e.target.value.trim(); }
   recChanged();
@@ -1464,7 +1473,7 @@ document.addEventListener('click', e => {
   }
   if(e.target.closest('[data-rc-add]')){
     const last = R.classes[R.classes.length - 1];
-    R.classes.push({id:genId(), days:last ? cDays(last) : ['Monday','Tuesday','Wednesday','Thursday','Friday'], start:last ? last.start + recTerm().classLen : 16 * 60, groups:3});
+    R.classes.push({id:genId(), days:last ? cDays(last) : ['Monday','Tuesday','Wednesday','Thursday','Friday'], start:last ? last.start + cLen(last) : 16 * 60, groups:3});
     recChanged();
   }else if(e.target.closest('[data-rc-del]')){
     const id = e.target.closest('.rc-slot').dataset.id;
