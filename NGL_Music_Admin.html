@@ -187,6 +187,17 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
         <div id="annList"></div>
         <label class="btn ghost small" style="display:inline-block;margin-top:8px">Add announcement MP3<input type="file" id="annFile" accept="audio/*" multiple hidden></label>
       </div>
+      <div class="panel" id="bgPanel">
+        <h3>Background music (Spotify)</h3>
+        <p>For when nothing is happening on the floor. Paste a Spotify playlist link. It pauses automatically when you play a gymnast or an announcement.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="spLink" placeholder="https://open.spotify.com/playlist/…" aria-label="Spotify playlist link" style="flex:1;min-width:200px;padding:7px 9px;border:1px solid var(--line);border-radius:4px">
+          <button class="btn small primary" id="spSave">Add playlist</button>
+          <button class="btn small ghost hidden" id="spClear">Remove</button>
+        </div>
+        <div id="spBox" style="margin-top:10px"></div>
+        <p style="margin:8px 0 0;font-size:12px">Sign in to Spotify in this browser first (open.spotify.com) so whole tracks play, not 30-second previews. Needs internet.</p>
+      </div>
       <div class="panel" id="introPanel">
         <h3>3. Gymnast introductions</h3>
         <p id="introState"></p>
@@ -855,6 +866,7 @@ function srcFor(id){
   return u ? {src:u.url, gain:1, local:false} : null;
 }
 function startAudio(src, gain){
+  try{ SP.ctl && SP.ctl.pause(); }catch(_){}
   audio.pause(); PL.fading=false; PL.paused=false; audio.src = src; audio.currentTime = 0; PL.gain = gain;
   audio.volume = Math.min(1, PL.vol*gain);
   return audio.play();
@@ -989,6 +1001,25 @@ $("#queue").addEventListener("click", e=>{
 $("#resetSess").onclick = ()=>{ if(PL.playing) return; if(!confirm(`Clear the 'played' ticks for Rotation ${PL.rot} and go back to its first gymnast?`)) return; queue().forEach(id=>{ delete PL.played[id]; delete PL.introed[id]; }); PL.cur = firstUp(queue()); plSave(); renderPlayer(); };
 $("#fsBtn").onclick = ()=>{ const st=$("#stage"); if(document.fullscreenElement) document.exitFullscreen(); else if(st.requestFullscreen) st.requestFullscreen().catch(()=>toast("Full screen isn't allowed here. Use 'Open in new tab' first.")); };
 document.addEventListener("fullscreenchange", ()=>{ $("#fsBtn").textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; });
+/* background music: Spotify playlist, paused whenever the player starts a track */
+const SP = {ctl:null, api:null, uri:null};
+function spUri(v){ const m = String(v||"").match(/(playlist|album|track|artist)[\/:]([A-Za-z0-9]{10,})/); return m ? `spotify:${m[1]}:${m[2]}` : null; }
+function spRender(){
+  let link = ""; try{ link = localStorage.getItem("ngl_sp_link") || ""; }catch(_){}
+  SP.uri = spUri(link); $("#spLink").value = link; $("#spClear").classList.toggle("hidden", !SP.uri);
+  const box = $("#spBox"); box.innerHTML = ""; SP.ctl = null;
+  if(!SP.uri) return;
+  const el = document.createElement("div"); box.appendChild(el);
+  const make = api => api.createController(el, {uri:SP.uri, width:"100%", height:232}, c => { SP.ctl = c; });
+  if(SP.api) make(SP.api);
+  else { window.onSpotifyIframeApiReady = api => { SP.api = api; make(api); };
+    if(!document.getElementById("spApi")){ const sc = document.createElement("script"); sc.id = "spApi"; sc.src = "https://open.spotify.com/embed/iframe-api/v1"; sc.async = true; document.body.appendChild(sc); } }
+}
+$("#spSave").onclick = ()=>{ const v = $("#spLink").value.trim(); if(!spUri(v)){ toast("That doesn't look like a Spotify playlist link."); return; }
+  try{ localStorage.setItem("ngl_sp_link", v); }catch(_){} spRender(); };
+$("#spClear").onclick = ()=>{ try{ localStorage.removeItem("ngl_sp_link"); }catch(_){} spRender(); };
+spRender();
+
 /* announcements */
 function renderAnn(){
   $("#annList").innerHTML = PL.ann.length ? PL.ann.map((a,i)=>`<div class="ann"><span class="t">${esc(a.name)}</span>
