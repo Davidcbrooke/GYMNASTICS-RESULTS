@@ -189,7 +189,7 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
       </div>
       <div class="panel" id="bgPanel">
         <h3>Background music (Spotify)</h3>
-        <p>For when nothing is happening on the floor. Paste a Spotify playlist link. It pauses automatically when you play a gymnast or an announcement.</p>
+        <p>For when nothing is happening on the floor. Paste a Spotify playlist link. It pauses automatically when you play a gymnast or an announcement, and starts again when you fade out.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <input id="spLink" placeholder="https://open.spotify.com/playlist/…" aria-label="Spotify playlist link" style="flex:1;min-width:200px;padding:7px 9px;border:1px solid var(--line);border-radius:4px">
           <button class="btn small primary" id="spSave">Add playlist</button>
@@ -917,10 +917,10 @@ function updPause(){
 }
 function fadeOut(){
   if(!PL.playing || PL.fading) return;
-  if(PL.paused){ finish(true); return; }   // already silent: just stop
+  if(PL.paused){ finish(true); spResume(); return; }   // already silent: just stop
   PL.fading = true; updPause();
   const v0 = audio.volume, t0 = performance.now(), dur = 2500;
-  const step = now=>{ if(!PL.fading) return; const f = Math.min(1,(now-t0)/dur); audio.volume = v0*(1-f); if(f<1) requestAnimationFrame(step); else finish(true); };
+  const step = now=>{ if(!PL.fading) return; const f = Math.min(1,(now-t0)/dur); audio.volume = v0*(1-f); if(f<1) requestAnimationFrame(step); else { finish(true); spResume(); } };
   requestAnimationFrame(step);
 }
 function restart(){
@@ -1002,7 +1002,8 @@ $("#resetSess").onclick = ()=>{ if(PL.playing) return; if(!confirm(`Clear the 'p
 $("#fsBtn").onclick = ()=>{ const st=$("#stage"); if(document.fullscreenElement) document.exitFullscreen(); else if(st.requestFullscreen) st.requestFullscreen().catch(()=>toast("Full screen isn't allowed here. Use 'Open in new tab' first.")); };
 document.addEventListener("fullscreenchange", ()=>{ $("#fsBtn").textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; });
 /* background music: Spotify playlist, paused whenever the player starts a track */
-const SP = {ctl:null, api:null, uri:null};
+const SP = {ctl:null, api:null, uri:null, started:false};
+function spResume(){ if(!SP.ctl) return; try{ SP.started ? SP.ctl.resume() : SP.ctl.play(); }catch(_){} }
 function spUri(v){ const m = String(v||"").match(/(playlist|album|track|artist)[\/:]([A-Za-z0-9]{10,})/); return m ? `spotify:${m[1]}:${m[2]}` : null; }
 function spRender(){
   let link = ""; try{ link = localStorage.getItem("ngl_sp_link") || ""; }catch(_){}
@@ -1010,7 +1011,8 @@ function spRender(){
   const box = $("#spBox"); box.innerHTML = ""; SP.ctl = null;
   if(!SP.uri) return;
   const el = document.createElement("div"); box.appendChild(el);
-  const make = api => api.createController(el, {uri:SP.uri, width:"100%", height:232}, c => { SP.ctl = c; });
+  const make = api => api.createController(el, {uri:SP.uri, width:"100%", height:232}, c => { SP.ctl = c; SP.started = false;
+    c.addListener("playback_update", e => { if(e && e.data && !e.data.isPaused) SP.started = true; }); });
   if(SP.api) make(SP.api);
   else { window.onSpotifyIframeApiReady = api => { SP.api = api; make(api); };
     if(!document.getElementById("spApi")){ const sc = document.createElement("script"); sc.id = "spApi"; sc.src = "https://open.spotify.com/embed/iframe-api/v1"; sc.async = true; document.body.appendChild(sc); } }
