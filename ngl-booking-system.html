@@ -2058,17 +2058,20 @@ function mailCtx(){
   return { d, due, region:p.region, pathway:(path.label||'NGL').toUpperCase(), accent:path.accent||'#0071B3', venue:c0.venue ? titleCase(c0.venue).replace(/\bSaadi\b/,'SAADI').replace(/\bNbc\b/,'NBC') : '' };
 }
 function mailBuildOpen(tpl, club){
-  const x = mailCtx(), wl = tpl === 'waitlist';
+  const x = mailCtx(), wl = tpl === 'waitlist', anyReg = x.region !== 'Recreational';
   const av = MAIL.avail || {}, shown = MAIL.group.filter(c => av[c.id] !== 0);
   const rows = shown.map((c,i) => { const p = compParts(c), col = i % 2 ? '#29235c' : x.accent, link = MAIL.links[c.id] || '#', n = av[c.id];
     return `<tr><td style="padding:14px 16px;border-bottom:1px solid #e6e8f0;font:15px/1.4 Roboto,Arial,sans-serif;color:#2b3555"><b style="color:#29235c">${mEsc(p.age)}</b>${p.level?`<br><span style="color:#5d6782;font-size:14px">${mEsc(p.level)}</span>`:''}</td>
 <td align="center" style="padding:14px 10px;border-bottom:1px solid #e6e8f0;font:15px/1.2 Roboto,Arial,sans-serif;color:#5d6782;white-space:nowrap">${n === '' || n == null ? '' : `<b style="display:block;font:900 24px Roboto,Arial,sans-serif;color:${col}">${n}</b>place${n===1?'':'s'} left`}</td>
 <td align="right" style="padding:14px 16px;border-bottom:1px solid #e6e8f0"><a href="${mEsc(link)}" target="_blank" style="display:inline-block;background:${col};color:#ffffff;text-decoration:none;font:bold 14px Roboto,Arial,sans-serif;padding:10px 16px;border-radius:999px;white-space:nowrap">Book on MyBG</a></td></tr>`; }).join('');
-  const subject = wl ? `Places available: NGL ${x.region}, ${shortDate(x.d)} (you're on the waiting list)` : `Places available: NGL ${x.region} competition, ${shortDate(x.d)}`;
+  const subject = wl ? `Places available: NGL ${x.region}, ${shortDate(x.d)} (you're on the waiting list)` : anyReg ? `Places available: NGL competition, ${shortDate(x.d)} · open to clubs from every region` : `Places available: NGL ${x.region} competition, ${shortDate(x.d)}`;
   const h1 = wl ? 'Good news: places are available' : 'Places available to book now';
   const intro = wl
     ? `You're on the waiting list for our ${mEsc(x.region)} competition on ${dayDate(x.d)}, and places have now become available. You're among the first to hear: book on the British Gymnastics MyBG (JustGo) site using the links below.`
-    : `We have places available at our ${mEsc(x.region)} competition on ${dayDate(x.d)}, and as a club with an NGL Club Hub account you're hearing about them first. Book on the British Gymnastics MyBG (JustGo) site using the links below.`;
+    : anyReg
+      ? `We have places available at our competition on ${dayDate(x.d)}${x.venue?` at ${mEsc(x.venue)}`:''} (${mEsc(x.region)}), and as a club with an NGL Club Hub account you're hearing about them first. Book on the British Gymnastics MyBG (JustGo) site using the links below.`
+      : `We have places available at our ${mEsc(x.region)} competition on ${dayDate(x.d)}, and as a club with an NGL Club Hub account you're hearing about them first. Book on the British Gymnastics MyBG (JustGo) site using the links below.`;
+  const regionBox = anyReg ? `<div style="background:#fff6e0;border-left:5px solid #F8D438;border-radius:6px;padding:14px 16px;margin:0 0 18px"><b style="color:#29235c">Open to clubs from every region.</b> "${mEsc(x.region)}" is just where the competition is held. Any British Gymnastics club can enter any NGL competition, wherever you're based, and every score counts towards the same national league tables.</div>` : '';
   const box = `<b style="color:#29235c">First come, first served.</b> Places go to the clubs that book first, so book as soon as you can.`;
   const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${mEsc(h1)}</title></head>
 <body style="margin:0;padding:0;background:#e9ebf2">
@@ -2082,6 +2085,7 @@ function mailBuildOpen(tpl, club){
 <p style="margin:0 0 18px;font-size:15px;color:#5d6782">Competition: ${longDate(x.d)}${x.venue?` at ${mEsc(x.venue)}`:''}</p>
 <p style="margin:0 0 14px">Hello ${mEsc(club.club)},</p>
 <p style="margin:0 0 18px">${intro}</p>
+${regionBox}
 <div style="font-size:12px;font-weight:bold;letter-spacing:2px;color:#29235c;margin:0 0 6px">PLACES AVAILABLE</div>
 </td></tr>
 <tr><td style="padding:0 36px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e6e8f0;border-radius:10px;border-collapse:separate;overflow:hidden">${rows}</table></td></tr>
@@ -2094,7 +2098,7 @@ function mailBuildOpen(tpl, club){
 <tr><td style="background:#c6152e;padding:18px 30px;font-family:Roboto,Arial,sans-serif;color:#ffffff;font-size:13px;line-height:1.5" align="center"><b style="font-size:15px">Exclusively for British Gymnastics Clubs</b><br>Official sponsor: JustGo · #ItsAllConnected<br><a href="https://www.nationalgymnasticsleague.co.uk" style="color:#ffffff">nationalgymnasticsleague.co.uk</a> · <a href="mailto:admin@nationalgymnasticsleague.co.uk" style="color:#ffffff">admin@nationalgymnasticsleague.co.uk</a></td></tr>
 <tr><td style="padding:14px 30px 18px;font:11px/1.5 Roboto,Arial,sans-serif;color:#8a91ad" align="center">You're receiving this because ${wl ? 'your club joined the waiting list for an NGL competition' : 'your club has an NGL Club Hub account'}.<br>SAADI Gymnastics trading as National Gymnastics League, 66 Waveney Road, Harpenden, Herts AL5 4QZ.</td></tr>
 </table></td></tr></table></body></html>`;
-  const text = `Hello ${club.club},\n\n${intro.replace(/<[^>]+>/g,'')}\n\n` + shown.map(c => `- ${compParts(c).age}${av[c.id]===''||av[c.id]==null?'':`: ${av[c.id]} place${av[c.id]===1?'':'s'} left`}. Book here: ${MAIL.links[c.id]||''}`).join('\n') +
+  const text = `Hello ${club.club},\n\n${intro.replace(/<[^>]+>/g,'')}\n\n` + (anyReg ? `Open to clubs from every region: ${x.region} is just where the competition is held. Any British Gymnastics club can enter any NGL competition, wherever you're based.\n\n` : '') + shown.map(c => `- ${compParts(c).age}${av[c.id]===''||av[c.id]==null?'':`: ${av[c.id]} place${av[c.id]===1?'':'s'} left`}. Book here: ${MAIL.links[c.id]||''}`).join('\n') +
     `\n\nFirst come, first served: places go to the clubs that book first.\n\nBest wishes,\nThe National Gymnastics League`;
   return { subject, html, text };
 }
