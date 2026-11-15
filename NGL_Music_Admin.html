@@ -189,7 +189,7 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
       </div>
       <div class="panel" id="bgPanel">
         <h3>Background music (Spotify)</h3>
-        <p>For when nothing is happening on the floor. Paste a Spotify playlist link. It pauses automatically when you play a gymnast or an announcement, and starts again when you fade out.</p>
+        <p>For when nothing is happening on the floor. Paste a Spotify playlist link. It pauses automatically when you play a gymnast or an announcement, and starts again when you press Stop.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <input id="spLink" placeholder="https://open.spotify.com/playlist/…" aria-label="Spotify playlist link" style="flex:1;min-width:200px;padding:7px 9px;border:1px solid var(--line);border-radius:4px">
           <button class="btn small primary" id="spSave">Add playlist</button>
@@ -229,14 +229,14 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
       <div class="ctl">
         <button class="btn go" id="goBtn">&#9654; Play<kbd>Space</kbd></button>
         <button class="btn pause" id="pauseBtn" disabled>&#10073;&#10073; Pause<kbd>K</kbd></button>
-        <button class="btn fade" id="fadeBtn">Fade out<kbd>F</kbd></button>
+        <button class="btn fade" id="fadeBtn">Stop<kbd>S</kbd></button>
         <button class="btn" id="restartBtn">Restart<kbd>R</kbd></button>
         <button class="btn ghost" id="prevBtn">&larr; Previous</button>
         <button class="btn ghost" id="nextBtn">Next &rarr;</button>
       </div>
       <div class="nextup" id="nextUp"></div>
       <div class="q" id="queue"></div>
-      <p style="font-size:13px;color:var(--muted);margin-top:10px">Space plays the selected gymnast. Absent gymnasts are skipped. Drag rows to change the order, or use the rotation box to move someone. While music is playing, Space does nothing, so a stray press can't stop a routine: use F to fade out, or K to pause and resume. When a track finishes, the next gymnast is selected but doesn't start until you press Space.</p>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px">Space plays the selected gymnast. Absent gymnasts are skipped. Drag rows to change the order, or use the rotation box to move someone. While music is playing, Space does nothing, so a stray press can't stop a routine: use S to stop (the music fades out), or K to pause and resume. When a track finishes, the next gymnast is selected but doesn't start until you press Space.</p>
     </div>
   </section>
   </div>
@@ -278,7 +278,7 @@ const deadline = () => ($("#dlInput") && $("#dlInput").value.trim()) || (EV && E
   const today = new Date().toISOString().slice(0,10), n = c => c.levels.reduce((a,L)=>a+L.gymnasts.length,0);
   $("#compSel").innerHTML = COMPS.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(c=>
     `<option value="${esc(c.compKey)}" ${c.compKey===D.compKey?"selected":""}>${c.date<today?"(past) ":""}${esc(fmtDate(c.date))} · ${esc(c.title)} · ${n(c)?n(c)+" gymnasts":"no entries yet"}</option>`).join("");
-  $("#compSel").onchange = e=>{ if(PL && PL.playing){ toast("Fade out the music before changing competition."); e.target.value = D.compKey; return; }
+  $("#compSel").onchange = e=>{ if(PL && PL.playing){ toast("Stop the music before changing competition."); e.target.value = D.compKey; return; }
     try{ localStorage.setItem("nglmusic:comp", e.target.value); }catch(_){}
     location.href = location.pathname + "?comp=" + encodeURIComponent(e.target.value) + location.hash; };
   $("#updBtn").onclick = ()=>{
@@ -872,7 +872,7 @@ function startAudio(src, gain){
   return audio.play();
 }
 async function play(){
-  if(PL.playing){ toast("Music is already playing. Press F to fade out."); return; }
+  if(PL.playing){ toast("Music is already playing. Press S to stop it."); return; }
   const id = PL.cur; if(!id) return;
   if(ABS[id] && !confirm(`${G[id].name} is marked absent. Play their music anyway?`)) return;
   if(wantIntro(id)){ const src = introSrc(id);
@@ -887,7 +887,7 @@ async function play(){
   renderPlayer();
 }
 async function playAnn(k){
-  if(PL.playing){ toast("Music is already playing. Press F to fade out first."); return; }
+  if(PL.playing){ toast("Music is already playing. Press S to stop it first."); return; }
   const a = PL.ann.find(x=>x.k===k); if(!a) return;
   if(!PL.objUrls["ann:"+k]) PL.objUrls["ann:"+k] = URL.createObjectURL(a.blob);
   PL.playing = {kind:"ann", k, name:a.name};
@@ -929,7 +929,7 @@ function restart(){
   updPause();
 }
 function move(d){
-  if(PL.playing){ toast("Fade out the music before moving on."); return; }
+  if(PL.playing){ toast("Stop the music before moving on."); return; }
   const ids = queue(); let i = ids.indexOf(PL.cur);
   for(let j=i+d; j>=0 && j<ids.length; j+=d){ if(!ABS[ids[j]]){ PL.cur = ids[j]; delete PL.introed[PL.cur]; break; } }
   plSave(); renderPlayer(); $("#queue .qr.cur")?.scrollIntoView({block:"nearest"});
@@ -965,7 +965,7 @@ document.addEventListener("keydown", e=>{
   if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && e.target.type!=="range") return;
   const k = e.key;
   if(k===" "||k==="Spacebar"){ e.preventDefault(); e.stopPropagation(); play(); }
-  else if(k==="f"||k==="F"){ e.preventDefault(); fadeOut(); }
+  else if(k==="s"||k==="S"||k==="f"||k==="F"){ e.preventDefault(); fadeOut(); }
   else if(k==="k"||k==="K"){ e.preventDefault(); togglePause(); }
   else if(k==="r"||k==="R"){ e.preventDefault(); restart(); }
   else if(k==="ArrowRight"||k==="ArrowDown"||k==="n"||k==="N"){ e.preventDefault(); move(1); }
@@ -987,7 +987,7 @@ if(EL.key) fillVoices();
 $("#vol").oninput = e=>{ PL.vol = e.target.value/100; if(PL.playing && !PL.fading) audio.volume = Math.min(1, PL.vol*(PL.gain||1)); plSave(); };
 $("#sessChips").addEventListener("click", e=>{
   const b = e.target.closest("[data-ps],[data-pr]"); if(!b) return;
-  if(PL.playing){ toast("Fade out the music before changing session or rotation."); return; }
+  if(PL.playing){ toast("Stop the music before changing session or rotation."); return; }
   if(b.dataset.ps){ PL.sess = b.dataset.ps; PL.rot = 1; } else PL.rot = +b.dataset.pr;
   PL.cur = firstUp(queue()); plSave(); renderPlayer();
 });
@@ -995,7 +995,7 @@ $("#queue").addEventListener("click", e=>{
   const ab = e.target.closest("[data-qabs]"); if(ab){ setAbsent(ab.dataset.qabs, !ABS[ab.dataset.qabs]); return; }
   if(e.target.closest("select,label,input")) return;
   const r = e.target.closest("[data-qid]"); if(!r) return;
-  if(PL.playing){ toast("Fade out the music before choosing another gymnast."); return; }
+  if(PL.playing){ toast("Stop the music before choosing another gymnast."); return; }
   PL.cur = r.dataset.qid; plSave(); renderPlayer();
 });
 $("#resetSess").onclick = ()=>{ if(PL.playing) return; if(!confirm(`Clear the 'played' ticks for Rotation ${PL.rot} and go back to its first gymnast?`)) return; queue().forEach(id=>{ delete PL.played[id]; delete PL.introed[id]; }); PL.cur = firstUp(queue()); plSave(); renderPlayer(); };
