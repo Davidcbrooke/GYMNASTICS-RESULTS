@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Ticket Sales</title>
+<link rel="icon" type="image/png" href="ngl-admin-icon-192.png">
+<link rel="apple-touch-icon" href="ngl-admin-icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{--navy:#14254a;--red:#c6152e;--ink:#16213a;--muted:#5d6782;--line:#e1e4ee;--paper:#f4f5f8;--ok:#1a7a43;--warn:#b26a00;
+  --cond:'Roboto Condensed','Arial Narrow',sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font-family:Roboto,system-ui,sans-serif;color:var(--ink);background:var(--paper);font-size:15px;line-height:1.4}
+.hidden{display:none!important}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--red)}
+.hd{max-width:980px;margin:0 auto;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.hd h1{font:800 24px var(--cond);margin:0;margin-right:auto}
+.hd small{display:block;font:500 12px Roboto;opacity:.75}
+main{max-width:980px;margin:0 auto;padding:16px}
+.sync{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.sync.old{border-color:#f0c36d;background:#fff8e6}
+.sync b{font-weight:700}
+.sync a{color:var(--red);font-weight:700}
+.tot{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.tot div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tot b{display:block;font:800 30px/1 var(--cond)}
+.tot span{font-size:13px;color:var(--muted)}
+.day{margin:18px 0 6px;font:800 15px var(--cond);letter-spacing:1px;text-transform:uppercase;color:var(--navy)}
+.comp{background:#fff;border:1px solid var(--line);border-left:6px solid var(--c,#0071B3);border-radius:12px;padding:12px 14px;margin-bottom:8px;
+  display:grid;grid-template-columns:1fr 210px 92px 92px;gap:14px;align-items:center}
+.nm{font-weight:700}
+.nm small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.bar{height:10px;background:#eceef5;border-radius:6px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--c,#0071B3)}
+.gy{font-size:14px}
+.gy b{font:800 20px var(--cond)}
+.num{text-align:right}
+.num b{display:block;font:800 22px/1 var(--cond)}
+.num span{font-size:12px;color:var(--muted)}
+.left b{color:var(--ok)}
+.left.low b{color:var(--warn)}
+.left.full b{color:var(--red)}
+.none{color:var(--muted);font-size:13px}
+.unm{margin-top:22px;background:#fff;border:1px dashed #c9cde0;border-radius:12px;padding:12px 14px;font-size:14px}
+.unm li{margin:3px 0}
+.ctl{display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:6px}
+.ctl label{display:flex;gap:6px;align-items:center;cursor:pointer}
+@media(max-width:700px){
+  .comp{grid-template-columns:1fr 1fr 1fr}
+  .comp .nm{grid-column:1/-1}
+  .tot b{font-size:24px}
+}
+</style>
+</head>
+<body>
+<header><div class="hd"><h1>Ticket sales<small>Gymnasts and spectators sold on JustGo, and gymnast places left</small></h1></div></header>
+<main>
+  <div class="sync" id="sync">Loading…</div>
+  <div class="tot" id="tot"></div>
+  <div class="ctl"><label><input type="checkbox" id="past"> Show past competitions</label></div>
+  <div id="list"></div>
+  <div id="unm"></div>
+</main>
+<script>
+const CONFIG = {
+  firebase: {
+    apiKey: "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4", authDomain: "saadi-rotation.firebaseapp.com",
+    projectId: "saadi-rotation", storageBucket: "saadi-rotation.firebasestorage.app",
+    messagingSenderId: "1066734803675", appId: "1:1066734803675:web:0188fd601adea7db08cafe"
+  }
+};
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ACC = {preschool:"#E8559A", schools:"#F8D438", recreational:"#E88230", general:"#0071B3", performance:"#01AFB8", university:"#3BAA4A", masters:"#7A4C9E"};
+function pathway(c){ if(c.pathway && ACC[c.pathway]) return c.pathway; return (((c.name||"")+" "+(c.level||"")).toLowerCase().includes("rec")) ? "recreational" : "general"; }
+const cap = c => (typeof c.maxPlaces === "number" && !isNaN(c.maxPlaces)) ? c.maxPlaces : null;
+let comps = [], JG = {events:{}, map:{}, syncedAt:null};
+
+/* Same matching as NGL Finance: a saved match first, otherwise by date and name */
+function autoMatch(e){
+  const same = comps.filter(c=>c.date===e.date); if(!same.length) return "";
+  if(same.length===1) return same[0].id;
+  const n = (e.name||"").toUpperCase();
+  const score = c => { const m = (c.name||"").toUpperCase(); let k = 0;
+    if(/6-8|9-11/.test(n) && /6-8|9-11/.test(m)) k += 3; if(/12-14|15\+/.test(n) && /12-14|15\+/.test(m)) k += 3;
+    const lv = n.match(/LEVEL ([ABC])/); if(lv && new RegExp("LEVEL "+lv[1]).test(m)) k += 3;
+    ["EAST","WEST","IRELAND","SOUTH","NORTH","FLOOR","VAULT","BOYS","MEN","WOMEN","RUBY","TEAL","MINI"].forEach(w=>{ if(n.includes(w) && m.includes(w)) k++; });
+    return k; };
+  return same.slice().sort((a,b)=>score(b)-score(a))[0].id;
+}
+const matchOf = ref => (JG.map && ref in JG.map) ? JG.map[ref] : autoMatch(JG.events[ref]||{});
+
+function dayLabel(d){ return new Date(d+"T12:00:00").toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"}); }
+function ago(iso){ const m = Math.round((Date.now()-new Date(iso))/60000);
+  if(m < 60) return m+" min ago"; const h = Math.round(m/60); if(h < 36) return h+" hours ago"; return Math.round(h/24)+" days ago"; }
+
+function render(){
+  const today = new Date().toISOString().slice(0,10), showPast = $("#past").checked;
+  const sold = {}; const unmatched = [];
+  Object.values(JG.events||{}).forEach(e=>{ const id = matchOf(e.ref);
+    if(!id || !comps.some(c=>c.id===id)){ if(e.date >= today) unmatched.push(e); return; }
+    const s = sold[id] = sold[id] || {g:0, s:0}; s.g += +e.gymnasts||0; s.s += +e.spectators||0; });
+  const list = comps.filter(c=>c.date && (showPast || c.date >= today)).sort((a,b)=>(a.date+(a.time||"")+a.name).localeCompare(b.date+(b.time||"")+b.name));
+
+  let tg=0, ts=0, tl=0, html="", last="";
+  list.forEach(c=>{
+    const s = sold[c.id] || {g:0,s:0}, mx = cap(c), left = mx==null ? null : Math.max(0, mx - s.g);
+    tg += s.g; ts += s.s; if(left!=null) tl += left;
+    if(c.date !== last){ html += `<div class="day">${dayLabel(c.date)}</div>`; last = c.date; }
+    const pct = mx ? Math.min(100, Math.round(s.g/mx*100)) : 0;
+    const cls = left==null ? "" : left===0 ? "full" : left <= Math.max(5, mx*0.1) ? "low" : "";
+    html += `<div class="comp" style="--c:${ACC[pathway(c)]}">
+      <div class="nm">${esc(c.name)}<small>${esc([c.time, c.venue].filter(Boolean).join(" · "))}</small></div>
+      <div class="gy"><b>${s.g}</b>${mx!=null?` of ${mx}`:""} gymnasts<div class="bar"><i style="width:${pct}%"></i></div></div>
+      <div class="num"><b>${s.s}</b><span>spectators</span></div>
+      <div class="num left ${cls}"><b>${left==null?"–":left===0?"Full":left}</b><span>${left==null?"no limit set":left===0?"no places left":"places left"}</span></div>
+    </div>`;
+  });
+  $("#list").innerHTML = html || `<p class="none">No ${showPast?"":"upcoming "}competitions.</p>`;
+  $("#tot").innerHTML = `<div><b>${tg}</b><span>gymnasts sold</span></div><div><b>${ts}</b><span>spectator tickets sold</span></div><div><b>${tl}</b><span>gymnast places left</span></div>`;
+  $("#unm").innerHTML = unmatched.length ? `<div class="unm"><b>JustGo events not matched to a competition</b> (their sales aren't counted above). Match them in Finance › Competitions › JustGo sales.<ul>${
+    unmatched.sort((a,b)=>a.date.localeCompare(b.date)).map(e=>`<li>${esc(e.date)} · ${esc(e.name)}: ${+e.gymnasts||0} gymnasts, ${+e.spectators||0} spectators</li>`).join("")}</ul></div>` : "";
+
+  const old = !JG.syncedAt || (Date.now()-new Date(JG.syncedAt)) > 2*864e5;
+  $("#sync").className = "sync" + (old ? " old" : "");
+  $("#sync").innerHTML = JG.syncedAt
+    ? `Sales last synced from JustGo <b>${ago(JG.syncedAt)}</b> (${new Date(JG.syncedAt).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}). ${old?"To update, open MyBG Event Management and run the <b>Sync NGL sales</b> bookmark. ":""}<a href="NGL_Finance.html" target="_top">Sync instructions in Finance</a>`
+    : `No JustGo sales synced yet. Open MyBG Event Management and run the <b>Sync NGL sales</b> bookmark. <a href="NGL_Finance.html" target="_top">Instructions in Finance</a>`;
+}
+$("#past").addEventListener("change", render);
+
+function startLive(){
+  const db = firebase.firestore();
+  db.collection("ngl_competitions").onSnapshot(s=>{ comps = s.docs.map(d=>({id:d.id, ...d.data()})); render(); },
+    err=>{ console.error(err); $("#sync").textContent = "Couldn't load competitions."; });
+  db.collection("ngl_finance").doc("justgo").onSnapshot(d=>{ const x = d.exists ? d.data() : {}; JG = {events:x.events||{}, map:x.map||{}, syncedAt:x.syncedAt||null}; render(); },
+    err=>{ console.error(err); $("#sync").textContent = err.code==="permission-denied" ? "You need Finance access to see ticket sales." : "Couldn't load ticket sales."; });
+}
+firebase.initializeApp(CONFIG.firebase);
+document.addEventListener("ngl-admin-ready", startLive, {once:true});
+const g = document.createElement("script"); g.src = "ngl-admin-guard.js"; g.dataset.section = "finance"; document.head.appendChild(g);
+</script>
+</body>
+</html>
