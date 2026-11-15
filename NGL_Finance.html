@@ -521,7 +521,7 @@ function stmtHTML(s, title){
   const cls = i => i===0 ? "cur" : i===1 ? "dim" : "";
   const tr = (label, vals, rowCls, tag, fmt) => `<tr class="${rowCls||""}"><td>${esc(label)}${tag?`<span class="tag">${esc(tag)}</span>`:""}</td>${vals.map((v,i)=>`<td class="${cls(i)}">${fmt?fmt(v,i):money(v)}</td>`).join("")}</tr>`;
   const head = `<thead><tr><th>${esc(title)}</th>
-      <th class="cur"><b>Booked to date</b><small>${s.B.gymnasts} gymnasts</small></th>
+      <th class="cur"><b>Sold on JustGo</b><small>${s.B.gymnasts} gymnasts</small></th>
       <th><b>Still to sell</b><small>${s.F.gymnasts-s.B.gymnasts} places</small></th>
       <th><b>At ${s.pct}% capacity</b><small>if bookings reach ${s.pct}%</small></th>
       <th><b>At 100% capacity</b><small>${s.F.gymnasts} gymnasts</small></th></tr></thead>`;
@@ -586,7 +586,7 @@ $("#scenPct").addEventListener("change", e=>{ A.scenarioPct = Math.min(100, Math
 function exportStatement(s, title, file){
   if(!s) return;
   const q = v => '"'+String(v).replace(/"/g,'""')+'"', n = v => v===""||v===null ? "" : Math.round(v);
-  const out = [[title,"Booked to date","Still to sell",`At ${s.pct}% capacity`,"At 100% capacity"].map(q).join(",")];
+  const out = [[title,"Sold on JustGo","Still to sell",`At ${s.pct}% capacity`,"At 100% capacity"].map(q).join(",")];
   s.lines.forEach(([l,v])=>out.push([q(l),...v.map(n)].join(",")));
   out.push(q("Income")); s.inc.forEach(([l,v,t])=>out.push([q(l+(t?` (${t})`:"")),...v.map(n)].join(",")));
   out.push([q("Total income"),...s.TI.map(n)].join(","));
@@ -1154,7 +1154,7 @@ function renderOverview(force){
   const c = lastNgl = buildConsolidated();
   const net = c.NET[0];
   const areas = c.per.reduce((a,p)=>a+p.s.NET[0],0);
-  $("#netBox").innerHTML = `<div><div class="big" style="color:${net>=0?"#6ee7a0":"#ffb3aa"}">${gbp(net)}</div><div class="lbl">NGL net position ${season} (booked to date)</div></div>
+  $("#netBox").innerHTML = `<div><div class="big" style="color:${net>=0?"#6ee7a0":"#ffb3aa"}">${gbp(net)}</div><div class="lbl">NGL net position ${season} (sold on JustGo to date)</div></div>
     <div><div style="font-weight:700">${gbp(c.NET[3])}</div><div class="lbl">If every competition sells out</div></div>
     <div><div style="font-weight:700">${gbp(c.TI[0])}</div><div class="lbl">Income booked</div></div>
     <div><div style="font-weight:700">${gbp(c.TC[0])}</div><div class="lbl">Costs</div></div>`;
@@ -1163,7 +1163,7 @@ function renderOverview(force){
       <span class="k p">Profit</span><span class="v p ${s.NET[0]>=0?"pnl-pos":"pnl-neg"}">${gbp(s.NET[0])}</span></div>
       <div class="note">${note}</div><button class="link" data-go="competitions" data-view="${go}">Open this P&amp;L</button></div></div>`;
   $("#cats").innerHTML =
-    c.per.map(({k,s})=>card(`${PATHWAYS[k].short}`, PATHWAYS[k].accent, s, k, `${s.n} competition${s.n===1?"":"s"}, ${s.B.gymnasts} of ${s.F.gymnasts} places booked. ${gbp(s.NET[3])} profit if full.`)).join("") +
+    c.per.map(({k,s})=>card(`${PATHWAYS[k].short}`, PATHWAYS[k].accent, s, k, `${s.n} competition${s.n===1?"":"s"}, ${s.B.gymnasts} of ${s.F.gymnasts} places sold on JustGo. ${gbp(s.NET[3])} profit if full.`)).join("") +
     `<div class="cat" style="--c:#2c6e9b"><span class="bar"></span><div class="in"><h3>Judging</h3><div class="note">Not connected yet. Remote judging income and judge payments will show here.</div><button class="link" data-go="judging">What's needed</button></div></div>`+
     LIC_PATHS.map(k=>{ const r=buildLicensing(k, season); return `<div class="cat" style="--c:${k==="preschool"?PATHWAYS[k].accent:"#d9a521"}"><span class="bar"></span><div class="in"><h3>${PATHWAYS[k].short} licensing</h3>`+
       (r.n ? `<div class="rows"><span class="k">Income</span><span class="v">${gbp(r.TI[3])}</span><span class="k">Costs</span><span class="v">${gbp(-r.TC[3])}</span><span class="k p">Profit</span><span class="v p ${r.NET[3]>=0?"pnl-pos":"pnl-neg"}">${gbp(r.NET[3])}</span></div><div class="note">${r.n} club${r.n===1?"":"s"}, ${r.summary}. ${r.F.source==="live"?"Live from Hub orders":"Planning figures"}, ${esc(licYearLabel(season))}.</div>`
@@ -1238,10 +1238,11 @@ function jgFor(c){
   evs.forEach(e=>{ ["gymnasts","spectators","gymInc","specInc","otherInc","income"].forEach(k=>t[k]+=+e[k]||0); t.refs.push(e.ref); });
   return t;
 }
-/* The "booked to date" row: JustGo sales when synced, otherwise club reservations */
+/* The "booked to date" row: only what has been sold on JustGo. Club Hub reservations aren't sales, so a
+   competition with no JustGo sales synced counts as 0 sold (its fixed costs still count). */
 function bookedRow(c){
   const s = jgFor(c);
-  if(!s) return pnlRow(c, Math.min(bookedFor(c), compMax(c)));
+  if(!s) return pnlRow(c, 0);
   const r = pnlRow(c, s.gymnasts);
   r.entry = s.gymInc; r.spec = s.specInc; r.jgOther = s.otherInc; r.otherInc += s.otherInc;
   r.income = r.entry + r.spec + r.otherInc; r.profit = r.income - r.costs; r.jg = s;
@@ -1276,7 +1277,7 @@ function renderJustGo(){
   const tot = evs.reduce((a,e)=>a+(+e.income||0),0);
   el.innerHTML = how + `<div class="tablewrap"><table class="jg-t" style="width:100%;border-collapse:collapse"><thead><tr><th>Date</th><th>JustGo event</th><th>P&amp;L competition</th><th>Gymnasts</th><th>Spectators</th><th>Other</th><th>Gross</th></tr></thead><tbody>${rows}</tbody>
     <tfoot><tr><td></td><td colspan="5" style="text-align:right"><b>Total gross on JustGo</b></td><td><b>${gbp(tot)}</b></td></tr></tfoot></table></div>
-    <p style="font-size:13px;color:var(--muted);margin-top:8px">Synced competitions use these real sales in the P&amp;L "booked to date" column instead of reservations. Change the P&amp;L competition if a JustGo event is matched wrongly.</p>`;
+    <p style="font-size:13px;color:var(--muted);margin-top:8px">The P&amp;L "Sold on JustGo" column uses only these sales. Club Hub reservations aren't counted until they're bought. Change the P&amp;L competition if a JustGo event is matched wrongly.</p>`;
 }
 document.addEventListener("change", async e=>{ const ref = e.target.dataset && e.target.dataset.jgmap; if(!ref || !LIVE) return;
   try{ await db.collection(CONFIG.collections.finance).doc("justgo").set({map:{[ref]:e.target.value}}, {merge:true}); toast("Saved"); }catch(err){ console.error(err); toast("Couldn't save the match."); } });
