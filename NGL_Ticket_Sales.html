@@ -46,6 +46,10 @@ main{max-width:980px;margin:0 auto;padding:16px}
 .left.low b{color:var(--warn)}
 .left.full b{color:var(--red)}
 .none{color:var(--muted);font-size:13px}
+.clubs{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:-2px}
+.clubs span{background:#f1f2f8;border-radius:999px;padding:3px 10px;font-size:12.5px;color:var(--ink)}
+.clubs span b{font-weight:700;color:var(--c,#0071B3);margin-left:4px}
+.clubs .lbl{background:none;padding:3px 0;color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
 .unm{margin-top:22px;background:#fff;border:1px dashed #c9cde0;border-radius:12px;padding:12px 14px;font-size:14px}
 .unm li{margin:3px 0}
 .ctl{display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:6px}
@@ -79,7 +83,15 @@ const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const ACC = {preschool:"#E8559A", schools:"#F8D438", recreational:"#E88230", general:"#0071B3", performance:"#01AFB8", university:"#3BAA4A", masters:"#7A4C9E"};
 function pathway(c){ if(c.pathway && ACC[c.pathway]) return c.pathway; return (((c.name||"")+" "+(c.level||"")).toLowerCase().includes("rec")) ? "recreational" : "general"; }
 const cap = c => (typeof c.maxPlaces === "number" && !isNaN(c.maxPlaces)) ? c.maxPlaces : null;
-let comps = [], JG = {events:{}, map:{}, syncedAt:null};
+let comps = [], JG = {events:{}, map:{}, syncedAt:null}, CLUBS = [];
+/* JustGo's "booked by" is "Person name-Club name" when a club buys: match it to a club name from Club Hub reservations */
+const norm = t => String(t||"").toLowerCase().replace(/gymnastics?|club|academy|ltd|limited|c\.i\.c|cic|community|centre|center|the|&|and/g," ").replace(/[^a-z0-9]+/g," ").trim();
+function clubOf(b){
+  const nb = " " + norm(b) + " ";
+  const hit = CLUBS.filter(c=>c.n && nb.includes(" " + c.n + " ")).sort((a,b)=>b.n.length-a.n.length)[0];
+  if(hit) return hit.name;
+  return b.includes("-") ? b.replace(/^[^-]*-/,"").trim() : b + " (individual)";
+}
 
 /* Same matching as NGL Finance: a saved match first, otherwise by date and name */
 function autoMatch(e){
@@ -104,12 +116,13 @@ function render(){
   const sold = {}; const unmatched = [];
   Object.values(JG.events||{}).forEach(e=>{ const id = matchOf(e.ref);
     if(!id || !comps.some(c=>c.id===id)){ if(e.date >= today) unmatched.push(e); return; }
-    const s = sold[id] = sold[id] || {g:0, s:0}; s.g += +e.gymnasts||0; s.s += +e.spectators||0; });
+    const s = sold[id] = sold[id] || {g:0, s:0, clubs:{}}; s.g += +e.gymnasts||0; s.s += +e.spectators||0;
+    Object.entries(e.bookers||{}).forEach(([b,q])=>{ const c = clubOf(b); s.clubs[c] = (s.clubs[c]||0) + (+q||0); }); });
   const list = comps.filter(c=>c.date && (showPast || c.date >= today)).sort((a,b)=>(a.date+(a.time||"")+a.name).localeCompare(b.date+(b.time||"")+b.name));
 
   let tg=0, ts=0, tl=0, html="", last="";
   list.forEach(c=>{
-    const s = sold[c.id] || {g:0,s:0}, mx = cap(c), left = mx==null ? null : Math.max(0, mx - s.g);
+    const s = sold[c.id] || {g:0,s:0,clubs:{}}, mx = cap(c), left = mx==null ? null : Math.max(0, mx - s.g);
     tg += s.g; ts += s.s; if(left!=null) tl += left;
     if(c.date !== last){ html += `<div class="day">${dayLabel(c.date)}</div>`; last = c.date; }
     const pct = mx ? Math.min(100, Math.round(s.g/mx*100)) : 0;
@@ -119,6 +132,7 @@ function render(){
       <div class="gy"><b>${s.g}</b>${mx!=null?` of ${mx}`:""} gymnasts<div class="bar"><i style="width:${pct}%"></i></div></div>
       <div class="num"><b>${s.s}</b><span>spectators</span></div>
       <div class="num left ${cls}"><b>${left==null?"–":left===0?"Full":left}</b><span>${left==null?"no limit set":left===0?"no places left":"places left"}</span></div>
+      ${Object.keys(s.clubs).length ? `<div class="clubs"><span class="lbl">Clubs booked</span>${Object.entries(s.clubs).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).map(([n,q])=>`<span>${esc(n)}<b>${q}</b></span>`).join("")}</div>` : (s.g ? "" : `<div class="clubs"><span class="lbl">No clubs booked yet</span></div>`)}
     </div>`;
   });
   $("#list").innerHTML = html || `<p class="none">No ${showPast?"":"upcoming "}competitions.</p>`;
@@ -138,6 +152,8 @@ function startLive(){
   const db = firebase.firestore();
   db.collection("ngl_competitions").onSnapshot(s=>{ comps = s.docs.map(d=>({id:d.id, ...d.data()})); render(); },
     err=>{ console.error(err); $("#sync").textContent = "Couldn't load competitions."; });
+  db.collection("ngl_bookings").get().then(s=>{ const m = {}; s.docs.forEach(d=>{ const c = (d.data().club||"").trim(); if(c) m[c] = 1; });
+    CLUBS = Object.keys(m).map(name=>({name, n:norm(name)})); render(); }).catch(err=>console.warn("club names", err));
   db.collection("ngl_finance").doc("justgo").onSnapshot(d=>{ const x = d.exists ? d.data() : {}; JG = {events:x.events||{}, map:x.map||{}, syncedAt:x.syncedAt||null}; render(); },
     err=>{ console.error(err); $("#sync").textContent = err.code==="permission-denied" ? "You need Finance access to see ticket sales." : "Couldn't load ticket sales."; });
 }
