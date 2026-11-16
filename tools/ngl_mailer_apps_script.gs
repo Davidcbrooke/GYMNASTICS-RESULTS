@@ -43,6 +43,8 @@ function checkAdmin(idToken) {
     method: 'post', contentType: 'application/json', payload: JSON.stringify({ idToken: idToken }), muteHttpExceptions: true });
   var u = (JSON.parse(r.getContentText()).users || [])[0];
   if (r.getResponseCode() !== 200 || !u || !u.email) throw new Error('Your sign-in has expired. Refresh NGL Admin and try again.');
+  if (!u.emailVerified && !(u.providerUserInfo || []).some(function (p) { return p.providerId === 'google.com'; }))
+    throw new Error('Please verify your email address before sending emails.');
   var email = u.email.toLowerCase();
   var d = UrlFetchApp.fetch('https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents/ngl_admin_users/' + encodeURIComponent(email), {
     headers: { Authorization: 'Bearer ' + idToken }, muteHttpExceptions: true });
