@@ -369,6 +369,7 @@
             <div class="fg"><label>Email <span class="req">*</span></label><input type="email" id="li-email" placeholder="you@example.com"></div>
             <div class="fg"><label>Password <span class="req">*</span></label><input type="password" id="li-password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"></div>
             <button class="btn btn-primary" id="btn-login" onclick="window.doLogin()">Sign In &#8594;</button>
+            <button type="button" id="btn-forgot" onclick="window.doForgot()" style="display:block;margin:12px 0 0;background:none;border:0;padding:0;color:var(--navy,#1e1a4c);text-decoration:underline;cursor:pointer;font:inherit;font-size:.8rem">Forgotten your password?</button>
             <div class="err-box" id="login-err"></div>
           </div>
 
@@ -765,7 +766,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  onAuthStateChanged, signOut
+  onAuthStateChanged, signOut, sendPasswordResetEmail
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   getStorage, ref, uploadBytes, getDownloadURL
@@ -1298,6 +1299,19 @@ window.doLogin = async function() {
   btn.disabled = false; btn.textContent = 'Sign In \u2192';
 };
 
+window.doForgot = async function() {
+  const email = document.getElementById('li-email').value.trim();
+  const box = document.getElementById('login-err');
+  if (!email) return showAuthErr('login-err', 'Type your email address above, then click "Forgotten your password?" again.');
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showAuthErr('login-err', 'If there is an account for ' + email + ', we have emailed a link to reset your password. Check your junk folder too.');
+    box.style.cssText = 'display:block;background:#e8f7ee;border-color:#bfe5cc;border-left-color:#2e9e5b;color:#1d6b3a';
+  } catch (e) {
+    showAuthErr('login-err', (e.code||'').includes('invalid-email') ? 'That email address doesn\u2019t look right.' : 'We couldn\u2019t send the reset email. Please try again.');
+  }
+};
+
 window.doLogout = async function() { await signOut(auth); };
 
 window.uploadPhoto = async function(input) {
@@ -1357,7 +1371,7 @@ async function loadAllJudges() {
 
 function showAuthErr(id, msg) {
   const e = document.getElementById(id);
-  e.textContent = msg; e.style.display = 'block';
+  e.style.cssText = ''; e.textContent = msg; e.style.display = 'block';
 }
 function friendlyAuthError(e) {
   const c = e.code || '';

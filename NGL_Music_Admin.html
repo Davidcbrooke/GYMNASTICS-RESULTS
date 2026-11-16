@@ -145,7 +145,7 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
     <p>Music is stored with club accounts, so sign in once with your NGL Club Hub admin login. This device remembers it.</p>
     <form id="csForm"><input id="csEmail" type="email" placeholder="Admin email" required style="width:100%;padding:9px;border:1px solid var(--line);border-radius:4px;margin-bottom:8px">
       <input id="csPass" type="password" placeholder="Password" required style="width:100%;padding:9px;border:1px solid var(--line);border-radius:4px;margin-bottom:8px">
-      <button class="btn primary">Connect</button> <button type="button" class="btn ghost" id="csCreate">First time? Create my music login</button><div id="csErr" style="color:var(--red);font-size:14px;margin-top:8px"></div>
+      <button class="btn primary">Connect</button> <button type="button" class="btn ghost" id="csCreate">First time? Create my music login</button> <button type="button" class="btn ghost" id="csForgot">Forgotten password?</button><div id="csErr" style="color:var(--red);font-size:14px;margin-top:8px"></div>
       <p style="font-size:13px;margin:10px 0 0">NGL staff: use the same email and password as your NGL admin sign-in.</p></form>
   </section>
   <div id="mainArea" class="hidden">
@@ -363,6 +363,11 @@ $("#csForm").addEventListener("submit", async e=>{
   e.preventDefault(); $("#csErr").textContent = "";
   try{ await cauth.signInWithEmailAndPassword($("#csEmail").value.trim(), $("#csPass").value); }
   catch(_){ $("#csErr").textContent = "Email or password isn't right."; }
+});
+$("#csForgot").addEventListener("click", ()=>{
+  const em = $("#csEmail").value.trim();
+  if(!em){ $("#csErr").textContent = "Type your email first, then click Forgotten password."; return; }
+  cauth.sendPasswordResetEmail(em).then(()=>{ $("#csErr").textContent = "If there's an account for "+em+", a reset link is on its way."; }).catch(()=>{ $("#csErr").textContent = "Couldn't send the reset email."; });
 });
 function watch(){
   cdb.collection("musicEvents").doc(D.compKey).onSnapshot(d=>{ EV = d.exists ? d.data() : null; ORDER = (EV && EV.order) || {}; ROT = (EV && EV.rot) || {}; INTROS = (EV && EV.intros) || {}; ABS = (EV && EV.absent) || {}; if(!$("#dlInput").dataset.touched) $("#dlInput").value = (EV && EV.deadline) || D.deadline || ""; renderDiff(); render(); renderClubs(); renderPlayer(); renderIntroPanel(); applyElevienOrder(); }, e=>err(e,"the competition"));

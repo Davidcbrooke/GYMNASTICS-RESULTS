@@ -1000,7 +1000,7 @@ function licSourceBar(){
     : "Sign in with your NGL admin account for the Hubs (the one you use on the Recreational or Pre-School Hub admin tab).";
   return `<div class="lic-src"><div class="seg"><button data-src="live" aria-pressed="${licSource==="live"}">Live orders</button><button data-src="plan" aria-pressed="${licSource==="plan"}">Planning</button></div>
     <div class="lic-status">${status}</div>
-    ${licSource==="live" && st==="signin" ? `<form id="licLogin" class="lic-login"><input type="email" id="licEmail" placeholder="Admin email" autocomplete="username" required><input type="password" id="licPass" placeholder="Password" autocomplete="current-password" required><button class="btn primary" type="submit">Sign in</button><span id="licLoginErr" class="neg"></span></form>` : ""}
+    ${licSource==="live" && st==="signin" ? `<form id="licLogin" class="lic-login"><input type="email" id="licEmail" placeholder="Admin email" autocomplete="username" required><input type="password" id="licPass" placeholder="Password" autocomplete="current-password" required><button class="btn primary" type="submit">Sign in</button><button type="button" class="btn" id="licForgot">Forgotten password?</button><span id="licLoginErr" class="neg"></span></form>` : ""}
     ${licSource==="live" && st==="live" ? `<label class="lic-paid"><input type="checkbox" id="licPaidOnly"${A.licPaidOnly?" checked":""}> Paid orders only</label>` : ""}</div>`;
 }
 function renderLicensing(){
@@ -1103,6 +1103,11 @@ function renderLicAssump(){
 $("#licSrc").addEventListener("click", e=>{
   const b = e.target.closest("[data-src]"); if(b){ licSource = b.dataset.src; try{ localStorage.setItem("ngl_lic_source", licSource); }catch(_){} renderLicensing(); renderOverview(); return; }
   if(e.target.id==="licSignOut" && LIC.app){ LIC.app.auth().signOut(); }
+  if(e.target.id==="licForgot" && LIC.app){
+    const em = $("#licEmail").value.trim(), err = $("#licLoginErr");
+    if(!em){ err.textContent = "Type your email first, then click Forgotten password."; return; }
+    LIC.app.auth().sendPasswordResetEmail(em).then(()=>{ err.textContent = "If there's an account for "+em+", a reset link is on its way."; }).catch(x=>{ err.textContent = (x.code||"").includes("invalid-email") ? "That email doesn't look right." : "Couldn't send the reset email."; });
+  }
 });
 $("#licSrc").addEventListener("change", e=>{ if(e.target.id==="licPaidOnly"){ A.licPaidOnly = e.target.checked; save(); renderLicensing(); renderOverview(); } });
 $("#licSrc").addEventListener("submit", async e=>{

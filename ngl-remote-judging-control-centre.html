@@ -983,6 +983,7 @@
       <div class="login-error" id="login-error"></div>
 
       <button class="login-btn" id="login-btn">Sign in</button>
+      <button type="button" id="login-forgot" style="display:block;margin:12px auto 0;background:none;border:0;color:inherit;opacity:.8;text-decoration:underline;cursor:pointer;font:inherit;font-size:.9em">Forgotten your password?</button>
     </div>
   </div>
 
@@ -1942,6 +1943,13 @@ function attemptLogin(){
 }
 
 loginBtn.addEventListener('click', attemptLogin);
+document.getElementById('login-forgot').addEventListener('click', () => {
+  const email = loginEmail.value.trim();
+  if (!email) { loginError.textContent = 'Type your email above, then click "Forgotten your password?" again.'; return; }
+  auth.sendPasswordResetEmail(email)
+    .then(() => { loginError.textContent = 'If there is an account for ' + email + ', we have emailed a link to reset the password.'; })
+    .catch(() => { loginError.textContent = 'We couldn\u2019t send the reset email. Check the address and try again.'; });
+});
 loginPassword.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
 loginEmail.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
 

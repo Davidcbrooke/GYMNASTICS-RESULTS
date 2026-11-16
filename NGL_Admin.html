@@ -176,11 +176,17 @@ function chSignInForm(msg){
     ${msg ? `<p class="ch-err">${esc(msg)}</p>` : ""}
     <input type="email" id="chEm" placeholder="Email" autocomplete="username" required>
     <input type="password" id="chPw" placeholder="Password" autocomplete="current-password" required>
-    <button type="submit">Sign in</button></form>`;
+    <button type="submit">Sign in</button> <button type="button" id="chForgot" style="background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer">Forgotten password?</button></form>`;
   document.getElementById('chForm').addEventListener('submit', async e => {
     e.preventDefault();
     try{ await CH.auth().signInWithEmailAndPassword(document.getElementById('chEm').value.trim(), document.getElementById('chPw').value); }
     catch(err){ chSignInForm("That didn't work. Check the email and password and try again."); }
+  });
+  document.getElementById('chForgot').addEventListener('click', async () => {
+    const em = document.getElementById('chEm').value.trim();
+    if(!em){ chSignInForm("Type your email first, then click Forgotten password."); return; }
+    try{ await CH.auth().sendPasswordResetEmail(em); chSignInForm("If there's an account for " + em + ", a password reset link is on its way."); }
+    catch(err){ chSignInForm("Couldn't send the reset email. Check the address and try again."); }
   });
 }
 
