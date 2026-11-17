@@ -195,6 +195,7 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
           <button class="btn small primary" id="spSave">Add playlist</button>
           <button class="btn small ghost hidden" id="spClear">Remove</button>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="spAuto"> Start the playlist again when a gymnast's music ends on its own</label>
         <div id="spBox" style="margin-top:10px"></div>
         <p style="margin:8px 0 0;font-size:12px">Sign in to Spotify in this browser first (open.spotify.com) so whole tracks play, not 30-second previews. Needs internet.</p>
       </div>
@@ -955,7 +956,10 @@ audio.addEventListener("timeupdate", tick);
   document.addEventListener("pointermove", e => { if(drag) seekTo(e); });
   document.addEventListener("pointerup", () => { drag = false; });
 })();
-audio.addEventListener("ended", ()=>{ if(PL.playing){ finish(true); spResume(); } });
+audio.addEventListener("ended", ()=>{ if(PL.playing){ finish(true); if(spAutoOn()) spResume(); } });
+function spAutoOn(){ try{ return localStorage.getItem("nglmusic:spAuto")==="1"; }catch(_){ return false; } }
+(function(){ const cb=document.getElementById("spAuto"); if(!cb) return; cb.checked=spAutoOn();
+  cb.addEventListener("change",()=>{ try{ localStorage.setItem("nglmusic:spAuto", cb.checked?"1":"0"); }catch(_){} }); })();
 audio.addEventListener("error", ()=>{
   const p = PL.playing; if(!p) return;
   if(p.kind==="gym" && p.local && UP[p.id] && navigator.onLine){ p.local=false; startAudio(UP[p.id].url, 1).catch(()=>{}); toast("Saved copy failed, playing the online copy."); return; }
