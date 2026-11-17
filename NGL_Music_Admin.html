@@ -955,7 +955,7 @@ audio.addEventListener("timeupdate", tick);
   document.addEventListener("pointermove", e => { if(drag) seekTo(e); });
   document.addEventListener("pointerup", () => { drag = false; });
 })();
-audio.addEventListener("ended", ()=>{ if(PL.playing) finish(true); });
+audio.addEventListener("ended", ()=>{ if(PL.playing){ finish(true); spResume(); } });
 audio.addEventListener("error", ()=>{
   const p = PL.playing; if(!p) return;
   if(p.kind==="gym" && p.local && UP[p.id] && navigator.onLine){ p.local=false; startAudio(UP[p.id].url, 1).catch(()=>{}); toast("Saved copy failed, playing the online copy."); return; }
