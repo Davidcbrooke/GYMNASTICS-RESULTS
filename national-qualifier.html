@@ -327,6 +327,26 @@ function loadData() {
     .catch(function(e){console.error(e);setStatus("error","Failed to load");});
 }
 
+/* Corrections and reassignments made in Admin › Result Corrections (public files in the repo root) */
+var corrections = {}, reassignments = {};
+function loadJsonPublic(file){
+  return fetch(RAW+file+"?t="+Date.now()).then(function(r){return r.ok?r.json():{};}).catch(function(){return {};});
+}
+function loadCorrectionsPublic(){
+  return Promise.all([loadJsonPublic("corrections.json"),loadJsonPublic("reassignments.json")])
+    .then(function(a){corrections=a[0]||{};reassignments=a[1]||{};});
+}
+function applyCorr(e){
+  if(reassignments[e.memberId]) e.memberId=String(reassignments[e.memberId]);
+  var c=corrections[e.memberId]; if(!c) return e;
+  if(c.gender) e.gender=String(c.gender).toLowerCase();
+  if(c.ageCategory) e.ageCategory=c.ageCategory;
+  if(c.level) e.level=String(c.level).toUpperCase();
+  if(c.trainingHrs) e.trainingHrs=normHrs(String(c.trainingHrs));
+  if(c.region) e.region=normRegion(String(c.region));
+  return e;
+}
+
 function loadFile(name) {
   return fetch(RAW+name)
     .then(function(r){return r.arrayBuffer();})
@@ -340,9 +360,9 @@ function loadFile(name) {
           var id=String(r["Member ID"]||r["BG Number"]||"").trim();
           if(!id)return;
           var gender=String(r["Gender"]||"").trim().toLowerCase();
-          if(gender&&gender!=="girls")return;
           out.push({
             memberId:id,
+            gender:gender,
             club:String(r["Club"]||"").trim(),
             ageCategory:String(r["Age Category"]||r["AgeCategory"]||"").trim(),
             level:String(r["Level"]||"").trim().toUpperCase(),
@@ -353,7 +373,7 @@ function loadFile(name) {
           });
         });
       });
-      return out;
+      return out.map(applyCorr).filter(function(e){return !e.gender||e.gender==="girls";});
     })
     .catch(function(){return[];});
 }
