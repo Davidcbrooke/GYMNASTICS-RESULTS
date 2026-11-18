@@ -196,7 +196,7 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
         <h3>Background music (Spotify)</h3>
         <p>For when nothing is happening on the floor. Paste a Spotify playlist link. It pauses automatically when you play a gymnast or an announcement, and starts again when you press Stop.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="spLink" placeholder="https://open.spotify.com/playlist/…" aria-label="Spotify playlist link" style="flex:1;min-width:200px;padding:7px 9px;border:1px solid var(--line);border-radius:4px">
+          <input id="spLink" type="url" name="spotify-playlist" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" placeholder="https://open.spotify.com/playlist/…" aria-label="Spotify playlist link" style="flex:1;min-width:200px;padding:7px 9px;border:1px solid var(--line);border-radius:4px">
           <button class="btn small primary" id="spSave">Add playlist</button>
           <button class="btn small ghost hidden" id="spClear">Remove</button>
         </div>
@@ -209,7 +209,7 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
         <p id="introState"></p>
         <div class="fullonly">
           <div id="elKeyRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-            <input id="elKey" type="password" autocomplete="off" placeholder="ElevenLabs API key" aria-label="ElevenLabs API key" style="flex:1;min-width:200px;padding:7px 9px;border:1px solid var(--line);border-radius:4px">
+            <input id="elKey" type="password" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" placeholder="ElevenLabs API key" aria-label="ElevenLabs API key" style="flex:1;min-width:200px;padding:7px 9px;border:1px solid var(--line);border-radius:4px">
             <button class="btn small primary" id="elKeySave">Add key</button>
           </div>
           <div id="elSetRow" class="hidden" style="display:grid;gap:8px;margin-bottom:8px">
@@ -265,7 +265,7 @@ const CLUB_HUB = "https://club.nationalgymnasticsleague.co.uk/#music";
 const D = window.NGL_MUSIC_DATA;
 const $ = s=>document.querySelector(s);
 const esc = v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;(document.fullscreenElement||document.body).appendChild(t);setTimeout(()=>t.remove(),3500);}
 $("#title").firstChild.textContent = D.title + " floor music";
 $("#dlInput").value = D.deadline || ""; $("#dlInput").addEventListener("input", e=>e.target.dataset.touched = "1");
 
@@ -774,7 +774,8 @@ function plLoad(){ try{ const o = JSON.parse(localStorage.getItem("nglplay2:"+D.
 async function plInit(){
   if(PL.ready || !SESS.length) return; PL.ready = true; plLoad();
   if(!SESS.some(s=>s.key===PL.sess)) PL.sess = SESS[0].key;
-  if(!(PL.rot>=1 && PL.rot<=nrotOf(SESS.find(s=>s.key===PL.sess)))) PL.rot = 1;
+  // Only check the top end once the competition data (rotation counts) has loaded, or a saved Rotation 5/6 resets to 1.
+  if(!(PL.rot>=1) || (EV && PL.rot>nrotOf(SESS.find(s=>s.key===PL.sess)))) PL.rot = 1;
   $("#vol").value = Math.round(PL.vol*100);
   try{ (await PDB.all("tracks")).forEach(t=>{ if(t.k.startsWith(D.compKey+":")) PL.cache[t.id]=t; }); }catch(e){ console.warn(e); }
   try{ const all = await PDB.all("ann"); PL.ann = all.filter(a=>!a.slot).sort((a,b)=>a.order-b.order); PL.special = {}; all.filter(a=>a.slot).forEach(a=>PL.special[a.slot]=a); }catch(_){ PL.ann = []; PL.special = {}; }
@@ -894,7 +895,10 @@ async function play(){
   if(!s){ toast(`No music uploaded for ${G[id].name}.`); return; }
   PL.playing = {kind:"gym", id, local:s.local};
   try{ await startAudio(s.src, s.gain); requestWake(); }
-  catch(e){ PL.playing = null; toast("Couldn't start the music. Press Space to try again, or use the backup."); }
+  catch(e){
+    // The saved copy failed and the error handler has already switched to the online copy: keep tracking it so Stop/Pause still work.
+    if(PL.playing && PL.playing.kind==="gym" && PL.playing.id===id && PL.playing.fallback){ renderPlayer(); return; }
+    PL.playing = null; toast("Couldn't start the music. Press Space to try again, or use the backup."); }
   renderPlayer();
 }
 async function playAnn(k){
@@ -964,13 +968,13 @@ audio.addEventListener("timeupdate", tick);
   document.addEventListener("pointermove", e => { if(drag) seekTo(e); });
   document.addEventListener("pointerup", () => { drag = false; });
 })();
-audio.addEventListener("ended", ()=>{ if(PL.playing){ finish(true); if(spAutoOn()) spResume(); } });
+audio.addEventListener("ended", ()=>{ if(PL.playing){ const kind = PL.playing.kind; finish(true); if(kind!=="intro" && spAutoOn()) spResume(); } });
 function spAutoOn(){ try{ return localStorage.getItem("nglmusic:spAuto")==="1"; }catch(_){ return false; } }
 (function(){ const cb=document.getElementById("spAuto"); if(!cb) return; cb.checked=spAutoOn();
   cb.addEventListener("change",()=>{ try{ localStorage.setItem("nglmusic:spAuto", cb.checked?"1":"0"); }catch(_){} }); })();
 audio.addEventListener("error", ()=>{
   const p = PL.playing; if(!p) return;
-  if(p.kind==="gym" && p.local && UP[p.id] && navigator.onLine){ p.local=false; startAudio(UP[p.id].url, 1).catch(()=>{}); toast("Saved copy failed, playing the online copy."); return; }
+  if(p.kind==="gym" && p.local && UP[p.id] && navigator.onLine){ p.local=false; p.fallback=true; startAudio(UP[p.id].url, 1).catch(()=>{}); toast("Saved copy failed, playing the online copy."); return; }
   PL.playing = null; renderPlayer(); toast("This music won't play. Use the backup copy for this gymnast.");
 });
 async function requestWake(){ try{ if("wakeLock" in navigator && !PL.wake) { PL.wake = await navigator.wakeLock.request("screen"); PL.wake.addEventListener("release",()=>PL.wake=null); } }catch(_){} }
@@ -979,7 +983,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 window.addEventListener("beforeunload", e=>{ if(PL.playing){ e.preventDefault(); e.returnValue=""; } });
 document.addEventListener("keydown", e=>{
   if($("#tab-play").classList.contains("hidden") || $("#dlg").open) return;
-  if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && e.target.type!=="range") return;
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && e.target.type!=="range" && e.target.type!=="checkbox") return;
   const k = e.key;
   if(k===" "||k==="Spacebar"){ e.preventDefault(); e.stopPropagation(); play(); }
   else if(k==="s"||k==="S"||k==="f"||k==="F"){ e.preventDefault(); fadeOut(); }
@@ -990,6 +994,11 @@ document.addEventListener("keydown", e=>{
 }, true);
 // buttons must not keep focus, or Space would also "click" the focused button
 $("#tab-play").addEventListener("mouseup", e=>{ const b=e.target.closest("button"); if(b) setTimeout(()=>b.blur(),0); });
+// tick boxes must not keep focus either, or Space would tick/untick them instead of playing
+$("#tab-play").addEventListener("change", e=>{ if(e.target.type==="checkbox") setTimeout(()=>e.target.blur(),0); });
+// clicking the Spotify player moves the keyboard into it; take the keyboard back so Space/S/K/R keep working
+window.addEventListener("blur", ()=>setTimeout(()=>{ const a=document.activeElement;
+  if(a && a.tagName==="IFRAME" && !$("#tab-play").classList.contains("hidden")){ a.blur(); window.focus(); } }, 400));
 $("#goBtn").onclick = play; $("#pauseBtn").onclick = togglePause; $("#fadeBtn").onclick = fadeOut; $("#restartBtn").onclick = restart;
 $("#prevBtn").onclick = ()=>move(-1); $("#nextBtn").onclick = ()=>move(1);
 $("#prepBtn").onclick = prepareAll;
@@ -1100,7 +1109,7 @@ function spSlotUpdate(d){
 function spSlotStop(resume){
   if(!PL.playing || PL.playing.kind!=="sp") return;
   PL.playing = null; PL.paused = false; SP.slotStarted = false;
-  try{ SP.ctl.pause(); SP.ctl.loadUri(SP.uri); SP.started = false; if(resume) setTimeout(()=>{ try{ SP.ctl.play(); }catch(_){} }, 700); }catch(_){}
+  try{ SP.ctl.pause(); SP.ctl.loadUri(SP.uri); SP.started = false; if(resume) setTimeout(()=>{ if(PL.playing) return; /* a gymnast or announcement started meanwhile */ try{ SP.ctl.play(); }catch(_){} }, 700); }catch(_){}
   renderPlayer(); updPause();
 }
 $("#spSlots").addEventListener("click", async e=>{
