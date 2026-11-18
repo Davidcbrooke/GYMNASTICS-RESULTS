@@ -187,6 +187,11 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
         <div id="annList"></div>
         <label class="btn ghost small" style="display:inline-block;margin-top:8px">Add announcement MP3<input type="file" id="annFile" accept="audio/*" multiple hidden></label>
       </div>
+      <div class="panel" id="spPanel">
+        <h3>3. Walk-on and Awards</h3>
+        <p>One track each, saved on this laptop only. Play the walk-on as the gymnasts march in, and the awards track for the medal ceremony.</p>
+        <div id="spSlots"></div>
+      </div>
       <div class="panel" id="bgPanel">
         <h3>Background music (Spotify)</h3>
         <p>For when nothing is happening on the floor. Paste a Spotify playlist link. It pauses automatically when you play a gymnast or an announcement, and starts again when you press Stop.</p>
@@ -772,9 +777,9 @@ async function plInit(){
   if(!(PL.rot>=1 && PL.rot<=nrotOf(SESS.find(s=>s.key===PL.sess)))) PL.rot = 1;
   $("#vol").value = Math.round(PL.vol*100);
   try{ (await PDB.all("tracks")).forEach(t=>{ if(t.k.startsWith(D.compKey+":")) PL.cache[t.id]=t; }); }catch(e){ console.warn(e); }
-  try{ PL.ann = (await PDB.all("ann")).sort((a,b)=>a.order-b.order); }catch(_){ PL.ann = []; }
+  try{ const all = await PDB.all("ann"); PL.ann = all.filter(a=>!a.slot).sort((a,b)=>a.order-b.order); PL.special = {}; all.filter(a=>a.slot).forEach(a=>PL.special[a.slot]=a); }catch(_){ PL.ann = []; PL.special = {}; }
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(_){}
-  renderPlayer(); renderAnn();
+  renderPlayer(); renderAnn(); renderSlots();
 }
 function status(id){
   const u = UP[id], c = PL.cache[id];
@@ -795,9 +800,9 @@ function renderPlayer(){
   $("#sessChips").innerHTML = SESS.map(x=>`<button class="chip" data-ps="${x.key}" aria-pressed="${x.key===PL.sess}">${esc(sessName(x))} <small>${esc(sessDesc(x))}</small></button>`).join("") +
     `<span style="width:12px"></span>` + Array.from({length:nrotOf(s)},(_,i)=>{ const q = rotOf(s)[i+1], done = q.filter(id=>PL.played[id]||ABS[id]).length;
       return `<button class="chip" data-pr="${i+1}" aria-pressed="${PL.rot===i+1}">Rotation ${i+1} <small>${done}/${q.length}</small></button>`; }).join("");
-  const isAnn = PL.playing && PL.playing.kind==="ann", cur = PL.playing && (PL.playing.kind==="gym"||PL.playing.kind==="intro") ? PL.playing.id : PL.cur, g = cur && G[cur];
+  const isAnn = PL.playing && (PL.playing.kind==="ann"||PL.playing.kind==="sp"), cur = PL.playing && (PL.playing.kind==="gym"||PL.playing.kind==="intro") ? PL.playing.id : PL.cur, g = cur && G[cur];
   const pos = cur ? ids.indexOf(cur) : -1;
-  if(isAnn) $("#nowCard").innerHTML = `<div class="lbl">Now playing · announcement</div><div class="nm">${esc(PL.playing.name)}</div><div class="cl">&nbsp;</div>`;
+  if(isAnn) $("#nowCard").innerHTML = `<div class="lbl">Now playing${PL.playing.kind==="sp"?" on Spotify":""} · ${PL.playing.slot==="walkon"?"walk-on":PL.playing.slot==="awards"?"awards ceremony":"announcement"}</div><div class="nm">${esc(PL.playing.name)}</div><div class="cl">&nbsp;</div>`;
   else if(!g) $("#nowCard").innerHTML = `<div class="lbl">${esc(sessName(s))} session · Rotation ${PL.rot}</div><div class="nm">No gymnasts in this rotation</div><div class="cl">Set the floor order on the Running order tab.</div>`;
   else { const stt = status(cur);
     $("#nowCard").innerHTML = `<div class="lbl">${PL.playing ? (PL.playing.kind==="intro" ? "Now playing · introduction" : "Now playing") : (wantIntro(cur) ? "Ready for introduction" : (PL.introed[cur] && INTROS[cur] ? "Introduced · Space for music" : "Ready"))} · ${esc(sessName(s))} · Rotation ${PL.rot} · ${pos+1} of ${ids.length}</div>
@@ -894,9 +899,9 @@ async function play(){
 }
 async function playAnn(k){
   if(PL.playing){ toast("Music is already playing. Press S to stop it first."); return; }
-  const a = PL.ann.find(x=>x.k===k); if(!a) return;
+  const a = PL.ann.find(x=>x.k===k) || Object.values(PL.special||{}).find(x=>x && x.k===k); if(!a) return;
   if(!PL.objUrls["ann:"+k]) PL.objUrls["ann:"+k] = URL.createObjectURL(a.blob);
-  PL.playing = {kind:"ann", k, name:a.name};
+  PL.playing = {kind:"ann", k, name:a.name, slot:a.slot||""};
   try{ await startAudio(PL.objUrls["ann:"+k], 1); requestWake(); }catch(_){ PL.playing=null; toast("Couldn't play that announcement."); }
   renderPlayer();
 }
@@ -908,6 +913,7 @@ function finish(advance){
 }
 /* Pause / resume: holds the music (gymnast or announcement) exactly where it is */
 function togglePause(){
+  if(PL.playing && PL.playing.kind==="sp"){ try{ SP.ctl.togglePlay(); }catch(_){} PL.paused = !PL.paused; updPause(); return; }
   if(!PL.playing || PL.fading) return;
   if(PL.paused){ PL.paused = false; audio.play().catch(()=>toast("Couldn't resume. Press Restart (R) instead.")); }
   else { PL.paused = true; audio.pause(); }
@@ -922,6 +928,7 @@ function updPause(){
   if(lbl && PL.playing){ lbl.textContent = lbl.textContent.replace(/^(Now playing|Paused)/, PL.paused ? "Paused" : "Now playing"); }
 }
 function fadeOut(){
+  if(PL.playing && PL.playing.kind==="sp"){ spSlotStop(true); return; }
   if(!PL.playing || PL.fading) return;
   if(PL.paused){ finish(true); spResume(); return; }   // already silent: just stop
   PL.fading = true; updPause();
@@ -930,6 +937,7 @@ function fadeOut(){
   requestAnimationFrame(step);
 }
 function restart(){
+  if(PL.playing && PL.playing.kind==="sp"){ try{ SP.ctl.seek(0); SP.ctl.resume(); }catch(_){} PL.paused = false; updPause(); return; }
   if(!PL.playing){ play(); return; }
   PL.fading = false; PL.paused = false; audio.currentTime = 0; audio.volume = Math.min(1, PL.vol*(PL.gain||1)); audio.play().catch(()=>{});
   updPause();
@@ -1021,7 +1029,7 @@ function spRender(){
   if(!SP.uri) return;
   const el = document.createElement("div"); box.appendChild(el);
   const make = api => api.createController(el, {uri:SP.uri, width:"100%", height:232}, c => { SP.ctl = c; SP.started = false;
-    c.addListener("playback_update", e => { if(e && e.data && !e.data.isPaused) SP.started = true; }); });
+    c.addListener("playback_update", e => { if(e && e.data && !e.data.isPaused) SP.started = true; spSlotUpdate(e && e.data); }); });
   if(SP.api) make(SP.api);
   else { window.onSpotifyIframeApiReady = api => { SP.api = api; make(api); };
     if(!document.getElementById("spApi")){ const sc = document.createElement("script"); sc.id = "spApi"; sc.src = "https://open.spotify.com/embed/iframe-api/v1"; sc.async = true; document.body.appendChild(sc); } }
@@ -1052,9 +1060,69 @@ $("#annList").addEventListener("click", async e=>{
   if(b.dataset.annx){ if(!confirm("Remove this announcement from this laptop?")) return; await PDB.del("ann", b.dataset.annx).catch(()=>{}); PL.ann = PL.ann.filter(a=>a.k!==b.dataset.annx); renderAnn(); }
   if(b.dataset.annu){ const i=+b.dataset.annu; if(i<1) return; [PL.ann[i-1],PL.ann[i]]=[PL.ann[i],PL.ann[i-1]]; PL.ann.forEach((a,j)=>{ a.order=j; PDB.put("ann",a).catch(()=>{}); }); renderAnn(); }
 });
+/* walk-on and awards: one track each, kept with the announcements on this laptop */
+const SLOTS = [{slot:"walkon", label:"Walk-on", hint:"Upbeat, 4/4 beat for marching in"}, {slot:"awards", label:"Awards ceremony", hint:"Emotional, for the medals"}];
+function renderSlots(){
+  const el = $("#spSlots"); if(!el) return;
+  el.innerHTML = SLOTS.map(x=>{ const a = (PL.special||{})[x.slot];
+    const what = a ? (a.spUri ? "Spotify · " : "MP3 · ") + esc(a.name) : x.hint;
+    return `<div class="ann" style="flex-wrap:wrap"><span class="t"><b>${x.label}</b><br><small style="color:var(--muted)">${what}</small></span>
+      ${a ? `<button class="btn small primary" data-slp="${x.slot}">&#9654; Play</button><button class="btn small ghost" data-slx="${x.slot}">Remove</button>` : ""}
+      <div style="display:flex;gap:6px;width:100%;margin-top:6px">
+        <input type="text" placeholder="Paste a Spotify track link" data-sll="${x.slot}" style="flex:1;min-width:0">
+        <button class="btn small ghost" data-sls="${x.slot}">Use link</button>
+        <label class="btn small ghost" style="cursor:pointer">Or MP3<input type="file" accept="audio/*" hidden data-slf="${x.slot}"></label></div></div>`; }).join("");
+}
+async function saveSlot(rec){
+  const old = (PL.special||{})[rec.slot];
+  try{ await PDB.put("ann", rec); PL.special = PL.special || {}; PL.special[rec.slot] = rec;
+    if(old && PL.objUrls["ann:"+old.k]){ URL.revokeObjectURL(PL.objUrls["ann:"+old.k]); delete PL.objUrls["ann:"+old.k]; } }
+  catch(_){ toast("Couldn't save that on this laptop."); }
+  renderSlots();
+}
+function playSlot(slot){
+  const a = (PL.special||{})[slot]; if(!a) return;
+  if(!a.spUri){ playAnn(a.k); return; }
+  if(PL.playing){ toast("Music is already playing. Press S to stop it first."); return; }
+  if(!SP.ctl){ toast("Spotify isn't ready. Add the background playlist below and sign in to Spotify in this browser."); return; }
+  PL.playing = {kind:"sp", k:a.k, name:a.name, slot}; PL.paused = false; SP.slotStarted = false;
+  try{ SP.ctl.loadUri(a.spUri); setTimeout(()=>{ try{ SP.ctl.play(); }catch(_){} }, 700); }catch(_){ PL.playing = null; toast("Couldn't play that Spotify track."); }
+  renderPlayer(); updPause();
+}
+function spSlotUpdate(d){
+  const p = PL.playing; if(!p || p.kind!=="sp" || !d) return;
+  if(!d.isPaused && d.position > 0) SP.slotStarted = true;
+  const b = $("#tBar"), t = $("#tTime");
+  if(b && d.duration){ b.style.width = Math.min(100, d.position/d.duration*100)+"%"; t.textContent = `${fmtT(d.position/1000)} / ${fmtT(d.duration/1000)}`; }
+  if(SP.slotStarted && d.duration && d.position >= d.duration - 400) spSlotStop(spAutoOn());
+}
+/* stop the walk-on / awards track and put the background playlist back */
+function spSlotStop(resume){
+  if(!PL.playing || PL.playing.kind!=="sp") return;
+  PL.playing = null; PL.paused = false; SP.slotStarted = false;
+  try{ SP.ctl.pause(); SP.ctl.loadUri(SP.uri); SP.started = false; if(resume) setTimeout(()=>{ try{ SP.ctl.play(); }catch(_){} }, 700); }catch(_){}
+  renderPlayer(); updPause();
+}
+$("#spSlots").addEventListener("click", async e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.slp) playSlot(b.dataset.slp);
+  if(b.dataset.slx){ const a = (PL.special||{})[b.dataset.slx]; if(!a || !confirm("Remove this track from this laptop?")) return;
+    PDB.del("ann", a.k).catch(()=>{}); delete PL.special[b.dataset.slx]; renderSlots(); }
+  if(b.dataset.sls){ const slot = b.dataset.sls, v = $(`[data-sll="${slot}"]`).value.trim(), m = v.match(/track[\/:]([A-Za-z0-9]{10,})/);
+    if(!m){ toast("Paste a Spotify link to a single song (it has /track/ in it)."); return; }
+    let name = "Spotify track"; try{ const r = await fetch("https://open.spotify.com/oembed?url="+encodeURIComponent("https://open.spotify.com/track/"+m[1])); if(r.ok){ const j = await r.json(); if(j.title) name = j.title; } }catch(_){}
+    saveSlot({k:"slot-"+slot, slot, name, spUri:"spotify:track:"+m[1], link:v, order:0}); }
+});
+$("#spSlots").addEventListener("change", e=>{
+  const inp = e.target.closest("[data-slf]"); if(!inp || !inp.files[0]) return;
+  const f = inp.files[0], slot = inp.dataset.slf; inp.value = "";
+  saveSlot({k:"slot-"+slot, slot, name:f.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," "), blob:f, order:0});
+});
+
 /* backup: every session and rotation in floor order, plus announcements, from saved copies where possible */
 async function exportBackup(){
   const zip = new JSZip(); let n=0, failed=0; toast("Preparing the backup…");
+  Object.values(PL.special||{}).forEach(a=>{ if(a && a.blob) zip.file(`00 ${a.slot==="walkon"?"Walk-on":"Awards"} - ${safe(a.name)}.mp3`, a.blob); });
   PL.ann.forEach((a,i)=>{ zip.file(`00 Announcements/${String(i+1).padStart(2,"0")} - ${safe(a.name)}.mp3`, a.blob); });
   for(const s of SESS){ const o = rotOf(s);
     for(const r of [...Array.from({length:nrotOf(s)},(_,i)=>i+1), "u"]){ const ids = o[r]; if(!ids.length) continue;
