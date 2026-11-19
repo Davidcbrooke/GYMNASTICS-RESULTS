@@ -101,6 +101,37 @@ dialog::backdrop{background:rgba(12,22,48,.55)}
 .ctl .pause{background:#e0a800;border-color:#e0a800;color:#1b1300;min-width:130px}
 .ctl .pause.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .ctl .btn:disabled{opacity:.4;cursor:not-allowed}
+/* Music deck: background, walk on & rotation, medal ceremony (one tap each) */
+.deck{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.tile{--c:var(--navy);background:#fff;border:1px solid var(--line);border-left:7px solid var(--c);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;min-width:0}
+.tile .tx{min-width:0}.tile .tx b{display:block;font-size:15px;text-transform:uppercase;letter-spacing:.03em}
+.tile .tx small{display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .btn{margin-left:auto;flex:none;min-width:118px;padding:11px 14px;font-size:15px;background:var(--c);border-color:var(--c);color:#fff}
+.tile .btn.stop{background:var(--red);border-color:var(--red)}
+.tile .btn:disabled{opacity:.35;cursor:not-allowed}
+.tile .btns{margin-left:auto;display:flex;gap:6px;flex:none}.tile .btns .btn{margin-left:0}
+/* stacked: name and track on top, one big button underneath */
+.tile{flex-direction:column;align-items:stretch;gap:8px}.tile .tx{width:100%}
+.tile .btn{margin-left:0;width:100%;min-width:0}.tile .btns{margin-left:0;width:100%}.tile .btns .btn{flex:1}.tile .btns .btn.skip{flex:none;width:auto}
+.tile .btn.skip{min-width:0;padding:11px 12px;background:#fff;color:var(--c);border-color:var(--c)}
+/* Fade out pressed: darker, sunk in and pulsing until the music has gone (tap again to stop at once) */
+@keyframes fadepulse{0%,100%{opacity:1}50%{opacity:.6}}
+.btn.fading,.tile .btn.fading,.ctl .fade.fading,.abtn.fading{background:#5e0a14!important;border-color:#5e0a14!important;color:#fff;box-shadow:inset 0 3px 8px rgba(0,0,0,.45);transform:translateY(1px);animation:fadepulse 1s ease-in-out infinite}
+.tile.on{box-shadow:inset 0 0 0 2px var(--c);background:#f4f8fc}
+.tile.on .tx small{color:var(--ink,#222);font-weight:600}
+.annbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:-2px 0 12px}
+.annbar .albl{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.abtn{font:inherit;font-size:14px;font-weight:600;padding:7px 12px;border-radius:6px;border:1px solid var(--gold);background:var(--gold-soft);color:#4a3800;cursor:pointer;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.abtn:hover{filter:brightness(.96)}.abtn.on{background:var(--red);border-color:var(--red);color:#fff}
+.gymlbl{display:none;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:2px 0 6px}
+@media (max-width:1180px){.deck{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:620px){.deck{grid-template-columns:1fr}}
+/* Controller view: setup panels out of the way (kept running, e.g. the Spotify player), no page scrolling */
+body.ctrl #tab-play .split{position:absolute;left:-10000px;top:0;width:900px;height:1px;overflow:hidden}
+body.ctrl #stage > p{display:none}
+body.ctrl #queue{max-height:34vh;overflow:auto}
+body.ctrl .gymlbl{display:block}
+body.ctrl #diffTop{display:none}
 .ctl kbd{font-family:var(--body);font-size:11px;opacity:.8;margin-left:6px;border:1px solid currentColor;border-radius:3px;padding:0 4px}
 .nextup{background:#fff;border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:6px;padding:10px 14px;margin-bottom:12px}
 .nextup b{font-family:var(--cond);font-size:22px}
@@ -183,18 +214,19 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
       </div>
       <div class="panel">
         <h3>2. Announcements</h3>
-        <p>Saved on this laptop only. Play them from here at the start of each session.</p>
+        <p>Shared with every laptop and browser (Chrome and Edge), and saved on each one so they play offline. Play them from the controller.</p>
         <div id="annList"></div>
         <label class="btn ghost small" style="display:inline-block;margin-top:8px">Add announcement MP3<input type="file" id="annFile" accept="audio/*" multiple hidden></label>
       </div>
       <div class="panel" id="spPanel">
-        <h3>3. Walk-on and Awards</h3>
-        <p>One track each, saved on this laptop only. Play the walk-on as the gymnasts march in, and the awards track for the medal ceremony.</p>
+        <h3>3. Walk On, Rotation, Medal Ceremony and Closing Out Music</h3>
+        <p>All three tracks are built in on every laptop and fade in and out. Walk On and Rotation Music: as the gymnasts march on and between rotations. Medal Ceremony Music: for the medals. Closing Out Music: to close the competition.</p>
         <div id="spSlots"></div>
       </div>
       <div class="panel" id="bgPanel">
-        <h3>Background music (Spotify)</h3>
-        <p>For when nothing is happening on the floor. Paste a Spotify playlist link. It pauses automatically when you play a gymnast or an announcement, and starts again when you press Stop.</p>
+        <h3>Background music</h3>
+        <p id="bgState" style="margin-bottom:10px"></p>
+        <p>Spotify (only used if there is no built-in playlist): paste a Spotify playlist link. It pauses automatically when you play a gymnast or an announcement, and starts again when you press Stop.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <input id="spLink" type="url" name="spotify-playlist" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" placeholder="https://open.spotify.com/playlist/…" aria-label="Spotify playlist link" style="flex:1;min-width:200px;padding:7px 9px;border:1px solid var(--line);border-radius:4px">
           <button class="btn small primary" id="spSave">Add playlist</button>
@@ -225,6 +257,10 @@ body.playonly .fullonly,body.playonly [data-intro],body.playonly .tabs [data-tab
       </div>
     </div>
     <div id="stage">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="btn small primary" id="ctrlBtn">Controller view</button></div>
+      <div class="deck" id="deck"></div>
+      <div class="annbar" id="annDeck"></div>
+      <div class="gymlbl">Gymnast routines</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
         <div class="chips" id="sessChips" style="margin:0;margin-right:auto;align-items:center"></div>
         <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px">Volume <input type="range" id="vol" min="0" max="100" value="100" style="width:120px"></label>
@@ -769,6 +805,9 @@ const PL = { introed:{}, sess:null, rot:1, cur:null, played:{}, cache:{}, ann:[]
 const TK = id => `${D.compKey}:${id}`;
 const fmtT = s => !isFinite(s) ? "0:00" : `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
 const audio = new Audio(); audio.preload = "auto";
+/* Built-in background playlist: its own player, so it can sit underneath and come back where it left off */
+const bgAudio = new Audio(); bgAudio.preload = "auto";
+const BG = {list:[], recs:{}, order:[], pos:0, want:false, fading:false, timer:null, saving:false};
 function plSave(){ try{ localStorage.setItem("nglplay2:"+D.compKey, JSON.stringify({sess:PL.sess, rot:PL.rot, cur:PL.cur, played:PL.played, vol:PL.vol})); }catch(_){} }
 function plLoad(){ try{ const o = JSON.parse(localStorage.getItem("nglplay2:"+D.compKey)||"null"); if(o){ PL.sess=o.sess; PL.rot=o.rot||1; PL.cur=o.cur||null; PL.played=o.played||{}; PL.vol=o.vol??1; } }catch(_){} }
 async function plInit(){
@@ -778,9 +817,12 @@ async function plInit(){
   if(!(PL.rot>=1) || (EV && PL.rot>nrotOf(SESS.find(s=>s.key===PL.sess)))) PL.rot = 1;
   $("#vol").value = Math.round(PL.vol*100);
   try{ (await PDB.all("tracks")).forEach(t=>{ if(t.k.startsWith(D.compKey+":")) PL.cache[t.id]=t; }); }catch(e){ console.warn(e); }
-  try{ const all = await PDB.all("ann"); PL.ann = all.filter(a=>!a.slot).sort((a,b)=>a.order-b.order); PL.special = {}; all.filter(a=>a.slot).forEach(a=>PL.special[a.slot]=a); }catch(_){ PL.ann = []; PL.special = {}; }
+  try{ const all = await PDB.all("ann"); PL.ann = all.filter(a=>!a.slot && !a.bg).sort((a,b)=>a.order-b.order); PL.special = {}; PL.builtinRecs = {};
+    all.filter(a=>a.slot).forEach(a=>{ if(a.builtin) PL.builtinRecs[a.slot] = a; else PL.special[a.slot] = a; });
+    BG.recs = {}; all.filter(a=>a.bg).forEach(a=>{ BG.recs[a.k] = a; }); }catch(_){ PL.ann = []; PL.special = {}; PL.builtinRecs = {}; }
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(_){}
   renderPlayer(); renderAnn(); renderSlots();
+  ensureBuiltins();   // built-in tracks (Walk On and Rotation Music): shown straight away, saved on this laptop in the background
 }
 function status(id){
   const u = UP[id], c = PL.cache[id];
@@ -803,7 +845,7 @@ function renderPlayer(){
       return `<button class="chip" data-pr="${i+1}" aria-pressed="${PL.rot===i+1}">Rotation ${i+1} <small>${done}/${q.length}</small></button>`; }).join("");
   const isAnn = PL.playing && (PL.playing.kind==="ann"||PL.playing.kind==="sp"), cur = PL.playing && (PL.playing.kind==="gym"||PL.playing.kind==="intro") ? PL.playing.id : PL.cur, g = cur && G[cur];
   const pos = cur ? ids.indexOf(cur) : -1;
-  if(isAnn) $("#nowCard").innerHTML = `<div class="lbl">Now playing${PL.playing.kind==="sp"?" on Spotify":""} · ${PL.playing.slot==="walkon"?"walk-on":PL.playing.slot==="awards"?"awards ceremony":"announcement"}</div><div class="nm">${esc(PL.playing.name)}</div><div class="cl">&nbsp;</div>`;
+  if(isAnn) $("#nowCard").innerHTML = `<div class="lbl">Now playing${PL.playing.kind==="sp"?" on Spotify":""} · ${PL.playing.slot==="walkon"?"walk on and rotation music":PL.playing.slot==="awards"?"medal ceremony music":PL.playing.slot==="closing"?"closing out music":"announcement"}</div><div class="nm">${esc(PL.playing.name)}</div><div class="cl">&nbsp;</div>`;
   else if(!g) $("#nowCard").innerHTML = `<div class="lbl">${esc(sessName(s))} session · Rotation ${PL.rot}</div><div class="nm">No gymnasts in this rotation</div><div class="cl">Set the floor order on the Running order tab.</div>`;
   else { const stt = status(cur);
     $("#nowCard").innerHTML = `<div class="lbl">${PL.playing ? (PL.playing.kind==="intro" ? "Now playing · introduction" : "Now playing") : (wantIntro(cur) ? "Ready for introduction" : (PL.introed[cur] && INTROS[cur] ? "Introduced · Space for music" : "Ready"))} · ${esc(sessName(s))} · Rotation ${PL.rot} · ${pos+1} of ${ids.length}</div>
@@ -820,6 +862,7 @@ function renderPlayer(){
       <span class="st ${st}">${ST_TXT[st]}</span>
       <span class="qc"><button class="btn small ghost" data-qabs="${id}">${ABS[id]?"Present":"Absent"}</button>${rotSelect(id, PL.rot)}${upLabel(id)}</span></div>`; }).join("")
     : `<div class="qr empty" style="display:block">No gymnasts in this rotation yet. Drag them here from another rotation's list, or set the floor order on the Running order tab.</div>`;
+  renderDeck();
   $("#goBtn").disabled = !!PL.playing;
   $("#goBtn").innerHTML = (cur && wantIntro(cur) ? "&#9654; Introduce" : "&#9654; Play music") + "<kbd>Space</kbd>";
   prepState(); tick(); updPause();
@@ -848,7 +891,7 @@ async function measure(blob){
 }
 async function prepareAll(){
   const ids = Object.keys(G).filter(id=>UP[id] && status(id)!=="saved" && status(id)!=="bad");
-  if(!ids.length){ const ni = await saveIntros().catch(()=>0); toast(ni ? `${ni} introduction${ni>1?"s":""} saved on this laptop.` : "Everything uploaded is already saved on this laptop."); return; }
+  if(!ids.length){ const ni = await saveIntros().catch(()=>0); await ensureBuiltins().catch(()=>{}); await bgSaveAll().catch(()=>{}); await annSaveAll().catch(()=>{}); toast(ni ? `${ni} introduction${ni>1?"s":""} saved on this laptop.` : "Everything uploaded is already saved on this laptop."); return; }
   PL.prepping = true; PL.saveErr = null; $("#prepBtn").disabled = true; let ok=0, failed=0;
   for(let i=0;i<ids.length;i++){
     const id = ids[i], u = UP[id];
@@ -862,6 +905,9 @@ async function prepareAll(){
     }catch(e){ console.warn(id, e); failed++; if(!PL.saveErr) PL.saveErr = e; }
   }
   const ni = await saveIntros().catch(()=>0);
+  await ensureBuiltins().catch(()=>{});   // the built-in walk on, medal and closing tracks too
+  await bgSaveAll().catch(()=>{});        // and the built-in background playlist
+  await annSaveAll().catch(()=>{});       // and the shared announcements
   PL.prepping = false; $("#prepBtn").disabled = false; $("#prepBtn").textContent = "Save all music to this laptop";
   renderPlayer();
   const why = (()=>{ const e = PL.saveErr; if(!e) return "";
@@ -878,7 +924,7 @@ function srcFor(id){
   return u ? {src:u.url, gain:1, local:false} : null;
 }
 function startAudio(src, gain){
-  try{ SP.ctl && SP.ctl.pause(); }catch(_){}
+  try{ SP.ctl && SP.ctl.pause(); }catch(_){} bgDuck();
   audio.pause(); PL.fading=false; PL.paused=false; audio.src = src; audio.currentTime = 0; PL.gain = gain;
   audio.volume = Math.min(1, PL.vol*gain);
   return audio.play();
@@ -904,13 +950,17 @@ async function play(){
 async function playAnn(k){
   if(PL.playing){ toast("Music is already playing. Press S to stop it first."); return; }
   const a = PL.ann.find(x=>x.k===k) || Object.values(PL.special||{}).find(x=>x && x.k===k); if(!a) return;
-  if(!PL.objUrls["ann:"+k]) PL.objUrls["ann:"+k] = URL.createObjectURL(a.blob);
+  if(!PL.objUrls["ann:"+k] && a.blob) PL.objUrls["ann:"+k] = URL.createObjectURL(a.blob);
+  const src = PL.objUrls["ann:"+k] || a.url;   // a built-in track not yet saved on this laptop plays online
+  if(!src){ toast("That track isn't on this laptop yet. Connect to the internet and press Save all music."); return; }
   PL.playing = {kind:"ann", k, name:a.name, slot:a.slot||""};
-  try{ await startAudio(PL.objUrls["ann:"+k], 1); requestWake(); }catch(_){ PL.playing=null; toast("Couldn't play that announcement."); }
-  renderPlayer();
+  try{ await startAudio(src, 1); requestWake(); if(BUILTIN[a.slot]) fadeIn(4000); }catch(_){ PL.playing=null; toast("Couldn't play that track."); }
+  renderPlayer(); renderSlots();
 }
 function finish(advance){
   const p = PL.playing; PL.playing = null; PL.fading = false; PL.paused = false; audio.pause();
+  stopFadeIn(); clearInterval(PL.fadeTimer); clearTimeout(PL.fadeSafety);
+  if(p && p.kind==="ann") renderSlots();   // swap "Fade out" back to "Play"
   if(p && p.kind==="intro"){ PL.introed[p.id] = true; plSave(); renderPlayer(); return; }
   if(p && p.kind==="gym"){ PL.played[p.id] = true; if(advance){ const nx = nextAfter(p.id); PL.cur = nx || p.id; } }
   plSave(); renderPlayer();
@@ -919,30 +969,45 @@ function finish(advance){
 function togglePause(){
   if(PL.playing && PL.playing.kind==="sp"){ try{ SP.ctl.togglePlay(); }catch(_){} PL.paused = !PL.paused; updPause(); return; }
   if(!PL.playing || PL.fading) return;
-  if(PL.paused){ PL.paused = false; audio.play().catch(()=>toast("Couldn't resume. Press Restart (R) instead.")); }
-  else { PL.paused = true; audio.pause(); }
+  if(PL.paused){ PL.paused = false; if(!PL.fadeInTimer) audio.volume = Math.min(1, PL.vol*(PL.gain||1)); audio.play().catch(()=>toast("Couldn't resume. Press Restart (R) instead.")); }
+  else { PL.paused = true; stopFadeIn(); audio.pause(); }
   updPause();
 }
 function updPause(){
   const b = $("#pauseBtn"); if(!b) return;
   b.disabled = !PL.playing || PL.fading;
   b.classList.toggle("on", !!PL.paused);
+  const fb = $("#fadeBtn"); if(fb){ const f = !!(PL.fading && PL.playing); fb.classList.toggle("fading", f); fb.innerHTML = f ? "Stopping&hellip;<kbd>S</kbd>" : "Stop<kbd>S</kbd>"; }
   b.innerHTML = PL.paused ? '&#9654; Resume<kbd>K</kbd>' : '&#10073;&#10073; Pause<kbd>K</kbd>';
   const lbl = document.querySelector("#nowCard .lbl");
   if(lbl && PL.playing){ lbl.textContent = lbl.textContent.replace(/^(Now playing|Paused)/, PL.paused ? "Paused" : "Now playing"); }
 }
+/* Fades run on an ordinary timer, not requestAnimationFrame: Chrome pauses animation frames when its window is
+   covered by another window, which left Stop stuck at full volume. A safety timeout always ends the fade. */
+function stopFadeIn(){ clearInterval(PL.fadeInTimer); PL.fadeInTimer = null; }
+function fadeIn(ms){
+  stopFadeIn(); const target = Math.min(1, PL.vol*(PL.gain||1)), t0 = performance.now(); audio.volume = 0;
+  PL.fadeInTimer = setInterval(()=>{ if(!PL.playing || PL.fading || PL.paused){ stopFadeIn(); return; }
+    const f = Math.min(1, (performance.now()-t0)/ms); audio.volume = target*f; if(f>=1) stopFadeIn(); }, 40);
+}
 function fadeOut(){
   if(PL.playing && PL.playing.kind==="sp"){ spSlotStop(true); return; }
-  if(!PL.playing || PL.fading) return;
-  if(PL.paused){ finish(true); spResume(); return; }   // already silent: just stop
-  PL.fading = true; updPause();
-  const v0 = audio.volume, t0 = performance.now(), dur = 2500;
-  const step = now=>{ if(!PL.fading) return; const f = Math.min(1,(now-t0)/dur); audio.volume = v0*(1-f); if(f<1) requestAnimationFrame(step); else { finish(true); spResume(); } };
-  requestAnimationFrame(step);
+  if(!PL.playing) return;
+  if(PL.fading){ clearInterval(PL.fadeTimer); clearTimeout(PL.fadeSafety); finish(true); bgBack(); return; }   // pressed again while fading: stop now
+  stopFadeIn();
+  if(PL.paused){ finish(true); bgBack(); return; }   // already silent: just stop
+  PL.fading = true; updPause(); renderSlots();   // the Fade out buttons turn dark while it fades
+  const v0 = audio.volume, t0 = performance.now(), dur = BUILTIN[PL.playing.slot] ? 5000 : 2500;
+  const done = ()=>{ clearInterval(PL.fadeTimer); clearTimeout(PL.fadeSafety); if(PL.fading){ finish(true); bgBack(); } };
+  clearInterval(PL.fadeTimer); clearTimeout(PL.fadeSafety);
+  PL.fadeTimer = setInterval(()=>{ if(!PL.fading){ clearInterval(PL.fadeTimer); return; }
+    const f = Math.min(1, (performance.now()-t0)/dur); audio.volume = v0*(1-f); if(f>=1) done(); }, 40);
+  PL.fadeSafety = setTimeout(done, dur + 1500);
 }
 function restart(){
   if(PL.playing && PL.playing.kind==="sp"){ try{ SP.ctl.seek(0); SP.ctl.resume(); }catch(_){} PL.paused = false; updPause(); return; }
   if(!PL.playing){ play(); return; }
+  stopFadeIn(); clearInterval(PL.fadeTimer); clearTimeout(PL.fadeSafety);
   PL.fading = false; PL.paused = false; audio.currentTime = 0; audio.volume = Math.min(1, PL.vol*(PL.gain||1)); audio.play().catch(()=>{});
   updPause();
 }
@@ -968,7 +1033,7 @@ audio.addEventListener("timeupdate", tick);
   document.addEventListener("pointermove", e => { if(drag) seekTo(e); });
   document.addEventListener("pointerup", () => { drag = false; });
 })();
-audio.addEventListener("ended", ()=>{ if(PL.playing){ const kind = PL.playing.kind; finish(true); if(kind!=="intro" && spAutoOn()) spResume(); } });
+audio.addEventListener("ended", ()=>{ if(PL.playing){ const kind = PL.playing.kind; finish(true); if(kind==="ann" || (kind!=="intro" && spAutoOn())) bgBack(); } });
 function spAutoOn(){ try{ return localStorage.getItem("nglmusic:spAuto")==="1"; }catch(_){ return false; } }
 (function(){ const cb=document.getElementById("spAuto"); if(!cb) return; cb.checked=spAutoOn();
   cb.addEventListener("change",()=>{ try{ localStorage.setItem("nglmusic:spAuto", cb.checked?"1":"0"); }catch(_){} }); })();
@@ -1010,7 +1075,7 @@ $("#elTpl").onchange = e=>{ const v = e.target.value.trim(); if(!/\{name\}/.test
 $("#introGo").onclick = generateIntros; $("#introHear").onclick = introSample;
 $("#introOn").onchange = e=>{ try{ localStorage.setItem("nglmusic:introsOn", e.target.checked?"1":"0"); }catch(_){} renderPlayer(); };
 if(EL.key) fillVoices();
-$("#vol").oninput = e=>{ PL.vol = e.target.value/100; if(PL.playing && !PL.fading) audio.volume = Math.min(1, PL.vol*(PL.gain||1)); plSave(); };
+$("#vol").oninput = e=>{ PL.vol = e.target.value/100; if(PL.playing && !PL.fading) audio.volume = Math.min(1, PL.vol*(PL.gain||1)); if(!bgAudio.paused && !BG.timer) bgAudio.volume = bgVol(); plSave(); };
 $("#sessChips").addEventListener("click", e=>{
   const b = e.target.closest("[data-ps],[data-pr]"); if(!b) return;
   if(PL.playing){ toast("Stop the music before changing session or rotation."); return; }
@@ -1038,7 +1103,8 @@ function spRender(){
   if(!SP.uri) return;
   const el = document.createElement("div"); box.appendChild(el);
   const make = api => api.createController(el, {uri:SP.uri, width:"100%", height:232}, c => { SP.ctl = c; SP.started = false;
-    c.addListener("playback_update", e => { if(e && e.data && !e.data.isPaused) SP.started = true; spSlotUpdate(e && e.data); }); });
+    c.addListener("playback_update", e => { if(e && e.data && !e.data.isPaused) SP.started = true; spSlotUpdate(e && e.data);
+      const p = !(e && e.data) || !!e.data.isPaused; if(p !== SP.isPaused){ SP.isPaused = p; renderDeck(); } }); renderDeck(); });
   if(SP.api) make(SP.api);
   else { window.onSpotifyIframeApiReady = api => { SP.api = api; make(api); };
     if(!document.getElementById("spApi")){ const sc = document.createElement("script"); sc.id = "spApi"; sc.src = "https://open.spotify.com/embed/iframe-api/v1"; sc.async = true; document.body.appendChild(sc); } }
@@ -1048,41 +1114,250 @@ $("#spSave").onclick = ()=>{ const v = $("#spLink").value.trim(); if(!spUri(v)){
 $("#spClear").onclick = ()=>{ try{ localStorage.removeItem("ngl_sp_link"); }catch(_){} spRender(); };
 spRender();
 
-/* announcements */
+/* announcements: shared by every laptop and browser. Files in Firebase storage, list in Firestore musicEvents/_builtin.ann,
+   and a copy saved on each laptop so they play offline. Ones added before sharing existed are shared the next time the page opens online. */
+function annShared(){ return PL.ann.filter(a=>a.url).map((a,i)=>({k:a.k, name:a.name, url:a.url, path:a.path||"", order:i})); }
+async function annPublish(){
+  const list = annShared();
+  try{ await cdb.collection("musicEvents").doc("_builtin").set({ann:list}, {merge:true}); if(PL.bcfg) PL.bcfg.ann = list;
+    PL.ann.forEach(a=>{ if(a.url && !a.pub){ a.pub = true; PDB.put("ann", a).catch(()=>{}); } }); return true; }
+  catch(e){ console.warn(e); toast("Couldn't share the announcements just now (offline?). They'll be shared next time this page opens online."); return false; }
+}
+async function annUpload(a){
+  if(!a.blob || a.url || !navigator.onLine) return false;
+  const path = "music/finals2026/admin/ann-"+a.k+".mp3", ref = capp.storage().ref(path);
+  await ref.put(a.blob, {contentType: "audio/mpeg"});   // the storage rules only accept audio/mpeg; browsers play the file whatever its label
+  a.url = await ref.getDownloadURL(); a.path = path; await PDB.put("ann", a); return true;
+}
+async function annSync(cfg){
+  if(!cfg || !Object.keys(cfg).length) return;   // offline: keep what's on this laptop
+  const shared = Array.isArray(cfg.ann) ? cfg.ann : [], byK = new Map(shared.map(s=>[s.k, s]));
+  PL.ann.filter(a=>a.pub && !byK.has(a.k)).forEach(a=>{ PDB.del("ann", a.k).catch(()=>{}); });   // removed on another laptop
+  PL.ann = PL.ann.filter(a=>!(a.pub && !byK.has(a.k)));
+  for(const s of shared){ let a = PL.ann.find(x=>x.k===s.k);   // added on another laptop
+    if(!a){ a = {k:s.k, name:s.name, url:s.url, path:s.path, pub:true, order:s.order}; PL.ann.push(a); PDB.put("ann", a).catch(()=>{}); }
+    else { a.name = s.name; a.order = s.order; a.pub = true; if(a.url !== s.url){ a.url = s.url; a.blob = null; } } }
+  let changed = false;
+  for(const a of PL.ann.filter(x=>!x.url && x.blob)){ try{ if(await annUpload(a)) changed = true; }catch(e){ console.warn("Announcement not shared yet", a.name, e); } }   // only on this browser: share it
+  PL.ann.sort((a,b)=>(a.order??0)-(b.order??0));
+  if(changed) await annPublish();
+  renderAnn(); annSaveAll();
+}
+async function annSaveAll(){
+  if(!navigator.onLine) return;
+  for(const a of PL.ann.filter(x=>x.url && !x.blob)){
+    try{ const r = await fetch(a.url); if(!r.ok) throw new Error(r.status); a.blob = await r.blob(); await PDB.put("ann", a); }
+    catch(e){ console.warn("Announcement not saved on this laptop yet", a.name, e); } }
+  renderAnn();
+}
 function renderAnn(){
-  $("#annList").innerHTML = PL.ann.length ? PL.ann.map((a,i)=>`<div class="ann"><span class="t">${esc(a.name)}</span>
+  $("#annList").innerHTML = PL.ann.length ? PL.ann.map((a,i)=>`<div class="ann"><span class="t">${esc(a.name)}<br><small style="color:var(--muted)">${
+        a.url ? (a.blob ? "Shared with every laptop · saved on this laptop" : "Shared with every laptop · not saved on this laptop yet") : "Only on this laptop: it will be shared when this page is online"}</small></span>
       <button class="btn small primary" data-annp="${a.k}">&#9654; Play</button>
       <button class="btn small ghost" data-annu="${i}" aria-label="Move up">&uarr;</button>
       <button class="btn small ghost" data-annx="${a.k}">Remove</button></div>`).join("")
     : `<p style="margin:0">None added yet. Add the safety and welcome tracks here.</p>`;
+  renderAnnDeck();
 }
+/* the small announcement player on the controller */
+function renderAnnDeck(){
+  const el = $("#annDeck"); if(!el) return; const p = PL.playing;
+  el.innerHTML = `<span class="albl">Announcements</span>` + (PL.ann.length ? PL.ann.map(a=>{ const on = !!(p && p.kind==="ann" && p.k===a.k);
+      return on ? `<button class="abtn on${PL.fading?" fading":""}" data-ak="${a.k}" title="Fade out">${PL.fading ? "Fading out&hellip;" : "&#9724; "+esc(a.name)}</button>`
+                : `<button class="abtn" data-ak="${a.k}" title="${esc(a.name)}">&#9654; ${esc(a.name)}</button>`; }).join("")
+    : `<span style="color:var(--muted);font-size:13px">None yet: add them in Setup view.</span>`);
+}
+$("#annDeck").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-ak]"); if(!b) return; setTimeout(()=>b.blur(), 0);
+  const p = PL.playing;
+  if(p && p.kind==="ann" && p.k===b.dataset.ak) fadeOut(); else playAnn(b.dataset.ak);
+});
 $("#annFile").onchange = async e=>{
-  const files = [...e.target.files]; e.target.value = "";
+  const files = [...e.target.files]; e.target.value = ""; let up = false;
   for(const f of files){ const k = "a"+Date.now()+Math.random().toString(36).slice(2,6);
     const rec = {k, name:f.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," "), blob:f, order:(PL.ann.at(-1)?.order||0)+1};
-    try{ await PDB.put("ann", rec); PL.ann.push(rec); }catch(_){ toast("Couldn't save that file on this laptop."); } }
+    try{ await PDB.put("ann", rec); PL.ann.push(rec); }catch(_){ toast("Couldn't save that file on this laptop."); continue; }
+    renderAnn();
+    try{ if(await annUpload(rec)) up = true; }catch(err){ console.warn(err); toast("Saved on this laptop, but couldn't share it yet. It will be shared next time this page opens online."); } }
+  if(up && await annPublish()) toast("Announcement added for every laptop.");
   renderAnn();
 };
 $("#annList").addEventListener("click", async e=>{
   const b = e.target.closest("button"); if(!b) return;
   if(b.dataset.annp) playAnn(b.dataset.annp);
-  if(b.dataset.annx){ if(!confirm("Remove this announcement from this laptop?")) return; await PDB.del("ann", b.dataset.annx).catch(()=>{}); PL.ann = PL.ann.filter(a=>a.k!==b.dataset.annx); renderAnn(); }
-  if(b.dataset.annu){ const i=+b.dataset.annu; if(i<1) return; [PL.ann[i-1],PL.ann[i]]=[PL.ann[i],PL.ann[i-1]]; PL.ann.forEach((a,j)=>{ a.order=j; PDB.put("ann",a).catch(()=>{}); }); renderAnn(); }
+  if(b.dataset.annx){ const a = PL.ann.find(x=>x.k===b.dataset.annx); if(!a) return;
+    if(!confirm(a.url ? "Remove this announcement from every laptop?" : "Remove this announcement from this laptop?")) return;
+    await PDB.del("ann", a.k).catch(()=>{}); PL.ann = PL.ann.filter(x=>x!==a); renderAnn();
+    if(a.url){ await annPublish(); if(a.path){ try{ await capp.storage().ref(a.path).delete(); }catch(_){} } } }
+  if(b.dataset.annu){ const i=+b.dataset.annu; if(i<1) return; [PL.ann[i-1],PL.ann[i]]=[PL.ann[i],PL.ann[i-1]]; PL.ann.forEach((a,j)=>{ a.order=j; PDB.put("ann",a).catch(()=>{}); }); renderAnn();
+    if(PL.ann.some(a=>a.url)) annPublish(); }
 });
 /* walk-on and awards: one track each, kept with the announcements on this laptop */
-const SLOTS = [{slot:"walkon", label:"Walk-on", hint:"Upbeat, 4/4 beat for marching in"}, {slot:"awards", label:"Awards ceremony", hint:"Emotional, for the medals"}];
+const SLOTS = [{slot:"walkon", label:"Walk On and Rotation Music", hint:"Upbeat, 4/4 beat for marching on and between rotations"}, {slot:"awards", label:"Medal Ceremony Music", hint:"For the medal ceremony"}, {slot:"closing", label:"Closing Out Music", hint:"To close the competition"}];
+/* Built-in tracks: the same on every laptop, stored with the gymnast music in NGL's Firebase storage (not on GitHub).
+   A laptop can still pick its own track (that choice wins until "Use built-in" is pressed).
+   The track's name and link live in Firestore musicEvents/_builtin (sign-in only), never in this public file. */
+const BUILTIN = {walkon:true, awards:true, closing:true};
+async function builtinCfg(){
+  if(PL.bcfg) return PL.bcfg;
+  try{ const d = await cdb.collection("musicEvents").doc("_builtin").get(); PL.bcfg = d.exists ? d.data() : {}; }
+  catch(e){ console.warn("Built-in tracks: couldn't read the settings (offline?)", e); return {}; }
+  return PL.bcfg;
+}
+async function ensureBuiltins(){
+  PL.special = PL.special || {}; PL.builtinRecs = PL.builtinRecs || {};
+  const cfg = await builtinCfg();
+  bgSetList(cfg);
+  annSync(cfg).catch(e=>console.warn("Announcements not synced", e));
+  for(const slot of Object.keys(BUILTIN)){
+    const saved = PL.builtinRecs[slot];
+    const b = (cfg[slot] && cfg[slot].url) ? cfg[slot] : (saved ? {name:saved.name, url:saved.url} : null);   // offline: use the copy already on this laptop
+    if(!b) continue;
+    const cur = PL.special[slot];
+    if(cur && !cur.builtin && cur.override) continue;                          // this laptop chose its own track
+    if(cur && !cur.builtin){ PDB.del("ann", cur.k).catch(()=>{}); if(PL.objUrls["ann:"+cur.k]){ URL.revokeObjectURL(PL.objUrls["ann:"+cur.k]); delete PL.objUrls["ann:"+cur.k]; } }  // older walk-on picks give way to the built-in track
+    let rec = PL.builtinRecs[slot];
+    if(!rec || rec.url !== b.url) rec = {k:"builtin-"+slot, slot, name:b.name, url:b.url, builtin:true, order:0};
+    PL.builtinRecs[slot] = rec; PL.special[slot] = rec; renderSlots();
+    if(!rec.blob && navigator.onLine){
+      try{ const r = await fetch(b.url); if(!r.ok) throw new Error(r.status); rec.blob = await r.blob(); rec.savedAt = Date.now(); await PDB.put("ann", rec); }
+      catch(e){ console.warn("Built-in track not saved yet", e); }
+      renderSlots();
+    }
+  }
+}
+/* Background playlist (built in): the track list lives in Firestore musicEvents/_builtin.bg, the files in Firebase storage */
+const BGK = t => "bgtrack-"+t.n;
+function bgSetList(cfg){
+  const t = cfg && cfg.bg && Array.isArray(cfg.bg.tracks) ? cfg.bg.tracks : null;
+  BG.list = t ? t.slice() : Object.values(BG.recs).map(r=>({n:r.n, name:r.name, url:r.url})).sort((a,b)=>a.n-b.n);   // offline: the copies on this laptop
+  BG.title = (cfg && cfg.bg && cfg.bg.name) || BG.title || "Background playlist";
+  if(t){ const keep = new Set(t.map(BGK)); Object.keys(BG.recs).forEach(k=>{ if(!keep.has(k)){ PDB.del("ann", k).catch(()=>{}); delete BG.recs[k]; } }); }   // tracks taken off the list
+  if(BG.order.length !== BG.list.length) bgShuffle();
+  renderDeck(); bgState();
+}
+function bgShuffle(){ BG.order = BG.list.map((_,i)=>i); for(let i=BG.order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [BG.order[i],BG.order[j]]=[BG.order[j],BG.order[i]]; } BG.pos = 0; }
+function bgOn(){ return BG.list.length > 0; }
+function bgSaved(){ return BG.list.filter(t=>{ const r = BG.recs[BGK(t)]; return r && r.blob && r.url===t.url; }).length; }
+function bgSrc(t){ const k = BGK(t), r = BG.recs[k];
+  if(r && r.blob && r.url===t.url){ if(!PL.objUrls[k]) PL.objUrls[k] = URL.createObjectURL(r.blob); return PL.objUrls[k]; }
+  return navigator.onLine ? t.url : null; }
+function bgNow(){ return BG.list[BG.order[BG.pos]]; }
+function bgVol(){ return Math.min(1, PL.vol); }
+function bgStopTimer(){ clearInterval(BG.timer); BG.timer = null; }
+function bgRamp(to, ms, then){ bgStopTimer(); const v0 = bgAudio.volume, t0 = performance.now();
+  BG.timer = setInterval(()=>{ const f = Math.min(1, (performance.now()-t0)/ms); bgAudio.volume = Math.max(0, Math.min(1, v0 + (to-v0)*f)); if(f>=1){ bgStopTimer(); then && then(); } }, 40); }
+function bgLoad(){   // put the current track in the player, skipping any that aren't on this laptop when offline
+  for(let n=0; n<BG.list.length; n++){ const t = bgNow(), src = t && bgSrc(t);
+    if(src){ if(bgAudio.dataset.k !== BGK(t)){ bgAudio.src = src; bgAudio.dataset.k = BGK(t); } return true; }
+    BG.pos = (BG.pos+1) % BG.list.length; }
+  return false; }
+function bgPlay(){
+  if(!bgOn()) return;
+  if(PL.playing){ toast("Other music is playing. Stop or fade it out first."); return; }
+  try{ SP.ctl && SP.ctl.pause(); }catch(_){}
+  if(!bgLoad()){ toast("The background music isn't saved on this laptop yet. Connect to the internet and press Save all music."); return; }
+  BG.want = true; BG.fading = false; bgAudio.volume = 0;
+  bgAudio.play().then(()=>bgRamp(bgVol(), 3000)).catch(()=>{ BG.want = false; toast("Couldn't play the background music."); renderDeck(); });
+  renderDeck();
+}
+function bgFadeOut(){
+  if(BG.fading){ bgStopTimer(); bgAudio.pause(); BG.fading = false; BG.want = false; renderDeck(); return; }   // pressed again: stop now
+  BG.want = false; if(bgAudio.paused){ renderDeck(); return; }
+  BG.fading = true; renderDeck();
+  bgRamp(0, 4000, ()=>{ bgAudio.pause(); BG.fading = false; renderDeck(); });
+}
+function bgSkip(){ if(!bgOn()) return; const was = !bgAudio.paused;
+  const go = ()=>{ BG.pos = (BG.pos+1) % BG.list.length; if(!BG.pos) bgShuffle(); bgAudio.dataset.k = ""; bgLoad();
+    if(was){ bgAudio.volume = 0; bgAudio.play().then(()=>bgRamp(bgVol(), 1500)).catch(()=>{}); } renderDeck(); };
+  was ? bgRamp(0, 700, go) : go(); }
+function bgDuck(){ if(!bgAudio.paused){ BG.fading = false; bgRamp(0, 700, ()=>{ bgAudio.pause(); renderDeck(); }); } }   // other music starting: get out of the way
+function bgBack(){   // other music has finished: bring the background back if it was on
+  if(bgOn()){ if(BG.want && !PL.playing && bgLoad()){ bgAudio.volume = 0; bgAudio.play().then(()=>bgRamp(bgVol(), 3000)).catch(()=>{}); renderDeck(); } return; }
+  spResume(); }
+bgAudio.addEventListener("ended", ()=>{ BG.pos = (BG.pos+1) % BG.list.length; if(!BG.pos) bgShuffle(); bgAudio.dataset.k = "";
+  if(BG.want && !PL.playing && bgLoad()){ bgAudio.volume = bgVol(); bgAudio.play().catch(()=>{}); } renderDeck(); });
+bgAudio.addEventListener("play", ()=>renderDeck()); bgAudio.addEventListener("pause", ()=>renderDeck());
+bgAudio.addEventListener("error", ()=>{ if(BG.want && !PL.playing){ toast("A background track wouldn't play, skipping it."); bgSkip(); } });
+async function bgSaveAll(){
+  if(!bgOn() || BG.saving || !navigator.onLine) return; BG.saving = true; let bad = 0;
+  for(const t of BG.list){ const k = BGK(t), r = BG.recs[k]; if(r && r.blob && r.url===t.url) continue;
+    try{ const res = await fetch(t.url); if(!res.ok) throw new Error(res.status); const rec = {k, bg:true, n:t.n, name:t.name, url:t.url, blob:await res.blob(), savedAt:Date.now()};
+      await PDB.put("ann", rec); BG.recs[k] = rec; }
+    catch(e){ console.warn("Background track not saved", t.name, e); bad++; if(e && e.name==="QuotaExceededError") break; }
+    bgState(); renderDeck(); }
+  BG.saving = false; bgState(); renderDeck();
+  if(bad) toast(`${bad} background track${bad>1?"s":""} not saved. Press Save all music again.`);
+}
+function bgState(){ const el = $("#bgState"); if(!el) return;
+  if(!bgOn()){ el.innerHTML = "No built-in playlist yet: the Spotify playlist below is used instead."; return; }
+  const n = BG.list.length, sv = bgSaved();
+  el.innerHTML = `<b>Built in: ${esc(BG.title)}</b> · ${n} tracks, played in a shuffled order · ` +
+    (sv===n ? `<span style="color:var(--ok)">all saved on this laptop</span>` : `<span style="color:#7a5a07">${sv} of ${n} saved on this laptop${BG.saving ? " (saving…)" : ": press Save all music"}</span>`) +
+    `. It fades down when other music starts and comes back when that music is stopped.`; }
+
+/* Music deck: the four one-tap tiles above the gymnast player */
+function renderDeck(){
+  renderAnnDeck();
+  const el = $("#deck"); if(!el) return;
+  const p = PL.playing;
+  const tile = (c, title, sub, on, btn) => `<div class="tile${on?" on":""}" style="--c:${c}"><div class="tx"><b>${title}</b><small>${sub}</small></div>${btn}</div>`;
+  const fadeBtn = (dk, fading) => fading ? `<button class="btn fading" data-dk="${dk}" title="Tap again to stop straight away">Fading out&hellip;</button>` : `<button class="btn stop" data-dk="${dk}">&#9724; Fade out</button>`;
+  const slotTile = (slot, c, title) => { const a = (PL.special||{})[slot], on = !!(p && a && p.k===a.k);
+    const sub = !a ? "Not set up: see Setup view" : on ? (p.kind==="sp" ? "Playing on Spotify · " : PL.fading ? "Fading out · " : "Playing · ") + esc(a.name) : esc(a.name);
+    const btn = !a ? `<button class="btn" disabled>&#9654; Play</button>` : on ? fadeBtn("fade", PL.fading) : `<button class="btn" data-dk="slot" data-slot="${slot}">&#9654; Play</button>`;
+    return tile(c, title, sub, on, btn); };
+  let bg;
+  if(bgOn()){ const t = bgNow(), playing = !bgAudio.paused, sv = bgSaved(), n = BG.list.length;
+    const sub = BG.fading ? "Fading out · " + esc(t ? t.name : "") : playing ? "Playing · " + esc(t ? t.name : "")
+      : BG.want && p ? "Paused for the other music, comes back after"
+      : `${n} tracks · ` + (sv===n ? "saved on this laptop" : `${sv} of ${n} saved` + (BG.saving ? " (saving…)" : ""));
+    bg = tile("#00AEB7", "Background music", sub, playing || (BG.want && !!p),
+      playing ? `<div class="btns"><button class="btn skip" data-dk="bgskip" title="Next track">&#9197;</button>${fadeBtn("bgfade", BG.fading)}</div>`
+              : `<button class="btn" data-dk="bgplay">&#9654; Play</button>`); }
+  else { const spOn = !!(SP.ctl && SP.isPaused === false && !(p && p.kind==="sp"));
+    bg = tile("#00AEB7", "Background music", !SP.ctl ? "Not set up: see Setup view" : spOn ? "Playing · Spotify playlist" : "Spotify playlist",
+      spOn, !SP.ctl ? `<button class="btn" disabled>&#9654; Play</button>`
+        : spOn ? `<button class="btn stop" data-dk="sppause">&#10073;&#10073; Pause</button>` : `<button class="btn" data-dk="spplay">&#9654; Play</button>`); }
+  el.innerHTML = bg +
+    slotTile("walkon", "#0073B3", "Walk on &amp; rotation") +
+    slotTile("awards", "#8F286B", "Medal ceremony") +
+    slotTile("closing", "#28225C", "Closing out");
+}
+$("#deck").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-dk]"); if(!b) return; setTimeout(()=>b.blur(), 0);
+  const k = b.dataset.dk;
+  if(k==="slot") playSlot(b.dataset.slot);
+  if(k==="fade") fadeOut();
+  if(k==="bgplay") bgPlay();
+  if(k==="bgfade") bgFadeOut();
+  if(k==="bgskip") bgSkip();
+  if(k==="spplay"){ if(PL.playing){ toast("Other music is playing. Stop or fade it out first."); return; } spResume(); }
+  if(k==="sppause"){ try{ SP.ctl.pause(); }catch(_){} }
+});
+function setCtrl(on){ document.body.classList.toggle("ctrl", on); $("#ctrlBtn").textContent = on ? "Setup view" : "Controller view";
+  try{ localStorage.setItem("nglmusic:ctrl", on ? "1" : "0"); }catch(_){} }
+$("#ctrlBtn").onclick = ()=> setCtrl(!document.body.classList.contains("ctrl"));
+try{ if(localStorage.getItem("nglmusic:ctrl")==="1") setCtrl(true); }catch(_){}
 function renderSlots(){
+  renderDeck();
   const el = $("#spSlots"); if(!el) return;
   el.innerHTML = SLOTS.map(x=>{ const a = (PL.special||{})[x.slot];
-    const what = a ? (a.spUri ? "Spotify · " : "MP3 · ") + esc(a.name) : x.hint;
+    const what = !a ? x.hint : a.builtin ? `Built in · ${esc(a.name)} · ${a.blob ? "saved on this laptop" : "online (saving…)"}` : (a.spUri ? "Spotify · " : "MP3 · ") + esc(a.name);
+    const own = a && !a.builtin && BUILTIN[x.slot];
     return `<div class="ann" style="flex-wrap:wrap"><span class="t"><b>${x.label}</b><br><small style="color:var(--muted)">${what}</small></span>
-      ${a ? `<button class="btn small primary" data-slp="${x.slot}">&#9654; Play</button><button class="btn small ghost" data-slx="${x.slot}">Remove</button>` : ""}
+      ${a ? (PL.playing && PL.playing.k===a.k
+              ? (PL.fading ? `<button class="btn small fading" data-slfo="${x.slot}">Fading out&hellip;</button>`
+                           : `<button class="btn small" data-slfo="${x.slot}" style="background:var(--red);color:#fff;border-color:var(--red)">&#9724; Fade out</button>`)
+              : `<button class="btn small primary" data-slp="${x.slot}">&#9654; Play</button>`)
+           + (a.builtin ? "" : `<button class="btn small ghost" data-slx="${x.slot}">${own ? "Use built-in" : "Remove"}</button>`) : ""}
       <div style="display:flex;gap:6px;width:100%;margin-top:6px">
         <input type="text" placeholder="Paste a Spotify track link" data-sll="${x.slot}" style="flex:1;min-width:0">
         <button class="btn small ghost" data-sls="${x.slot}">Use link</button>
         <label class="btn small ghost" style="cursor:pointer">Or MP3<input type="file" accept="audio/*" hidden data-slf="${x.slot}"></label></div></div>`; }).join("");
 }
 async function saveSlot(rec){
+  if(BUILTIN[rec.slot]) rec.override = true;   // chosen on purpose instead of the built-in track
   const old = (PL.special||{})[rec.slot];
   try{ await PDB.put("ann", rec); PL.special = PL.special || {}; PL.special[rec.slot] = rec;
     if(old && PL.objUrls["ann:"+old.k]){ URL.revokeObjectURL(PL.objUrls["ann:"+old.k]); delete PL.objUrls["ann:"+old.k]; } }
@@ -1115,8 +1390,11 @@ function spSlotStop(resume){
 $("#spSlots").addEventListener("click", async e=>{
   const b = e.target.closest("button"); if(!b) return;
   if(b.dataset.slp) playSlot(b.dataset.slp);
-  if(b.dataset.slx){ const a = (PL.special||{})[b.dataset.slx]; if(!a || !confirm("Remove this track from this laptop?")) return;
-    PDB.del("ann", a.k).catch(()=>{}); delete PL.special[b.dataset.slx]; renderSlots(); }
+  if(b.dataset.slfo) fadeOut();
+  if(b.dataset.slx){ const slot = b.dataset.slx, a = (PL.special||{})[slot]; if(!a || a.builtin) return;
+    if(!BUILTIN[slot] && !confirm("Remove this track from this laptop?")) return;
+    PDB.del("ann", a.k).catch(()=>{}); delete PL.special[slot]; renderSlots();
+    if(BUILTIN[slot]){ a.override = false; ensureBuiltins(); } }   // back to the built-in track
   if(b.dataset.sls){ const slot = b.dataset.sls, v = $(`[data-sll="${slot}"]`).value.trim(), m = v.match(/track[\/:]([A-Za-z0-9]{10,})/);
     if(!m){ toast("Paste a Spotify link to a single song (it has /track/ in it)."); return; }
     let name = "Spotify track"; try{ const r = await fetch("https://open.spotify.com/oembed?url="+encodeURIComponent("https://open.spotify.com/track/"+m[1])); if(r.ok){ const j = await r.json(); if(j.title) name = j.title; } }catch(_){}
@@ -1131,8 +1409,8 @@ $("#spSlots").addEventListener("change", e=>{
 /* backup: every session and rotation in floor order, plus announcements, from saved copies where possible */
 async function exportBackup(){
   const zip = new JSZip(); let n=0, failed=0; toast("Preparing the backup…");
-  Object.values(PL.special||{}).forEach(a=>{ if(a && a.blob) zip.file(`00 ${a.slot==="walkon"?"Walk-on":"Awards"} - ${safe(a.name)}.mp3`, a.blob); });
-  PL.ann.forEach((a,i)=>{ zip.file(`00 Announcements/${String(i+1).padStart(2,"0")} - ${safe(a.name)}.mp3`, a.blob); });
+  Object.values(PL.special||{}).forEach(a=>{ if(a && a.blob) zip.file(`00 ${a.slot==="walkon"?"Walk On and Rotation Music":"Medal Ceremony Music"} - ${safe(a.name)}.mp3`, a.blob); });
+  PL.ann.filter(a=>a.blob).forEach((a,i)=>{ zip.file(`00 Announcements/${String(i+1).padStart(2,"0")} - ${safe(a.name)}.mp3`, a.blob); });
   for(const s of SESS){ const o = rotOf(s);
     for(const r of [...Array.from({length:nrotOf(s)},(_,i)=>i+1), "u"]){ const ids = o[r]; if(!ids.length) continue;
       const dir = `${safe(sessName(s))} session/${r==="u"?"Not in a rotation":"Rotation "+r}`;
