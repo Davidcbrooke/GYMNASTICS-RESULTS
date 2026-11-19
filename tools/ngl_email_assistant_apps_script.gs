@@ -98,16 +98,16 @@ function sendReply(threadId, body, who) {
   inc.reply(body, { htmlBody: htmlOf(body), name: 'National Gymnastics League' });
   var d = draftFor(t.getId()); if (d) d.deleteDraft();
   t.removeLabel(label(L.ready)).removeLabel(label(L.dave)).addLabel(label(L.sent));
-  t.markRead(); t.moveToTrash();   // deleted (Gmail Bin, kept 30 days), as Dave does after replying
+  t.markRead(); t.moveToArchive();
   console.log(who + ' sent a reply to ' + inc.getFrom() + ': ' + t.getFirstMessageSubject());
   return { ok: true };
 }
 
-/** Skip: leave it in the Gmail inbox (draft kept) for Dave to deal with there. Done: delete it (Gmail Bin) and bin the draft. */
+/** Skip: leave it in the Gmail inbox (draft kept) for Dave to deal with there. Done: archive it and bin the draft. */
 function finish(threadId, to, archive, who) {
   var t = agentThread(threadId);
   t.removeLabel(label(L.ready)).removeLabel(label(L.dave)).addLabel(label(to));
-  if (archive) { var d = draftFor(t.getId()); if (d) d.deleteDraft(); t.markRead(); t.moveToTrash(); }
+  if (archive) { var d = draftFor(t.getId()); if (d) d.deleteDraft(); t.markRead(); t.moveToArchive(); }
   console.log(who + ' marked "' + t.getFirstMessageSubject() + '" as ' + to);
   return { ok: true };
 }
