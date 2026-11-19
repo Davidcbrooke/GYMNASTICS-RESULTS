@@ -301,11 +301,13 @@ const CONFIG = {
   // Blank url = shown as "Not linked yet".
   /* groups, in the order they show; one colour each (a pathway area uses its pathway colour) */
   groups: [
+    {id:"office", name:"Office", colour:"#28225C"},
     {id:"comps", name:"Competitions", colour:"#c6152e"},
     {id:"clubs", name:"Clubs and pathways", colour:"#14254a"},
     {id:"money", name:"Finance", colour:"#1f7a4d"}
   ],
   sections: [
+    {group:"office", icon:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>', id:"email", name:"Email assistant", desc:"Replies Claude has drafted for admin@: check, edit and send them. Nothing goes until you press Send", url:"NGL_Email_Assistant.html"},
     {group:"clubs", icon:'<path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/>', id:"clubs",        name:"Club registrations", desc:"Every club registered on the NGL Club Hub: newest first, contact details, where they came from and licences", url:"https://club.nationalgymnasticsleague.co.uk/#admin"},
     {group:"comps", icon:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', id:"competitions", name:"Competitions",   desc:"Competition dates, club bookings and the season calendar", url:"ngl-booking-system.html?admin=1"},
     {group:"comps", icon:'<path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2"/>', id:"sales", access:"finance", name:"Ticket sales", desc:"Gymnasts and spectators sold on JustGo for each competition, and places left", url:"NGL_Ticket_Sales.html"},

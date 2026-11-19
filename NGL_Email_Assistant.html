@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NGL Email Assistant</title>
+<link rel="icon" type="image/png" href="ngl-admin-icon-192.png">
+<link rel="apple-touch-icon" href="ngl-admin-icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Condensed:wght@700;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{--navy:#28225C;--red:#C6152E;--blue:#0073B3;--ink:#16213a;--muted:#5d6782;--line:#e1e4ee;--paper:#f4f5f8;--ok:#1a7a43;
+  --cond:'Roboto Condensed','Arial Narrow',sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font-family:Roboto,Arial,sans-serif;color:var(--ink);background:var(--paper);font-size:15px;line-height:1.45}
+.hidden{display:none!important}
+.bar7{display:flex;height:6px}.bar7 i{flex:1}
+header{background:var(--navy);color:#fff}
+.hd{max-width:900px;margin:0 auto;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.hd h1{font:900 26px var(--cond);margin:0;margin-right:auto;letter-spacing:.2px}
+.hd small{display:block;font:500 12.5px Roboto;opacity:.8;letter-spacing:0}
+.hd button{font:700 14px Roboto;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.6);border-radius:8px;padding:8px 14px;cursor:pointer}
+main{max-width:900px;margin:0 auto;padding:16px}
+.tot{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.tot div{flex:1;min-width:150px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;border-left:6px solid var(--c)}
+.tot b{display:block;font:900 30px/1 var(--cond);color:var(--c)}
+.tot span{font-size:13px;color:var(--muted)}
+.msg{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;color:var(--muted)}
+.msg.err{border-color:#f0b9c1;background:#fdf1f3;color:#8a1022}
+.card{background:#fff;border:1px solid var(--line);border-left:7px solid var(--c,var(--blue));border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.card.dave{--c:var(--red)}
+.top{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.who{margin-right:auto;min-width:0}
+.who b{font-size:16px}
+.who .sub{font-weight:700;color:var(--navy);margin-top:1px}
+.who small{display:block;color:var(--muted);font-size:12.5px}
+.tag{font:700 10.5px Roboto;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--c,var(--blue));border-radius:999px;padding:3px 10px;white-space:nowrap}
+.note{margin:10px 0 0;background:#FFF7E0;border:1px solid #F3D98B;border-radius:8px;padding:8px 12px;font-size:14px}
+.note b{color:#7a5a07}
+.note.dave{background:#FDECEF;border-color:#F2B8C2}.note.dave b{color:var(--red)}
+details{margin-top:10px;font-size:14px}
+summary{cursor:pointer;color:var(--blue);font-weight:700}
+.orig{white-space:pre-wrap;background:#f7f8fb;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:6px;max-height:340px;overflow:auto;font-size:13.5px}
+.orig.prev{max-height:none;color:var(--ink);margin-top:10px}
+.earlier{margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+.earlier div{font-size:12.5px;color:var(--muted);margin:6px 0 2px}
+label.rl{display:block;font:700 12px Roboto;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
+textarea{width:100%;min-height:170px;font:15px/1.5 Roboto,Arial,sans-serif;color:var(--ink);border:1px solid #c9cde0;border-radius:8px;padding:10px 12px;resize:vertical}
+textarea:focus{outline:2px solid var(--blue);border-color:var(--blue)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.btn{font:700 14.5px Roboto;border-radius:8px;padding:10px 16px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.btn.send{background:var(--red);border-color:var(--red);color:#fff}
+.btn.send.sure{background:#7d0b1c;border-color:#7d0b1c;box-shadow:0 0 0 3px #f5c5cd}
+.btn:disabled{opacity:.55;cursor:default}
+.acts a{margin-left:auto;font-size:13.5px;color:var(--blue);font-weight:700;text-decoration:none}
+.att{font-size:12.5px;color:var(--muted);margin-top:4px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:9;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+@media(max-width:600px){.acts a{margin-left:0;width:100%}.btn{flex:1}}
+</style>
+</head>
+<body>
+<div class="bar7"><i style="background:#E84187"></i><i style="background:#FBD43A"></i><i style="background:#E8822F"></i><i style="background:#0073B3"></i><i style="background:#00AEB7"></i><i style="background:#6BA526"></i><i style="background:#8F286B"></i></div>
+<header><div class="hd"><h1>Email assistant<small>Replies drafted by Claude for admin@nationalgymnasticsleague.co.uk. Nothing is sent until you press Send.</small></h1>
+  <button id="refresh">Refresh</button></div></header>
+<main>
+  <div class="tot" id="tot"></div>
+  <div id="list"><div class="msg">Loading…</div></div>
+</main>
+<script>
+const CONFIG = {
+  firebase: {
+    apiKey: "AIzaSyDV7BuYhSjji9DQDjih5a6Ms7G-SVZpKw4", authDomain: "saadi-rotation.firebaseapp.com",
+    projectId: "saadi-rotation", storageBucket: "saadi-rotation.firebasestorage.app",
+    messagingSenderId: "1066734803675", appId: "1:1066734803675:web:0188fd601adea7db08cafe"
+  },
+  // NGL Email Assistant Apps Script web app (admin@ account): tools/ngl_email_assistant_apps_script.gs
+  assistantUrl: "https://script.google.com/macros/s/AKfycbxDq9KmIqo4LeF-WvHmv594VAb0qVeTwooEKE0qQAr243UftThi_hVJmkzAHUZKhqyo/exec"
+};
+const DEMO = /[?&]demo\b/.test(location.search);
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(m){ const t = document.createElement("div"); t.className = "toast"; t.textContent = m; document.body.appendChild(t); setTimeout(()=>t.remove(), 3200); }
+const nameOf = f => String(f||"").replace(/<[^>]*>/,"").replace(/"/g,"").trim() || String(f||"");
+const addrOf = f => (String(f||"").match(/<([^>]+)>/) || [,f])[1];
+function when(ms){ const m = Math.round((Date.now()-ms)/60000);
+  const ago = m < 60 ? m+" min ago" : m < 36*60 ? Math.round(m/60)+" hours ago" : Math.round(m/1440)+" days ago";
+  return new Date(ms).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) + " · " + ago; }
+
+let ITEMS = [], BUSY = {};
+async function call(action, extra){
+  if(DEMO) return demoCall(action, extra);
+  if(!CONFIG.assistantUrl) throw new Error("not-connected");
+  const u = firebase.auth().currentUser;
+  const r = await fetch(CONFIG.assistantUrl, { method:"POST", body: JSON.stringify({ idToken: await u.getIdToken(), action, ...extra }) });
+  const j = await r.json(); if(!j.ok) throw new Error(j.error || "The Email assistant refused the request.");
+  return j;
+}
+
+function render(){
+  const dave = ITEMS.filter(i=>i.needsDave).length, ready = ITEMS.length - dave;
+  $("#tot").innerHTML = `<div style="--c:var(--red)"><b>${dave}</b><span>need you</span></div><div style="--c:var(--blue)"><b>${ready}</b><span>replies ready to send</span></div>`;
+  if(!ITEMS.length){ $("#list").innerHTML = `<div class="msg">All clear: nothing waiting. Claude checks the inbox at 7am and 1pm.</div>`; return; }
+  $("#list").innerHTML = ITEMS.map(i=>{
+    const parts = String(i.note||"").split("|").map(s=>s.trim()).filter(Boolean);
+    const summary = parts.filter(p=>!/^needs you/i.test(p)).join(" · "), reason = (parts.find(p=>/^needs you/i.test(p))||"").replace(/^needs you:?\s*/i,"");
+    return `<article class="card ${i.needsDave?"dave":""}" data-t="${esc(i.threadId)}">
+      <div class="top"><div class="who"><b>${esc(nameOf(i.from))}</b> <small style="display:inline">${esc(addrOf(i.from))}</small>
+        <div class="sub">${esc(i.subject || "(no subject)")}</div><small>${esc(when(i.date))}${i.count>1?` · ${i.count} messages in this conversation`:""}</small></div>
+        <span class="tag">${i.needsDave?"Needs you":"Ready to send"}</span></div>
+      ${summary||reason ? `<div class="note ${i.needsDave?"dave":""}">${summary?`<b>Claude:</b> ${esc(summary)}`:""}${reason?`${summary?"<br>":""}<b>Why it needs you:</b> ${esc(reason)}`:""}</div>` : ""}
+      <details ${i.needsDave?"open":""}><summary>Their email</summary><div class="orig">${esc(i.text)}</div>
+        ${i.attachments && i.attachments.length ? `<div class="att">Attached: ${i.attachments.map(esc).join(", ")}</div>` : ""}
+        ${i.earlier && i.earlier.length ? `<div class="earlier">${i.earlier.map(e=>`<div>${esc(nameOf(e.from))} · ${esc(new Date(e.date).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div><div class="orig">${esc(e.text)}</div>`).join("")}</div>` : ""}</details>
+      <label class="rl" for="r-${esc(i.threadId)}">Your reply${i.hasDraft?"":" (no draft: write one)"}</label>
+      <textarea id="r-${esc(i.threadId)}">${esc(i.draft)}</textarea>
+      <div class="acts">
+        <button class="btn send" data-a="send">Send reply</button>
+        <button class="btn" data-a="done" title="No reply needed: archive it">Done, no reply</button>
+        <button class="btn" data-a="skip" title="Take it out of here and deal with it in Gmail">Leave for Gmail</button>
+        <a href="${esc(i.link)}" target="_blank" rel="noopener">Open in Gmail ↗</a>
+      </div></article>`; }).join("");
+}
+
+async function load(){
+  $("#refresh").disabled = true;
+  try{ ITEMS = (await call("list")).items || []; render(); }
+  catch(e){
+    $("#tot").innerHTML = "";
+    $("#list").innerHTML = e.message === "not-connected"
+      ? `<div class="msg"><b>Not connected yet.</b> The Email assistant script hasn't been deployed. Once it is, its web app address goes in <code>assistantUrl</code> at the top of this page.</div>`
+      : `<div class="msg err"><b>Couldn't load the emails.</b> ${esc(e.message)}</div>`;
+  }
+  $("#refresh").disabled = false;
+}
+
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("button[data-a]"); if(!b) return;
+  const card = b.closest(".card"), id = card.dataset.t, a = b.dataset.a; if(BUSY[id]) return;
+  const item = ITEMS.find(i=>i.threadId===id), body = card.querySelector("textarea").value;
+  if(a === "send"){
+    if(!body.trim()) return toast("Write a reply first.");
+    if(/\[NOTE FOR DAVE/i.test(body)) return toast("Take Claude's note out of the reply first.");
+    if(!b.classList.contains("sure")){ b.classList.add("sure"); b.textContent = `Tap again to send to ${nameOf(item.from)}`; setTimeout(()=>{ if(b.isConnected){ b.classList.remove("sure"); b.textContent = "Send reply"; } }, 5000); return; }
+  }
+  BUSY[id] = true; card.querySelectorAll("button").forEach(x=>x.disabled = true);
+  const was = b.textContent; b.textContent = a==="send" ? "Sending…" : "Saving…";
+  try{
+    await call(a, a === "send" ? {threadId:id, body} : {threadId:id});
+    ITEMS = ITEMS.filter(i=>i.threadId!==id); render();
+    toast(a==="send" ? `Reply sent to ${nameOf(item.from)}.` : a==="done" ? "Marked done and archived." : "Left in the Gmail inbox.");
+  }catch(err){ toast(err.message); b.textContent = was; b.classList.remove("sure"); card.querySelectorAll("button").forEach(x=>x.disabled = false); }
+  delete BUSY[id];
+});
+$("#refresh").addEventListener("click", load);
+
+/* ?demo: sample emails, nothing is sent (for checking the layout) */
+const DEMO_ITEMS = [
+  {threadId:"d1", needsDave:true, subject:"Refund for Finals spectator tickets", from:"Sam Parent <sam.parent@example.com>", date:Date.now()-3*3600e3, count:1,
+   text:"Hi,\n\nMy daughter is now unwell and can't compete on Sunday. Can I have a refund for the two spectator tickets?\n\nThanks,\nSam", attachments:[], earlier:[],
+   note:"Parent asking for a refund on 2 Finals spectator tickets (gymnast ill) | Needs you: refund decision", hasDraft:true,
+   draft:"Hi Sam,\n\nI'm so sorry to hear she's unwell. I'll look into the tickets for you today and come back to you.\n\nBest wishes,\nDave Brooke\nNational Gymnastics League", link:"#"},
+  {threadId:"d2", needsDave:false, subject:"Floor & Vault competition: how do we book?", from:"Club Coach <coach@exampleclub.co.uk>", date:Date.now()-26*3600e3, count:1,
+   text:"Hello,\n\nWe'd like to bring 8 gymnasts to the Floor & Vault competition in February. How do we book?\n\nKind regards", attachments:[], earlier:[],
+   note:"Club wants to book 8 gymnasts for Floor & Vault (14 Feb)", hasDraft:true,
+   draft:"Hello,\n\nThank you, it would be great to have you there. You can reserve your places in the NGL Club Hub, then buy them on JustGo Events.\n\nBest wishes,\nDave Brooke\nNational Gymnastics League", link:"#"}
+];
+async function demoCall(action){ if(action==="list") return {ok:true, items:DEMO_ITEMS}; await new Promise(r=>setTimeout(r,500)); return {ok:true}; }
+
+if(DEMO){ load(); }
+else {
+  firebase.initializeApp(CONFIG.firebase);
+  document.addEventListener("ngl-admin-ready", load, {once:true});
+  const g = document.createElement("script"); g.src = "ngl-admin-guard.js"; g.dataset.section = "email"; document.head.appendChild(g);
+}
+</script>
+</body>
+</html>
