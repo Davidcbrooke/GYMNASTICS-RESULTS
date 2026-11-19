@@ -83,8 +83,10 @@ const DEMO = /[?&]demo\b/.test(location.search);
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(m){ const t = document.createElement("div"); t.className = "toast"; t.textContent = m; document.body.appendChild(t); setTimeout(()=>t.remove(), 3200); }
-const nameOf = f => String(f||"").replace(/<[^>]*>/,"").replace(/"/g,"").trim() || String(f||"");
 const addrOf = f => (String(f||"").match(/<([^>]+)>/) || [,f])[1];
+const nameOf = f => String(f||"").replace(/<[^>]*>/,"").replace(/"/g,"").trim() || addrOf(f);
+const unwrap = t => String(t||"").replace(/ 
+(?=\S)/g, " ");   // Gmail wraps draft lines at ~76 characters with a trailing space
 function when(ms){ const m = Math.round((Date.now()-ms)/60000);
   const ago = m < 60 ? m+" min ago" : m < 36*60 ? Math.round(m/60)+" hours ago" : Math.round(m/1440)+" days ago";
   return new Date(ms).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) + " · " + ago; }
@@ -107,7 +109,7 @@ function render(){
     const parts = String(i.note||"").split("|").map(s=>s.trim()).filter(Boolean);
     const summary = parts.filter(p=>!/^needs you/i.test(p)).join(" · "), reason = (parts.find(p=>/^needs you/i.test(p))||"").replace(/^needs you:?\s*/i,"");
     return `<article class="card ${i.needsDave?"dave":""}" data-t="${esc(i.threadId)}">
-      <div class="top"><div class="who"><b>${esc(nameOf(i.from))}</b> <small style="display:inline">${esc(addrOf(i.from))}</small>
+      <div class="top"><div class="who"><b>${esc(nameOf(i.from))}</b> ${nameOf(i.from)!==addrOf(i.from)?`<small style="display:inline">${esc(addrOf(i.from))}</small>`:""}
         <div class="sub">${esc(i.subject || "(no subject)")}</div><small>${esc(when(i.date))}${i.count>1?` · ${i.count} messages in this conversation`:""}</small></div>
         <span class="tag">${i.needsDave?"Needs you":"Ready to send"}</span></div>
       ${summary||reason ? `<div class="note ${i.needsDave?"dave":""}">${summary?`<b>Claude:</b> ${esc(summary)}`:""}${reason?`${summary?"<br>":""}<b>Why it needs you:</b> ${esc(reason)}`:""}</div>` : ""}
@@ -115,7 +117,7 @@ function render(){
         ${i.attachments && i.attachments.length ? `<div class="att">Attached: ${i.attachments.map(esc).join(", ")}</div>` : ""}
         ${i.earlier && i.earlier.length ? `<div class="earlier">${i.earlier.map(e=>`<div>${esc(nameOf(e.from))} · ${esc(new Date(e.date).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div><div class="orig">${esc(e.text)}</div>`).join("")}</div>` : ""}</details>
       <label class="rl" for="r-${esc(i.threadId)}">Your reply${i.hasDraft?"":" (no draft: write one)"}</label>
-      <textarea id="r-${esc(i.threadId)}">${esc(i.draft)}</textarea>
+      <textarea id="r-${esc(i.threadId)}">${esc(unwrap(i.draft))}</textarea>
       <div class="acts">
         <button class="btn send" data-a="send">Send reply</button>
         <button class="btn" data-a="done" title="No reply needed: archive it">Done, no reply</button>
