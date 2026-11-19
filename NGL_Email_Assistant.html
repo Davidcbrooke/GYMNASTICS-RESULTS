@@ -85,8 +85,7 @@ const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 function toast(m){ const t = document.createElement("div"); t.className = "toast"; t.textContent = m; document.body.appendChild(t); setTimeout(()=>t.remove(), 3200); }
 const addrOf = f => (String(f||"").match(/<([^>]+)>/) || [,f])[1];
 const nameOf = f => String(f||"").replace(/<[^>]*>/,"").replace(/"/g,"").trim() || addrOf(f);
-const unwrap = t => String(t||"").replace(/ 
-(?=\S)/g, " ");   // Gmail wraps draft lines at ~76 characters with a trailing space
+const unwrap = t => String(t||"").replace(/ \n(?=\S)/g, " ");   // Gmail wraps draft lines at ~76 characters with a trailing space
 function when(ms){ const m = Math.round((Date.now()-ms)/60000);
   const ago = m < 60 ? m+" min ago" : m < 36*60 ? Math.round(m/60)+" hours ago" : Math.round(m/1440)+" days ago";
   return new Date(ms).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) + " · " + ago; }
