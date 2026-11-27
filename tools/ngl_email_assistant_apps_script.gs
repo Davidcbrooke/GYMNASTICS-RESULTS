@@ -4,7 +4,7 @@
  *
  * Deploy as its own Apps Script project, signed in as admin@nationalgymnasticsleague.co.uk:
  *   Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
- * Only signed-in NGL admins (ngl_admin_users in saadi-rotation) who are the owner or have the
+ * Only signed-in NGL admins (NGL app team list, or the old ngl_admin_users) who are an owner or have the
  * "email" section can use it, and it only ever touches threads the agent has labelled Agent/Ready
  * or Agent/Needs Dave, so it can't be used to send anything else.
  *
@@ -112,24 +112,36 @@ function finish(threadId, to, archive, who) {
   return { ok: true };
 }
 
-/** Checks the Firebase sign-in token, then that the person is the owner or has the Email assistant section. */
+/** Checks the sign-in token, then that the person is an owner or has the Email assistant section.
+ *  The NGL app (club.nationalgymnasticsleague.co.uk, project ngl-club-hub-staging: NGL Admin > Team = adminUsers)
+ *  is tried first; the old NGL Admin Hub (saadi-rotation, ngl_admin_users) still works until it's retired. */
+var LOGINS = [
+  { key: 'AIzaSyCLsxitgoWUWjDwcQhSK6nThUQuPi7mKxM', project: 'ngl-club-hub-staging', team: 'adminUsers',
+    owners: ['admin@nationalgymnasticsleague.co.uk', 'bookingoffice@saadigymnastics.co.uk'] },
+  { key: FIREBASE_API_KEY, project: PROJECT, team: 'ngl_admin_users', owners: [] }
+];
 function checkAdmin(idToken) {
   if (!idToken) throw new Error('Please sign in to NGL Admin.');
-  var r = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + FIREBASE_API_KEY, {
-    method: 'post', contentType: 'application/json', payload: JSON.stringify({ idToken: idToken }), muteHttpExceptions: true });
-  var u = (JSON.parse(r.getContentText()).users || [])[0];
-  if (r.getResponseCode() !== 200 || !u || !u.email) throw new Error('Your sign-in has expired. Refresh NGL Admin and try again.');
-  if (!u.emailVerified && !(u.providerUserInfo || []).some(function (p) { return p.providerId === 'google.com'; }))
-    throw new Error('Please verify your email address first.');
-  var email = u.email.toLowerCase();
-  var d = UrlFetchApp.fetch('https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents/ngl_admin_users/' + encodeURIComponent(email), {
-    headers: { Authorization: 'Bearer ' + idToken }, muteHttpExceptions: true });
-  if (d.getResponseCode() !== 200) throw new Error(email + ' is not an NGL admin.');
-  var f = JSON.parse(d.getContentText()).fields || {};
-  var owner = f.owner && f.owner.booleanValue;
-  var sections = ((f.sections && f.sections.arrayValue && f.sections.arrayValue.values) || []).map(function (v) { return v.stringValue; });
-  if (!owner && sections.indexOf('email') < 0) throw new Error(email + ' does not have Email assistant access.');
-  return email;
+  for (var i = 0; i < LOGINS.length; i++) {
+    var L0 = LOGINS[i];
+    var r = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + L0.key, {
+      method: 'post', contentType: 'application/json', payload: JSON.stringify({ idToken: idToken }), muteHttpExceptions: true });
+    var u = r.getResponseCode() === 200 && (JSON.parse(r.getContentText()).users || [])[0];
+    if (!u || !u.email) continue;                       // not a sign-in from this project: try the next
+    if (!u.emailVerified && !(u.providerUserInfo || []).some(function (p) { return p.providerId === 'google.com'; }))
+      throw new Error('Please verify your email address first.');
+    var email = u.email.toLowerCase();
+    if (L0.owners.indexOf(email) > -1) return email;
+    var d = UrlFetchApp.fetch('https://firestore.googleapis.com/v1/projects/' + L0.project + '/databases/(default)/documents/' + L0.team + '/' + encodeURIComponent(email), {
+      headers: { Authorization: 'Bearer ' + idToken }, muteHttpExceptions: true });
+    if (d.getResponseCode() !== 200) throw new Error(email + ' is not an NGL admin.');
+    var f = JSON.parse(d.getContentText()).fields || {};
+    var owner = f.owner && f.owner.booleanValue;
+    var sections = ((f.sections && f.sections.arrayValue && f.sections.arrayValue.values) || []).map(function (v) { return v.stringValue; });
+    if (!owner && sections.indexOf('email') < 0) throw new Error(email + ' does not have Email assistant access.');
+    return email;
+  }
+  throw new Error('Your sign-in has expired. Refresh NGL Admin and try again.');
 }
 
 /** Run once from the editor (signed in as admin@) to approve the permissions and create the labels. */
