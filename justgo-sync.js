@@ -3,7 +3,7 @@
    "National Gymnastics League" selected. It reads each upcoming NGL event's tickets and bookings,
    adds them up (no names or emails leave the page), then opens NGL Finance, which saves the totals. */
 (async () => {
-  const FIN = 'https://davidcbrooke.github.io/GYMNASTICS-RESULTS/NGL_Finance.html?jgsync=1';
+  const FIN = 'https://club.nationalgymnasticsleague.co.uk/?jgsync=1#/admin/sales';   // since 27 Nov 2026 the sales go to the NGL Club Hub (NGL Admin › Ticket sales)
   const box = document.createElement('div');
   box.style.cssText = 'position:fixed;z-index:2147483647;top:16px;right:16px;width:340px;background:#1d1a55;color:#fff;font:15px/1.4 Roboto,Arial,sans-serif;padding:16px 18px;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.4);border-top:6px solid #c6152e';
   const say = (h, p = '') => { box.innerHTML = `<b style="font-size:17px">${h}</b><div style="margin-top:6px;color:#d9dcf5">${p}</div>`; };
@@ -23,13 +23,13 @@
     if(!/Event Management/.test(head) || !/National Gymnastics League/.test(head)) return stop('Switch to National Gymnastics League', 'Open Event Management, use the club switcher at the top right to choose National Gymnastics League, then press the bookmark again.');
     // Open NGL Finance straight away, while the bookmark click still counts (browsers block pop-ups opened later)
     const w = window.open(FIN, 'nglfinance');
-    if(!w) return stop('Allow pop-ups', 'Your browser blocked the NGL Finance tab. Allow pop-ups for mybg.british-gymnastics.org and press the bookmark again.');
+    if(!w) return stop('Allow pop-ups', 'Your browser blocked the NGL Club Hub tab. Allow pop-ups for mybg.british-gymnastics.org and press the bookmark again.');
     let ready = false, payload = null;
-    const send = () => { if(ready && payload){ w.postMessage(payload, 'https://davidcbrooke.github.io'); payload = null; } };
+    const send = () => { if(ready && payload){ w.postMessage(payload, 'https://club.nationalgymnasticsleague.co.uk'); payload = null; } };
     window.addEventListener('message', ev => {
-      if(ev.origin !== 'https://davidcbrooke.github.io') return;
+      if(ev.origin !== 'https://club.nationalgymnasticsleague.co.uk') return;
       if(ev.data === 'ngl-jg-ready'){ ready = true; send(); }
-      if(ev.data && ev.data.type === 'ngl-jg-saved') stop('Sales synced ✓', `${ev.data.count} events saved to NGL Finance. ${ev.data.matched} matched to competitions.`);
+      if(ev.data && ev.data.type === 'ngl-jg-saved') stop('Sales synced ✓', `${ev.data.count} events saved to the NGL Club Hub. ${ev.data.matched} matched to competitions.`);
     });
     window.focus();
     say('Reading NGL events…');
@@ -71,7 +71,7 @@
         gymnasts:gym, spectators:spec, gymInc, specInc, otherInc, income:gymInc + specInc + otherInc});
     }
     payload = {type:'ngl-jg-sales', at:new Date().toISOString(), events:out};
-    say('Sending to NGL Finance…', 'Log in to NGL Admin in the NGL Finance tab if it asks. This box updates when the totals are saved.');
+    say('Sending to the NGL Club Hub…', 'Log in to NGL Admin in the Club Hub tab if it asks. This box updates when the totals are saved.');
     send();
   }catch(err){ console.error(err); stop('Sync didn’t finish', String(err.message || err)); }
 })();
